@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#b5122b">
+  <title>STR | Tus derechos</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      background: #f5f5f5;
+      color: #181818;
+      padding-bottom: 90px;
+    }
+
+    /* CABECERA */
+    header {
+      background: linear-gradient(135deg, #a90f26, #d51d3a);
+      color: white;
+      padding: 30px 20px 34px;
+      border-radius: 0 0 28px 28px;
+    }
+
+    .brand {
+      font-size: 30px;
+      font-weight: 800;
+      margin-bottom: 8px;
+    }
+
+    .subtitle {
+      font-size: 17px;
+      opacity: 0.92;
+    }
+
+    /* CONTENIDO */
+    main {
+      max-width: 900px;
+      margin: auto;
+      padding: 22px 18px;
+    }
+
+    /* BUSCADOR */
+    .search {
+      width: 100%;
+      border: none;
+      background: white;
+      padding: 17px 20px;
+      border-radius: 30px;
+      font-size: 16px;
+      box-shadow: 0 3px 15px rgba(0,0,0,.08);
+      margin-bottom: 30px;
+    }
+
+    h2 {
+      font-size: 22px;
+      margin-bottom: 15px;
+    }
+
+    /* TARJETAS */
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 14px;
+      margin-bottom: 32px;
+    }
+
+    .card {
+      min-height: 150px;
+      border-radius: 20px;
+      padding: 20px;
+      color: white;
+      font-weight: 700;
+      font-size: 18px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      box-shadow: 0 5px 18px rgba(0,0,0,.12);
+      cursor: pointer;
+    }
+
+    .card span {
+      font-size: 35px;
+    }
+
+    .red {
+      background: linear-gradient(135deg, #b5122b, #e12644);
+    }
+
+    .dark {
+      background: linear-gradient(135deg, #242424, #454545);
+    }
+
+    .grey {
+      background: linear-gradient(135deg, #626262, #8b8b8b);
+    }
+
+    .soft {
+      background: linear-gradient(135deg, #8e1024, #b5122b);
+    }
+
+    /* BLOQUE DESTACADO */
+    .featured {
+      background: white;
+      border-radius: 22px;
+      padding: 22px;
+      box-shadow: 0 4px 18px rgba(0,0,0,.07);
+      margin-bottom: 30px;
+    }
+
+    .featured small {
+      color: #b5122b;
+      font-weight: bold;
+    }
+
+    .featured h3 {
+      margin: 8px 0;
+      font-size: 20px;
+    }
+
+    .featured p {
+      color: #626262;
+      line-height: 1.5;
+    }
+
+    /* MENÚ INFERIOR */
+    nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 72px;
+      background: rgba(255,255,255,.96);
+      border-top: 1px solid #ddd;
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      z-index: 100;
+    }
+
+    nav a {
+      color: #666;
+      text-decoration: none;
+      font-size: 12px;
+      text-align: center;
+    }
+
+    nav a strong {
+      display: block;
+      font-size: 23px;
+      margin-bottom: 3px;
+    }
+
+    nav a.active {
+      color: #b5122b;
+      font-weight: bold;
+    }
+
+    @media (min-width: 700px) {
+      .cards {
+        grid-template-columns: repeat(4, 1fr);
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+<header>
+  <div class="brand">STR</div>
+  <div class="subtitle">Tus derechos, siempre a mano</div>
+</header>
+
+<main>
+
+  <input
+    class="search"
+    type="search"
+    placeholder="🔎 ¿Qué necesitas consultar?"
+  >
+
+  <h2>Consulta tus derechos</h2>
+
+  <section class="cards">
+
+    <div class="card red">
+      <span>📋</span>
+      Permisos retribuidos
+    </div>
+
+    <div class="card dark">
+      <span>⚖️</span>
+      Conoce tus derechos
+    </div>
+
+    <div class="card grey">
+      <span>🤝</span>
+      Afíliate a STR
+    </div>
+
+    <div class="card soft">
+      <span>💬</span>
+      Contacta con STR
+    </div>
+
+  </section>
+
+  <h2>Destacado</h2>
+
+  <section class="featured">
+    <small>PERMISOS RETRIBUIDOS</small>
+    <h3>Hospitalización de un familiar</h3>
+    <p>
+      Consulta de forma sencilla qué establece la normativa,
+      quién genera el derecho, su duración y la documentación necesaria.
+    </p>
+  </section>
+
+</main>
+
+<nav>
+  <a class="active" href="#">
+    <strong>⌂</strong>
+    Inicio
+  </a>
+
+  <a href="#">
+    <strong>▣</strong>
+    Derechos
+  </a>
+
+  <a href="#">
+    <strong>♥</strong>
+    Afíliate
+  </a>
+
+  <a href="#">
+    <strong>☎</strong>
+    Contacto
+  </a>
+</nav>
+
+</body>
+</html>
