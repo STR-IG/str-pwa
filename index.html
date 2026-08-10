@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#b5122b">
-  <title>STR | Tus derechos</title>
+  <meta name="theme-color" content="#e30613">
+  <title>STR-IG | Instituto Grifols</title>
 
   <style>
     * {
@@ -13,158 +13,498 @@
       padding: 0;
     }
 
+    :root {
+      --red: #e30613;
+      --red-dark: #b9000b;
+      --red-soft: #fff0f1;
+      --black: #161616;
+      --grey: #6e6e73;
+      --light: #f5f5f7;
+      --white: #ffffff;
+    }
+
     body {
       font-family: Arial, Helvetica, sans-serif;
-      background: #f5f5f5;
-      color: #181818;
-      padding-bottom: 90px;
+      background: var(--light);
+      color: var(--black);
+      padding-bottom: 88px;
+    }
+
+    button,
+    input {
+      font-family: inherit;
     }
 
     /* CABECERA */
-    header {
-      background: linear-gradient(135deg, #a90f26, #d51d3a);
+
+    .hero {
+      background:
+        linear-gradient(135deg, rgba(176,0,12,.96), rgba(227,6,19,.88)),
+        linear-gradient(45deg, #b9000b, #ef3340);
       color: white;
-      padding: 30px 20px 34px;
-      border-radius: 0 0 28px 28px;
+      padding: 24px 20px 34px;
+      border-radius: 0 0 30px 30px;
     }
 
-    .brand {
-      font-size: 30px;
-      font-weight: 800;
-      margin-bottom: 8px;
-    }
-
-    .subtitle {
-      font-size: 17px;
-      opacity: 0.92;
-    }
-
-    /* CONTENIDO */
-    main {
-      max-width: 900px;
+    .topbar {
+      max-width: 1100px;
       margin: auto;
-      padding: 22px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 26px;
     }
 
-    /* BUSCADOR */
-    .search {
-      width: 100%;
-      border: none;
+    .menu {
+      font-size: 28px;
+      line-height: 1;
+    }
+
+    .notification {
+      font-size: 24px;
+      position: relative;
+    }
+
+    .notification::after {
+      content: "3";
+      position: absolute;
+      top: -8px;
+      right: -10px;
+      width: 18px;
+      height: 18px;
       background: white;
-      padding: 17px 20px;
-      border-radius: 30px;
-      font-size: 16px;
-      box-shadow: 0 3px 15px rgba(0,0,0,.08);
-      margin-bottom: 30px;
-    }
-
-    h2 {
-      font-size: 22px;
-      margin-bottom: 15px;
-    }
-
-    /* TARJETAS */
-    .cards {
+      color: var(--red);
+      border-radius: 50%;
+      font-size: 11px;
+      font-weight: 800;
       display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 14px;
-      margin-bottom: 32px;
+      place-items: center;
     }
 
-    .card {
-      min-height: 150px;
+    .hero-content {
+      max-width: 1100px;
+      margin: auto;
+    }
+
+    .brand-line {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+
+    .logo-text {
+      font-size: 42px;
+      font-weight: 900;
+      letter-spacing: -3px;
+    }
+
+    .brand-name {
+      border-left: 2px solid rgba(255,255,255,.5);
+      padding-left: 14px;
+    }
+
+    .brand-name strong {
+      display: block;
+      font-size: 22px;
+    }
+
+    .brand-name span {
+      font-size: 14px;
+      opacity: .9;
+    }
+
+    .claim {
+      font-style: italic;
+      font-size: 16px;
+      margin-bottom: 22px;
+      opacity: .95;
+    }
+
+    .hero h1 {
+      font-size: clamp(32px, 5vw, 52px);
+      max-width: 560px;
+      line-height: 1.02;
+      margin-bottom: 12px;
+    }
+
+    .hero-description {
+      font-size: 18px;
+      line-height: 1.5;
+      max-width: 540px;
+      opacity: .96;
+      margin-bottom: 25px;
+    }
+
+    .searchbox {
+      width: 100%;
+      max-width: 700px;
+      border: 0;
+      outline: none;
+      padding: 18px 22px;
+      border-radius: 999px;
+      font-size: 16px;
+      box-shadow: 0 12px 30px rgba(0,0,0,.16);
+    }
+
+    /* CUERPO */
+
+    main {
+      max-width: 1100px;
+      margin: auto;
+      padding: 28px 18px;
+    }
+
+    .section {
+      margin-bottom: 34px;
+    }
+
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .section-header h2 {
+      font-size: 23px;
+    }
+
+    .section-header a {
+      color: var(--red);
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 14px;
+    }
+
+    /* ACCESOS */
+
+    .quick-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+    }
+
+    .quick-card {
+      background: white;
       border-radius: 20px;
       padding: 20px;
-      color: white;
-      font-weight: 700;
-      font-size: 18px;
+      min-height: 155px;
+      box-shadow: 0 5px 18px rgba(0,0,0,.07);
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      box-shadow: 0 5px 18px rgba(0,0,0,.12);
+      transition: .2s ease;
       cursor: pointer;
     }
 
-    .card span {
-      font-size: 35px;
+    .quick-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 10px 24px rgba(0,0,0,.11);
     }
 
-    .red {
-      background: linear-gradient(135deg, #b5122b, #e12644);
+    .icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 14px;
+      background: var(--red);
+      color: white;
+      display: grid;
+      place-items: center;
+      font-size: 24px;
     }
 
-    .dark {
-      background: linear-gradient(135deg, #242424, #454545);
+    .quick-card strong {
+      font-size: 18px;
+      line-height: 1.15;
     }
 
-    .grey {
-      background: linear-gradient(135deg, #626262, #8b8b8b);
+    .quick-card small {
+      color: var(--grey);
+      font-size: 13px;
+      line-height: 1.4;
+      margin-top: 8px;
     }
 
-    .soft {
-      background: linear-gradient(135deg, #8e1024, #b5122b);
+    /* CARRUSEL PERMISOS */
+
+    .scroll-row {
+      display: flex;
+      gap: 14px;
+      overflow-x: auto;
+      padding-bottom: 10px;
+      scroll-snap-type: x mandatory;
     }
 
-    /* BLOQUE DESTACADO */
-    .featured {
+    .scroll-row::-webkit-scrollbar {
+      height: 6px;
+    }
+
+    .scroll-row::-webkit-scrollbar-thumb {
+      background: #d7d7d7;
+      border-radius: 20px;
+    }
+
+    .permit-card {
       background: white;
-      border-radius: 22px;
-      padding: 22px;
-      box-shadow: 0 4px 18px rgba(0,0,0,.07);
-      margin-bottom: 30px;
+      min-width: 190px;
+      width: 190px;
+      border-radius: 20px;
+      padding: 18px;
+      box-shadow: 0 5px 16px rgba(0,0,0,.07);
+      scroll-snap-align: start;
     }
 
-    .featured small {
-      color: #b5122b;
-      font-weight: bold;
+    .permit-card .icon {
+      margin-bottom: 20px;
     }
 
-    .featured h3 {
-      margin: 8px 0;
+    .permit-card h3 {
+      font-size: 16px;
+      min-height: 42px;
+      margin-bottom: 14px;
+    }
+
+    .tag {
+      display: inline-block;
+      color: var(--red-dark);
+      background: var(--red-soft);
+      border-radius: 999px;
+      padding: 7px 10px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    /* ACTUALIDAD */
+
+    .news-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+    }
+
+    .news-card {
+      background: white;
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 5px 18px rgba(0,0,0,.07);
+    }
+
+    .news-image {
+      height: 105px;
+      background:
+        linear-gradient(135deg, rgba(227,6,19,.85), rgba(176,0,12,.65)),
+        #ddd;
+      display: flex;
+      align-items: end;
+      padding: 15px;
+      color: white;
+      font-weight: 800;
+    }
+
+    .news-content {
+      padding: 17px;
+    }
+
+    .news-content h3 {
+      font-size: 17px;
+      margin-bottom: 8px;
+    }
+
+    .news-content p {
+      color: var(--grey);
+      line-height: 1.45;
+      font-size: 14px;
+    }
+
+    /* SECCIONES */
+
+    .list {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+
+    .list-item {
+      background: white;
+      padding: 17px;
+      border-radius: 18px;
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      box-shadow: 0 4px 15px rgba(0,0,0,.055);
+    }
+
+    .list-icon {
+      flex: 0 0 48px;
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: var(--red);
+      color: white;
+      font-size: 22px;
+    }
+
+    .list-text {
+      flex: 1;
+    }
+
+    .list-text strong {
+      display: block;
+      font-size: 16px;
+      margin-bottom: 4px;
+    }
+
+    .list-text span {
+      color: var(--grey);
+      font-size: 13px;
+      line-height: 1.35;
+    }
+
+    .arrow {
+      color: #999;
       font-size: 20px;
     }
 
-    .featured p {
-      color: #626262;
-      line-height: 1.5;
+    /* AFILIACIÓN */
+
+    .join {
+      background: linear-gradient(135deg, var(--red-dark), var(--red));
+      border-radius: 24px;
+      padding: 24px;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
     }
 
-    /* MENÚ INFERIOR */
-    nav {
+    .join h2 {
+      margin-bottom: 6px;
+    }
+
+    .join p {
+      opacity: .94;
+      line-height: 1.45;
+    }
+
+    .join-button {
+      background: white;
+      color: var(--red);
+      text-decoration: none;
+      border-radius: 999px;
+      padding: 14px 22px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    /* MENÚ FIJO */
+
+    .bottom-nav {
       position: fixed;
+      left: 50%;
+      transform: translateX(-50%);
       bottom: 0;
-      left: 0;
-      right: 0;
-      height: 72px;
-      background: rgba(255,255,255,.96);
-      border-top: 1px solid #ddd;
+      width: 100%;
+      max-width: 1100px;
+      height: 76px;
+      background: rgba(255,255,255,.97);
+      backdrop-filter: blur(12px);
+      border-top: 1px solid #e5e5e5;
       display: flex;
       justify-content: space-around;
       align-items: center;
-      z-index: 100;
+      z-index: 50;
     }
 
-    nav a {
-      color: #666;
+    .bottom-nav a {
       text-decoration: none;
-      font-size: 12px;
+      color: #666;
       text-align: center;
+      font-size: 11px;
+      min-width: 58px;
     }
 
-    nav a strong {
+    .bottom-nav a b {
       display: block;
-      font-size: 23px;
-      margin-bottom: 3px;
+      font-size: 21px;
+      margin-bottom: 4px;
     }
 
-    nav a.active {
-      color: #b5122b;
-      font-weight: bold;
+    .bottom-nav a.active {
+      color: var(--red);
+      font-weight: 800;
     }
 
-    @media (min-width: 700px) {
-      .cards {
-        grid-template-columns: repeat(4, 1fr);
+    /* MÓVIL */
+
+    @media (max-width: 700px) {
+      .hero {
+        border-radius: 0 0 24px 24px;
+        padding: 18px 17px 28px;
+      }
+
+      .brand-line {
+        margin-bottom: 12px;
+      }
+
+      .logo-text {
+        font-size: 34px;
+      }
+
+      .brand-name strong {
+        font-size: 18px;
+      }
+
+      .hero h1 {
+        font-size: 34px;
+      }
+
+      .hero-description {
+        font-size: 15px;
+      }
+
+      main {
+        padding: 24px 14px;
+      }
+
+      .quick-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .quick-card {
+        min-height: 135px;
+        padding: 16px;
+      }
+
+      .quick-card strong {
+        font-size: 16px;
+      }
+
+      .news-grid {
+        display: flex;
+        overflow-x: auto;
+        gap: 12px;
+      }
+
+      .news-card {
+        min-width: 245px;
+      }
+
+      .list {
+        grid-template-columns: 1fr;
+      }
+
+      .join {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .join-button {
+        width: 100%;
+        text-align: center;
       }
     }
   </style>
@@ -172,78 +512,297 @@
 
 <body>
 
-<header>
-  <div class="brand">STR</div>
-  <div class="subtitle">Tus derechos, siempre a mano</div>
+<header class="hero">
+
+  <div class="topbar">
+    <div class="menu">☰</div>
+    <div class="notification">🔔</div>
+  </div>
+
+  <div class="hero-content">
+
+    <div class="brand-line">
+      <div class="logo-text">STR</div>
+
+      <div class="brand-name">
+        <strong>STR-IG</strong>
+        <span>Instituto Grifols</span>
+      </div>
+    </div>
+
+    <div class="claim">¡Tú trabajas, tú decides!</div>
+
+    <h1>Tus derechos, siempre a mano</h1>
+
+    <p class="hero-description">
+      Información laboral y sindical para la plantilla de Instituto Grifols.
+    </p>
+
+    <input
+      class="searchbox"
+      type="search"
+      placeholder="🔎  ¿Qué necesitas consultar?"
+    >
+
+  </div>
 </header>
+
 
 <main>
 
-  <input
-    class="search"
-    type="search"
-    placeholder="🔎 ¿Qué necesitas consultar?"
-  >
+  <!-- ACCESOS RÁPIDOS -->
 
-  <h2>Consulta tus derechos</h2>
+  <section class="section">
 
-  <section class="cards">
-
-    <div class="card red">
-      <span>📋</span>
-      Permisos retribuidos
+    <div class="section-header">
+      <h2>Accesos rápidos</h2>
+      <a href="#">Ver todos →</a>
     </div>
 
-    <div class="card dark">
-      <span>⚖️</span>
-      Conoce tus derechos
-    </div>
+    <div class="quick-grid">
 
-    <div class="card grey">
-      <span>🤝</span>
-      Afíliate a STR
-    </div>
+      <article class="quick-card">
+        <div class="icon">📋</div>
+        <div>
+          <strong>Permisos retribuidos</strong>
+          <small>Consulta todos los permisos.</small>
+        </div>
+      </article>
 
-    <div class="card soft">
-      <span>💬</span>
-      Contacta con STR
+      <article class="quick-card">
+        <div class="icon">⚖️</div>
+        <div>
+          <strong>Conoce tus derechos</strong>
+          <small>Información laboral clara y útil.</small>
+        </div>
+      </article>
+
+      <article class="quick-card">
+        <div class="icon">📅</div>
+        <div>
+          <strong>Calendarios laborales</strong>
+          <small>Turnos, festivos y horarios.</small>
+        </div>
+      </article>
+
+      <article class="quick-card">
+        <div class="icon">💬</div>
+        <div>
+          <strong>Contacta con STR-IG</strong>
+          <small>Escríbenos, estamos aquí.</small>
+        </div>
+      </article>
+
     </div>
 
   </section>
 
-  <h2>Destacado</h2>
 
-  <section class="featured">
-    <small>PERMISOS RETRIBUIDOS</small>
-    <h3>Hospitalización de un familiar</h3>
-    <p>
-      Consulta de forma sencilla qué establece la normativa,
-      quién genera el derecho, su duración y la documentación necesaria.
-    </p>
+  <!-- PERMISOS -->
+
+  <section class="section">
+
+    <div class="section-header">
+      <h2>Permisos retribuidos</h2>
+      <a href="#">Ver todos →</a>
+    </div>
+
+    <div class="scroll-row">
+
+      <article class="permit-card">
+        <div class="icon">🏥</div>
+        <h3>Hospitalización familiar</h3>
+        <span class="tag">5 días</span>
+      </article>
+
+      <article class="permit-card">
+        <div class="icon">🕊️</div>
+        <h3>Fallecimiento familiar</h3>
+        <span class="tag">Ver permiso</span>
+      </article>
+
+      <article class="permit-card">
+        <div class="icon">💍</div>
+        <h3>Matrimonio</h3>
+        <span class="tag">15 días</span>
+      </article>
+
+      <article class="permit-card">
+        <div class="icon">🩺</div>
+        <h3>Intervención quirúrgica</h3>
+        <span class="tag">Ver permiso</span>
+      </article>
+
+      <article class="permit-card">
+        <div class="icon">📄</div>
+        <h3>Deber inexcusable</h3>
+        <span class="tag">Ver permiso</span>
+      </article>
+
+    </div>
+
+  </section>
+
+
+  <!-- ACTUALIDAD -->
+
+  <section class="section">
+
+    <div class="section-header">
+      <h2>Actualidad STR-IG</h2>
+      <a href="#">Ver todas →</a>
+    </div>
+
+    <div class="news-grid">
+
+      <article class="news-card">
+        <div class="news-image">STR-IG</div>
+        <div class="news-content">
+          <h3>Actividad de la sección sindical</h3>
+          <p>Conoce en qué estamos trabajando y las novedades de STR-IG.</p>
+        </div>
+      </article>
+
+      <article class="news-card">
+        <div class="news-image">Información</div>
+        <div class="news-content">
+          <h3>Información para la plantilla</h3>
+          <p>Comunicaciones y cuestiones laborales de interés.</p>
+        </div>
+      </article>
+
+      <article class="news-card">
+        <div class="news-image">Derechos</div>
+        <div class="news-content">
+          <h3>Nuevos contenidos</h3>
+          <p>Seguimos ampliando nuestra guía de derechos laborales.</p>
+        </div>
+      </article>
+
+    </div>
+
+  </section>
+
+
+  <!-- SECCIONES -->
+
+  <section class="section">
+
+    <div class="section-header">
+      <h2>Nuestras secciones</h2>
+    </div>
+
+    <div class="list">
+
+      <article class="list-item">
+        <div class="list-icon">⚖️</div>
+        <div class="list-text">
+          <strong>Derechos laborales</strong>
+          <span>Información y herramientas sobre tus derechos.</span>
+        </div>
+        <div class="arrow">›</div>
+      </article>
+
+      <article class="list-item">
+        <div class="list-icon">📅</div>
+        <div class="list-text">
+          <strong>Calendarios</strong>
+          <span>Turnos, festivos, horarios y planificación anual.</span>
+        </div>
+        <div class="arrow">›</div>
+      </article>
+
+      <article class="list-item">
+        <div class="list-icon">📰</div>
+        <div class="list-text">
+          <strong>Actualidad STR-IG</strong>
+          <span>Noticias, comunicados y actividad de tu sección.</span>
+        </div>
+        <div class="arrow">›</div>
+      </article>
+
+      <article class="list-item">
+        <div class="list-icon">👥</div>
+        <div class="list-text">
+          <strong>El sindicato</strong>
+          <span>Conoce STR, nuestro proyecto y nuestros valores.</span>
+        </div>
+        <div class="arrow">›</div>
+      </article>
+
+      <article class="list-item">
+        <div class="list-icon">❤️</div>
+        <div class="list-text">
+          <strong>Afíliate</strong>
+          <span>Ventajas de afiliarte y cómo hacerlo.</span>
+        </div>
+        <div class="arrow">›</div>
+      </article>
+
+      <article class="list-item">
+        <div class="list-icon">☎️</div>
+        <div class="list-text">
+          <strong>Contacto</strong>
+          <span>Estamos para ayudarte. Escríbenos o llámanos.</span>
+        </div>
+        <div class="arrow">›</div>
+      </article>
+
+    </div>
+
+  </section>
+
+
+  <!-- AFÍLIATE -->
+
+  <section class="join">
+
+    <div>
+      <h2>Afíliate a STR-IG</h2>
+      <p>Juntos somos más fuertes. Defendemos tus derechos.</p>
+    </div>
+
+    <a class="join-button" href="#">
+      Quiero afiliarme →
+    </a>
+
   </section>
 
 </main>
 
-<nav>
+
+<nav class="bottom-nav">
+
   <a class="active" href="#">
-    <strong>⌂</strong>
+    <b>⌂</b>
     Inicio
   </a>
 
   <a href="#">
-    <strong>▣</strong>
+    <b>⚖</b>
     Derechos
   </a>
 
   <a href="#">
-    <strong>♥</strong>
+    <b>📰</b>
+    Actualidad
+  </a>
+
+  <a href="#">
+    <b>👥</b>
+    Sindicato
+  </a>
+
+  <a href="#">
+    <b>♡</b>
     Afíliate
   </a>
 
   <a href="#">
-    <strong>☎</strong>
+    <b>☎</b>
     Contacto
   </a>
+
 </nav>
 
 </body>
