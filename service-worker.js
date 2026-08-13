@@ -1,6 +1,6 @@
- const CACHE_NAME = 'str-ig-cache';
+const CACHE_NAME = 'str-ig-cache-v2';
 
-self.addEventListener('install', (event) => {
+self.addEventListener('install', () => {
   self.skipWaiting();
 });
 
@@ -24,13 +24,15 @@ self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
 
   event.respondWith(
-    fetch(event.request)
+    fetch(event.request, { cache: 'no-store' })
       .then((response) => {
-        const copy = response.clone();
+        if (response && response.ok) {
+          const copy = response.clone();
 
-        caches.open(CACHE_NAME).then((cache) => {
-          cache.put(event.request, copy);
-        });
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(event.request, copy);
+          });
+        }
 
         return response;
       })
