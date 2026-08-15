@@ -1,0 +1,16 @@
+{
+  "name": "STR-IG",
+  "short_name": "STR-IG",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#e30613",
+  "icons": [
+    {
+      "src": "icono-str-ig.png",
+      "sizes": "1024x1024",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
