@@ -61,6 +61,7 @@
       display: grid;
       grid-template-columns: repeat(2, minmax(0,1fr));
       gap: 14px;
+      align-items: stretch;
     }
     .image-card,
     .permit-card {
@@ -70,32 +71,42 @@
       box-shadow: 0 5px 18px rgba(0,0,0,.07);
       text-decoration: none;
       color: inherit;
+      width: 100%;
+      aspect-ratio: 1.5 / 1;
+      min-height: 0;
     }
-    .image-card img { width: 100%; height: auto; display: block; }
+    .image-card img {
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: cover;
+    }
     .permit-card {
-      min-height: 190px;
-      padding: 18px;
+      padding: 14px;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
     }
     .icon {
-      width: 52px;
-      height: 52px;
-      border-radius: 15px;
+      width: 44px;
+      height: 44px;
+      border-radius: 13px;
       background: var(--red);
       display: grid;
       place-items: center;
-      font-size: 25px;
+      font-size: 21px;
     }
-    .permit-card h2 { font-size: 19px; line-height: 1.15; }
+    .permit-card h2 {
+      font-size: clamp(15px, 4vw, 19px);
+      line-height: 1.08;
+    }
     .tag {
       align-self: flex-start;
       background: var(--red-soft);
       color: #b9000b;
       border-radius: 999px;
-      padding: 8px 12px;
-      font-size: 13px;
+      padding: 7px 10px;
+      font-size: 12px;
       font-weight: 700;
     }
     .bottom-nav {
