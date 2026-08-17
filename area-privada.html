@@ -126,13 +126,6 @@
       box-shadow: 0 0 0 3px rgba(227, 6, 19, .12);
     }
 
-    #code {
-      text-align: center;
-      letter-spacing: 10px;
-      font-size: 25px;
-      font-weight: 800;
-    }
-
     .primary {
       width: 100%;
       min-height: 54px;
@@ -147,6 +140,11 @@
     }
 
     .primary:active { background: var(--red-dark); }
+
+    .primary:disabled {
+      cursor: wait;
+      opacity: .65;
+    }
 
     .help {
       margin: 16px 2px 0;
@@ -168,13 +166,56 @@
 
     .status.show { display: block; }
 
-    .change-email {
-      display: inline-block;
-      margin-top: 13px;
-      border: 0;
-      padding: 0;
-      color: var(--red);
-      background: none;
+    .verified {
+      display: grid;
+      place-items: center;
+      width: 62px;
+      height: 62px;
+      margin: 0 auto 16px;
+      border-radius: 50%;
+      color: white;
+      background: #18864b;
+      font-size: 31px;
+      font-weight: 800;
+    }
+
+    .member-title {
+      margin: 0 0 8px;
+      text-align: center;
+      font-size: 24px;
+    }
+
+    .member-copy {
+      margin: 0 0 20px;
+      color: var(--muted);
+      text-align: center;
+      line-height: 1.45;
+    }
+
+    .private-tool {
+      padding: 17px;
+      border: 1px solid #f0c5c8;
+      border-radius: 16px;
+      background: #fff6f7;
+    }
+
+    .private-tool h3 { margin: 0 0 6px; }
+
+    .private-tool p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.4;
+    }
+
+    .secondary {
+      width: 100%;
+      min-height: 48px;
+      margin-top: 16px;
+      border: 1px solid #cfcfd3;
+      border-radius: 999px;
+      color: var(--ink);
+      background: white;
       cursor: pointer;
       font-weight: 700;
     }
@@ -198,46 +239,98 @@
   <main>
     <div class="lock" aria-hidden="true">🔒</div>
     <h1>Acceso para afiliados</h1>
-    <p class="intro">Introduce el correo personal que facilitaste a STR. Te enviaremos un código de seis cifras para verificar tu acceso.</p>
+    <p id="intro" class="intro">Introduce el correo personal que facilitaste a STR. Te enviaremos un enlace seguro para verificar tu acceso.</p>
 
     <section class="panel" aria-live="polite">
       <form id="email-form" class="step active">
         <label for="email">Correo electrónico personal</label>
         <input id="email" name="email" type="email" autocomplete="email" placeholder="nombre@correo.com" required>
-        <button class="primary" type="submit">Recibir código</button>
-        <p class="help">Si el correo está autorizado, recibirás un código válido durante 10 minutos.</p>
-        <p id="setup-message" class="status">La pantalla ya está preparada. Activaremos el envío real de códigos al conectar el servicio privado de acceso.</p>
+        <button id="send-link" class="primary" type="submit">Recibir enlace de acceso</button>
+        <p class="help">Si el correo está autorizado, recibirás un enlace temporal y de un solo uso.</p>
+        <p id="setup-message" class="status"></p>
       </form>
 
-      <form id="code-form" class="step">
-        <label for="code">Código de seis cifras</label>
-        <input id="code" name="code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" placeholder="000000" required>
-        <button class="primary" type="submit">Validar y entrar</button>
-        <button id="change-email" class="change-email" type="button">Usar otro correo</button>
-      </form>
+      <div id="member-area" class="step">
+        <div class="verified" aria-hidden="true">✓</div>
+        <h2 class="member-title">Acceso verificado</h2>
+        <p class="member-copy">Has entrado correctamente con <strong id="member-email"></strong>.</p>
+        <div class="private-tool">
+          <h3>Calcula tu V</h3>
+          <p>Tu acceso privado ya funciona. El siguiente paso será incorporar aquí la calculadora.</p>
+        </div>
+        <button id="sign-out" class="secondary" type="button">Cerrar sesión</button>
+      </div>
     </section>
 
     <p class="privacy"><span aria-hidden="true">🛡️</span><span>El acceso será personal. STR no solicitará tu contraseña del correo electrónico.</span></p>
   </main>
 
-  <script>
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+
+    const SUPABASE_URL = 'https://icneigdnuntzugisexaz.supabase.co';
+    const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_apKjcPClIBTHS2wwN6qPsA_6Vm4tk9m';
+    const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+      auth: {
+        detectSessionInUrl: true,
+        persistSession: true,
+        autoRefreshToken: true
+      }
+    });
+
     const emailForm = document.getElementById('email-form');
-    const codeForm = document.getElementById('code-form');
+    const memberArea = document.getElementById('member-area');
     const setupMessage = document.getElementById('setup-message');
+    const sendLinkButton = document.getElementById('send-link');
+    const intro = document.getElementById('intro');
 
-    emailForm.addEventListener('submit', (event) => {
-      event.preventDefault();
-      setupMessage.classList.add('show');
-    });
+    function showSignedIn(session) {
+      emailForm.classList.remove('active');
+      memberArea.classList.add('active');
+      intro.textContent = 'Área exclusiva para personas afiliadas a STR.';
+      document.getElementById('member-email').textContent = session.user.email || '';
+    }
 
-    codeForm.addEventListener('submit', (event) => {
-      event.preventDefault();
-    });
-
-    document.getElementById('change-email').addEventListener('click', () => {
-      codeForm.classList.remove('active');
+    function showSignedOut() {
+      memberArea.classList.remove('active');
       emailForm.classList.add('active');
-      document.getElementById('email').focus();
+      intro.textContent = 'Introduce el correo personal que facilitaste a STR. Te enviaremos un enlace seguro para verificar tu acceso.';
+    }
+
+    emailForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const email = document.getElementById('email').value.trim().toLowerCase();
+
+      sendLinkButton.disabled = true;
+      sendLinkButton.textContent = 'Enviando…';
+      setupMessage.classList.remove('show');
+
+      const redirectTo = `${window.location.origin}${window.location.pathname}`;
+
+      await supabase.auth.signInWithOtp({
+        email,
+        options: {
+          emailRedirectTo: redirectTo,
+          shouldCreateUser: false
+        }
+      });
+
+      setupMessage.textContent = 'Si el correo está autorizado, recibirás en breve un enlace de acceso. Revisa también la carpeta de correo no deseado.';
+      setupMessage.classList.add('show');
+      sendLinkButton.disabled = false;
+      sendLinkButton.textContent = 'Volver a enviar el enlace';
+    });
+
+    document.getElementById('sign-out').addEventListener('click', async () => {
+      await supabase.auth.signOut();
+      showSignedOut();
+    });
+
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session) showSignedIn(session);
+
+    supabase.auth.onAuthStateChange((_event, currentSession) => {
+      if (currentSession) showSignedIn(currentSession);
     });
   </script>
 </body>
