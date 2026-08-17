@@ -126,6 +126,13 @@
       box-shadow: 0 0 0 3px rgba(227, 6, 19, .12);
     }
 
+    .code-input {
+      text-align: center;
+      letter-spacing: 8px;
+      font-size: 27px;
+      font-weight: 800;
+    }
+
     .primary {
       width: 100%;
       min-height: 54px;
@@ -247,7 +254,7 @@
     .secondary {
       width: 100%;
       min-height: 48px;
-      margin-top: 16px;
+      margin-top: 12px;
       border: 1px solid #cfcfd3;
       border-radius: 999px;
       color: var(--ink);
@@ -275,15 +282,24 @@
   <main>
     <div class="lock" aria-hidden="true">🔒</div>
     <h1>Acceso para afiliados</h1>
-    <p id="intro" class="intro">Introduce el correo personal que facilitaste a STR. Te enviaremos un enlace seguro para verificar tu acceso.</p>
+    <p id="intro" class="intro">Introduce el correo personal que facilitaste a STR. Te enviaremos un código de 6 dígitos para verificar tu acceso.</p>
 
     <section class="panel" aria-live="polite">
       <form id="email-form" class="step active">
         <label for="email">Correo electrónico personal</label>
         <input id="email" name="email" type="email" autocomplete="email" placeholder="nombre@correo.com" required>
-        <button id="send-link" class="primary" type="submit">Recibir enlace de acceso</button>
-        <p class="help">Si el correo está autorizado, recibirás un enlace temporal y de un solo uso.</p>
+        <button id="send-code" class="primary" type="submit">Recibir código de acceso</button>
+        <p class="help">Si el correo está autorizado por STR, recibirás un código temporal de 6 dígitos.</p>
         <p id="setup-message" class="status"></p>
+      </form>
+
+      <form id="code-form" class="step">
+        <label for="otp-code">Código de 6 dígitos</label>
+        <input id="otp-code" class="code-input" name="otp-code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" placeholder="000000" required>
+        <button id="verify-code" class="primary" type="submit">Entrar</button>
+        <p class="help">Hemos enviado el código al correo indicado. Revisa también la carpeta de correo no deseado.</p>
+        <p id="code-message" class="status"></p>
+        <button id="change-email" class="secondary" type="button">Usar otro correo</button>
       </form>
 
       <div id="member-area" class="step">
@@ -353,7 +369,7 @@
       </div>
     </section>
 
-    <p class="privacy"><span aria-hidden="true">🛡️</span><span>El acceso será personal. STR no solicitará tu contraseña del correo electrónico.</span></p>
+    <p class="privacy"><span aria-hidden="true">🛡️</span><span>El acceso es personal. STR no solicitará tu contraseña del correo electrónico.</span></p>
   </main>
 
   <script type="module">
@@ -361,57 +377,136 @@
 
     const SUPABASE_URL = 'https://icneigdnuntzugisexaz.supabase.co';
     const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_apKjcPClIBTHS2wwN6qPsA_6Vm4tk9m';
+    const OTP_ENDPOINT = `${SUPABASE_URL}/functions/v1/request-private-otp`;
+
     const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
       auth: {
-        detectSessionInUrl: true,
+        detectSessionInUrl: false,
         persistSession: true,
         autoRefreshToken: true
       }
     });
 
     const emailForm = document.getElementById('email-form');
+    const codeForm = document.getElementById('code-form');
     const memberArea = document.getElementById('member-area');
     const setupMessage = document.getElementById('setup-message');
-    const sendLinkButton = document.getElementById('send-link');
+    const codeMessage = document.getElementById('code-message');
+    const sendCodeButton = document.getElementById('send-code');
+    const verifyCodeButton = document.getElementById('verify-code');
     const intro = document.getElementById('intro');
     const vForm = document.getElementById('v-form');
     const calculatorMessage = document.getElementById('calculator-message');
+    let pendingEmail = '';
+
+    function activateStep(step) {
+      emailForm.classList.remove('active');
+      codeForm.classList.remove('active');
+      memberArea.classList.remove('active');
+      step.classList.add('active');
+    }
+
+    function showSignedOut() {
+      pendingEmail = '';
+      sessionStorage.removeItem('strPendingEmail');
+      activateStep(emailForm);
+      intro.textContent = 'Introduce el correo personal que facilitaste a STR. Te enviaremos un código de 6 dígitos para verificar tu acceso.';
+    }
+
+    function showCodeStep(email) {
+      pendingEmail = email;
+      sessionStorage.setItem('strPendingEmail', email);
+      activateStep(codeForm);
+      intro.textContent = 'Introduce el código de 6 dígitos que hemos enviado a tu correo.';
+      document.getElementById('otp-code').value = '';
+      document.getElementById('otp-code').focus();
+    }
 
     function showSignedIn(session) {
-      emailForm.classList.remove('active');
-      memberArea.classList.add('active');
+      sessionStorage.removeItem('strPendingEmail');
+      activateStep(memberArea);
       intro.textContent = 'Área exclusiva para personas afiliadas a STR.';
       document.getElementById('member-email').textContent = session.user.email || '';
     }
 
-    function showSignedOut() {
-      memberArea.classList.remove('active');
-      emailForm.classList.add('active');
-      intro.textContent = 'Introduce el correo personal que facilitaste a STR. Te enviaremos un enlace seguro para verificar tu acceso.';
+    async function isAuthorizedSession(session) {
+      if (!session) return false;
+      const { data, error } = await supabase.rpc('is_current_user_private_access_allowed');
+      return !error && data === true;
+    }
+
+    async function requestCode(email) {
+      await fetch(OTP_ENDPOINT, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': SUPABASE_PUBLISHABLE_KEY
+        },
+        body: JSON.stringify({ email })
+      });
     }
 
     emailForm.addEventListener('submit', async (event) => {
       event.preventDefault();
       const email = document.getElementById('email').value.trim().toLowerCase();
 
-      sendLinkButton.disabled = true;
-      sendLinkButton.textContent = 'Enviando…';
+      sendCodeButton.disabled = true;
+      sendCodeButton.textContent = 'Enviando…';
       setupMessage.classList.remove('show');
 
-      const redirectTo = `${window.location.origin}${window.location.pathname}`;
+      try {
+        await requestCode(email);
+        setupMessage.textContent = 'Si el correo está autorizado, recibirás un código de acceso. Revisa también la carpeta de correo no deseado.';
+        setupMessage.classList.add('show');
+        setTimeout(() => showCodeStep(email), 450);
+      } catch (_error) {
+        setupMessage.textContent = 'No se ha podido completar la solicitud. Comprueba tu conexión e inténtalo de nuevo.';
+        setupMessage.classList.add('show');
+      } finally {
+        sendCodeButton.disabled = false;
+        sendCodeButton.textContent = 'Recibir código de acceso';
+      }
+    });
 
-      await supabase.auth.signInWithOtp({
-        email,
-        options: {
-          emailRedirectTo: redirectTo,
-          shouldCreateUser: false
-        }
+    codeForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const token = document.getElementById('otp-code').value.replace(/\D/g, '').slice(0, 6);
+      if (!pendingEmail || token.length !== 6) return;
+
+      verifyCodeButton.disabled = true;
+      verifyCodeButton.textContent = 'Verificando…';
+      codeMessage.classList.remove('show');
+
+      const { data, error } = await supabase.auth.verifyOtp({
+        email: pendingEmail,
+        token,
+        type: 'email'
       });
 
-      setupMessage.textContent = 'Si el correo está autorizado, recibirás en breve un enlace de acceso. Revisa también la carpeta de correo no deseado.';
-      setupMessage.classList.add('show');
-      sendLinkButton.disabled = false;
-      sendLinkButton.textContent = 'Volver a enviar el enlace';
+      if (error || !data.session) {
+        codeMessage.textContent = 'El código no es correcto o ha caducado. Solicita uno nuevo e inténtalo otra vez.';
+        codeMessage.classList.add('show');
+        verifyCodeButton.disabled = false;
+        verifyCodeButton.textContent = 'Entrar';
+        return;
+      }
+
+      if (!(await isAuthorizedSession(data.session))) {
+        await supabase.auth.signOut();
+        codeMessage.textContent = 'Este correo no tiene acceso al área privada. Ponte en contacto con tu delegado sindical.';
+        codeMessage.classList.add('show');
+        verifyCodeButton.disabled = false;
+        verifyCodeButton.textContent = 'Entrar';
+        return;
+      }
+
+      showSignedIn(data.session);
+      verifyCodeButton.disabled = false;
+      verifyCodeButton.textContent = 'Entrar';
+    });
+
+    document.getElementById('change-email').addEventListener('click', () => {
+      showSignedOut();
     });
 
     document.getElementById('sign-out').addEventListener('click', async () => {
@@ -426,11 +521,17 @@
     });
 
     const { data: { session } } = await supabase.auth.getSession();
-    if (session) showSignedIn(session);
-
-    supabase.auth.onAuthStateChange((_event, currentSession) => {
-      if (currentSession) showSignedIn(currentSession);
-    });
+    if (session) {
+      if (await isAuthorizedSession(session)) {
+        showSignedIn(session);
+      } else {
+        await supabase.auth.signOut();
+        showSignedOut();
+      }
+    } else {
+      const savedEmail = sessionStorage.getItem('strPendingEmail');
+      if (savedEmail) showCodeStep(savedEmail);
+    }
   </script>
 </body>
 </html>
