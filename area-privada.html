@@ -819,7 +819,7 @@
       const { data, error } = await supabase.auth.verifyOtp({
         email: pendingEmail,
         token,
-        type: 'email'
+        type: 'recovery'
       });
 
       if (error || !data.session) {
