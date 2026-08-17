@@ -208,6 +208,42 @@
       line-height: 1.4;
     }
 
+    .calculator-intro { margin-bottom: 16px !important; }
+
+    .month-card {
+      margin-top: 14px;
+      padding: 16px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: #fff;
+    }
+
+    .month-card h4 {
+      margin: 0 0 14px;
+      font-size: 16px;
+    }
+
+    .field + .field { margin-top: 13px; }
+
+    .field label {
+      margin-bottom: 7px;
+      font-size: 13px;
+    }
+
+    .field-hint {
+      display: block;
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .calculate-note {
+      margin: 14px 2px 0 !important;
+      font-size: 12px !important;
+      line-height: 1.45 !important;
+    }
+
     .secondary {
       width: 100%;
       min-height: 48px;
@@ -256,7 +292,62 @@
         <p class="member-copy">Has entrado correctamente con <strong id="member-email"></strong>.</p>
         <div class="private-tool">
           <h3>Calcula tu V</h3>
-          <p>Tu acceso privado ya funciona. El siguiente paso será incorporar aquí la calculadora.</p>
+          <p class="calculator-intro">Introduce los datos de los tres meses anteriores al inicio de tus vacaciones.</p>
+
+          <form id="v-form">
+            <div class="month-card">
+              <h4>Primer mes</h4>
+              <div class="field">
+                <label for="month-1">Mes</label>
+                <input id="month-1" name="month-1" type="month" required>
+              </div>
+              <div class="field">
+                <label for="days-1">Días trabajados</label>
+                <input id="days-1" name="days-1" type="number" inputmode="numeric" min="0" max="31" step="1" placeholder="Ejemplo: 18" required>
+              </div>
+              <div class="field">
+                <label for="amount-1">Total de complementos incluidos</label>
+                <input id="amount-1" name="amount-1" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0,00 €" required>
+                <span class="field-hint">Suma únicamente los conceptos que entran en el cálculo de la V.</span>
+              </div>
+            </div>
+
+            <div class="month-card">
+              <h4>Segundo mes</h4>
+              <div class="field">
+                <label for="month-2">Mes</label>
+                <input id="month-2" name="month-2" type="month" required>
+              </div>
+              <div class="field">
+                <label for="days-2">Días trabajados</label>
+                <input id="days-2" name="days-2" type="number" inputmode="numeric" min="0" max="31" step="1" placeholder="Ejemplo: 17" required>
+              </div>
+              <div class="field">
+                <label for="amount-2">Total de complementos incluidos</label>
+                <input id="amount-2" name="amount-2" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0,00 €" required>
+              </div>
+            </div>
+
+            <div class="month-card">
+              <h4>Tercer mes</h4>
+              <div class="field">
+                <label for="month-3">Mes</label>
+                <input id="month-3" name="month-3" type="month" required>
+              </div>
+              <div class="field">
+                <label for="days-3">Días trabajados</label>
+                <input id="days-3" name="days-3" type="number" inputmode="numeric" min="0" max="31" step="1" placeholder="Ejemplo: 18" required>
+              </div>
+              <div class="field">
+                <label for="amount-3">Total de complementos incluidos</label>
+                <input id="amount-3" name="amount-3" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0,00 €" required>
+              </div>
+            </div>
+
+            <button id="calculate-v" class="primary" type="submit">Calcular mi V</button>
+            <p id="calculator-message" class="status"></p>
+            <p class="calculate-note">La fórmula se ejecutará de forma protegida. Los importes introducidos no se guardarán.</p>
+          </form>
         </div>
         <button id="sign-out" class="secondary" type="button">Cerrar sesión</button>
       </div>
@@ -283,6 +374,8 @@
     const setupMessage = document.getElementById('setup-message');
     const sendLinkButton = document.getElementById('send-link');
     const intro = document.getElementById('intro');
+    const vForm = document.getElementById('v-form');
+    const calculatorMessage = document.getElementById('calculator-message');
 
     function showSignedIn(session) {
       emailForm.classList.remove('active');
@@ -324,6 +417,12 @@
     document.getElementById('sign-out').addEventListener('click', async () => {
       await supabase.auth.signOut();
       showSignedOut();
+    });
+
+    vForm.addEventListener('submit', (event) => {
+      event.preventDefault();
+      calculatorMessage.textContent = 'La pantalla ya está preparada. Falta conectar el cálculo protegido antes de obtener el resultado.';
+      calculatorMessage.classList.add('show');
     });
 
     const { data: { session } } = await supabase.auth.getSession();
