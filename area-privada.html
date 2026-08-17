@@ -245,6 +245,117 @@
       line-height: 1.35;
     }
 
+    .plus-list {
+      display: grid;
+      gap: 10px;
+      margin-top: 15px;
+    }
+
+    .plus-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 112px;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .plus-label {
+      margin: 0;
+      font-size: 13px;
+      line-height: 1.3;
+    }
+
+    .concept-code {
+      display: inline-block;
+      min-width: 38px;
+      margin-right: 5px;
+      color: var(--red-dark);
+      font-size: 11px;
+      font-weight: 800;
+    }
+
+    .plus-row input {
+      min-height: 46px;
+      padding: 10px 11px;
+      text-align: right;
+    }
+
+    details.other-pluses {
+      margin-top: 15px;
+      padding-top: 13px;
+      border-top: 1px solid var(--line);
+    }
+
+    details.other-pluses summary {
+      color: var(--red-dark);
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .month-total {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      margin-top: 15px;
+      padding-top: 13px;
+      border-top: 1px solid var(--line);
+      font-size: 14px;
+      font-weight: 800;
+    }
+
+    .excluded-box {
+      margin-top: 16px;
+      padding: 14px;
+      border-radius: 14px;
+      background: #f3f3f5;
+    }
+
+    .excluded-box strong {
+      display: block;
+      margin-bottom: 7px;
+      font-size: 13px;
+    }
+
+    .excluded-box ul {
+      margin: 0;
+      padding-left: 18px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .calculator-result {
+      display: none;
+      margin-top: 16px;
+      padding: 20px 16px;
+      border: 1px solid #b9dfc9;
+      border-radius: 16px;
+      background: #f0faf4;
+      text-align: center;
+    }
+
+    .calculator-result.show { display: block; }
+
+    .result-label {
+      color: #28613f;
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .result-value {
+      display: block;
+      margin: 6px 0 8px;
+      color: #126537;
+      font-size: 34px;
+      font-weight: 900;
+    }
+
+    .result-detail {
+      margin: 0 !important;
+      color: #365c45 !important;
+      font-size: 13px !important;
+    }
+
     .calculate-note {
       margin: 14px 2px 0 !important;
       font-size: 12px !important;
@@ -310,59 +421,29 @@
           <h3>Calcula tu V</h3>
           <p class="calculator-intro">Introduce los datos de los tres meses anteriores al inicio de tus vacaciones.</p>
 
-          <form id="v-form">
-            <div class="month-card">
-              <h4>Primer mes</h4>
-              <div class="field">
-                <label for="month-1">Mes</label>
-                <input id="month-1" name="month-1" type="month" required>
-              </div>
-              <div class="field">
-                <label for="days-1">Días trabajados</label>
-                <input id="days-1" name="days-1" type="number" inputmode="numeric" min="0" max="31" step="1" placeholder="Ejemplo: 18" required>
-              </div>
-              <div class="field">
-                <label for="amount-1">Total de complementos incluidos</label>
-                <input id="amount-1" name="amount-1" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0,00 €" required>
-                <span class="field-hint">Suma únicamente los conceptos que entran en el cálculo de la V.</span>
-              </div>
+          <p id="calculator-loading" class="help">Cargando los conceptos de la nómina…</p>
+          <form id="v-form" hidden>
+            <div id="months-container"></div>
+
+            <div class="field" style="margin-top:16px;">
+              <label for="vacation-days">Días de vacaciones que quieres calcular</label>
+              <input id="vacation-days" name="vacation-days" type="number" inputmode="numeric" min="1" max="25" step="1" placeholder="Ejemplo: 2" required>
             </div>
 
-            <div class="month-card">
-              <h4>Segundo mes</h4>
-              <div class="field">
-                <label for="month-2">Mes</label>
-                <input id="month-2" name="month-2" type="month" required>
-              </div>
-              <div class="field">
-                <label for="days-2">Días trabajados</label>
-                <input id="days-2" name="days-2" type="number" inputmode="numeric" min="0" max="31" step="1" placeholder="Ejemplo: 17" required>
-              </div>
-              <div class="field">
-                <label for="amount-2">Total de complementos incluidos</label>
-                <input id="amount-2" name="amount-2" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0,00 €" required>
-              </div>
-            </div>
-
-            <div class="month-card">
-              <h4>Tercer mes</h4>
-              <div class="field">
-                <label for="month-3">Mes</label>
-                <input id="month-3" name="month-3" type="month" required>
-              </div>
-              <div class="field">
-                <label for="days-3">Días trabajados</label>
-                <input id="days-3" name="days-3" type="number" inputmode="numeric" min="0" max="31" step="1" placeholder="Ejemplo: 18" required>
-              </div>
-              <div class="field">
-                <label for="amount-3">Total de complementos incluidos</label>
-                <input id="amount-3" name="amount-3" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0,00 €" required>
-              </div>
+            <div class="excluded-box">
+              <strong>No introduzcas estos conceptos:</strong>
+              <ul id="excluded-list"></ul>
             </div>
 
             <button id="calculate-v" class="primary" type="submit">Calcular mi V</button>
             <p id="calculator-message" class="status"></p>
-            <p class="calculate-note">La fórmula se ejecutará de forma protegida. Los importes introducidos no se guardarán.</p>
+            <div id="calculator-result" class="calculator-result">
+              <span class="result-label">Tu V por cada día de vacaciones</span>
+              <strong id="daily-result" class="result-value"></strong>
+              <p id="total-result" class="result-detail"></p>
+              <p id="formula-detail" class="result-detail" style="margin-top:6px !important;"></p>
+            </div>
+            <p class="calculate-note">El cálculo se realiza de forma protegida. Los meses y los importes introducidos no se guardan.</p>
           </form>
         </div>
         <button id="sign-out" class="secondary" type="button">Cerrar sesión</button>
@@ -397,7 +478,15 @@
     const intro = document.getElementById('intro');
     const vForm = document.getElementById('v-form');
     const calculatorMessage = document.getElementById('calculator-message');
+    const calculatorLoading = document.getElementById('calculator-loading');
+    const monthsContainer = document.getElementById('months-container');
+    const excludedList = document.getElementById('excluded-list');
+    const calculatorResult = document.getElementById('calculator-result');
+    const calculateButton = document.getElementById('calculate-v');
+    const euro = new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' });
     let pendingEmail = '';
+    let calculatorFields = [];
+    let calculatorReady = false;
 
     function activateStep(step) {
       emailForm.classList.remove('active');
@@ -427,6 +516,104 @@
       activateStep(memberArea);
       intro.textContent = 'Área exclusiva para personas afiliadas a STR.';
       document.getElementById('member-email').textContent = session.user.email || '';
+      loadCalculator();
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;');
+    }
+
+    function plusRows(fields, monthIndex) {
+      return fields.map((field) => `
+        <div class="plus-row">
+          <label class="plus-label" for="${escapeHtml(field.key)}-${monthIndex}">
+            ${field.code ? `<span class="concept-code">${escapeHtml(field.code)}</span>` : ''}${escapeHtml(field.label)}
+          </label>
+          <input
+            id="${escapeHtml(field.key)}-${monthIndex}"
+            type="number"
+            inputmode="decimal"
+            min="0"
+            max="10000"
+            step="0.01"
+            placeholder="0,00 €"
+            data-plus-key="${escapeHtml(field.key)}"
+            data-month-index="${monthIndex}"
+          >
+        </div>
+      `).join('');
+    }
+
+    function renderMonthCard(monthIndex) {
+      const usual = calculatorFields.filter((field) => field.group === 'usual');
+      const other = calculatorFields.filter((field) => field.group === 'other');
+      const titles = ['Primer mes', 'Segundo mes', 'Tercer mes'];
+
+      return `
+        <div class="month-card" data-month-card="${monthIndex}">
+          <h4>${titles[monthIndex - 1]}</h4>
+          <div class="field">
+            <label for="month-${monthIndex}">Mes</label>
+            <input id="month-${monthIndex}" type="month" required>
+          </div>
+          <div class="field">
+            <label for="days-${monthIndex}">Días laborales de calendario</label>
+            <input id="days-${monthIndex}" type="number" inputmode="numeric" min="1" max="31" step="1" placeholder="Ejemplo: 18" required>
+            <span class="field-hint">No son los días que aparecen en «Plus de turno».</span>
+          </div>
+          <div class="plus-list">${plusRows(usual, monthIndex)}</div>
+          ${other.length ? `
+            <details class="other-pluses">
+              <summary>Otros pluses que pueden aparecer</summary>
+              <div class="plus-list">${plusRows(other, monthIndex)}</div>
+            </details>
+          ` : ''}
+          <div class="month-total">
+            <span>Total del mes</span>
+            <span id="month-total-${monthIndex}">0,00 €</span>
+          </div>
+        </div>
+      `;
+    }
+
+    function monthSubtotal(monthIndex) {
+      return [...document.querySelectorAll(`[data-month-index="${monthIndex}"]`)]
+        .reduce((total, input) => total + (Number(input.value) || 0), 0);
+    }
+
+    function updateMonthTotals() {
+      for (let index = 1; index <= 3; index++) {
+        const total = document.getElementById(`month-total-${index}`);
+        if (total) total.textContent = euro.format(monthSubtotal(index));
+      }
+    }
+
+    async function loadCalculator() {
+      if (calculatorReady) return;
+      calculatorLoading.textContent = 'Cargando los conceptos de la nómina…';
+      calculatorMessage.classList.remove('show');
+
+      const { data, error } = await supabase.functions.invoke('calculate-v', {
+        body: { action: 'config' }
+      });
+
+      if (error || !Array.isArray(data?.fields)) {
+        calculatorLoading.textContent = 'No se ha podido cargar la calculadora. Cierra la sesión y vuelve a intentarlo.';
+        return;
+      }
+
+      calculatorFields = data.fields;
+      monthsContainer.innerHTML = [1, 2, 3].map(renderMonthCard).join('');
+      excludedList.innerHTML = (data.excluded || []).map((concept) => `<li>${escapeHtml(concept)}</li>`).join('');
+      calculatorLoading.hidden = true;
+      vForm.hidden = false;
+      calculatorReady = true;
+      updateMonthTotals();
     }
 
     async function isAuthorizedSession(session) {
@@ -514,10 +701,57 @@
       showSignedOut();
     });
 
-    vForm.addEventListener('submit', (event) => {
+    vForm.addEventListener('input', (event) => {
+      if (event.target.matches('[data-plus-key]')) updateMonthTotals();
+    });
+
+    vForm.addEventListener('submit', async (event) => {
       event.preventDefault();
-      calculatorMessage.textContent = 'La pantalla ya está preparada. Falta conectar el cálculo protegido antes de obtener el resultado.';
-      calculatorMessage.classList.add('show');
+      if (!calculatorReady) return;
+
+      calculatorMessage.classList.remove('show');
+      calculatorResult.classList.remove('show');
+      calculateButton.disabled = true;
+      calculateButton.textContent = 'Calculando…';
+
+      const months = [1, 2, 3].map((index) => {
+        const amounts = {};
+        document.querySelectorAll(`[data-month-index="${index}"]`).forEach((input) => {
+          amounts[input.dataset.plusKey] = input.value || 0;
+        });
+
+        return {
+          month: document.getElementById(`month-${index}`).value,
+          days: Number(document.getElementById(`days-${index}`).value),
+          amounts
+        };
+      });
+
+      const { data, error } = await supabase.functions.invoke('calculate-v', {
+        body: {
+          action: 'calculate',
+          months,
+          vacationDays: Number(document.getElementById('vacation-days').value)
+        }
+      });
+
+      calculateButton.disabled = false;
+      calculateButton.textContent = 'Calcular mi V';
+
+      if (error || data?.error) {
+        const errorCode = data?.error || '';
+        calculatorMessage.textContent = errorCode === 'MONTHS_NOT_CONSECUTIVE'
+          ? 'Los tres meses deben ser consecutivos y estar colocados del más antiguo al más reciente.'
+          : 'Revisa los meses, los días laborales y los importes introducidos e inténtalo de nuevo.';
+        calculatorMessage.classList.add('show');
+        return;
+      }
+
+      document.getElementById('daily-result').textContent = euro.format(data.dailyValue);
+      document.getElementById('total-result').textContent = `${data.vacationDays} ${data.vacationDays === 1 ? 'día' : 'días'} de vacaciones: ${euro.format(data.totalVacation)}`;
+      document.getElementById('formula-detail').textContent = `${euro.format(data.totalComplements)} en pluses ÷ ${data.totalDays} días laborales`;
+      calculatorResult.classList.add('show');
+      calculatorResult.scrollIntoView({ behavior: 'smooth', block: 'center' });
     });
 
     const { data: { session } } = await supabase.auth.getSession();
