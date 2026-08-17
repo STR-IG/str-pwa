@@ -199,6 +199,93 @@
       line-height: 1.45;
     }
 
+    .member-screen { display: none; }
+    .member-screen.active { display: block; }
+
+    .instructions-heading {
+      margin: 0 0 8px;
+      text-align: center;
+      font-size: 25px;
+    }
+
+    .instructions-intro {
+      margin: 0 auto 20px;
+      max-width: 370px;
+      color: var(--muted);
+      text-align: center;
+      font-size: 15px;
+      line-height: 1.45;
+    }
+
+    .instructions-list {
+      display: grid;
+      gap: 12px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .instruction-card {
+      display: grid;
+      grid-template-columns: 38px minmax(0, 1fr);
+      gap: 12px;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: #fff;
+    }
+
+    .instruction-number {
+      display: grid;
+      place-items: center;
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      color: white;
+      background: var(--red);
+      font-size: 16px;
+      font-weight: 900;
+    }
+
+    .instruction-card strong {
+      display: block;
+      margin: 1px 0 4px;
+      font-size: 14px;
+    }
+
+    .instruction-card p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .payroll-column {
+      display: inline-block;
+      padding: 2px 7px;
+      border-radius: 6px;
+      color: #126537;
+      background: #e8f6ed;
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .instructions-warning {
+      margin-top: 14px;
+      padding: 14px;
+      border-left: 4px solid #e0a000;
+      border-radius: 12px;
+      color: #684900;
+      background: #fff8df;
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .calculator-heading {
+      margin: 0 0 6px;
+      font-size: 22px;
+    }
+
     .private-tool {
       padding: 17px;
       border: 1px solid #f0c5c8;
@@ -414,39 +501,87 @@
       </form>
 
       <div id="member-area" class="step">
-        <div class="verified" aria-hidden="true">✓</div>
-        <h2 class="member-title">Acceso verificado</h2>
-        <p class="member-copy">Has entrado correctamente con <strong id="member-email"></strong>.</p>
-        <div class="private-tool">
-          <h3>Calcula tu V</h3>
-          <p class="calculator-intro">Introduce los datos de los tres meses anteriores al inicio de tus vacaciones.</p>
+        <div id="instructions-screen" class="member-screen active">
+          <div class="verified" aria-hidden="true">✓</div>
+          <h2 class="instructions-heading">Cómo usar Calcula tu V</h2>
+          <p class="instructions-intro">Antes de empezar, prepara las tres nóminas inmediatamente anteriores al inicio de tus vacaciones.</p>
 
-          <p id="calculator-loading" class="help">Cargando los conceptos de la nómina…</p>
-          <form id="v-form" hidden>
-            <div id="months-container"></div>
+          <ol class="instructions-list">
+            <li class="instruction-card">
+              <span class="instruction-number">1</span>
+              <div>
+                <strong>Prepara las tres nóminas</strong>
+                <p>Deben ser tres meses consecutivos, colocados del más antiguo al más reciente.</p>
+              </div>
+            </li>
+            <li class="instruction-card">
+              <span class="instruction-number">2</span>
+              <div>
+                <strong>Indica los días laborales</strong>
+                <p>Escribe los días laborales de cada mes según tu calendario. No copies los días que aparecen en «Plus de turno».</p>
+              </div>
+            </li>
+            <li class="instruction-card">
+              <span class="instruction-number">3</span>
+              <div>
+                <strong>Copia el importe de cada plus</strong>
+                <p>Busca el concepto en la nómina y copia únicamente su cantidad de la columna <span class="payroll-column">DEVENGOS</span>. No copies «Cantidad» ni «Importe diario».</p>
+              </div>
+            </li>
+            <li class="instruction-card">
+              <span class="instruction-number">4</span>
+              <div>
+                <strong>Deja en blanco lo que no aparezca</strong>
+                <p>Si un plus no figura en una nómina, no tienes que escribir un cero: déjalo vacío.</p>
+              </div>
+            </li>
+            <li class="instruction-card">
+              <span class="instruction-number">5</span>
+              <div>
+                <strong>Indica tus días de vacaciones</strong>
+                <p>La herramienta mostrará el importe de la V por día y el total correspondiente a esos días.</p>
+              </div>
+            </li>
+          </ol>
 
-            <div class="field" style="margin-top:16px;">
-              <label for="vacation-days">Días de vacaciones que quieres calcular</label>
-              <input id="vacation-days" name="vacation-days" type="number" inputmode="numeric" min="1" max="25" step="1" placeholder="Ejemplo: 2" required>
-            </div>
-
-            <div class="excluded-box">
-              <strong>No introduzcas estos conceptos:</strong>
-              <ul id="excluded-list"></ul>
-            </div>
-
-            <button id="calculate-v" class="primary" type="submit">Calcular mi V</button>
-            <p id="calculator-message" class="status"></p>
-            <div id="calculator-result" class="calculator-result">
-              <span class="result-label">Tu V por cada día de vacaciones</span>
-              <strong id="daily-result" class="result-value"></strong>
-              <p id="total-result" class="result-detail"></p>
-              <p id="formula-detail" class="result-detail" style="margin-top:6px !important;"></p>
-            </div>
-            <p class="calculate-note">El cálculo se realiza de forma protegida. Los meses y los importes introducidos no se guardan.</p>
-          </form>
+          <div class="instructions-warning"><strong>Importante:</strong> no introduzcas el Plus de rotatividad, las Dietas festivos ni los Pluses vacaciones. La propia calculadora te recordará todos los conceptos excluidos.</div>
+          <button id="start-calculator" class="primary" type="button">Entendido, empezar</button>
+          <button id="sign-out-instructions" class="secondary" type="button">Cerrar sesión</button>
         </div>
-        <button id="sign-out" class="secondary" type="button">Cerrar sesión</button>
+
+        <div id="calculator-screen" class="member-screen">
+          <div class="private-tool">
+            <h2 class="calculator-heading">Calcula tu V</h2>
+            <p class="calculator-intro">Introduce los datos de los tres meses anteriores al inicio de tus vacaciones.</p>
+
+            <p id="calculator-loading" class="help">Cargando los conceptos de la nómina…</p>
+            <form id="v-form" hidden>
+              <div id="months-container"></div>
+
+              <div class="field" style="margin-top:16px;">
+                <label for="vacation-days">Días de vacaciones que quieres calcular</label>
+                <input id="vacation-days" name="vacation-days" type="number" inputmode="numeric" min="1" max="25" step="1" placeholder="Ejemplo: 2" required>
+              </div>
+
+              <div class="excluded-box">
+                <strong>No introduzcas estos conceptos:</strong>
+                <ul id="excluded-list"></ul>
+              </div>
+
+              <button id="calculate-v" class="primary" type="submit">Calcular mi V</button>
+              <p id="calculator-message" class="status"></p>
+              <div id="calculator-result" class="calculator-result">
+                <span class="result-label">Tu V por cada día de vacaciones</span>
+                <strong id="daily-result" class="result-value"></strong>
+                <p id="total-result" class="result-detail"></p>
+                <p id="formula-detail" class="result-detail" style="margin-top:6px !important;"></p>
+              </div>
+              <p class="calculate-note">El cálculo se realiza de forma protegida. Los meses y los importes introducidos no se guardan.</p>
+            </form>
+          </div>
+          <button id="show-instructions" class="secondary" type="button">Ver de nuevo las instrucciones</button>
+          <button id="sign-out-calculator" class="secondary" type="button">Cerrar sesión</button>
+        </div>
       </div>
     </section>
 
@@ -483,6 +618,8 @@
     const excludedList = document.getElementById('excluded-list');
     const calculatorResult = document.getElementById('calculator-result');
     const calculateButton = document.getElementById('calculate-v');
+    const instructionsScreen = document.getElementById('instructions-screen');
+    const calculatorScreen = document.getElementById('calculator-screen');
     const euro = new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' });
     let pendingEmail = '';
     let calculatorFields = [];
@@ -515,8 +652,23 @@
       sessionStorage.removeItem('strPendingEmail');
       activateStep(memberArea);
       intro.textContent = 'Área exclusiva para personas afiliadas a STR.';
-      document.getElementById('member-email').textContent = session.user.email || '';
+      instructionsScreen.classList.add('active');
+      calculatorScreen.classList.remove('active');
       loadCalculator();
+    }
+
+    function showCalculatorScreen() {
+      instructionsScreen.classList.remove('active');
+      calculatorScreen.classList.add('active');
+      intro.textContent = 'Introduce los importes tal como aparecen en la columna «Devengos» de tus nóminas.';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function showInstructionsScreen() {
+      calculatorScreen.classList.remove('active');
+      instructionsScreen.classList.add('active');
+      intro.textContent = 'Lee estos pasos antes de introducir los datos de tus nóminas.';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     function escapeHtml(value) {
@@ -696,10 +848,16 @@
       showSignedOut();
     });
 
-    document.getElementById('sign-out').addEventListener('click', async () => {
+    document.getElementById('start-calculator').addEventListener('click', showCalculatorScreen);
+    document.getElementById('show-instructions').addEventListener('click', showInstructionsScreen);
+
+    async function signOut() {
       await supabase.auth.signOut();
       showSignedOut();
-    });
+    }
+
+    document.getElementById('sign-out-instructions').addEventListener('click', signOut);
+    document.getElementById('sign-out-calculator').addEventListener('click', signOut);
 
     vForm.addEventListener('input', (event) => {
       if (event.target.matches('[data-plus-key]')) updateMonthTotals();
