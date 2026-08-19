@@ -61,6 +61,16 @@
     const intro=document.getElementById('intro');
     let pendingEmail='';
 
+    function destination(){
+      const saved=sessionStorage.getItem('strAfterLogin');
+      if(saved==='revisa-nomina.html') return saved;
+      return 'area-privada.html';
+    }
+    function goToPrivateDestination(){
+      const target=destination();
+      sessionStorage.removeItem('strAfterLogin');
+      window.location.replace(target);
+    }
     function showStatus(el,text,type=''){el.textContent=text;el.className='status show'+(type?' '+type:'')}
     function clearStatus(el){el.className='status';el.textContent=''}
     function cleanCode(v){return String(v).replace(/\D/g,'').slice(0,6)}
@@ -100,7 +110,7 @@
         if(!(await authorized())){await supabase.auth.signOut();showStatus(verifyStatus,'Este correo no tiene acceso al área privada. Ponte en contacto con tu delegado sindical.','bad');return}
         sessionStorage.removeItem('strPendingEmailV2');
         showStatus(verifyStatus,'Acceso correcto. Entrando en el área privada…','ok');
-        window.location.replace('area-privada.html');
+        goToPrivateDestination();
       }catch(_){showStatus(verifyStatus,'No se ha podido completar la verificación. Comprueba tu conexión.','bad')}
       finally{verifyButton.disabled=false;verifyButton.textContent='Entrar'}
     });
@@ -108,7 +118,7 @@
     document.getElementById('change-email').addEventListener('click',showEmailStep);
 
     const {data:{session}}=await supabase.auth.getSession();
-    if(session&&await authorized()) window.location.replace('area-privada.html');
+    if(session&&await authorized()) goToPrivateDestination();
     else if(session){await supabase.auth.signOut();showEmailStep()}
     else{const saved=sessionStorage.getItem('strPendingEmailV2');if(saved){emailInput.value=saved;showCodeStep(saved)}}
   </script>
