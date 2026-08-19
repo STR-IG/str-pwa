@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#e30613">
+  <title>Revisa tu nómina · STR-IG</title>
+  <link rel="icon" type="image/png" href="icono-str-ig.png">
+  <link rel="apple-touch-icon" href="icono-str-ig.png">
+  <link rel="manifest" href="manifest.json">
+  <style>
+    *{box-sizing:border-box}
+    :root{--red:#e30613;--red-dark:#b9000b;--ink:#18181b;--muted:#6e6e73;--line:#e5e5e7;--bg:#f5f5f7;--ok:#16784a;--warn:#8a5b00}
+    body{margin:0;min-height:100vh;background:var(--bg);color:var(--ink);font-family:Arial,Helvetica,sans-serif}
+    .topbar{display:flex;align-items:center;gap:14px;min-height:68px;padding:12px 18px;background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:10}
+    .back{display:grid;place-items:center;width:42px;height:42px;border-radius:50%;color:var(--ink);background:#f0f0f2;text-decoration:none;font-size:25px}
+    .topbar strong{font-size:18px}
+    main{width:min(100% - 28px,560px);margin:0 auto;padding:28px 0 48px}
+    .hero{text-align:center;margin-bottom:22px}
+    .hero-icon{display:grid;place-items:center;width:70px;height:70px;margin:0 auto 16px;border-radius:22px;color:#fff;background:linear-gradient(145deg,var(--red),var(--red-dark));font-size:31px;box-shadow:0 12px 28px rgba(227,6,19,.22)}
+    h1{margin:0 0 9px;font-size:30px;letter-spacing:-.5px}
+    .intro{margin:0 auto;max-width:480px;color:var(--muted);font-size:15px;line-height:1.5}
+    .panel{padding:20px;border-radius:24px;background:#fff;box-shadow:0 10px 30px rgba(0,0,0,.07)}
+    .month-label{display:block;margin:0 0 8px;font-size:14px;font-weight:800}
+    input[type="month"]{width:100%;min-height:52px;padding:12px 14px;border:1px solid #cfcfd3;border-radius:14px;background:#fff;font:inherit;font-size:16px}
+    .doc{margin-top:15px;padding:16px;border:1px solid var(--line);border-radius:18px;background:#fff}
+    .doc-head{display:flex;gap:12px;align-items:flex-start}
+    .num{display:grid;place-items:center;flex:0 0 36px;width:36px;height:36px;border-radius:50%;background:var(--red);color:#fff;font-weight:900}
+    .doc h2{margin:0 0 5px;font-size:17px}
+    .doc p{margin:0;color:var(--muted);font-size:13px;line-height:1.45}
+    .upload{display:block;margin-top:14px;padding:15px;border:2px dashed #d5d5d8;border-radius:14px;background:#fafafa;text-align:center;cursor:pointer}
+    .upload strong{display:block;margin-bottom:4px;font-size:14px}
+    .upload span{color:var(--muted);font-size:12px}
+    .upload input{display:none}
+    .file-name{display:none;margin-top:10px;padding:10px 12px;border-radius:11px;background:#eef8f2;color:var(--ok);font-size:12px;font-weight:800;word-break:break-word}
+    .file-name.show{display:block}
+    .tip{margin-top:14px;padding:13px 14px;border-left:4px solid #e0a000;border-radius:12px;background:#fff8df;color:#684900;font-size:13px;line-height:1.45}
+    .tip strong{display:block;margin-bottom:3px}
+    .optional{margin-top:16px;padding:15px;border-radius:16px;background:#f3f3f5}
+    .optional strong{display:block;margin-bottom:5px;font-size:14px}
+    .optional p{margin:0;color:var(--muted);font-size:13px;line-height:1.45}
+    .button{width:100%;min-height:54px;margin-top:18px;border:0;border-radius:999px;background:var(--red);color:#fff;font:inherit;font-size:16px;font-weight:900;cursor:pointer}
+    .button:disabled{opacity:.45;cursor:not-allowed}
+    .status{display:none;margin-top:14px;padding:14px;border-radius:14px;font-size:13px;line-height:1.45}
+    .status.show{display:block}
+    .status.ok{background:#eef8f2;color:#205b35}
+    .privacy{display:flex;gap:9px;margin:16px 4px 0;color:var(--muted);font-size:12px;line-height:1.45}
+    #loading{padding:28px 20px;text-align:center;color:var(--muted)}
+    #content{display:none}
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <a class="back" href="index.html" aria-label="Volver a la pantalla principal">‹</a>
+    <strong>Revisa tu nómina</strong>
+  </header>
+
+  <main>
+    <div id="loading">Comprobando tu acceso…</div>
+
+    <div id="content">
+      <section class="hero">
+        <div class="hero-icon" aria-hidden="true">✓</div>
+        <h1>Revisa tu nómina</h1>
+        <p class="intro">Sube la nómina y el registro de jornada del mismo mes. STR podrá cruzar los conceptos variables y detectar posibles diferencias.</p>
+      </section>
+
+      <section class="panel">
+        <label class="month-label" for="month">Mes que quieres revisar</label>
+        <input id="month" type="month" required>
+
+        <div class="doc">
+          <div class="doc-head">
+            <span class="num">1</span>
+            <div>
+              <h2>Nómina del mes</h2>
+              <p>Sube la nómina correspondiente al mes que quieres comprobar.</p>
+            </div>
+          </div>
+          <label class="upload" for="payroll-file">
+            <strong>Seleccionar nómina</strong>
+            <span>Archivo PDF</span>
+            <input id="payroll-file" type="file" accept="application/pdf,.pdf">
+          </label>
+          <div id="payroll-name" class="file-name"></div>
+        </div>
+
+        <div class="doc">
+          <div class="doc-head">
+            <span class="num">2</span>
+            <div>
+              <h2>Registro de jornada</h2>
+              <p>Sube el registro del mismo mes. Debe incluir el apartado «Resumen de variables del mes».</p>
+            </div>
+          </div>
+          <label class="upload" for="schedule-file">
+            <strong>Seleccionar registro de jornada</strong>
+            <span>Archivo PDF</span>
+            <input id="schedule-file" type="file" accept="application/pdf,.pdf">
+          </label>
+          <div id="schedule-name" class="file-name"></div>
+          <div class="tip"><strong>Importante</strong>Comprueba que en el PDF aparezca la tabla «Resumen de variables del mes», donde figuran conceptos como Comidas Can Guasch, Plus de turno, Plus Nocturno, Plus Festivo o turno de 12 horas.</div>
+        </div>
+
+        <div class="optional">
+          <strong>¿Y los fichajes del comedor?</strong>
+          <p>No los pediremos de entrada. Si al comparar la nómina con el registro aparece una diferencia en «Comidas Can Guasch», entonces la aplicación podrá pedirlos como comprobación adicional.</p>
+        </div>
+
+        <button id="review" class="button" type="button" disabled>Preparar revisión</button>
+        <div id="status" class="status"></div>
+      </section>
+
+      <p class="privacy"><span aria-hidden="true">🛡️</span><span>Los documentos seleccionados permanecen en tu dispositivo en esta primera fase y no se envían automáticamente.</span></p>
+    </div>
+  </main>
+
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+
+    const URL='https://icneigdnuntzugisexaz.supabase.co';
+    const KEY='sb_publishable_apKjcPClIBTHS2wwN6qPsA_6Vm4tk9m';
+    const supabase=createClient(URL,KEY,{auth:{detectSessionInUrl:false,persistSession:true,autoRefreshToken:true}});
+
+    const loading=document.getElementById('loading');
+    const content=document.getElementById('content');
+    const month=document.getElementById('month');
+    const payroll=document.getElementById('payroll-file');
+    const schedule=document.getElementById('schedule-file');
+    const payrollName=document.getElementById('payroll-name');
+    const scheduleName=document.getElementById('schedule-name');
+    const review=document.getElementById('review');
+    const status=document.getElementById('status');
+
+    async function authorized(){
+      const {data:{session}}=await supabase.auth.getSession();
+      if(!session) return false;
+      const {data,error}=await supabase.rpc('is_current_user_private_access_allowed');
+      return !error&&data===true;
+    }
+
+    function showFile(input,box){
+      const file=input.files?.[0];
+      if(!file){box.textContent='';box.classList.remove('show');return}
+      box.textContent='✓ '+file.name;
+      box.classList.add('show');
+    }
+
+    function ready(){
+      review.disabled=!(month.value&&payroll.files?.length&&schedule.files?.length);
+    }
+
+    payroll.addEventListener('change',()=>{showFile(payroll,payrollName);ready()});
+    schedule.addEventListener('change',()=>{showFile(schedule,scheduleName);ready()});
+    month.addEventListener('change',ready);
+
+    review.addEventListener('click',()=>{
+      if(review.disabled) return;
+      status.className='status show ok';
+      status.innerHTML='<strong>Documentación preparada.</strong><br>Tenemos los dos documentos que necesitamos: nómina y registro de jornada del mismo mes. El siguiente paso será conectar el lector automático para extraer el «Resumen de variables del mes» y compararlo con la nómina.';
+      status.scrollIntoView({behavior:'smooth',block:'nearest'});
+    });
+
+    if(await authorized()){
+      loading.style.display='none';
+      content.style.display='block';
+    }else{
+      sessionStorage.setItem('strAfterLogin','revisa-nomina.html');
+      window.location.replace('acceso-privado.html');
+    }
+  </script>
+</body>
+</html>
