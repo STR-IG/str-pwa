@@ -10,7 +10,7 @@
   <link rel="manifest" href="manifest.json">
   <style>
     *{box-sizing:border-box}
-    :root{--red:#e30613;--red-dark:#b9000b;--ink:#18181b;--muted:#6e6e73;--line:#e5e5e7;--bg:#f5f5f7;--ok:#16784a;--warn:#8a5b00}
+    :root{--red:#e30613;--red-dark:#b9000b;--ink:#18181b;--muted:#6e6e73;--line:#e5e5e7;--bg:#f5f5f7;--ok:#16784a}
     body{margin:0;min-height:100vh;background:var(--bg);color:var(--ink);font-family:Arial,Helvetica,sans-serif}
     .topbar{display:flex;align-items:center;gap:14px;min-height:68px;padding:12px 18px;background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:10}
     .back{display:grid;place-items:center;width:42px;height:42px;border-radius:50%;color:var(--ink);background:#f0f0f2;text-decoration:none;font-size:25px}
@@ -28,22 +28,20 @@
     .num{display:grid;place-items:center;flex:0 0 36px;width:36px;height:36px;border-radius:50%;background:var(--red);color:#fff;font-weight:900}
     .doc h2{margin:0 0 5px;font-size:17px}
     .doc p{margin:0;color:var(--muted);font-size:13px;line-height:1.45}
-    .upload{display:block;margin-top:14px;padding:15px;border:2px dashed #d5d5d8;border-radius:14px;background:#fafafa;text-align:center;cursor:pointer}
-    .upload strong{display:block;margin-bottom:4px;font-size:14px}
-    .upload span{color:var(--muted);font-size:12px}
+    .example{margin-top:14px;padding:13px 14px;border-left:4px solid #e0a000;border-radius:12px;background:#fff8df;color:#684900;font-size:13px;line-height:1.45}
+    .example strong{display:block;margin-bottom:4px}
+    .upload{display:block;margin-top:14px;padding:18px 15px;border:2px dashed #d5d5d8;border-radius:14px;background:#fafafa;text-align:center;cursor:pointer}
+    .upload strong{display:block;margin-bottom:5px;font-size:14px}
+    .upload span{color:var(--muted);font-size:12px;line-height:1.4}
     .upload input{display:none}
-    .file-name{display:none;margin-top:10px;padding:10px 12px;border-radius:11px;background:#eef8f2;color:var(--ok);font-size:12px;font-weight:800;word-break:break-word}
-    .file-name.show{display:block}
-    .tip{margin-top:14px;padding:13px 14px;border-left:4px solid #e0a000;border-radius:12px;background:#fff8df;color:#684900;font-size:13px;line-height:1.45}
-    .tip strong{display:block;margin-bottom:3px}
-    .optional{margin-top:16px;padding:15px;border-radius:16px;background:#f3f3f5}
-    .optional strong{display:block;margin-bottom:5px;font-size:14px}
-    .optional p{margin:0;color:var(--muted);font-size:13px;line-height:1.45}
+    .preview{display:none;margin-top:12px;padding:10px;border:1px solid #b9dfc9;border-radius:14px;background:#f0faf4}
+    .preview.show{display:block}
+    .preview img{display:block;width:100%;max-height:340px;object-fit:contain;border-radius:9px;background:#fff}
+    .file-name{margin-top:8px;color:var(--ok);font-size:12px;font-weight:800;word-break:break-word}
     .button{width:100%;min-height:54px;margin-top:18px;border:0;border-radius:999px;background:var(--red);color:#fff;font:inherit;font-size:16px;font-weight:900;cursor:pointer}
     .button:disabled{opacity:.45;cursor:not-allowed}
-    .status{display:none;margin-top:14px;padding:14px;border-radius:14px;font-size:13px;line-height:1.45}
+    .status{display:none;margin-top:14px;padding:14px;border-radius:14px;background:#eef8f2;color:#205b35;font-size:13px;line-height:1.45}
     .status.show{display:block}
-    .status.ok{background:#eef8f2;color:#205b35}
     .privacy{display:flex;gap:9px;margin:16px 4px 0;color:var(--muted);font-size:12px;line-height:1.45}
     #loading{padding:28px 20px;text-align:center;color:var(--muted)}
     #content{display:none}
@@ -62,7 +60,7 @@
       <section class="hero">
         <div class="hero-icon" aria-hidden="true">✓</div>
         <h1>Revisa tu nómina</h1>
-        <p class="intro">Sube la nómina y el registro de jornada del mismo mes. STR podrá cruzar los conceptos variables y detectar posibles diferencias.</p>
+        <p class="intro">Empezamos por el registro de jornada. Sube una imagen recortada donde se vea claramente el «Resumen de variables del mes».</p>
       </section>
 
       <section class="panel">
@@ -73,45 +71,33 @@
           <div class="doc-head">
             <span class="num">1</span>
             <div>
-              <h2>Nómina del mes</h2>
-              <p>Sube la nómina correspondiente al mes que quieres comprobar.</p>
-            </div>
-          </div>
-          <label class="upload" for="payroll-file">
-            <strong>Seleccionar nómina</strong>
-            <span>Archivo PDF</span>
-            <input id="payroll-file" type="file" accept="application/pdf,.pdf">
-          </label>
-          <div id="payroll-name" class="file-name"></div>
-        </div>
-
-        <div class="doc">
-          <div class="doc-head">
-            <span class="num">2</span>
-            <div>
               <h2>Registro de jornada</h2>
-              <p>Sube el registro del mismo mes. Debe incluir el apartado «Resumen de variables del mes».</p>
+              <p>Haz una captura y recórtala para que aparezca únicamente la zona con el resumen de variables del mes.</p>
             </div>
           </div>
-          <label class="upload" for="schedule-file">
-            <strong>Seleccionar registro de jornada</strong>
-            <span>Archivo PDF</span>
-            <input id="schedule-file" type="file" accept="application/pdf,.pdf">
+
+          <div class="example">
+            <strong>Qué debe verse</strong>
+            La tabla «Resumen de variables del mes», con conceptos como Comidas Can Guasch, Plus de turno, Plus Nocturno, Plus Festivo o turno de 12 horas. No hace falta que aparezca toda la página.
+          </div>
+
+          <label class="upload" for="schedule-image">
+            <strong>Seleccionar imagen recortada</strong>
+            <span>Foto o captura de pantalla · JPG, PNG o HEIC</span>
+            <input id="schedule-image" type="file" accept="image/*">
           </label>
-          <div id="schedule-name" class="file-name"></div>
-          <div class="tip"><strong>Importante</strong>Comprueba que en el PDF aparezca la tabla «Resumen de variables del mes», donde figuran conceptos como Comidas Can Guasch, Plus de turno, Plus Nocturno, Plus Festivo o turno de 12 horas.</div>
+
+          <div id="preview" class="preview">
+            <img id="preview-image" alt="Vista previa del registro de jornada">
+            <div id="file-name" class="file-name"></div>
+          </div>
         </div>
 
-        <div class="optional">
-          <strong>¿Y los fichajes del comedor?</strong>
-          <p>No los pediremos de entrada. Si al comparar la nómina con el registro aparece una diferencia en «Comidas Can Guasch», entonces la aplicación podrá pedirlos como comprobación adicional.</p>
-        </div>
-
-        <button id="review" class="button" type="button" disabled>Preparar revisión</button>
+        <button id="continue" class="button" type="button" disabled>Continuar</button>
         <div id="status" class="status"></div>
       </section>
 
-      <p class="privacy"><span aria-hidden="true">🛡️</span><span>Los documentos seleccionados permanecen en tu dispositivo en esta primera fase y no se envían automáticamente.</span></p>
+      <p class="privacy"><span aria-hidden="true">🛡️</span><span>La imagen seleccionada permanece en tu dispositivo en esta fase de prueba.</span></p>
     </div>
   </main>
 
@@ -125,12 +111,13 @@
     const loading=document.getElementById('loading');
     const content=document.getElementById('content');
     const month=document.getElementById('month');
-    const payroll=document.getElementById('payroll-file');
-    const schedule=document.getElementById('schedule-file');
-    const payrollName=document.getElementById('payroll-name');
-    const scheduleName=document.getElementById('schedule-name');
-    const review=document.getElementById('review');
+    const imageInput=document.getElementById('schedule-image');
+    const preview=document.getElementById('preview');
+    const previewImage=document.getElementById('preview-image');
+    const fileName=document.getElementById('file-name');
+    const continueButton=document.getElementById('continue');
     const status=document.getElementById('status');
+    let previewUrl='';
 
     async function authorized(){
       const {data:{session}}=await supabase.auth.getSession();
@@ -139,25 +126,34 @@
       return !error&&data===true;
     }
 
-    function showFile(input,box){
-      const file=input.files?.[0];
-      if(!file){box.textContent='';box.classList.remove('show');return}
-      box.textContent='✓ '+file.name;
-      box.classList.add('show');
-    }
-
     function ready(){
-      review.disabled=!(month.value&&payroll.files?.length&&schedule.files?.length);
+      continueButton.disabled=!(month.value&&imageInput.files?.length);
     }
 
-    payroll.addEventListener('change',()=>{showFile(payroll,payrollName);ready()});
-    schedule.addEventListener('change',()=>{showFile(schedule,scheduleName);ready()});
+    imageInput.addEventListener('change',()=>{
+      const file=imageInput.files?.[0];
+      if(previewUrl) URL.revokeObjectURL(previewUrl);
+      previewUrl='';
+      if(!file){
+        preview.classList.remove('show');
+        previewImage.removeAttribute('src');
+        fileName.textContent='';
+        ready();
+        return;
+      }
+      previewUrl=URL.createObjectURL(file);
+      previewImage.src=previewUrl;
+      fileName.textContent='✓ '+file.name;
+      preview.classList.add('show');
+      ready();
+    });
+
     month.addEventListener('change',ready);
 
-    review.addEventListener('click',()=>{
-      if(review.disabled) return;
-      status.className='status show ok';
-      status.innerHTML='<strong>Documentación preparada.</strong><br>Tenemos los dos documentos que necesitamos: nómina y registro de jornada del mismo mes. El siguiente paso será conectar el lector automático para extraer el «Resumen de variables del mes» y compararlo con la nómina.';
+    continueButton.addEventListener('click',()=>{
+      if(continueButton.disabled) return;
+      status.className='status show';
+      status.innerHTML='<strong>Imagen preparada.</strong><br>El siguiente paso será leer únicamente esta zona del registro de jornada y comprobar que extrae correctamente las variables del mes.';
       status.scrollIntoView({behavior:'smooth',block:'nearest'});
     });
 
