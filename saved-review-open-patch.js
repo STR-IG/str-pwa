@@ -12,10 +12,15 @@
       event.preventDefault();
       event.stopImmediatePropagation();
 
-      // Una revisión ya guardada debe poder abrirse aunque el estado temporal
-      // de la imagen de nómina no se haya restaurado al volver a la pantalla.
-      documents.payroll.confirmed = true;
-      startPayrollComparison(false);
+      const savedPayroll = plainObjectToMap(savedReview.payroll);
+      showComparisonScreen();
+      renderPayrollComparison(savedPayroll, true, savedReview);
+      setComparisonProgress(
+        'ready',
+        '✓',
+        'Revisión mensual guardada',
+        'Puedes consultar el resultado o volver a leer la nómina.'
+      );
     } catch (error) {
       console.error('saved-review-open-patch', error);
     }
