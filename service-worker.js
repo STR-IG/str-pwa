@@ -1,4 +1,4 @@
-const CACHE_NAME = 'str-ig-cache-v23';
+const CACHE_NAME = 'str-ig-cache-v24';
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();
@@ -46,3 +46,4 @@ self.addEventListener('fetch', (event) => {
       .catch(() => caches.match(event.request))
   );
 });
+
