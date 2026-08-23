@@ -1893,7 +1893,7 @@
 
         <section id="timesheet-crop-editor" class="crop-editor" aria-labelledby="crop-editor-title" hidden>
           <h3 id="crop-editor-title">Recorta el registro de jornada</h3>
-          <p>Mueve el marco y arrastra sus esquinas. Deja dentro todo desde «REGISTRO DE JORNADA» hacia abajo y excluye la cabecera con datos personales.</p>
+          <p id="crop-editor-help">Mueve el marco y arrastra sus esquinas. Deja dentro todo desde «REGISTRO DE JORNADA» hacia abajo y excluye la cabecera con datos personales.</p>
           <div id="crop-stage" class="crop-stage">
             <img id="crop-source-image" alt="Hoja completa del registro de jornada">
             <div id="crop-selection" class="crop-selection" role="application" aria-label="Área de recorte ajustable">
@@ -2046,6 +2046,8 @@
     const confirmImageButton = document.getElementById('confirm-image');
     const previewStatusText = document.getElementById('preview-status-text');
     const cropEditor = document.getElementById('timesheet-crop-editor');
+    const cropEditorTitle = document.getElementById('crop-editor-title');
+    const cropEditorHelp = document.getElementById('crop-editor-help');
     const cropStage = document.getElementById('crop-stage');
     const cropSourceImage = document.getElementById('crop-source-image');
     const cropSelection = document.getElementById('crop-selection');
@@ -4063,7 +4065,7 @@
       preview.hidden = !hasImage;
       preview.classList.toggle('scan-blocked', privacyBlocked);
       documentActions.hidden = !hasImage;
-      const selectionNeedsConsent = activeKind !== 'timesheet' && !privacyConfirmation.checked;
+      const selectionNeedsConsent = false;
       selectImageButton.disabled = savingDocument || checkingPrivacy || selectionNeedsConsent;
       changeImageButton.disabled = savingDocument || checkingPrivacy || selectionNeedsConsent;
       changeImageButton.textContent = privacyBlocked ? 'Recortar o cambiar imagen' : 'Cambiar imagen';
@@ -4103,7 +4105,7 @@
 
       if (workingSaved) {
         selectHint.textContent = 'La imagen ya está guardada. Marca la casilla solo si quieres sustituirla.';
-      } else if (kind === 'timesheet') {
+      } else {
         selectHint.textContent = 'Selecciona la hoja completa; podrás recortarla dentro de la aplicación.';
       }
 
@@ -4183,7 +4185,6 @@
     }
 
     function chooseImage() {
-      if (activeKind !== 'timesheet' && !privacyConfirmation.checked) return;
       fileInput.value = '';
       fileInput.click();
     }
@@ -4203,7 +4204,12 @@
 
     function openTimesheetCrop(file) {
       closeTimesheetCrop(); pendingTimesheetFile = file; pendingTimesheetUrl = URL.createObjectURL(file);
-      cropRect = { x: 0, y: 0.14, width: 1, height: 0.86 };
+      const isPayroll = activeKind === 'payroll';
+      cropRect = isPayroll ? { x: 0, y: 0.42, width: 1, height: 0.58 } : { x: 0, y: 0.14, width: 1, height: 0.86 };
+      cropEditorTitle.textContent = isPayroll ? 'Recorta la nómina' : 'Recorta el registro de jornada';
+      cropEditorHelp.textContent = isPayroll
+        ? 'Mueve el marco y arrastra sus esquinas. Deja dentro completa la tabla «Devengos y deducciones» y excluye los datos personales de la cabecera.'
+        : 'Mueve el marco y arrastra sus esquinas. Deja dentro todo desde «REGISTRO DE JORNADA» hacia abajo y excluye la cabecera con datos personales.';
       cropSourceImage.onload = () => { renderCropSelection(); cropEditor.scrollIntoView({ behavior: 'smooth', block: 'start' }); };
       cropSourceImage.src = pendingTimesheetUrl; cropEditor.hidden = false; preview.hidden = true; documentActions.hidden = true;
       setPrivacyScanState('idle'); selectHint.textContent = 'Ajusta el marco y confirma el recorte antes de comprobar la privacidad.';
@@ -4274,8 +4280,8 @@
         return;
       }
 
-      if (activeKind === 'timesheet') { openTimesheetCrop(file); return; }
-      await acceptSelectedFile(file);
+      openTimesheetCrop(file);
+      return;
     }
 
     async function confirmImage() {
@@ -4336,14 +4342,10 @@
 
     privacyConfirmation.addEventListener('change', () => {
       selectHint.textContent = privacyConfirmation.checked
-        ? (activeKind === 'timesheet'
-          ? 'Selecciona la hoja completa. Tras confirmar el recorte se comprobará en este dispositivo.'
-          : 'Selecciona una imagen recortada. Se comprobará en este dispositivo antes de guardarse.')
+        ? 'Selecciona la hoja completa. Tras confirmar el recorte se comprobará en este dispositivo.'
         : (workingSaved
           ? 'La imagen ya está guardada. Marca la casilla solo si quieres sustituirla.'
-          : (activeKind === 'timesheet'
-            ? 'Selecciona la hoja completa; podrás recortarla dentro de la aplicación.'
-            : 'Marca primero la casilla de aceptación.'));
+          : 'Selecciona la hoja completa; podrás recortarla dentro de la aplicación.');
       renderWorkingPreview();
     });
 
