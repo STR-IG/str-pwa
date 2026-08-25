@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#e30613">
+  <title>Alta de afiliados · STR-IG</title>
+  <style>
+    *{box-sizing:border-box}
+    body{margin:0;font-family:Arial,Helvetica,sans-serif;background:#f5f5f7;color:#161616;padding-bottom:40px}
+    .topbar{height:64px;background:#161616;color:#fff;display:flex;align-items:center;gap:14px;padding:0 16px;position:sticky;top:0;z-index:10}
+    .back{color:#fff;text-decoration:none;font-size:34px;line-height:1}
+    .topbar strong{font-size:18px}
+    main{max-width:620px;margin:auto;padding:24px 16px}
+    .access{display:none}.access.active{display:block}
+    .hero{background:linear-gradient(135deg,#e30613,#a8000b);color:white;border-radius:24px;padding:22px;margin-bottom:18px}
+    .hero small{display:block;text-transform:uppercase;letter-spacing:.8px;font-weight:800;opacity:.9;margin-bottom:7px}
+    .hero h1{margin:0 0 8px;font-size:30px;line-height:1}
+    .hero p{margin:0;line-height:1.45;opacity:.95}
+    .panel{background:#fff;border-radius:22px;padding:20px;box-shadow:0 6px 22px rgba(0,0,0,.07)}
+    label{display:block;font-size:13px;font-weight:800;margin:14px 0 7px}
+    input{width:100%;border:1px solid #d5d5d8;border-radius:13px;padding:14px;font-size:16px;outline:none}
+    input:focus{border-color:#e30613;box-shadow:0 0 0 3px rgba(227,6,19,.08)}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .primary,.whatsapp,.secondary{width:100%;border:0;border-radius:14px;padding:15px 16px;font-size:15px;font-weight:800;cursor:pointer;margin-top:18px}
+    .primary{background:#e30613;color:#fff}.primary:disabled{opacity:.6;cursor:wait}
+    .secondary{background:#efeff1;color:#161616}
+    .whatsapp{display:none;background:#171717;color:white;text-align:center;text-decoration:none}.whatsapp.show{display:block}
+    .status{display:none;margin-top:14px;padding:12px;border-radius:12px;font-size:13px;line-height:1.4}
+    .status.show{display:block}.status.ok{background:#eff9f2;color:#195d31}.status.error{background:#fff0f1;color:#8e0010}
+    .security{margin-top:14px;color:#6e6e73;font-size:12px;line-height:1.45}
+    .denied{background:#fff;border-radius:22px;padding:24px;text-align:center;box-shadow:0 6px 22px rgba(0,0,0,.07)}
+    .denied h1{font-size:24px}.denied p{color:#6e6e73;line-height:1.5}
+    .loading{text-align:center;padding:60px 20px;color:#6e6e73}
+    .login-title{text-align:center;margin:0 0 8px;font-size:27px}
+    .login-copy{text-align:center;color:#6e6e73;line-height:1.45;margin:0 0 12px}
+    .login-step{display:none}.login-step.active{display:block}
+    #otp-code{text-align:center;letter-spacing:8px;font-size:25px;font-weight:800}
+    .management{margin-top:18px}
+    .management-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
+    .management-head h2{margin:0;font-size:22px}.count{color:#6e6e73;font-size:13px;font-weight:800}
+    .table-wrap{overflow-x:auto;border:1px solid #e1e1e4;border-radius:16px}
+    .affiliate-table{width:100%;border-collapse:collapse;min-width:720px}
+    .affiliate-table th,.affiliate-table td{padding:13px 12px;text-align:left;border-bottom:1px solid #ededf0;font-size:13px;vertical-align:middle}
+    .affiliate-table th{background:#f7f7f8;font-size:12px;text-transform:uppercase;letter-spacing:.3px}
+    .affiliate-table tr:last-child td{border-bottom:0}.affiliate-table td:first-child{font-weight:800}
+    .danger{border:1px solid #e30613;border-radius:999px;padding:9px 12px;color:#e30613;background:#fff;font-weight:800;cursor:pointer;white-space:nowrap}
+    .danger:disabled{opacity:.6;cursor:wait}
+    .management-status{margin-top:12px;color:#6e6e73;font-size:13px;line-height:1.4}.management-status.error{color:#8e0010}
+    .empty{padding:20px;text-align:center;color:#6e6e73}
+    .delete-dialog{width:min(100% - 32px,430px);border:0;border-radius:22px;padding:24px;box-shadow:0 20px 60px rgba(0,0,0,.24)}
+    .delete-dialog::backdrop{background:rgba(0,0,0,.55)}
+    .delete-dialog h2{margin:0 0 14px;font-size:22px}.delete-dialog p{margin:0;line-height:1.5}.delete-dialog p+p{margin-top:8px}
+    .dialog-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:22px}
+    .dialog-actions button{margin:0}.dialog-actions .secondary{margin-top:0}.dialog-actions .danger{width:100%;border-radius:14px;padding:15px 12px}
+    @media(max-width:520px){.row{grid-template-columns:1fr}.hero h1{font-size:27px}.management-head{align-items:flex-start;flex-direction:column}.dialog-actions{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <header class="topbar"><a class="back" href="index.html" aria-label="Volver">‹</a><strong>Gestión interna STR-IG</strong></header>
+  <main>
+    <div id="loading" class="loading">Comprobando acceso…</div>
+
+    <section id="login" class="access">
+      <div class="panel">
+        <h1 class="login-title">Acceso al comité</h1>
+        <p id="login-copy" class="login-copy">Identifícate con tu correo de acceso a STR-IG.</p>
+        <form id="email-form" class="login-step active">
+          <label for="login-email">Correo electrónico personal</label>
+          <input id="login-email" type="email" autocomplete="email" placeholder="nombre@correo.com" required>
+          <button id="send-code" class="primary" type="submit">Recibir código de acceso</button>
+          <p id="send-status" class="status"></p>
+        </form>
+        <form id="code-form" class="login-step">
+          <label for="otp-code">Código de 6 cifras</label>
+          <input id="otp-code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" placeholder="000000" required>
+          <button id="verify-code" class="primary" type="submit">Entrar</button>
+          <p id="verify-status" class="status"></p>
+          <button id="change-email" class="secondary" type="button">Usar otro correo</button>
+        </form>
+      </div>
+    </section>
+
+    <section id="authorized" class="access">
+      <div class="hero"><small>Solo comité autorizado</small><h1>Alta de afiliados</h1><p>Da de alta a una persona en el acceso privado de la app y prepara su mensaje de bienvenida por WhatsApp.</p></div>
+      <form id="signup-form" class="panel">
+        <label for="name">Nombre y apellidos</label>
+        <input id="name" autocomplete="name" required placeholder="Nombre completo">
+        <label for="email">Correo personal</label>
+        <input id="email" type="email" autocomplete="email" required placeholder="nombre@correo.com">
+        <div class="row">
+          <div><label for="employee">Número de afiliado</label><input id="employee" inputmode="numeric" required placeholder="00000"></div>
+          <div><label for="phone">Teléfono móvil</label><input id="phone" type="tel" autocomplete="tel" required placeholder="600000000"></div>
+        </div>
+        <button id="save" class="primary" type="submit">Dar de alta en la app</button>
+        <p id="status" class="status"></p>
+        <a id="whatsapp" class="whatsapp" href="#" target="_blank" rel="noopener">Enviar mensaje de alta por WhatsApp</a>
+        <button id="new-signup" class="secondary" type="button" hidden>Nueva alta</button>
+        <p class="security">Esta herramienta no aparece para el resto de afiliados. El alta solo puede ejecutarse con una sesión autorizada de Rocío o Dubardo.</p>
+      </form>
+
+      <section class="panel management" aria-labelledby="affiliate-list-title">
+        <div class="management-head">
+          <h2 id="affiliate-list-title">Afiliados dados de alta</h2>
+          <span id="affiliate-count" class="count">Cargando…</span>
+        </div>
+        <div class="table-wrap">
+          <table class="affiliate-table">
+            <thead><tr><th>Nombre</th><th>N.º afiliado</th><th>Email</th><th>Teléfono</th><th>Acción</th></tr></thead>
+            <tbody id="affiliate-list"></tbody>
+          </table>
+        </div>
+        <p id="management-status" class="management-status" aria-live="polite"></p>
+      </section>
+    </section>
+
+    <dialog id="delete-affiliate-dialog" class="delete-dialog">
+      <h2>Borrar afiliado</h2>
+      <p id="delete-affiliate-question"></p>
+      <p><strong>Esta acción no se puede deshacer.</strong></p>
+      <div class="dialog-actions">
+        <button id="cancel-delete-affiliate" class="secondary" type="button">Cancelar</button>
+        <button id="confirm-delete-affiliate" class="danger" type="button">Borrar afiliado</button>
+      </div>
+    </dialog>
+
+    <section id="denied" class="access denied"><h1>Acceso restringido</h1><p>Esta herramienta es exclusiva para los miembros autorizados del comité de la Sección Sindical.</p><a href="index.html">Volver al inicio</a></section>
+  </main>
+
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+
+    const SUPABASE_URL='https://icneigdnuntzugisexaz.supabase.co';
+    const SUPABASE_PUBLISHABLE_KEY='sb_publishable_apKjcPClIBTHS2wwN6qPsA_6Vm4tk9m';
+    const REQUEST=SUPABASE_URL+'/functions/v1/request-custom-otp';
+    const VERIFY=SUPABASE_URL+'/functions/v1/verify-custom-otp';
+    const MANAGE_AFFILIATES=SUPABASE_URL+'/functions/v1/manage-affiliates';
+    const supabase=createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY,{auth:{detectSessionInUrl:false,persistSession:true,autoRefreshToken:true}});
+
+    const loading=document.getElementById('loading');
+    const login=document.getElementById('login');
+    const authorized=document.getElementById('authorized');
+    const denied=document.getElementById('denied');
+    const emailForm=document.getElementById('email-form');
+    const codeForm=document.getElementById('code-form');
+    const loginEmail=document.getElementById('login-email');
+    const otpCode=document.getElementById('otp-code');
+    const sendCode=document.getElementById('send-code');
+    const verifyCode=document.getElementById('verify-code');
+    const sendStatus=document.getElementById('send-status');
+    const verifyStatus=document.getElementById('verify-status');
+    const loginCopy=document.getElementById('login-copy');
+    const form=document.getElementById('signup-form');
+    const status=document.getElementById('status');
+    const whatsapp=document.getElementById('whatsapp');
+    const newSignup=document.getElementById('new-signup');
+    const saveButton=document.getElementById('save');
+    const affiliateList=document.getElementById('affiliate-list');
+    const affiliateCount=document.getElementById('affiliate-count');
+    const managementStatus=document.getElementById('management-status');
+    const deleteAffiliateDialog=document.getElementById('delete-affiliate-dialog');
+    const deleteAffiliateQuestion=document.getElementById('delete-affiliate-question');
+    const confirmDeleteAffiliate=document.getElementById('confirm-delete-affiliate');
+    let pendingEmail='';
+    let affiliatePendingDeletion=null;
+
+    function showOnly(section){
+      loading.style.display='none';
+      [login,authorized,denied].forEach(el=>el.classList.toggle('active',el===section));
+    }
+    function setLoginStatus(el,message,type=''){el.textContent=message;el.className='status show'+(type?` ${type}`:'')}
+    function clearLoginStatus(el){el.textContent='';el.className='status'}
+    function cleanCode(value){return String(value).replace(/\D/g,'').slice(0,6)}
+    function showEmailStep(){
+      pendingEmail='';sessionStorage.removeItem('strCommitteePendingEmail');
+      emailForm.classList.add('active');codeForm.classList.remove('active');
+      loginCopy.textContent='Identifícate con tu correo de acceso a STR-IG.';
+      otpCode.value='';clearLoginStatus(verifyStatus);showOnly(login);
+    }
+    function showCodeStep(email){
+      pendingEmail=email;sessionStorage.setItem('strCommitteePendingEmail',email);
+      emailForm.classList.remove('active');codeForm.classList.add('active');
+      loginCopy.textContent='Introduce el código de 6 cifras que hemos enviado a tu correo.';
+      otpCode.value='';showOnly(login);otpCode.focus();
+    }
+    function setStatus(message,type=''){status.textContent=message;status.className=`status show ${type}`}
+    function normalizePhone(value){
+      let digits=(value||'').replace(/\D/g,'');
+      if(digits.startsWith('0034'))digits=digits.slice(4);
+      if(digits.startsWith('34')&&digits.length>9)digits=digits.slice(2);
+      return digits;
+    }
+    async function manageAffiliates(action,payload={}){
+      const {data:{session}}=await supabase.auth.getSession();
+      if(!session?.access_token)throw new Error('NO_SESSION');
+      const response=await fetch(MANAGE_AFFILIATES,{method:'POST',headers:{'Authorization':`Bearer ${session.access_token}`,'Content-Type':'application/json','apikey':SUPABASE_PUBLISHABLE_KEY},body:JSON.stringify({action,...payload})});
+      const result=await response.json().catch(()=>({}));
+      if(!response.ok)throw new Error(result?.error||`HTTP_${response.status}`);
+      return result;
+    }
+    async function routeSession(){
+      const {data:{session}}=await supabase.auth.getSession();
+      if(!session){
+        const saved=sessionStorage.getItem('strCommitteePendingEmail');
+        if(saved){loginEmail.value=saved;showCodeStep(saved)}else showEmailStep();
+        return;
+      }
+      try{await manageAffiliates('authorize');showOnly(authorized);await loadAffiliates()}
+      catch(_error){showOnly(denied)}
+    }
+
+    otpCode.addEventListener('input',()=>{otpCode.value=cleanCode(otpCode.value)});
+    emailForm.addEventListener('submit',async(event)=>{
+      event.preventDefault();
+      const email=loginEmail.value.trim().toLowerCase();
+      sendCode.disabled=true;sendCode.textContent='Enviando…';clearLoginStatus(sendStatus);
+      try{
+        const response=await fetch(REQUEST,{method:'POST',headers:{'Content-Type':'application/json','apikey':SUPABASE_PUBLISHABLE_KEY},body:JSON.stringify({email})});
+        const result=await response.json().catch(()=>({}));
+        if(!response.ok||result?.sent===false){
+          setLoginStatus(sendStatus,result?.reason==='rate_limited'?'Espera un minuto antes de solicitar otro código.':'No se ha podido enviar el código. Inténtalo de nuevo.','error');return;
+        }
+        setLoginStatus(sendStatus,'Código enviado.','ok');setTimeout(()=>showCodeStep(email),300);
+      }catch(_error){setLoginStatus(sendStatus,'No se ha podido completar la solicitud. Comprueba tu conexión.','error')}
+      finally{sendCode.disabled=false;sendCode.textContent='Recibir código de acceso'}
+    });
+
+    codeForm.addEventListener('submit',async(event)=>{
+      event.preventDefault();
+      const code=cleanCode(otpCode.value);if(!pendingEmail||code.length!==6)return;
+      verifyCode.disabled=true;verifyCode.textContent='Verificando…';clearLoginStatus(verifyStatus);
+      try{
+        const response=await fetch(VERIFY,{method:'POST',headers:{'Content-Type':'application/json','apikey':SUPABASE_PUBLISHABLE_KEY},body:JSON.stringify({email:pendingEmail,code})});
+        const result=await response.json().catch(()=>({}));
+        if(!result?.ok||!result?.verified||!result?.token_hash){setLoginStatus(verifyStatus,'El código no es correcto, ya se ha usado o ha caducado.','error');return}
+        const {data,error}=await supabase.auth.verifyOtp({token_hash:result.token_hash,type:'email'});
+        if(error||!data?.session){setLoginStatus(verifyStatus,'No se pudo iniciar la sesión. Inténtalo de nuevo.','error');return}
+        sessionStorage.removeItem('strCommitteePendingEmail');
+        try{await manageAffiliates('authorize');showOnly(authorized);await loadAffiliates()}
+        catch(_error){await supabase.auth.signOut();showOnly(denied)}
+      }catch(_error){setLoginStatus(verifyStatus,'No se ha podido completar la verificación. Comprueba tu conexión.','error')}
+      finally{verifyCode.disabled=false;verifyCode.textContent='Entrar'}
+    });
+    document.getElementById('change-email').addEventListener('click',showEmailStep);
+
+    function addCell(row,value){const cell=document.createElement('td');cell.textContent=value||'—';row.appendChild(cell)}
+    function renderAffiliates(affiliates){
+      affiliateList.replaceChildren();affiliateCount.textContent=`${affiliates.length} ${affiliates.length===1?'alta':'altas'}`;
+      if(!affiliates.length){const row=document.createElement('tr');const cell=document.createElement('td');cell.colSpan=5;cell.className='empty';cell.textContent='Todavía no hay afiliados dados de alta.';row.appendChild(cell);affiliateList.appendChild(row);return}
+      for(const affiliate of affiliates){
+        const row=document.createElement('tr');
+        addCell(row,affiliate.display_name||affiliate.email);addCell(row,affiliate.employee_number);addCell(row,affiliate.email);addCell(row,affiliate.phone);
+        const actionCell=document.createElement('td');const button=document.createElement('button');button.type='button';button.className='danger';button.textContent='Borrar afiliado';
+        button.addEventListener('click',()=>{affiliatePendingDeletion=affiliate;deleteAffiliateQuestion.textContent=`¿Seguro que quieres borrar a ${affiliate.display_name||affiliate.email}?`;deleteAffiliateDialog.showModal()});
+        actionCell.appendChild(button);row.appendChild(actionCell);affiliateList.appendChild(row);
+      }
+    }
+    async function loadAffiliates(){
+      affiliateCount.textContent='Cargando…';managementStatus.textContent='';managementStatus.className='management-status';
+      try{const result=await manageAffiliates('list');renderAffiliates(Array.isArray(result.affiliates)?result.affiliates:[])}
+      catch(_error){affiliateCount.textContent='';managementStatus.textContent='No se ha podido cargar la tabla. Inténtalo de nuevo.';managementStatus.className='management-status error'}
+    }
+    function whatsappUrl(phone,name){
+      const digits=normalizePhone(phone);
+      const text=`Hola ${name}:\n\n¡Bienvenido/a de nuevo después de las vacaciones!\n\nTe damos la bienvenida al área de afiliados/as de STR-IG. En la app encontrarás información laboral, permisos, calendarios y herramientas privadas para revisar tu nómina y calcular tu V.\n\nPara acceder a la app:\n1. Abre https://str-ig.github.io/str-pwa/\n2. Entra en una herramienta del Área privada.\n3. Introduce tu correo personal y solicita el código de 6 dígitos.\n4. Escribe el código recibido y ya tendrás acceso.\n\nPara instalarla en Android:\n1. Abre el enlace con Google Chrome.\n2. Pulsa el menú de los tres puntos.\n3. Elige «Añadir a pantalla de inicio» o «Instalar aplicación».\n\nPara instalarla en iPhone:\n1. Abre el enlace con Safari.\n2. Pulsa el botón Compartir.\n3. Elige «Añadir a pantalla de inicio».\n4. Pulsa «Añadir».\n\nSi tienes cualquier problema, contacta con nosotros.`;
+      return `https://wa.me/34${digits}?text=${encodeURIComponent(text)}`;
+    }
+    form.addEventListener('submit',async(event)=>{
+      event.preventDefault();whatsapp.classList.remove('show');newSignup.hidden=true;setStatus('Guardando alta…');saveButton.disabled=true;
+      const name=document.getElementById('name').value.trim();
+      const email=document.getElementById('email').value.trim().toLowerCase();
+      const employee=document.getElementById('employee').value.trim();
+      const phone=document.getElementById('phone').value.trim();
+      const digits=normalizePhone(phone);
+      if(digits.length!==9){setStatus('Revisa el teléfono. Debe tener 9 cifras.','error');saveButton.disabled=false;return}
+      try{await manageAffiliates('upsert',{email,displayName:name,employeeNumber:employee,phone:digits})}
+      catch(error){console.error(error);setStatus('No se ha podido completar el alta. Comprueba que sigues conectado con una cuenta autorizada.','error');saveButton.disabled=false;return}
+      saveButton.disabled=false;
+      setStatus(`${name} ha quedado dado/a de alta en la app.`,'ok');
+      whatsapp.href=whatsappUrl(digits,name);whatsapp.classList.add('show');newSignup.hidden=false;saveButton.hidden=true;await loadAffiliates();
+    });
+    newSignup.addEventListener('click',()=>{
+      form.reset();status.className='status';status.textContent='';whatsapp.classList.remove('show');newSignup.hidden=true;saveButton.hidden=false;document.getElementById('name').focus();
+    });
+    document.getElementById('cancel-delete-affiliate').addEventListener('click',()=>{affiliatePendingDeletion=null;deleteAffiliateDialog.close()});
+    confirmDeleteAffiliate.addEventListener('click',async()=>{
+      if(!affiliatePendingDeletion)return;
+      const target=affiliatePendingDeletion;confirmDeleteAffiliate.disabled=true;confirmDeleteAffiliate.textContent='Borrando…';
+      try{await manageAffiliates('delete',{email:target.email});affiliatePendingDeletion=null;deleteAffiliateDialog.close();await loadAffiliates();managementStatus.textContent=`${target.display_name||target.email} se ha borrado correctamente.`;managementStatus.className='management-status'}
+      catch(_error){deleteAffiliateDialog.close();managementStatus.textContent='No se ha podido borrar el afiliado. No se ha modificado ninguna ficha.';managementStatus.className='management-status error'}
+      finally{confirmDeleteAffiliate.disabled=false;confirmDeleteAffiliate.textContent='Borrar afiliado'}
+    });
+
+    await routeSession();
+  </script>
+</body>
+</html>

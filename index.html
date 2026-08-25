@@ -191,6 +191,27 @@
     .bottom-nav a b { display:block; font-size:21px; margin-bottom:4px; }
     .bottom-nav a.active { color:var(--red); font-weight:800; }
 
+    .committee-fab {
+      display:none !important;
+      position:fixed;
+      right:18px;
+      bottom:calc(88px + env(safe-area-inset-bottom));
+      z-index:9998;
+      width:46px;
+      height:46px;
+      border:2px solid white;
+      border-radius:50%;
+      place-items:center;
+      color:white;
+      background:#161616;
+      box-shadow:0 5px 16px rgba(0,0,0,.28);
+      text-decoration:none;
+      font-size:28px;
+      line-height:1;
+    }
+    .committee-fab.show { display:grid !important; }
+    .committee-fab:hover { background:var(--red); }
+
     .permit-detail { display:none; }
     .permit-detail:target { display:block; }
     #permisos { display:none; }
@@ -319,6 +340,8 @@
   </section>
 </main>
 
+<a id="committee-signup-card" href="alta-afiliados.html" class="committee-fab" aria-label="Alta de afiliados, gestión interna STR-IG" title="Alta de afiliados">+</a>
+
 <nav class="bottom-nav">
   <a class="active" href="index.html"><b>⌂</b>Inicio</a>
   <a href="#"><b>⚖</b>Derechos</a>
@@ -327,6 +350,35 @@
   <a href="#"><b>♡</b>Afíliate</a>
   <a href="#"><b>☎</b>Contacto</a>
 </nav>
+
+<script type="module">
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+
+const card = document.getElementById('committee-signup-card');
+const supabaseUrl = 'https://icneigdnuntzugisexaz.supabase.co';
+const publishableKey = 'sb_publishable_apKjcPClIBTHS2wwN6qPsA_6Vm4tk9m';
+const supabase = createClient(supabaseUrl, publishableKey, {
+  auth: { detectSessionInUrl:false, persistSession:true, autoRefreshToken:true }
+});
+
+try {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (session?.access_token) {
+    const response = await fetch(`${supabaseUrl}/functions/v1/manage-affiliates`, {
+      method:'POST',
+      headers:{
+        'Authorization':`Bearer ${session.access_token}`,
+        'Content-Type':'application/json',
+        'apikey':publishableKey
+      },
+      body:JSON.stringify({ action:'authorize' })
+    });
+    if (response.ok) card.classList.add('show');
+  }
+} catch (_error) {
+  card.classList.remove('show');
+}
+</script>
 
 <script>
 if ('serviceWorker' in navigator) {
