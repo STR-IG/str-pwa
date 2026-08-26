@@ -68,8 +68,15 @@
       'preguntale-str-permisos.html',
       'preguntale-hospitalizacion-familiar.html',
       'preguntale-hospitalizacion-duracion.html',
-      'preguntale-hospitalizacion-jornada.html'
+      'preguntale-hospitalizacion-jornada.html',
+      'preguntale-hospitalizacion-turno.html',
+      'preguntale-hospitalizacion-reposo.html',
+      'preguntale-hospitalizacion-dias.html'
     ]);
+    const requestedDestination=new URLSearchParams(window.location.search).get('next');
+    if(ALLOWED_DESTINATIONS.has(requestedDestination)){
+      sessionStorage.setItem('strAfterLogin',requestedDestination);
+    }
     function destination(){
       const saved=sessionStorage.getItem('strAfterLogin');
       return ALLOWED_DESTINATIONS.has(saved) ? saved : 'area-privada.html';
