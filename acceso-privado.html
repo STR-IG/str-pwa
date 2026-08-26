@@ -61,10 +61,18 @@
     const intro=document.getElementById('intro');
     let pendingEmail='';
 
+    const ALLOWED_DESTINATIONS=new Set([
+      'area-privada.html',
+      'revisa-nomina.html',
+      'preguntale-str-ig.html',
+      'preguntale-str-permisos.html',
+      'preguntale-hospitalizacion-familiar.html',
+      'preguntale-hospitalizacion-duracion.html',
+      'preguntale-hospitalizacion-jornada.html'
+    ]);
     function destination(){
       const saved=sessionStorage.getItem('strAfterLogin');
-      if(saved==='revisa-nomina.html') return saved;
-      return 'area-privada.html';
+      return ALLOWED_DESTINATIONS.has(saved) ? saved : 'area-privada.html';
     }
     function goToPrivateDestination(){
       const target=destination();
