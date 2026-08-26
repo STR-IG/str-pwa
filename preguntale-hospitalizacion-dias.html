@@ -106,7 +106,14 @@
       const timeout=setTimeout(()=>controller.abort(),30000);
       try{
         const payload={relationship:sessionStorage.getItem('strHospitalRelationship')||'',duration:sessionStorage.getItem('strHospitalDuration')||'',admissionDate:sessionStorage.getItem('strHospitalAdmissionDate')||'',admissionTime:sessionStorage.getItem('strHospitalAdmissionTime')||'',workShift:sessionStorage.getItem('strHospitalWorkShift')||'',medicalStatus:sessionStorage.getItem('strHospitalMedicalStatus')||'',dischargeDate:sessionStorage.getItem('strHospitalDischargeDate')||'',restUntil:sessionStorage.getItem('strHospitalRestUntil')||'',leaveDays:[firstDay,...values]};
-        const response=await fetch(ANSWER_URL,{method:'POST',headers:{Authorization:`Bearer ${session.access_token}`,apikey:KEY,'Content-Type':'application/json'},body:JSON.stringify(payload),signal:controller.signal});
+        let {data:{session:currentSession},error:sessionError}=await supabase.auth.getSession();
+        if(sessionError||!currentSession?.access_token)throw new Error('UNAUTHORIZED');
+        if(((currentSession.expires_at||0)*1000)-Date.now()<60000){
+          const {data:refreshData,error:refreshError}=await supabase.auth.refreshSession();
+          if(refreshError||!refreshData.session?.access_token)throw new Error('UNAUTHORIZED');
+          currentSession=refreshData.session;
+        }
+        const response=await fetch(ANSWER_URL,{method:'POST',headers:{Authorization:`Bearer ${currentSession.access_token}`,apikey:KEY,'Content-Type':'application/json'},body:JSON.stringify(payload),signal:controller.signal});
         const data=await response.json().catch(()=>({}));
         if(!response.ok)throw new Error(data?.error||`HTTP_${response.status}`);
         showGuidance(data?.guidance);
