@@ -26,17 +26,30 @@
       border-radius: 20px;
       box-shadow: 0 5px 18px rgba(0,0,0,.07);
     }
-    .back-bottom {
-      display: block;
+    .actions {
+      display: grid;
+      gap: 10px;
+      margin-top: 18px;
+    }
+    .actions a {
+      display: grid;
+      place-items: center;
       width: 100%;
+      min-height: 50px;
       text-align: center;
       text-decoration: none;
-      color: var(--white);
-      background: var(--red);
       font-weight: 800;
       border-radius: 999px;
       padding: 15px 18px;
-      margin-top: 18px;
+    }
+    .primary {
+      color: var(--white);
+      background: var(--red);
+    }
+    .secondary {
+      color: var(--red);
+      background: var(--white);
+      border: 1px solid #ddd;
     }
   </style>
 </head>
@@ -48,7 +61,10 @@
       alt="Ficha del permiso retribuido por visita médica"
     >
 
-    <a class="back-bottom" href="permisos.html">Volver a Permisos retribuidos</a>
+    <div class="actions">
+      <a class="primary" href="permisos.html">Volver a Permisos retribuidos</a>
+      <a class="secondary" href="index.html">Volver a la pantalla de inicio</a>
+    </div>
   </main>
 </body>
 </html>
