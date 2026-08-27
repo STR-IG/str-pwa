@@ -118,10 +118,12 @@ Deno.serve(async (req: Request) => {
     const medicalStatus = String(body?.medicalStatus ?? "");
     const dischargeDate = String(body?.dischargeDate ?? "");
     const restUntil = String(body?.restUntil ?? "");
+    const queryType = String(body?.queryType ?? "hospitalizacion_familiar_primer_grado");
     const leaveDays = Array.isArray(body?.leaveDays) ? body.leaveDays.map((value: unknown) => String(value)) : [];
 
+    const isSecondDegree = queryType === "hospitalizacion_familiar_segundo_grado";
     const validCore = relationship && durations.has(duration) && isIsoDate(admissionDate) && isTime(admissionTime) && workShifts.has(workShift) && medicalStatuses.has(medicalStatus);
-    const validDays = leaveDays.length === 5 && leaveDays.every(isIsoDate) && new Set(leaveDays).size === 5 && leaveDays.every((day: string, index: number) => index === 0 || day > leaveDays[0]) && leaveDays.every((day: string) => day >= admissionDate);
+    const validDays = leaveDays.length >= 1 && leaveDays.length <= 5 && leaveDays.every(isIsoDate) && new Set(leaveDays).size === leaveDays.length && leaveDays.every((day: string, index: number) => index === 0 || day > leaveDays[0]) && leaveDays.every((day: string) => day >= admissionDate) && (!isSecondDegree || leaveDays.length === 5);
     const validDischarge = !["rest", "no-rest"].includes(medicalStatus) || isIsoDate(dischargeDate);
     const validRest = medicalStatus !== "rest" || (isIsoDate(restUntil) && restUntil >= dischargeDate);
     if (!validCore || !validDays || !validDischarge || !validRest) return json(req, { error: "INVALID_QUESTIONNAIRE" }, 400);
@@ -136,6 +138,7 @@ Deno.serve(async (req: Request) => {
       dischargeDate: dischargeDate || null,
       restUntil: restUntil || null,
       leaveDays,
+      pendingLeaveDays: Math.max(0, 5 - leaveDays.length),
     };
 
     const aiResponse = await fetch("https://api.openai.com/v1/responses", {
@@ -150,7 +153,7 @@ Deno.serve(async (req: Request) => {
         reasoning: { effort: "low" },
         max_output_tokens: 900,
         safety_identifier: await safetyIdentifier(user.id),
-        instructions: `Eres un asistente informativo de la sección sindical STR-IG. Analiza exclusivamente los datos estructurados de un cuestionario sobre permiso por hospitalización familiar en España. La referencia general es el artículo 37.3.b del Estatuto de los Trabajadores: cinco días por accidente o enfermedad graves, hospitalización o intervención quirúrgica sin hospitalización que precise reposo domiciliario, para las relaciones incluidas legalmente. No inventes convenio, sentencia, diagnóstico, horario ni documentación. Distingue entre ingreso hospitalario y reposo tras el alta. Ten en cuenta que el turno nocturno puede exigir revisión individual del momento en que comienza la jornada. No afirmes que la selección de días discontinuos es válida con certeza si falta respaldo normativo o convencional; indícalo como aspecto que debe confirmar STR-IG. Da una orientación clara, prudente y breve, nunca una garantía jurídica. Si faltan datos o hay una posible incompatibilidad temporal, usa el estado revision. Responde en español y no incluyas datos personales.`,
+        instructions: `Eres un asistente informativo de la sección sindical STR-IG. Analiza exclusivamente los datos estructurados de un cuestionario sobre permiso por hospitalización familiar en España. La referencia general es el artículo 37.3.b del Estatuto de los Trabajadores: cinco días por accidente o enfermedad graves, hospitalización o intervención quirúrgica sin hospitalización que precise reposo domiciliario, para las relaciones incluidas legalmente. No inventes convenio, sentencia, diagnóstico, horario ni documentación. Distingue entre ingreso hospitalario y reposo tras el alta. Ten en cuenta que el turno nocturno puede exigir revisión individual del momento en que comienza la jornada. En hospitalización de primer grado, el usuario puede haber indicado solo entre uno y cinco días porque todavía no tenga decididos todos los días de disfrute: analiza únicamente las fechas facilitadas y no inventes ni exijas fechas pendientes. No afirmes que la selección de días discontinuos es válida con certeza si falta respaldo normativo o convencional; indícalo como aspecto que debe confirmar STR-IG. Da una orientación clara, prudente y breve, nunca una garantía jurídica. Si faltan datos esenciales o hay una posible incompatibilidad temporal, usa el estado revision. Responde en español y no incluyas datos personales.`,
         input: JSON.stringify(facts),
         text: {
           verbosity: "low",
