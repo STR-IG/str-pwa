@@ -10,7 +10,7 @@
   <link rel="manifest" href="manifest.json">
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    :root { --red:#e30613; --light:#f5f5f7; --white:#fff; }
+    :root { --red:#e30613; --red-dark:#b9000b; --light:#f5f5f7; --white:#fff; --grey:#6e6e73; --green:#0b6b4f; --green-soft:#edf8f3; }
     body {
       font-family: Arial, Helvetica, sans-serif;
       background: var(--light);
@@ -25,6 +25,50 @@
       display: block;
       border-radius: 20px;
       box-shadow: 0 5px 18px rgba(0,0,0,.07);
+    }
+    .award {
+      margin-top: 18px;
+      padding: 20px;
+      border-radius: 20px;
+      background: var(--white);
+      box-shadow: 0 5px 18px rgba(0,0,0,.07);
+    }
+    .award-label {
+      display: inline-block;
+      margin-bottom: 8px;
+      color: var(--red-dark);
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: .4px;
+      text-transform: uppercase;
+    }
+    .award h2 {
+      margin-bottom: 8px;
+      font-size: clamp(22px, 5vw, 28px);
+      line-height: 1.15;
+    }
+    .amount {
+      margin-bottom: 14px;
+      color: var(--green);
+      font-size: 24px;
+      font-weight: 900;
+    }
+    .award p, .award li {
+      font-size: 15px;
+      line-height: 1.5;
+    }
+    .award ul {
+      margin: 12px 0 0 20px;
+      display: grid;
+      gap: 8px;
+    }
+    .award-note {
+      margin-top: 14px;
+      padding: 13px 14px;
+      border-radius: 14px;
+      background: var(--green-soft);
+      color: #153d2e;
+      font-weight: 700;
     }
     .back-bottom {
       display: block;
@@ -47,6 +91,20 @@
       src="ficha-permiso-matrimonio.png"
       alt="Ficha del permiso por matrimonio"
     >
+
+    <section class="award" aria-labelledby="award-title">
+      <span class="award-label">Además, recuerda</span>
+      <h2 id="award-title">Premio por matrimonio o pareja de hecho</h2>
+      <p class="amount">685,28 € brutos</p>
+      <p>El premio se abona en un único pago junto con la nómina.</p>
+      <ul>
+        <li>Debes comunicar el nuevo estado civil y aportar la documentación acreditativa correspondiente.</li>
+        <li>Si la documentación se entrega correctamente antes del día 15, el premio puede abonarse en la nómina de ese mismo mes.</li>
+        <li>Si se entrega después del día 15, el abono se realizará en la nómina del mes siguiente.</li>
+        <li>Si las dos personas que contraen matrimonio o formalizan la pareja de hecho son personas empleadas activas, cada una recibe su premio.</li>
+      </ul>
+      <p class="award-note">Importe correspondiente a 2026.</p>
+    </section>
 
     <a class="back-bottom" href="permisos.html">Volver a Permisos retribuidos</a>
   </main>
