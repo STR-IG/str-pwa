@@ -113,15 +113,18 @@ Deno.serve(async (req: Request) => {
     const interventionTime = String(body?.interventionTime ?? "");
     const workShift = String(body?.workShift ?? "");
     const homeRest = String(body?.homeRest ?? "");
+    const queryType = String(body?.queryType ?? "");
     const leaveDays = Array.isArray(body?.leaveDays) ? body.leaveDays.map((value: unknown) => String(value)) : [];
 
     const validCore = relationship && isIsoDate(interventionDate) && isTime(interventionTime) && workShifts.has(workShift) && homeRest === "yes";
     const isCohabitant = relationship.startsWith("Persona conviviente");
-    const validDayCount = isCohabitant ? leaveDays.length >= 1 && leaveDays.length <= 5 : leaveDays.length === 5;
+    const isFirstDegree = queryType === "intervencion_quirurgica_primer_grado";
+    const flexibleDays = isCohabitant || isFirstDegree;
+    const validDayCount = flexibleDays ? leaveDays.length >= 1 && leaveDays.length <= 5 : leaveDays.length === 5;
     const validDays = validDayCount && leaveDays.every(isIsoDate) && new Set(leaveDays).size === leaveDays.length && leaveDays.every((day: string, index: number) => index === 0 || day > leaveDays[0]) && leaveDays.every((day: string) => day >= interventionDate);
     if (!validCore || !validDays) return json(req, { error: "INVALID_QUESTIONNAIRE" }, 400);
 
-    const facts = { relationship, interventionDate, interventionTime, workShift, homeRest, leaveDays };
+    const facts = { relationship, interventionDate, interventionTime, workShift, homeRest, leaveDays, pendingLeaveDays: Math.max(0, 5 - leaveDays.length) };
     const aiResponse = await fetch("https://api.openai.com/v1/responses", {
       method: "POST",
       headers: {
@@ -134,7 +137,7 @@ Deno.serve(async (req: Request) => {
         reasoning: { effort: "low" },
         max_output_tokens: 900,
         safety_identifier: await safetyIdentifier(user.id),
-        instructions: `Eres un asistente informativo de la sección sindical STR-IG. Analiza exclusivamente datos estructurados de un cuestionario sobre intervención quirúrgica familiar sin hospitalización que precisa reposo domiciliario en España. La referencia general es el artículo 37.3.b del Estatuto de los Trabajadores. No inventes convenio, sentencia, diagnóstico, horario, duración del reposo ni documentación. Ten en cuenta la relación, la fecha y hora de la intervención, el turno asignado y los días que la persona ya ha propuesto disfrutar. En casos de persona conviviente puede haber entre uno y cinco días propuestos porque todavía no haya decidido todos; no lo trates como error ni inventes los días restantes, y deja claro que solo se están valorando las fechas ya indicadas. En los demás casos el cuestionario seguirá enviando cinco días. El turno nocturno puede exigir revisar individualmente el momento en que comienza la jornada. No afirmes con certeza que días discontinuos son válidos si falta respaldo normativo o convencional; señálalo como aspecto que debe confirmar STR-IG. Da una orientación clara, prudente y breve, nunca una garantía jurídica. Si faltan datos esenciales, las fechas exceden el reposo acreditado o hay una posible incompatibilidad temporal, usa el estado revision. Responde en español y no incluyas datos personales.`,
+        instructions: `Eres un asistente informativo de la sección sindical STR-IG. Analiza exclusivamente datos estructurados de un cuestionario sobre intervención quirúrgica familiar sin hospitalización que precisa reposo domiciliario en España. La referencia general es el artículo 37.3.b del Estatuto de los Trabajadores. No inventes convenio, sentencia, diagnóstico, horario, duración del reposo ni documentación. Ten en cuenta la relación, la fecha y hora de la intervención, el turno asignado y los días que la persona ya ha propuesto disfrutar. En casos de persona conviviente o intervención de primer grado puede haber entre uno y cinco días propuestos porque todavía no haya decidido todos; no lo trates como error ni inventes los días restantes, y deja claro que solo se están valorando las fechas ya indicadas. En los demás casos el cuestionario seguirá enviando cinco días. El turno nocturno puede exigir revisar individualmente el momento en que comienza la jornada. No afirmes con certeza que días discontinuos son válidos si falta respaldo normativo o convencional; señálalo como aspecto que debe confirmar STR-IG. Da una orientación clara, prudente y breve, nunca una garantía jurídica. Si faltan datos esenciales, las fechas exceden el reposo acreditado o hay una posible incompatibilidad temporal, usa el estado revision. Responde en español y no incluyas datos personales.`,
         input: JSON.stringify(facts),
         text: {
           verbosity: "low",
@@ -173,5 +176,3 @@ Deno.serve(async (req: Request) => {
     return json(req, { error: "UNEXPECTED_ERROR" }, 500);
   }
 });
-
-
