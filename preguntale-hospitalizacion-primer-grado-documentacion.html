@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#e30613">
+  <title>Documentación hospitalización · Pregúntale a STR-IG</title>
+  <link rel="icon" type="image/png" href="icono-str-ig.png">
+  <link rel="manifest" href="manifest.json">
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}:root{--red:#e30613;--red-dark:#b9000b;--amber:#765700;--amber-soft:#fff6d6;--grey:#6e6e73;--line:#ddd;--light:#f5f5f7;--white:#fff}body{min-height:100vh;font-family:Arial,Helvetica,sans-serif;background:var(--light);color:#161616}.top{position:sticky;top:0;z-index:20;padding:calc(14px + env(safe-area-inset-top)) 18px 14px;border-bottom:1px solid #e4e4e7;background:rgba(245,245,247,.96)}.top-inner{display:flex;align-items:center;gap:14px;max-width:680px;margin:auto}.back{display:grid;place-items:center;width:42px;height:42px;border-radius:50%;color:var(--red);background:#fff;text-decoration:none;font-size:26px;font-weight:700}h1{font-size:clamp(21px,5vw,27px)}main{max-width:680px;margin:auto;padding:24px 18px 48px}.panel{padding:22px;border-radius:22px;background:#fff;box-shadow:0 6px 22px rgba(0,0,0,.07)}.step{color:var(--red-dark);font-size:12px;font-weight:900;text-transform:uppercase}h2{margin:10px 0 8px;font-size:24px}.intro{margin-bottom:18px;color:var(--grey);line-height:1.5}.question{margin-top:22px}.question:first-of-type{margin-top:0}.question h3{margin-bottom:10px;font-size:17px;line-height:1.3}.answers{display:grid;gap:10px}.answer{min-height:54px;padding:12px 14px;border:1px solid var(--line);border-radius:15px;background:#fff;text-align:left;font:inherit;font-weight:800;cursor:pointer}.answer.selected{border-color:var(--red);background:#fff4f5}.notice{margin-top:18px;padding:14px;border-radius:15px;color:var(--amber);background:var(--amber-soft);font-size:14px;line-height:1.5}.primary{width:100%;min-height:52px;margin-top:20px;border:0;border-radius:999px;color:#fff;background:var(--red);font:inherit;font-weight:800}.primary:disabled{opacity:.45}#auth-check{text-align:center;color:var(--grey)}
+  </style>
+</head>
+<body>
+<header class="top"><div class="top-inner"><a class="back" href="preguntale-hospitalizacion-reposo.html">‹</a><h1>Hospitalización familiar</h1></div></header>
+<main><p id="auth-check">Comprobando acceso privado…</p><section id="content" hidden><div class="panel">
+  <span class="step">Documentación · 1.er grado</span>
+  <h2>Revisa la documentación antes de tramitar el permiso</h2>
+  <p class="intro">No tienes que subir ningún documento a Pregúntale a STR. Estas preguntas solo sirven para orientarte antes de presentarlo por el canal correspondiente.</p>
+
+  <div class="question"><h3>¿Tienes justificante donde consten las fechas de hospitalización?</h3><div class="answers"><button class="answer" data-field="hospitalProof" data-value="yes">Sí</button><button class="answer" data-field="hospitalProof" data-value="no">No todavía</button><button class="answer" data-field="hospitalProof" data-value="unknown">No lo sé</button></div></div>
+
+  <div class="question"><h3>¿La relación de parentesco ya consta en los sistemas internos?</h3><div class="answers"><button class="answer" data-field="relationshipRecorded" data-value="yes">Sí</button><button class="answer" data-field="relationshipRecorded" data-value="no">No</button><button class="answer" data-field="relationshipRecorded" data-value="unknown">No lo sé</button></div></div>
+
+  <div id="relationship-proof-question" class="question" hidden><h3>¿Tienes algún documento para acreditar el parentesco si te lo solicitan?</h3><p class="intro">Por ejemplo, el documento acreditativo que corresponda. No lo subas aquí.</p><div class="answers"><button class="answer" data-field="relationshipProof" data-value="yes">Sí</button><button class="answer" data-field="relationshipProof" data-value="no">No todavía</button><button class="answer" data-field="relationshipProof" data-value="unknown">No lo sé</button></div></div>
+
+  <div class="question"><h3>¿El justificante incluye diagnóstico u otros datos de salud que no sean necesarios para acreditar las fechas?</h3><div class="answers"><button class="answer" data-field="healthData" data-value="no">No</button><button class="answer" data-field="healthData" data-value="yes">Sí</button><button class="answer" data-field="healthData" data-value="unknown">No lo sé</button></div></div>
+
+  <div class="question"><h3>¿Algún documento contiene datos personales de terceras personas que no sean necesarios para justificar el permiso?</h3><div class="answers"><button class="answer" data-field="thirdPartyData" data-value="no">No</button><button class="answer" data-field="thirdPartyData" data-value="yes">Sí</button><button class="answer" data-field="thirdPartyData" data-value="unknown">No lo sé</button></div></div>
+
+  <p id="privacy-warning" class="notice">Recuerda: Pregúntale a STR no recibe ni almacena tus justificantes. Revisa la documentación antes de presentarla.</p>
+  <button id="continue" class="primary" disabled>Continuar</button>
+</div></section></main>
+<script type="module">
+import{createClient}from'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+const URL='https://icneigdnuntzugisexaz.supabase.co',KEY='sb_publishable_apKjcPClIBTHS2wwN6qPsA_6Vm4tk9m',PAGE='preguntale-hospitalizacion-primer-grado-documentacion.html';
+const supabase=createClient(URL,KEY,{auth:{detectSessionInUrl:false,persistSession:true,autoRefreshToken:true}});
+async function allowed(s){if(!s)return false;const{data,error}=await supabase.rpc('is_current_user_private_access_allowed');return!error&&data===true}
+const{data:{session}}=await supabase.auth.getSession();if(!(await allowed(session))){if(session)await supabase.auth.signOut();sessionStorage.setItem('strAfterLogin',PAGE);location.replace(`acceso-privado.html?next=${PAGE}`)}else{document.getElementById('auth-check').hidden=true;document.getElementById('content').hidden=false}
+const state={hospitalProof:'',relationshipRecorded:'',relationshipProof:'',healthData:'',thirdPartyData:''},relationshipProofQuestion=document.getElementById('relationship-proof-question'),warning=document.getElementById('privacy-warning'),continueButton=document.getElementById('continue');
+for(const key of Object.keys(state))state[key]=sessionStorage.getItem(`strHospitalDoc_${key}`)||'';
+function refresh(){relationshipProofQuestion.hidden=state.relationshipRecorded==='yes';const needsRelationshipProof=state.relationshipRecorded!=='yes';const valid=state.hospitalProof&&state.relationshipRecorded&&state.healthData&&state.thirdPartyData&&(!needsRelationshipProof||state.relationshipProof);continueButton.disabled=!valid;const warnings=[];if(state.healthData==='yes'||state.healthData==='unknown')warnings.push('Revisa el justificante y elimina u oculta datos de salud que no sean necesarios para acreditar las fechas de hospitalización.');if(state.thirdPartyData==='yes'||state.thirdPartyData==='unknown')warnings.push('Oculta los datos personales de terceras personas que no sean necesarios para justificar el permiso.');if(state.hospitalProof==='no'||state.hospitalProof==='unknown')warnings.push('Cosmos solicita justificante de las fechas de hospitalización.');if(state.relationshipRecorded!=='yes'&&(state.relationshipProof==='no'||state.relationshipProof==='unknown'))warnings.push('Si el parentesco no consta en los sistemas internos, puede ser necesario acreditarlo documentalmente.');warning.textContent=warnings.length?warnings.join(' '):'La documentación parece preparada. Pregúntale a STR no recibe ni almacena ningún documento.'}
+document.querySelectorAll('.answer').forEach(btn=>{const f=btn.dataset.field;if(state[f]===btn.dataset.value)btn.classList.add('selected');btn.onclick=()=>{state[f]=btn.dataset.value;btn.closest('.answers').querySelectorAll('.answer').forEach(b=>b.classList.toggle('selected',b===btn));sessionStorage.setItem(`strHospitalDoc_${f}`,state[f]);if(f==='relationshipRecorded'&&state[f]==='yes'){state.relationshipProof='';sessionStorage.removeItem('strHospitalDoc_relationshipProof')}refresh()}});
+continueButton.onclick=()=>{if(continueButton.disabled)return;location.href='preguntale-hospitalizacion-dias.html'};refresh();
+</script>
+</body></html>
