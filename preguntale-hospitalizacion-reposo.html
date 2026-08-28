@@ -91,7 +91,7 @@
     restUntil.value=sessionStorage.getItem('strHospitalRestUntil')||'';
     const savedStatus=sessionStorage.getItem('strHospitalMedicalStatus')||'';
     if(savedStatus)selectAnswer(savedStatus);else updateState();
-    continueButton.addEventListener('click',()=>{if(continueButton.disabled)return;sessionStorage.setItem('strHospitalMedicalStatus',selectedValue);if(['rest','no-rest'].includes(selectedValue))sessionStorage.setItem('strHospitalDischargeDate',dischargeDate.value);else sessionStorage.removeItem('strHospitalDischargeDate');if(selectedValue==='rest')sessionStorage.setItem('strHospitalRestUntil',restUntil.value);else sessionStorage.removeItem('strHospitalRestUntil');window.location.href='preguntale-hospitalizacion-dias.html';});
+    continueButton.addEventListener('click',()=>{if(continueButton.disabled)return;sessionStorage.setItem('strHospitalMedicalStatus',selectedValue);if(['rest','no-rest'].includes(selectedValue))sessionStorage.setItem('strHospitalDischargeDate',dischargeDate.value);else sessionStorage.removeItem('strHospitalDischargeDate');if(selectedValue==='rest')sessionStorage.setItem('strHospitalRestUntil',restUntil.value);else sessionStorage.removeItem('strHospitalRestUntil');const queryType=sessionStorage.getItem('strHospitalQueryType')||'hospitalizacion_familiar_primer_grado';window.location.href=queryType==='hospitalizacion_familiar_primer_grado'?'preguntale-hospitalizacion-primer-grado-documentacion.html':'preguntale-hospitalizacion-dias.html';});
   </script>
 </body>
 </html>
