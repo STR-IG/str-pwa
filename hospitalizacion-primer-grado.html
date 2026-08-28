@@ -26,17 +26,26 @@
       border-radius: 20px;
       box-shadow: 0 5px 18px rgba(0,0,0,.07);
     }
-    .back-bottom {
+    .back-bottom,
+    .home-bottom {
       display: block;
       width: 100%;
       text-align: center;
       text-decoration: none;
-      color: var(--white);
-      background: var(--red);
       font-weight: 800;
       border-radius: 999px;
       padding: 15px 18px;
       margin-top: 18px;
+    }
+    .back-bottom {
+      color: var(--white);
+      background: var(--red);
+    }
+    .home-bottom {
+      color: var(--red);
+      background: var(--white);
+      border: 2px solid var(--red);
+      margin-top: 12px;
     }
   </style>
 </head>
@@ -49,6 +58,7 @@
     >
 
     <a class="back-bottom" href="permisos.html">Volver a Permisos retribuidos</a>
+    <a class="home-bottom" href="index.html">Volver al menú principal</a>
   </main>
 </body>
 </html>
