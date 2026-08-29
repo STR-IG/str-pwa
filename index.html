@@ -67,15 +67,7 @@
       background:rgba(255,255,255,.82);
       box-shadow:0 2px 8px rgba(0,0,0,.12);
     }
-    .hero-dot {
-      width:9px;
-      height:9px;
-      padding:0;
-      border:0;
-      border-radius:50%;
-      background:#b7b7b7;
-      cursor:pointer;
-    }
+    .hero-dot { width:9px; height:9px; padding:0; border:0; border-radius:50%; background:#b7b7b7; cursor:pointer; }
     .hero-dot.active { background:var(--red); }
     .topbar { max-width:1100px; margin:auto; display:flex; align-items:center; justify-content:space-between; margin-bottom:26px; }
     .menu { font-size:28px; line-height:1; }
@@ -101,11 +93,7 @@
     .area-heading { margin-bottom:16px; font-size:22px; font-weight:900; letter-spacing:.7px; color:var(--black); }
     .area-heading::after { display:block; width:52px; height:4px; margin-top:8px; border-radius:999px; background:var(--red); content:""; }
     .area-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; width:100%; max-width:780px; }
-    .quick-card {
-      background:white; border-radius:20px; padding:20px; min-height:155px;
-      box-shadow:0 5px 18px rgba(0,0,0,.07); display:flex; flex-direction:column;
-      justify-content:space-between; transition:.2s ease; cursor:pointer;
-    }
+    .quick-card { background:white; border-radius:20px; padding:20px; min-height:155px; box-shadow:0 5px 18px rgba(0,0,0,.07); display:flex; flex-direction:column; justify-content:space-between; transition:.2s ease; cursor:pointer; }
     .quick-card:hover { transform:translateY(-3px); box-shadow:0 10px 24px rgba(0,0,0,.11); }
     .menu-image-card { aspect-ratio:1.45/1; min-height:0; padding:0; overflow:hidden; background:transparent; box-shadow:none; }
     .menu-image-card img { width:100%; height:100%; object-fit:cover; display:block; }
@@ -113,83 +101,14 @@
     .quick-card strong { font-size:18px; line-height:1.15; }
     .quick-card small { color:var(--grey); font-size:13px; line-height:1.4; margin-top:8px; }
 
-    .payroll-card {
-      position:relative;
-      min-height:155px;
-      padding:0;
-      overflow:hidden;
-      color:white;
-      text-decoration:none;
-      background:
-        linear-gradient(90deg,rgba(112,0,9,.92) 0%,rgba(172,0,14,.76) 43%,rgba(105,0,8,.08) 72%),
-        url("revisa-tu-nomina-bg.webp") center / cover no-repeat;
-      box-shadow:none;
-      cursor:pointer;
-    }
+    .payroll-card { position:relative; min-height:155px; padding:0; overflow:hidden; color:white; text-decoration:none; background:linear-gradient(90deg,rgba(112,0,9,.92) 0%,rgba(172,0,14,.76) 43%,rgba(105,0,8,.08) 72%),url("revisa-tu-nomina-bg.webp") center / cover no-repeat; box-shadow:none; cursor:pointer; }
     .payroll-card:hover { transform:none; box-shadow:none; }
-    .payroll-copy {
-      position:relative;
-      z-index:2;
-      display:flex;
-      flex-direction:column;
-      justify-content:center;
-      align-items:flex-start;
-      width:62%;
-      height:100%;
-      padding:20px;
-    }
-    .payroll-card h3 {
-      max-width:220px;
-      font-size:clamp(23px,2.6vw,35px);
-      line-height:1;
-      letter-spacing:-.6px;
-      text-shadow:0 2px 8px rgba(0,0,0,.18);
-    }
-    .coming-soon {
-      display:inline-block;
-      margin-top:11px;
-      padding:6px 9px;
-      border-radius:999px;
-      color:var(--red-dark);
-      background:rgba(255,255,255,.94);
-      font-size:10px;
-      font-weight:900;
-      letter-spacing:.7px;
-      text-transform:uppercase;
-    }
-    .card-lock {
-      position:absolute;
-      right:13px;
-      bottom:13px;
-      z-index:3;
-      width:54px;
-      height:54px;
-      border:3px solid white;
-      border-radius:50%;
-      background:#075b46;
-      box-shadow:0 4px 12px rgba(0,0,0,.22);
-    }
-    .card-lock::before {
-      position:absolute;
-      top:12px;
-      left:16px;
-      width:16px;
-      height:15px;
-      border:4px solid white;
-      border-bottom:0;
-      border-radius:11px 11px 0 0;
-      content:"";
-    }
-    .card-lock::after {
-      position:absolute;
-      left:12px;
-      bottom:10px;
-      width:24px;
-      height:21px;
-      border-radius:4px;
-      background:white;
-      content:"";
-    }
+    .payroll-copy { position:relative; z-index:2; display:flex; flex-direction:column; justify-content:center; align-items:flex-start; width:62%; height:100%; padding:20px; }
+    .payroll-card h3 { max-width:220px; font-size:clamp(23px,2.6vw,35px); line-height:1; letter-spacing:-.6px; text-shadow:0 2px 8px rgba(0,0,0,.18); }
+    .coming-soon { display:inline-block; margin-top:11px; padding:6px 9px; border-radius:999px; color:var(--red-dark); background:rgba(255,255,255,.94); font-size:10px; font-weight:900; letter-spacing:.7px; text-transform:uppercase; }
+    .card-lock { position:absolute; right:13px; bottom:13px; z-index:3; width:54px; height:54px; border:3px solid white; border-radius:50%; background:#075b46; box-shadow:0 4px 12px rgba(0,0,0,.22); }
+    .card-lock::before { position:absolute; top:12px; left:16px; width:16px; height:15px; border:4px solid white; border-bottom:0; border-radius:11px 11px 0 0; content:""; }
+    .card-lock::after { position:absolute; left:12px; bottom:10px; width:24px; height:21px; border-radius:4px; background:white; content:""; }
 
     .scroll-row { display:flex; gap:14px; overflow-x:auto; padding-bottom:10px; scroll-snap-type:x mandatory; }
     .scroll-row::-webkit-scrollbar { height:6px; }
@@ -219,49 +138,12 @@
     .join p { opacity:.94; line-height:1.45; }
     .join-button { background:white; color:var(--red); text-decoration:none; border-radius:999px; padding:14px 22px; font-weight:800; white-space:nowrap; }
 
-    .bottom-nav {
-      position:fixed !important;
-      left:0 !important;
-      right:0 !important;
-      bottom:0 !important;
-      transform:none !important;
-      width:100% !important;
-      max-width:none !important;
-      min-height:76px;
-      height:calc(76px + env(safe-area-inset-bottom));
-      padding-bottom:env(safe-area-inset-bottom);
-      background:#fff;
-      border-top:1px solid #e5e5e5;
-      display:flex;
-      justify-content:space-around;
-      align-items:center;
-      z-index:9999 !important;
-      box-shadow:0 -3px 14px rgba(0,0,0,.08);
-      -webkit-transform:translateZ(0);
-      transform:translateZ(0) !important;
-    }
+    .bottom-nav { position:fixed !important; left:0 !important; right:0 !important; bottom:0 !important; transform:none !important; width:100% !important; max-width:none !important; min-height:76px; height:calc(76px + env(safe-area-inset-bottom)); padding-bottom:env(safe-area-inset-bottom); background:#fff; border-top:1px solid #e5e5e5; display:flex; justify-content:space-around; align-items:center; z-index:9999 !important; box-shadow:0 -3px 14px rgba(0,0,0,.08); -webkit-transform:translateZ(0); transform:translateZ(0) !important; }
     .bottom-nav a { text-decoration:none; color:#666; text-align:center; font-size:11px; min-width:58px; }
     .bottom-nav a b { display:block; font-size:21px; margin-bottom:4px; }
     .bottom-nav a.active { color:var(--red); font-weight:800; }
 
-    .committee-fab {
-      display:none !important;
-      position:fixed;
-      right:18px;
-      bottom:calc(88px + env(safe-area-inset-bottom));
-      z-index:9998;
-      width:46px;
-      height:46px;
-      border:2px solid white;
-      border-radius:50%;
-      place-items:center;
-      color:white;
-      background:#161616;
-      box-shadow:0 5px 16px rgba(0,0,0,.28);
-      text-decoration:none;
-      font-size:28px;
-      line-height:1;
-    }
+    .committee-fab { display:none !important; position:fixed; right:18px; bottom:calc(88px + env(safe-area-inset-bottom)); z-index:9998; width:46px; height:46px; border:2px solid white; border-radius:50%; place-items:center; color:white; background:#161616; box-shadow:0 5px 16px rgba(0,0,0,.28); text-decoration:none; font-size:28px; line-height:1; }
     .committee-fab.show { display:grid !important; }
     .committee-fab:hover { background:var(--red); }
 
@@ -271,7 +153,8 @@
     #permisos:target { display:block; }
 
     @media (max-width:700px) {
-      .hero { min-height:0; height:66.67vw; max-height:520px; border-radius:0 0 24px 24px; }
+      .hero { min-height:0; height:min(145vw,650px); max-height:650px; border-radius:0 0 24px 24px; transition:height .22s ease; }
+      .hero.conoce-active { height:66.67vw; max-height:520px; }
       .hero-track { height:100%; }
       .hero-slide { background-position:center center; background-size:contain; background-color:#fff; }
       .brand-line { margin-bottom:12px; }
@@ -421,20 +304,14 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 const card = document.getElementById('committee-signup-card');
 const supabaseUrl = 'https://icneigdnuntzugisexaz.supabase.co';
 const publishableKey = 'sb_publishable_apKjcPClIBTHS2wwN6qPsA_6Vm4tk9m';
-const supabase = createClient(supabaseUrl, publishableKey, {
-  auth: { detectSessionInUrl:false, persistSession:true, autoRefreshToken:true }
-});
+const supabase = createClient(supabaseUrl, publishableKey, { auth: { detectSessionInUrl:false, persistSession:true, autoRefreshToken:true } });
 
 try {
   const { data: { session } } = await supabase.auth.getSession();
   if (session?.access_token) {
     const response = await fetch(`${supabaseUrl}/functions/v1/manage-affiliates`, {
       method:'POST',
-      headers:{
-        'Authorization':`Bearer ${session.access_token}`,
-        'Content-Type':'application/json',
-        'apikey':publishableKey
-      },
+      headers:{ 'Authorization':`Bearer ${session.access_token}`, 'Content-Type':'application/json', 'apikey':publishableKey },
       body:JSON.stringify({ action:'authorize' })
     });
     if (response.ok) card.classList.add('show');
@@ -445,12 +322,14 @@ try {
 </script>
 
 <script>
+const hero = document.querySelector('.hero');
 const heroCarousel = document.getElementById('hero-carousel');
 const heroDots = Array.from(document.querySelectorAll('.hero-dot'));
 
 if (heroCarousel && heroDots.length) {
   const setActiveHeroDot = (index) => {
     heroDots.forEach((dot, dotIndex) => dot.classList.toggle('active', dotIndex === index));
+    if (hero) hero.classList.toggle('conoce-active', index === 1);
   };
 
   heroDots.forEach((dot) => {
