@@ -88,6 +88,8 @@
       background: var(--red);
       font-weight: 800;
     }
+    .demo-action { display:none !important; }
+    body.demo-mode .demo-action { display:grid !important; }
   </style>
 </head>
 <body>
@@ -113,9 +115,20 @@
     </section>
 
     <div class="actions">
+      <a class="demo-action" href="preguntale-matrimonio-tipo.html">Probar demo</a>
       <a class="back-bottom" href="permisos.html">Volver a Permisos retribuidos</a>
       <a class="home-bottom" href="index.html">Volver al menú principal</a>
     </div>
   </main>
+  <script>
+    if (new URLSearchParams(window.location.search).get('demo') === '1') {
+      document.body.classList.add('demo-mode');
+      const back = document.querySelector('.back-bottom');
+      if (back) {
+        back.href = 'demo-app.html';
+        back.textContent = 'Volver a la demo';
+      }
+    }
+  </script>
 </body>
 </html>
