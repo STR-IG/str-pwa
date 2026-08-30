@@ -95,8 +95,8 @@
     .area-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; width:100%; max-width:780px; }
     .quick-card { background:white; border-radius:20px; padding:20px; min-height:155px; box-shadow:0 5px 18px rgba(0,0,0,.07); display:flex; flex-direction:column; justify-content:space-between; transition:.2s ease; cursor:pointer; }
     .quick-card:hover { transform:translateY(-3px); box-shadow:0 10px 24px rgba(0,0,0,.11); }
-    .menu-image-card { aspect-ratio:1.45/1; min-height:0; padding:0; overflow:hidden; background:transparent; box-shadow:none; }
-    .menu-image-card img { width:100%; height:100%; object-fit:cover; display:block; }
+    .menu-image-card { aspect-ratio:1.45/1; min-height:0; padding:0; overflow:hidden; background:#fff; box-shadow:none; -webkit-transform:translateZ(0); transform:translateZ(0); -webkit-backface-visibility:hidden; backface-visibility:hidden; }
+    .menu-image-card img { width:100%; height:100%; object-fit:cover; display:block; -webkit-transform:translateZ(0); transform:translateZ(0); -webkit-backface-visibility:hidden; backface-visibility:hidden; }
     .icon { width:48px; height:48px; border-radius:14px; background:var(--red); color:white; display:grid; place-items:center; font-size:24px; }
     .quick-card strong { font-size:18px; line-height:1.15; }
     .quick-card small { color:var(--grey); font-size:13px; line-height:1.4; margin-top:8px; }
@@ -157,6 +157,7 @@
       .hero.conoce-active { height:66.67vw; max-height:520px; }
       .hero-track { height:100%; }
       .hero-slide { background-position:center center; background-size:contain; background-color:#fff; }
+      .quick-card:hover { transform:none; }
       .brand-line { margin-bottom:12px; }
       .logo-text { font-size:34px; }
       .brand-name strong { font-size:18px; }
