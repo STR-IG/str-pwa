@@ -1,4 +1,4 @@
-const CACHE_NAME = 'str-ig-cache-v28';
+const CACHE_NAME = 'str-ig-cache-v29';
 
 const SUPABASE_URL = 'https://icneigdnuntzugisexaz.supabase.co';
 const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_apKjcPClIBTHS2wwN6qPsA_6Vm4tk9m';
