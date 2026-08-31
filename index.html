@@ -19,6 +19,10 @@
     .hero-track::-webkit-scrollbar { display:none; }
     .hero-slide { flex:0 0 100%; width:100%; height:100%; scroll-snap-align:start; scroll-snap-stop:always; background-position:center; background-size:cover; background-repeat:no-repeat; }
     .hero-slide:first-child { background-image:url("card-demo-app.png"); cursor:pointer; }
+    .hero-slide.conoce-app { background-image:url("card-conoce-app-str-ig.png"); cursor:pointer; }
+    .hero-dots { position:absolute; left:50%; bottom:13px; z-index:4; display:flex; gap:8px; transform:translateX(-50%); padding:7px 10px; border-radius:999px; background:rgba(255,255,255,.82); box-shadow:0 2px 8px rgba(0,0,0,.12); }
+    .hero-dot { width:9px; height:9px; padding:0; border:0; border-radius:50%; background:#b7b7b7; cursor:pointer; }
+    .hero-dot.active { background:var(--red); }
     .topbar { max-width:1100px; margin:auto; display:flex; align-items:center; justify-content:space-between; margin-bottom:26px; }
     .menu { font-size:28px; line-height:1; }
     .hero-content { max-width:1100px; margin:auto; }
@@ -96,7 +100,8 @@
     #permisos { display:none; }
     #permisos:target { display:block; }
     @media (max-width:700px) {
-      .hero { min-height:0; height:66.67vw; max-height:520px; border-radius:0 0 24px 24px; }
+      .hero { min-height:0; height:min(145vw,650px); max-height:650px; border-radius:0 0 24px 24px; transition:height .22s ease; }
+      .hero.conoce-active { height:66.67vw; max-height:520px; }
       .hero-track { height:100%; }
       .hero-slide { background-position:center center; background-size:contain; background-color:#fff; }
       .quick-card:hover { transform:none; }
@@ -128,8 +133,13 @@
 </head>
 <body>
 <header class="hero" aria-label="Destacados">
-  <div class="hero-track">
+  <div class="hero-track" id="hero-carousel">
     <a class="hero-slide" href="demo-app.html" role="img" aria-label="Prueba la demo de la app STR-IG"></a>
+    <div class="hero-slide conoce-app" role="img" aria-label="Conoce la app STR-IG. Flujo de presentación pendiente de creación" title="Conoce la app STR-IG"></div>
+  </div>
+  <div class="hero-dots" aria-label="Seleccionar destacado">
+    <button type="button" class="hero-dot active" aria-label="Ver destacado 1" data-slide="0"></button>
+    <button type="button" class="hero-dot" aria-label="Ver destacado 2" data-slide="1"></button>
   </div>
 </header>
 <main>
@@ -190,6 +200,10 @@ const supabase = createClient(supabaseUrl, publishableKey, { auth: { detectSessi
 try { const { data: { session } } = await supabase.auth.getSession(); if (session?.access_token) { const response = await fetch(`${supabaseUrl}/functions/v1/manage-affiliates`, { method:'POST', headers:{ 'Authorization':`Bearer ${session.access_token}`, 'Content-Type':'application/json', 'apikey':publishableKey }, body:JSON.stringify({ action:'authorize' }) }); if (response.ok) card.classList.add('show'); } } catch (_error) { card.classList.remove('show'); }
 </script>
 <script>
+const hero = document.querySelector('.hero');
+const heroCarousel = document.getElementById('hero-carousel');
+const heroDots = Array.from(document.querySelectorAll('.hero-dot'));
+if (heroCarousel && heroDots.length) { const setActiveHeroDot = (index) => { heroDots.forEach((dot, dotIndex) => dot.classList.toggle('active', dotIndex === index)); if (hero) hero.classList.toggle('conoce-active', index === 1); }; heroDots.forEach((dot) => { dot.addEventListener('click', () => { const index = Number(dot.dataset.slide || 0); heroCarousel.scrollTo({ left:index * heroCarousel.clientWidth, behavior:'smooth' }); setActiveHeroDot(index); }); }); let heroScrollTimer; heroCarousel.addEventListener('scroll', () => { clearTimeout(heroScrollTimer); heroScrollTimer = setTimeout(() => { const index = Math.round(heroCarousel.scrollLeft / Math.max(heroCarousel.clientWidth, 1)); setActiveHeroDot(Math.max(0, Math.min(index, heroDots.length - 1))); }, 60); }, { passive:true }); }
 if ('serviceWorker' in navigator) { window.addEventListener('load', async () => { try { const registration = await navigator.serviceWorker.register('./service-worker.js', { updateViaCache:'none' }); registration.update(); let refreshing=false; navigator.serviceWorker.addEventListener('controllerchange', () => { if (refreshing) return; refreshing=true; window.location.reload(); }); } catch (error) { console.error('Error al registrar el Service Worker:', error); } }); }
 </script>
 </body>
