@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#e30613">
+  <title>Conoce tus derechos · STR-IG</title>
+  <link rel="icon" type="image/png" href="icono-str-ig.png">
+  <link rel="apple-touch-icon" href="icono-str-ig.png">
+  <link rel="manifest" href="manifest.json">
+  <style>
+    * { box-sizing:border-box; margin:0; padding:0; }
+    :root { --red:#e30613; --ink:#161616; --muted:#6e6e73; --paper:#fff; --surface:#f5f5f7; }
+    body { min-height:100vh; padding-bottom:calc(34px + env(safe-area-inset-bottom)); color:var(--ink); background:var(--surface); font-family:Arial,Helvetica,sans-serif; }
+    .top { position:sticky; top:0; z-index:20; padding:calc(12px + env(safe-area-inset-top)) 16px 12px; border-bottom:1px solid #e3e3e6; background:rgba(245,245,247,.96); backdrop-filter:blur(12px); }
+    .top-inner { display:flex; align-items:center; gap:13px; width:min(100%,900px); margin:auto; }
+    .back { display:grid; flex:0 0 42px; width:42px; height:42px; place-items:center; border-radius:50%; color:var(--red); background:var(--paper); box-shadow:0 3px 12px rgba(0,0,0,.08); font-size:27px; font-weight:800; line-height:1; text-decoration:none; }
+    h1 { font-size:clamp(23px,6vw,30px); line-height:1.05; }
+    main { width:min(100%,900px); margin:auto; padding:22px 14px 0; }
+    .intro { margin-bottom:19px; color:var(--muted); font-size:15px; line-height:1.5; }
+    .rights-grid { display:grid; grid-template-columns:1fr; gap:12px; width:100%; max-width:780px; }
+    .rights-card { overflow:hidden; border-radius:20px; background:var(--paper); box-shadow:0 5px 18px rgba(0,0,0,.07); }
+    .rights-card img { display:block; width:100%; height:auto; }
+    .home { display:block; max-width:780px; margin-top:24px; padding:15px 18px; border-radius:999px; color:#555; background:#e8e8eb; font-size:14px; font-weight:800; text-align:center; text-decoration:none; }
+    @media (min-width:700px) {
+      main { padding-top:28px; }
+      .rights-grid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; }
+    }
+  </style>
+</head>
+<body>
+  <header class="top">
+    <div class="top-inner">
+      <a class="back" href="index.html" aria-label="Volver al menú principal">‹</a>
+      <h1>Conoce tus derechos</h1>
+    </div>
+  </header>
+
+  <main>
+    <p class="intro">Información clara para conocer y ejercer tus derechos laborales.</p>
+
+    <section class="rights-grid" aria-label="Derechos laborales">
+      <article class="rights-card" aria-label="Tu jornada laboral, contenido próximamente">
+        <img src="card-tu-jornada-laboral.png" alt="Tu jornada laboral">
+      </article>
+      <article class="rights-card" aria-label="Pausas y descansos, contenido próximamente">
+        <img src="card-pausas-descansos.png" alt="Pausas y descansos">
+      </article>
+      <!-- Añadir aquí las futuras cards de derechos laborales. -->
+    </section>
+
+    <a class="home" href="index.html">Volver al menú principal</a>
+  </main>
+</body>
+</html>
