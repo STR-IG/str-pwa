@@ -15,6 +15,77 @@ const DEFAULT_NEWS = [{
 
 let newsPromise;
 
+function applyHomeCarousels() {
+  if (document.getElementById('str-home-carousel-layout')) return;
+  const style = document.createElement('style');
+  style.id = 'str-home-carousel-layout';
+  style.textContent = `
+    .news-grid,
+    .list {
+      display:flex !important;
+      gap:12px !important;
+      overflow-x:auto !important;
+      overflow-y:hidden !important;
+      padding-bottom:10px !important;
+      scroll-snap-type:x mandatory !important;
+      -webkit-overflow-scrolling:touch;
+      scrollbar-width:none;
+    }
+    .news-grid::-webkit-scrollbar,
+    .list::-webkit-scrollbar { display:none; }
+
+    .news-grid > .news-card,
+    .list > .list-item {
+      flex:0 0 calc((100% - 24px) / 3) !important;
+      width:auto !important;
+      min-width:0 !important;
+      aspect-ratio:1.5 / 1 !important;
+      scroll-snap-align:start;
+      overflow:hidden !important;
+      border-radius:20px !important;
+      box-sizing:border-box;
+    }
+
+    .news-grid > .news-card {
+      display:flex !important;
+      flex-direction:column;
+    }
+
+    .activity-news-card img,
+    .list > .list-item:first-child img {
+      width:100% !important;
+      height:100% !important;
+      object-fit:cover !important;
+      display:block !important;
+    }
+
+    .news-grid > .news-card:not(.activity-news-card) .news-image {
+      flex:0 0 42%;
+      height:auto !important;
+    }
+    .news-grid > .news-card:not(.activity-news-card) .news-content {
+      flex:1;
+      min-height:0;
+      overflow:hidden;
+      padding:14px !important;
+    }
+
+    .list > .list-item { padding:16px !important; }
+    .list > .list-item:first-child { padding:0 !important; }
+
+    @media (max-width:700px) {
+      .news-grid > .news-card,
+      .list > .list-item {
+        flex:0 0 245px !important;
+        width:245px !important;
+        min-width:245px !important;
+        aspect-ratio:1.5 / 1 !important;
+      }
+    }
+  `;
+  document.head.appendChild(style);
+}
+
 function readJson(key, fallback) {
   try {
     const value = JSON.parse(localStorage.getItem(key));
@@ -244,6 +315,7 @@ async function configurePushControl(options) {
 }
 
 export async function initNews(options = {}) {
+  applyHomeCarousels();
   await refreshNewsBadges();
   window.addEventListener('pageshow', () => refreshNewsBadges());
   document.addEventListener('visibilitychange', () => {
