@@ -202,6 +202,10 @@ async function configurePushControl(buttonId, statusId) {
 
 export async function initNews(options = {}) {
   await refreshNewsBadges();
+  window.addEventListener('pageshow', () => refreshNewsBadges());
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') refreshNewsBadges();
+  });
   if (options.pushButtonId) {
     configurePushControl(options.pushButtonId, options.pushStatusId);
   }
