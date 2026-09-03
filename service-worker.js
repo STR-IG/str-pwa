@@ -1,4 +1,4 @@
-const CACHE_NAME = 'str-ig-cache-v32';
+const CACHE_NAME = 'str-ig-cache-v33';
 
 const SUPABASE_URL = 'https://icneigdnuntzugisexaz.supabase.co';
 const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_apKjcPClIBTHS2wwN6qPsA_6Vm4tk9m';
@@ -40,6 +40,46 @@ self.addEventListener('activate', (event) => {
       )
       .then(() => self.clients.claim())
   );
+});
+
+self.addEventListener('push', (event) => {
+  let payload = {};
+  try { payload = event.data?.json() ?? {}; } catch (_error) {}
+  const badgeCount = Math.max(0, Number(payload.badge) || 0);
+
+  event.waitUntil((async () => {
+    try {
+      if (badgeCount > 0 && 'setAppBadge' in self.navigator) {
+        await self.navigator.setAppBadge(badgeCount);
+      } else if ('clearAppBadge' in self.navigator) {
+        await self.navigator.clearAppBadge();
+      }
+    } catch (_error) {}
+
+    await self.registration.showNotification('Tienes una novedad', {
+      body: 'Entra en la app para verla.',
+      icon: './icono-str-ig-192.png',
+      badge: './icono-str-ig-192.png',
+      tag: 'str-ig-novedades',
+      renotify: true,
+      data: { url: './index.html' },
+    });
+  })());
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const targetUrl = new URL(event.notification.data?.url || './index.html', self.registration.scope).href;
+  event.waitUntil((async () => {
+    const windows = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    for (const client of windows) {
+      if ('focus' in client) {
+        await client.navigate(targetUrl);
+        return client.focus();
+      }
+    }
+    return self.clients.openWindow(targetUrl);
+  })());
 });
 
 function openAnalyticsDb() {

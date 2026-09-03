@@ -119,19 +119,9 @@
     <a href="index.html"><b>☎</b>Contacto</a>
   </nav>
 
-  <script>
-    (function () {
-      const MENU_VERSION = '2026-09';
-      try {
-        localStorage.setItem('str_menu_seen_version', MENU_VERSION);
-      } catch (_error) {}
-
-      if ('clearAppBadge' in navigator) {
-        navigator.clearAppBadge().catch(() => {});
-      } else if ('setAppBadge' in navigator) {
-        navigator.setAppBadge(0).catch(() => {});
-      }
-    })();
+  <script type="module">
+    import { markCategoryRead } from './novedades.js';
+    markCategoryRead('menu');
   </script>
 </body>
 </html>

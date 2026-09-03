@@ -1,6 +1,7 @@
 {
   "name": "STR-IG",
   "short_name": "STR-IG",
+  "id": "/str-pwa/",
   "start_url": "./",
   "display": "standalone",
   "background_color": "#ffffff",
