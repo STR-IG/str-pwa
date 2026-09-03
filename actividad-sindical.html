@@ -18,8 +18,6 @@
     h1 { font-size:clamp(23px,6vw,30px); line-height:1.05; }
     main { display:grid; gap:20px; width:min(100%,900px); margin:auto; padding:20px 14px 0; }
     .card { border-radius:22px; background:var(--paper); box-shadow:0 5px 18px rgba(0,0,0,.07); }
-    .hero { overflow:hidden; }
-    .hero img { width:100%; height:auto; display:block; }
     .section-heading { padding:4px 2px 0; }
     .eyebrow { display:block; margin-bottom:7px; color:var(--red); font-size:12px; font-weight:900; letter-spacing:.8px; text-transform:uppercase; }
     .section-heading h2 { margin-bottom:7px; font-size:clamp(24px,6vw,32px); line-height:1.08; }
@@ -31,8 +29,14 @@
     .status.achieved { color:var(--green); background:var(--green-soft); }
     .status.closed { color:#555; background:var(--grey-soft); }
     .activity-list { display:grid; gap:12px; }
-    .activity { padding:19px 18px; }
-    .activity-meta { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:12px; }
+    .activity { overflow:hidden; }
+    .activity-status { padding:10px 18px; color:#fff; font-size:12px; font-weight:900; letter-spacing:.55px; text-transform:uppercase; }
+    .activity-status.in-progress { background:var(--red); }
+    .activity-status.pending { background:#d27a00; }
+    .activity-status.achieved { background:var(--green); }
+    .activity-status.closed { background:#66666b; }
+    .activity-body { padding:18px; }
+    .activity-meta { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:10px; }
     .activity time { color:var(--muted); font-size:13px; font-weight:700; }
     .activity h3 { margin-bottom:7px; font-size:19px; line-height:1.2; }
     .activity p { color:var(--muted); font-size:14px; line-height:1.5; }
@@ -43,8 +47,7 @@
     .home { display:block; padding:15px 18px; border-radius:999px; color:#555; background:#e8e8eb; font-size:14px; font-weight:800; text-align:center; text-decoration:none; }
     @media (min-width:700px) {
       main { padding-top:28px; }
-      .hero { max-width:700px; justify-self:center; }
-      .activity { padding:22px 24px; }
+      .activity-body { padding:22px 24px; }
     }
   </style>
 </head>
@@ -53,10 +56,6 @@
     <div class="top-inner"><a class="back" href="index.html" aria-label="Volver al menú principal">‹</a><h1>Actividad sindical</h1></div>
   </header>
   <main>
-    <section class="card hero" aria-label="Actividad sindical STR-IG">
-      <img src="card-actividad-sindical.png" alt="Actividad sindical STR-IG. En qué estamos trabajando.">
-    </section>
-
     <section class="section-heading" aria-labelledby="activity-title">
       <span class="eyebrow">Actualidad STR-IG</span>
       <h2 id="activity-title">Nuestras actuaciones</h2>
@@ -78,12 +77,14 @@
       </article>
       <!-- Estructura reutilizable para cada actuación:
       <article class="card activity">
-        <div class="activity-meta">
-          <time datetime="AAAA-MM-DD">DD de mes de AAAA</time>
-          <span class="status in-progress">EN CURSO</span>
+        <div class="activity-status achieved">CONSEGUIDO</div>
+        <div class="activity-body">
+          <div class="activity-meta">
+            <time datetime="AAAA-MM-DD">DD de mes de AAAA</time>
+          </div>
+          <h3>Título de la actuación</h3>
+          <p>Qué hicimos, qué conseguimos o en qué punto se encuentra la gestión.</p>
         </div>
-        <h3>Título de la actuación</h3>
-        <p>Breve descripción de la gestión, avance o resultado.</p>
       </article>
       Estados disponibles: in-progress, pending, achieved y closed.
       -->
