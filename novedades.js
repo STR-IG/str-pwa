@@ -184,6 +184,12 @@ async function configurePushControl(options) {
   if (!button) return;
 
   const isInstalled = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+  if (!isInstalled) {
+    if (panel) panel.hidden = true;
+    return;
+  }
+  if (panel) panel.hidden = false;
+
   let onboardingDismissed = false;
   try { onboardingDismissed = localStorage.getItem(ONBOARDING_STORAGE_KEY) === '1'; } catch (_error) {}
 

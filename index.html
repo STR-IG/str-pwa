@@ -57,6 +57,7 @@
     .news-notification-badge { position:absolute; top:8px; right:8px; z-index:5; min-width:28px; height:28px; padding:0 8px; border:2px solid #fff; border-radius:999px; display:none; align-items:center; justify-content:center; color:#fff; background:var(--red); box-shadow:0 3px 10px rgba(0,0,0,.24); font-size:15px; line-height:1; font-weight:900; }
     .news-notification-badge.show { display:flex; }
     .news-alerts { margin:0 auto 28px; padding:16px 18px; border:1px solid #f0c9cc; border-radius:18px; background:#fff; display:flex; align-items:center; justify-content:space-between; gap:16px; box-shadow:0 4px 15px rgba(0,0,0,.06); }
+    .news-alerts[hidden] { display:none; }
     .news-alerts-copy strong { display:block; margin-bottom:3px; font-size:15px; }
     .news-alerts-copy span { color:var(--grey); font-size:13px; line-height:1.35; }
     .news-alerts-button { flex:0 0 auto; border:0; border-radius:999px; padding:11px 16px; color:#fff; background:var(--red); font:inherit; font-size:13px; font-weight:800; cursor:pointer; }
@@ -163,7 +164,7 @@
   </div>
 </header>
 <main>
-  <section class="news-alerts" id="news-alerts-panel" aria-label="Avisos de novedades">
+  <section class="news-alerts" id="news-alerts-panel" aria-label="Avisos de novedades" hidden>
     <div class="news-alerts-copy"><strong>Activa los avisos de STR-IG</strong><span class="news-alerts-status" id="news-alerts-status">Recibe un aviso cuando haya una novedad, incluso con la app cerrada.</span></div>
     <button class="news-alerts-button" id="enable-news-alerts" type="button">ACTIVAR AVISOS</button>
   </section>
