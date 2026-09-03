@@ -3,6 +3,7 @@ const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_apKjcPClIBTHS2wwN6qPsA_6Vm4tk9m
 const VAPID_PUBLIC_KEY = 'BBTztbyStE4bSwPnFrwgub5t2EY96fogT6LQaiD4lkSa31PC3IDmXsCDbHsc2LxRA3_i2fUH-chHpz2cGkUwyHQ';
 const READ_STORAGE_KEY = 'str_news_read_ids';
 const DEVICE_STORAGE_KEY = 'str_push_device_id';
+const ONBOARDING_STORAGE_KEY = 'str_push_onboarding_dismissed';
 const MENU_LEGACY_KEY = 'str_menu_seen_version';
 const DEFAULT_NEWS = [{
   id: 'menu-2026-09',
@@ -128,7 +129,7 @@ function setPushStatus(element, message, state = '') {
 async function enablePush(button, status) {
   if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) {
     setPushStatus(status, 'Para recibir avisos en iPhone, instala STR-IG en la pantalla de inicio.', 'unsupported');
-    return;
+    return false;
   }
 
   button.disabled = true;
@@ -139,7 +140,8 @@ async function enablePush(button, status) {
       : await Notification.requestPermission();
     if (permission !== 'granted') {
       setPushStatus(status, 'Los avisos no se han activado. Puedes permitirlos desde los ajustes.', 'denied');
-      return;
+      button.disabled = false;
+      return false;
     }
 
     const registration = await navigator.serviceWorker.ready;
@@ -162,19 +164,50 @@ async function enablePush(button, status) {
     setPushStatus(status, 'Avisos activados.', 'enabled');
     button.textContent = 'Avisos activados';
     button.disabled = true;
+    return true;
   } catch (_error) {
     setPushStatus(status, 'No se han podido activar los avisos. Inténtalo de nuevo.', 'error');
     button.disabled = false;
+    return false;
   }
 }
 
-async function configurePushControl(buttonId, statusId) {
+async function configurePushControl(options) {
+  const buttonId = options.pushButtonId;
+  const statusId = options.pushStatusId;
   const button = document.getElementById(buttonId);
   const status = document.getElementById(statusId);
+  const panel = document.getElementById(options.pushPanelId);
+  const onboarding = document.getElementById(options.onboardingId);
+  const onboardingButton = document.getElementById(options.onboardingButtonId);
+  const onboardingDismiss = document.getElementById(options.onboardingDismissId);
   if (!button) return;
 
+  const isInstalled = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+  let onboardingDismissed = false;
+  try { onboardingDismissed = localStorage.getItem(ONBOARDING_STORAGE_KEY) === '1'; } catch (_error) {}
+
+  const dismissOnboarding = () => {
+    if (onboarding) onboarding.hidden = true;
+    try { localStorage.setItem(ONBOARDING_STORAGE_KEY, '1'); } catch (_error) {}
+  };
+
+  const activated = () => {
+    dismissOnboarding();
+    if (panel) panel.hidden = true;
+  };
+
+  const activateFrom = async (sourceButton) => {
+    const enabled = await enablePush(sourceButton, status);
+    if (enabled) activated();
+    return enabled;
+  };
+
+  onboardingDismiss?.addEventListener('click', dismissOnboarding);
+  onboardingButton?.addEventListener('click', () => activateFrom(onboardingButton));
+
   if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) {
-    button.addEventListener('click', () => enablePush(button, status));
+    button.addEventListener('click', () => activateFrom(button));
     return;
   }
 
@@ -194,10 +227,14 @@ async function configurePushControl(buttonId, statusId) {
       button.textContent = 'Avisos activados';
       button.disabled = true;
       setPushStatus(status, 'Recibirás un aviso genérico cuando haya una novedad.', 'enabled');
+      activated();
       return;
     }
   } catch (_error) {}
-  button.addEventListener('click', () => enablePush(button, status));
+  button.addEventListener('click', () => activateFrom(button));
+  if (isInstalled && !onboardingDismissed && Notification.permission === 'default' && onboarding) {
+    onboarding.hidden = false;
+  }
 }
 
 export async function initNews(options = {}) {
@@ -207,7 +244,7 @@ export async function initNews(options = {}) {
     if (document.visibilityState === 'visible') refreshNewsBadges();
   });
   if (options.pushButtonId) {
-    configurePushControl(options.pushButtonId, options.pushStatusId);
+    configurePushControl(options);
   }
 }
 
