@@ -53,6 +53,9 @@
     .quick-card:hover { transform:translateY(-3px); box-shadow:0 10px 24px rgba(0,0,0,.11); }
     .menu-image-card { aspect-ratio:1.45/1; min-height:0; padding:0; overflow:hidden; background:#fff; box-shadow:none; -webkit-transform:translateZ(0); transform:translateZ(0); -webkit-backface-visibility:hidden; backface-visibility:hidden; }
     .menu-image-card img { width:100%; height:100%; object-fit:cover; display:block; -webkit-transform:translateZ(0); transform:translateZ(0); -webkit-backface-visibility:hidden; backface-visibility:hidden; }
+    .menu-notification-card { position:relative; }
+    .menu-notification-badge { position:absolute; top:8px; right:8px; z-index:5; min-width:28px; height:28px; padding:0 8px; border:2px solid #fff; border-radius:999px; display:none; align-items:center; justify-content:center; color:#fff; background:var(--red); box-shadow:0 3px 10px rgba(0,0,0,.24); font-size:15px; line-height:1; font-weight:900; }
+    .menu-notification-badge.show { display:flex; }
     .icon { width:48px; height:48px; border-radius:14px; background:var(--red); color:white; display:grid; place-items:center; font-size:24px; }
     .quick-card strong { font-size:18px; line-height:1.15; }
     .quick-card small { color:var(--grey); font-size:13px; line-height:1.4; margin-top:8px; }
@@ -147,7 +150,7 @@
       <h2 class="area-heading">ÁREA PÚBLICA</h2>
       <div class="area-grid">
         <a href="permisos.html" class="quick-card menu-image-card"><img src="permisos-retribuidos.png" alt="Permisos retribuidos"></a>
-        <a href="menu-comedor.html" class="quick-card menu-image-card"><img src="menu-comedor.png" alt="Menú comedor"></a>
+        <a href="menu-comedor.html" class="quick-card menu-image-card menu-notification-card" id="menu-card"><img src="menu-comedor.png" alt="Menú comedor"><span class="menu-notification-badge" id="menu-notification-badge" aria-label="1 novedad sin leer">1</span></a>
       </div>
     </div>
     <div class="area-block">
@@ -202,6 +205,25 @@ try { const { data: { session } } = await supabase.auth.getSession(); if (sessio
 const heroCarousel = document.getElementById('hero-carousel');
 const heroDots = Array.from(document.querySelectorAll('.hero-dot'));
 if (heroCarousel && heroDots.length) { const setActiveHeroDot = (index) => { heroDots.forEach((dot, dotIndex) => dot.classList.toggle('active', dotIndex === index)); }; heroDots.forEach((dot) => { dot.addEventListener('click', () => { const index = Number(dot.dataset.slide || 0); heroCarousel.scrollTo({ left:index * heroCarousel.clientWidth, behavior:'smooth' }); setActiveHeroDot(index); }); }); let heroScrollTimer; heroCarousel.addEventListener('scroll', () => { clearTimeout(heroScrollTimer); heroScrollTimer = setTimeout(() => { const index = Math.round(heroCarousel.scrollLeft / Math.max(heroCarousel.clientWidth, 1)); setActiveHeroDot(Math.max(0, Math.min(index, heroDots.length - 1))); }, 60); }, { passive:true }); }
+
+(function () {
+  const MENU_VERSION = '2026-09';
+  const badge = document.getElementById('menu-notification-badge');
+  let seenVersion = null;
+  try { seenVersion = localStorage.getItem('str_menu_seen_version'); } catch (_error) {}
+  const unread = seenVersion !== MENU_VERSION;
+
+  if (badge) badge.classList.toggle('show', unread);
+
+  if (unread && 'setAppBadge' in navigator) {
+    navigator.setAppBadge(1).catch(() => {});
+  } else if (!unread && 'clearAppBadge' in navigator) {
+    navigator.clearAppBadge().catch(() => {});
+  } else if (!unread && 'setAppBadge' in navigator) {
+    navigator.setAppBadge(0).catch(() => {});
+  }
+})();
+
 if ('serviceWorker' in navigator) { window.addEventListener('load', async () => { try { const registration = await navigator.serviceWorker.register('./service-worker.js', { updateViaCache:'none' }); registration.update(); let refreshing=false; navigator.serviceWorker.addEventListener('controllerchange', () => { if (refreshing) return; refreshing=true; window.location.reload(); }); } catch (error) { console.error('Error al registrar el Service Worker:', error); } }); }
 </script>
 </body>
