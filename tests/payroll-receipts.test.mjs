@@ -59,7 +59,8 @@ function harness(bucket) {
     clearAllDocuments() { this; }, loadWorkSchedule() {}, updatePeriodCards() {}, showPeriodMessage() {},
     showPeriodScreen() {}, openDocument() {}, ensureYearOption() {}, renderPrivateHistory() {},
     currentScheduleSettings: () => ({}), buildMonthlyComparisons: () => ({}),
-    applyComparisonCardResult() {}, renderComparisonResult() {}, setComparisonProgress() {},
+    applyComparisonCardResult() {}, renderComparisonResult() {}, renderPayrollComparison() {}, setComparisonProgress() {},
+    updateMonthlyControls() {}, hideMonthlyResults() {},
     parseQuantityValue: Number, formatQuantity: String,
     document: { getElementById(id) { if (!nodes.has(id)) nodes.set(id, element()); return nodes.get(id); } }
   });
@@ -404,3 +405,5 @@ test('listing is paginated, with no two-receipt cap', async () => {
 });
 
 test('inline module parses', () => { new vm.SourceTextModule(source); });
+
+export { bucketFor, documentHarness, extract, source, element };

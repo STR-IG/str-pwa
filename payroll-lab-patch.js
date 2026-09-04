@@ -126,7 +126,7 @@
   }
 
   function markAsAutoRead(input, value) {
-    if (!input || input.value.trim() || value === '') return false;
+    if (!input || input.readOnly || input.value.trim() || value === '') return false;
     input.value = value;
     input.dispatchEvent(new Event('input', { bubbles: true }));
     input.dataset.labAutoRead = 'true';
@@ -157,7 +157,7 @@
 
     const missing = Object.values(TARGETS).filter((config) => {
       const input = config.ids.map((id) => document.getElementById(id)).find(Boolean);
-      return input && !input.value.trim();
+      return input && !input.readOnly && !input.value.trim();
     });
 
     if (!missing.length || !window.Tesseract?.recognize) {
@@ -172,6 +172,7 @@
         preserve_interword_spaces: '1'
       });
       const text = result?.data?.text || '';
+      if (image.src !== src || document.getElementById('comparison-screen')?.hidden) return;
       let recovered = 0;
 
       for (const config of missing) {

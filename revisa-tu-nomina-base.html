@@ -1720,10 +1720,16 @@
 
         <section id="completion-panel" class="completion-panel" hidden>
           <strong>✓ Los dos documentos están guardados</strong>
-          <p>Ya puedes cruzar las cantidades del registro con las descontadas o pagadas en la nómina.</p>
+          <p>Confirma las cantidades de este recibo. Si tienes varias nóminas, las sumaremos al cerrar la comparación del mes.</p>
           <button id="start-analysis" class="primary" type="button">Analizar y comparar</button>
           <p id="analysis-ready-status" class="final-status" role="status" hidden></p>
           <button id="add-period-payroll" class="secondary" type="button" hidden>Añadir otra nómina de este mes</button>
+          <div id="month-controls-period" hidden>
+            <p>¿Ya están todas? Compararemos la suma de las nóminas con el registro mensual, sin duplicar la jornada.</p>
+            <button id="close-month-period" class="primary" type="button">Ya he añadido todas las nóminas de este mes</button>
+            <button id="view-month-period" class="secondary" type="button">Ver resultado mensual guardado</button>
+          </div>
+          <div id="month-result-period" class="comparison-result" role="status" hidden></div>
         </section>
 
         <p class="local-note"><span aria-hidden="true">🛡️</span><span>Las imágenes se guardan en un espacio privado asociado a tu cuenta y no tienen enlaces públicos. Podrás recuperarlas al volver a elegir el mismo mes.</span></p>
@@ -1827,12 +1833,12 @@
         <div id="comparison-form" class="analysis-form" hidden>
           <div class="watch-intro">
             <strong>🛡️ Control de comidas del mismo mes</strong>
-            <p>Las comidas de «Can Guasch» del registro y las descontadas en la nómina deberían coincidir. Si no coinciden, quedará anotado como desfase para revisarlo.</p>
+            <p>Confirma las comidas de este recibo. Si el mes tiene varias nóminas, compararemos la suma de todas con el registro mensual.</p>
           </div>
 
           <div class="analysis-form-heading">
-            <h2>Registro frente a nómina</h2>
-            <p>La cifra del registro ya está confirmada. Comprueba o corrige la cantidad leída de la nómina antes de guardar el informe mensual.</p>
+            <h2>Cantidades de esta nómina</h2>
+            <p>El registro corresponde al mes completo; esta nómina puede cubrir solo una parte. Confirma sus cantidades sin ajustarlas a las del registro. La comparación se hará al cerrar el mes.</p>
             <span id="comparison-detected-count" class="analysis-detected-count">0 cantidades leídas automáticamente</span>
           </div>
 
@@ -1847,10 +1853,16 @@
 
           <div class="analysis-actions">
             <button id="retry-payroll-analysis" class="secondary" type="button">Volver a leer nómina</button>
-            <button id="confirm-comparison" class="primary" type="button">Comprobar cantidades</button>
+            <button id="confirm-comparison" class="primary" type="button">Guardar cantidades de esta nómina</button>
           </div>
           <p id="comparison-saved" class="analysis-confirmed" role="status" hidden></p>
           <button id="add-monthly-payroll" class="secondary" type="button" hidden>Añadir otra nómina de este mes</button>
+          <div id="month-controls-comparison" hidden>
+            <p>Añade los recibos que falten o confirma que ya están todos para comparar el mes completo.</p>
+            <button id="close-month-comparison" class="primary" type="button">Ya he añadido todas las nóminas de este mes</button>
+            <button id="view-month-comparison" class="secondary" type="button">Ver resultado mensual guardado</button>
+          </div>
+          <div id="month-result-comparison" class="comparison-result" role="status" hidden></div>
         </div>
       </section>
 
@@ -1942,6 +1954,7 @@
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@7.0.0/dist/tesseract.min.js" integrity="sha384-2BQ3U3OdKOb0Uczxqr41I9UvZkzr4V9Hv8uSzMMZAlmhsFClvdZX5wi5fDCzG+tM" crossorigin="anonymous"></script>
   <script type="module">
     import { newReceiptId, receiptCreatedAt, monthReceipts, assertUniquePayroll, sha256 } from './payroll-receipts.mjs?v=1';
+    import { closeMonth, readMonthClosure } from './payroll-month.mjs?v=1';
     import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 
     const SUPABASE_URL = 'https://icneigdnuntzugisexaz.supabase.co';
@@ -2725,8 +2738,86 @@
     }
 
     function monthlyIncidentCount(review) {
-      if (!review || review.status !== 'complete') return 0;
+      if (!review || review.status !== 'complete' || review.scope !== 'month') return 0;
       return Object.values(review.comparisons || {}).filter((item) => item?.status === 'mismatch').length;
+    }
+
+    function hideMonthlyResults() {
+      for (const place of ['period', 'comparison']) document.getElementById(`month-result-${place}`).hidden = true;
+    }
+
+    function updateMonthlyControls() {
+      hideMonthlyResults();
+      for (const place of ['period', 'comparison']) {
+        document.getElementById(`month-controls-${place}`).hidden = loadingDocuments || !isCurrentReviewComplete();
+      }
+    }
+
+    function renderMonthClosure(result, target, label) {
+      target.textContent = '';
+      target.className = 'comparison-result';
+      const title = document.createElement('strong');
+      const message = document.createElement('p');
+      target.appendChild(title);
+      target.appendChild(message);
+      if (!result) {
+        title.textContent = 'Comparación mensual pendiente';
+        message.textContent = 'No hay un cierre vigente, o los recibos han cambiado. Añade y confirma las nóminas que falten y pulsa «Ya he añadido todas las nóminas de este mes».';
+      } else {
+        const incidents = monthlyIncidentCount(result);
+        target.classList.toggle('issue', incidents > 0);
+        title.textContent = incidents ? `Mes completo: ${incidents} diferencia${incidents === 1 ? '' : 's'} para revisar` : '✓ Las cantidades del mes coinciden';
+        message.textContent = `${label}: suma de ${result.receiptCount} nómina${result.receiptCount === 1 ? '' : 's'} frente a un único registro mensual. ${incidents ? 'Revisa los conceptos y los períodos antes de considerar estas diferencias un error de nómina.' : 'No hay diferencias en los conceptos comparados.'}`;
+        const list = document.createElement('ul');
+        for (const [key, values] of Object.entries(result.comparisons)) {
+          const item = document.createElement('li');
+          const name = PAYROLL_VARIABLES.find(variable => variable.key === key)?.label || key;
+          item.textContent = `${name}: registro ${formatQuantity(values.register)} · suma de nóminas ${formatQuantity(values.payroll)} · ${values.status === 'match' ? 'coincide' : `diferencia ${formatQuantity(values.difference)}`}`;
+          list.appendChild(item);
+        }
+        target.appendChild(list);
+      }
+      target.hidden = false;
+      target.scrollIntoView({behavior:'smooth', block:'nearest'});
+    }
+
+    async function handleMonthClosure(close = false) {
+      if (!currentUserId || savingReview || savingDocument || loadingDocuments || comparisonRunning || !isCurrentReviewComplete()) return;
+      const place = comparisonScreen.hidden ? 'period' : 'comparison';
+      const target = document.getElementById(`month-result-${place}`);
+      if (place === 'comparison' && confirmComparisonButton.dataset.action !== 'back') {
+        target.textContent = 'Guarda primero las cantidades modificadas de este recibo.';
+        target.hidden = false;
+        return;
+      }
+      const key = periodKey();
+      const folder = monthFolder();
+      const label = periodLabel();
+      const controls = [month, year, confirmComparisonButton, retryPayrollAnalysisButton, addMonthlyPayroll, addPeriodPayroll, addDocumentPayroll];
+      for (const location of ['period', 'comparison']) {
+        controls.push(document.getElementById(`close-month-${location}`), document.getElementById(`view-month-${location}`));
+      }
+      const disabled = controls.map(control => control.disabled);
+      savingReview = true;
+      controls.forEach(control => { control.disabled = true; });
+      hideMonthlyResults();
+      target.textContent = close ? 'Sumando los recibos y guardando el cierre mensual…' : 'Comprobando que el cierre guardado corresponde a los recibos actuales…';
+      target.className = 'comparison-result';
+      target.hidden = false;
+      try {
+        const bucket = supabase.storage.from(STORAGE_BUCKET);
+        const result = await (close ? closeMonth : readMonthClosure)(bucket, folder, COMPARABLE_KEYS, buildMonthlyComparisons);
+        if (key !== periodKey()) return;
+        renderMonthClosure(result, target, label);
+      } catch (error) {
+        if (key !== periodKey()) return;
+        target.textContent = error?.message || 'No se ha podido comprobar el mes. Tus recibos no se han borrado; vuelve a intentarlo.';
+        target.className = 'comparison-result issue';
+        target.hidden = false;
+      } finally {
+        savingReview = false;
+        controls.forEach((control, index) => { control.disabled = disabled[index]; });
+      }
     }
 
     function renderPrivateHistory() {
@@ -2743,7 +2834,7 @@
         const complete = entry.timesheet && entry.payroll;
         const reviewed = entry.review?.status === 'complete';
         const incidents = monthlyIncidentCount(entry.review);
-        const mealMismatch = entry.review?.comparisons?.meals?.status === 'mismatch';
+        const mealMismatch = entry.review?.scope === 'month' && entry.review?.comparisons?.meals?.status === 'mismatch';
         const card = document.createElement('button');
         card.type = 'button';
         card.className = `history-card${complete ? ' complete' : ''}${incidents ? ' has-alert' : ''}`;
@@ -2762,7 +2853,7 @@
           ? '1 de 2'
           : (!reviewed
             ? 'Pendiente revisar'
-            : (incidents ? `${incidents} incidencia${incidents === 1 ? '' : 's'}` : 'Revisión OK'));
+            : 'Cantidades guardadas');
 
         top.appendChild(title);
         top.appendChild(status);
@@ -2773,9 +2864,9 @@
         chips.appendChild(createHistoryChip('Nómina', entry.payroll));
         if (complete) {
           chips.appendChild(createHistoryChip(
-            mealMismatch ? 'Comidas con desfase' : (reviewed ? 'Comidas coinciden' : 'Comidas sin revisar'),
-            reviewed && !mealMismatch,
-            mealMismatch
+            reviewed ? 'Consultar cierre mensual' : 'Cantidades pendientes',
+            reviewed,
+            false
           ));
         }
 
@@ -2857,6 +2948,7 @@
 
     function updatePeriodCards() {
       addPeriodPayroll.hidden = loadingDocuments || !isCurrentReviewComplete();
+      updateMonthlyControls();
       const label = periodLabel();
       const timesheetCard = document.getElementById('timesheet-card');
       const payrollCard = document.getElementById('payroll-card');
@@ -2923,9 +3015,7 @@
           : `Analizar y comparar ${label}`);
       const readyStatus = document.getElementById('analysis-ready-status');
       readyStatus.textContent = savedReview?.status === 'complete'
-        ? (incidents
-          ? `⚠ Revisión guardada con ${incidents} posible${incidents === 1 ? '' : 's'} incidencia${incidents === 1 ? '' : 's'}.`
-          : '✓ Revisión mensual guardada: las cantidades coinciden.')
+        ? '✓ Cantidades de este recibo guardadas. Añade otra nómina o consulta/cierra la comparación mensual.'
         : '✓ Datos de la jornada confirmados; falta cruzarlos con la nómina.';
       readyStatus.hidden = completed !== 2 || (!savedReview && !confirmedTimesheetAnalyses.has(periodKey()));
     }
@@ -3770,6 +3860,15 @@
     }
 
     function renderComparisonResult(review) {
+      if (review?.scope !== 'month') {
+        comparisonResult.className = 'comparison-result';
+        comparisonResultTitle.textContent = '✓ Cantidades de este recibo guardadas';
+        comparisonResultMessage.textContent = 'Este no es el resultado del mes. Añade las nóminas que falten y confirma que están todas para comparar su suma con el registro mensual.';
+        comparisonResultList.textContent = '';
+        comparisonResultList.hidden = true;
+        comparisonResult.hidden = false;
+        return;
+      }
       const incidents = Object.entries(review?.comparisons || {})
         .filter(([, item]) => item?.status === 'mismatch');
       const meal = review?.comparisons?.meals;
@@ -3803,7 +3902,6 @@
         const result = extracted?.get(key);
         const payrollValue = typeof result === 'string' ? result : (result?.value || '');
         const registerValue = timesheetValues.get(key);
-        if (key !== 'meals' && registerValue === undefined && payrollValue === '') return;
         if (payrollValue !== '') detected += 1;
 
         const card = document.createElement('div');
@@ -3823,7 +3921,7 @@
         const registerColumn = document.createElement('div');
         registerColumn.className = 'comparison-value';
         const registerLabel = document.createElement('small');
-        registerLabel.textContent = 'Registro de jornada';
+        registerLabel.textContent = 'Registro del mes completo';
         const registerFixed = document.createElement('span');
         registerFixed.className = 'comparison-fixed';
         registerFixed.textContent = formatQuantity(parseQuantityValue(registerValue) || 0);
@@ -3835,7 +3933,7 @@
         const inputId = `comparison-${key}`;
         const payrollLabel = document.createElement('label');
         payrollLabel.setAttribute('for', inputId);
-        payrollLabel.textContent = 'Cantidad en nómina';
+        payrollLabel.textContent = 'Cantidad en este recibo';
         const input = document.createElement('input');
         input.id = inputId;
         input.type = 'text';
@@ -3843,7 +3941,10 @@
         input.autocomplete = 'off';
         input.placeholder = 'No aparece';
         input.value = payrollValue;
+        input.readOnly = confirmed;
         input.addEventListener('input', () => {
+          hideMonthlyResults();
+          document.getElementById('month-controls-comparison').hidden = true;
           card.classList.remove('ok', 'issue');
           status.className = 'comparison-status';
           status.textContent = input.value.trim() ? 'Revisado' : 'Por comparar';
@@ -3851,7 +3952,7 @@
           comparisonResult.hidden = true;
           comparisonSaved.hidden = true;
           confirmComparisonButton.dataset.action = 'check';
-          confirmComparisonButton.textContent = 'Comprobar cantidades';
+          confirmComparisonButton.textContent = 'Guardar cantidades de esta nómina';
         });
         payrollColumn.appendChild(payrollLabel);
         payrollColumn.appendChild(input);
@@ -3877,15 +3978,16 @@
       comparisonSaved.hidden = true;
       confirmComparisonButton.disabled = false;
       confirmComparisonButton.dataset.action = confirmed ? 'back' : 'check';
-      confirmComparisonButton.textContent = confirmed ? 'Volver al resumen' : 'Comprobar cantidades';
+      confirmComparisonButton.textContent = confirmed ? 'Volver al resumen' : 'Guardar cantidades de esta nómina';
       comparisonForm.hidden = false;
       comparisonResult.hidden = true;
+      hideMonthlyResults();
+      document.getElementById('month-controls-comparison').hidden = !confirmed;
 
       if (confirmed && review) {
         addMonthlyPayroll.hidden = false;
-        Object.entries(review.comparisons || {}).forEach(([key, result]) => applyComparisonCardResult(key, result));
         renderComparisonResult(review);
-        comparisonSaved.textContent = '✓ Revisión mensual guardada en tu historial privado.';
+        comparisonSaved.textContent = '✓ Recibo guardado en tu historial privado. El cierre mensual se consulta por separado.';
         comparisonSaved.hidden = false;
       }
     }
@@ -3917,13 +4019,13 @@
     }
 
     async function startPayrollComparison(force = false) {
-      if (comparisonRunning || !documents.payroll.confirmed) return;
+      if (savingReview || savingDocument || loadingDocuments || comparisonRunning || !documents.payroll.confirmed) return;
       showComparisonScreen();
       const savedReview = monthlyReviews.get(periodKey());
       if (savedReview?.status === 'complete' && !force) {
         const savedPayroll = plainObjectToMap(savedReview.payroll);
         renderPayrollComparison(savedPayroll, true, savedReview);
-        setComparisonProgress('ready', '✓', 'Revisión mensual guardada', 'Puedes consultar el resultado o volver a leer la nómina.');
+        setComparisonProgress('ready', '✓', 'Cantidades del recibo guardadas', 'Añade otra nómina o confirma que ya están todas para comparar el mes.');
         return;
       }
 
@@ -4007,7 +4109,12 @@
       const payrollValues = new Map();
       for (const [key, input] of comparisonInputs.entries()) {
         const raw = input.value.trim();
-        if (!raw) continue;
+        if (!raw) {
+          comparisonError.textContent = 'Confirma todas las cantidades de esta nómina. Escribe 0 solo si has comprobado que el concepto no aparece.';
+          comparisonError.hidden = false;
+          input.focus();
+          return;
+        }
         const variable = PAYROLL_VARIABLES.find((item) => item.key === key);
         const quantity = parseQuantityValue(raw);
         if (!Number.isFinite(quantity) || quantity < 0 || quantity > variable.max) {
@@ -4026,10 +4133,11 @@
       }
 
       const timesheetValues = confirmedTimesheetAnalyses.get(periodKey()) || new Map();
-      const comparisons = buildMonthlyComparisons(timesheetValues, payrollValues);
-      const incidents = Object.values(comparisons).filter((item) => item.status === 'mismatch').length;
+      const comparisons = {};
+      const incidents = 0;
       const review = {
-        version: 1,
+        version: 2,
+        scope: 'receipt',
         status: 'complete',
         period: periodKey(),
         year: Number(year.value),
@@ -4048,7 +4156,7 @@
       try {
         await uploadMonthlyReview(review);
       } catch (error) {
-        comparisonError.textContent = 'No se ha podido guardar la revisión. Comprueba la conexión y vuelve a pulsar Comprobar cantidades.';
+        comparisonError.textContent = 'No se ha podido guardar el recibo. Comprueba la conexión y vuelve a guardar sus cantidades.';
         comparisonError.hidden = false;
         return;
       } finally {
@@ -4059,18 +4167,17 @@
       addMonthlyPayroll.hidden = false;
       confirmedPayrollAnalyses.set(periodKey(), payrollValues);
       monthlyReviews.set(periodKey(), review);
-      Object.entries(comparisons).forEach(([key, result]) => applyComparisonCardResult(key, result));
-      renderComparisonResult({ comparisons });
+      renderPayrollComparison(payrollValues, true, review);
       comparisonDetectedCount.textContent = `${payrollValues.size} cantidades comprobadas en nómina`;
       comparisonSaved.hidden = true;
       confirmComparisonButton.disabled = false;
       confirmComparisonButton.dataset.action = 'back';
       confirmComparisonButton.textContent = 'Volver al resumen';
       setComparisonProgress(
-        incidents ? 'warning' : 'ready',
-        incidents ? '!' : '✓',
-        incidents ? 'Posible incidencia detectada' : 'Comprobación completada',
-        incidents ? 'Contacta con tus delegados sindicales para resolver la incidencia.' : 'Las cantidades comparadas coinciden.'
+        'ready',
+        '✓',
+        'Cantidades del recibo guardadas',
+        'Añade las nóminas que falten o confirma que ya están todas para comparar el mes completo.'
       );
       updatePeriodCards();
       comparisonSaved.textContent = '✓ Revisión guardada en tu historial privado.';
@@ -4539,6 +4646,10 @@
     addMonthlyPayroll.addEventListener('click', startAnotherPayroll);
     addPeriodPayroll.addEventListener('click', startAnotherPayroll);
     addDocumentPayroll.addEventListener('click', startAnotherPayroll);
+    for (const place of ['period', 'comparison']) {
+      document.getElementById(`close-month-${place}`).addEventListener('click', () => handleMonthClosure(true));
+      document.getElementById(`view-month-${place}`).addEventListener('click', () => handleMonthClosure(false));
+    }
     document.getElementById('open-document-review').addEventListener('click', () => {
       showPeriodScreen();
       startMonthlyReview();

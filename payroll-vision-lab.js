@@ -82,7 +82,7 @@
   function clearAndApply(concepts) {
     Object.values(FIELD_MAP).forEach((id) => {
       const input = document.getElementById(id);
-      if (!input) return;
+      if (!input || input.readOnly) return;
       input.value = '';
       input.placeholder = 'No leído automáticamente';
       delete input.dataset.labAutoRead;
@@ -95,7 +95,7 @@
       if (!key || seen.has(key)) continue;
       const input = document.getElementById(FIELD_MAP[key]);
       const value = String(item?.value || '').trim();
-      if (!input || !value) continue;
+      if (!input || input.readOnly || !value) continue;
       input.value = value;
       input.dataset.labAutoRead = 'vision';
       input.dispatchEvent(new Event('input', { bubbles: true }));
@@ -121,6 +121,7 @@
     const screen = document.getElementById('comparison-screen');
     const img = document.getElementById('comparison-reference-image');
     if (!screen || screen.hidden || !img?.src || running || completedForSrc === img.src) return;
+    if ([...document.querySelectorAll('input[id^="comparison-"]')].some(input => input.readOnly)) return;
     running = true;
     const src = img.src;
     setPayrollProgress('checking', 'Leyendo la nómina con visión…', 'Buscamos las cantidades de los mismos conceptos variables del registro de jornada.');
@@ -133,6 +134,7 @@
         body: JSON.stringify({ imageDataUrl })
       });
       const data = await response.json().catch(() => ({}));
+      if (img.src !== src || screen.hidden || [...document.querySelectorAll('input[id^="comparison-"]')].some(input => input.readOnly)) return;
       if (!response.ok) throw new Error(data?.error || `HTTP_${response.status}`);
       if (data?.isPayroll !== true) {
         clearAndApply([]);
