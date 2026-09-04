@@ -1723,6 +1723,7 @@
           <p>Ya puedes cruzar las cantidades del registro con las descontadas o pagadas en la nómina.</p>
           <button id="start-analysis" class="primary" type="button">Analizar y comparar</button>
           <p id="analysis-ready-status" class="final-status" role="status" hidden></p>
+          <button id="add-period-payroll" class="secondary" type="button" hidden>Añadir otra nómina de este mes</button>
         </section>
 
         <p class="local-note"><span aria-hidden="true">🛡️</span><span>Las imágenes se guardan en un espacio privado asociado a tu cuenta y no tienen enlaces públicos. Podrás recuperarlas al volver a elegir el mismo mes.</span></p>
@@ -1864,6 +1865,13 @@
       </div>
 
       <section class="panel">
+        <section id="saved-document-notice" class="completion-panel" aria-label="Revisión guardada" hidden>
+          <strong>Esta revisión ya está guardada</strong>
+          <p>Sus imágenes se conservan sin cambios. Para guardar otro recibo de este mes, inicia una nueva revisión.</p>
+          <button id="add-document-payroll" class="primary" type="button">Añadir otra nómina de este mes</button>
+          <button id="open-document-review" class="secondary" type="button">Ver revisión guardada</button>
+        </section>
+        <div id="document-upload-controls">
         <div class="instruction">
           <span id="instruction-icon" class="instruction-icon" aria-hidden="true">🗓️</span>
           <div>
@@ -1913,6 +1921,8 @@
           </div>
         </div>
 
+        </div>
+
         <div id="image-preview" class="preview" hidden>
           <img id="preview-image" alt="Vista previa de la imagen seleccionada">
           <div class="preview-label"><span aria-hidden="true">✓</span><span id="preview-status-text">Imagen lista para guardar</span></div>
@@ -1924,7 +1934,7 @@
         </div>
       </section>
 
-      <p class="local-note"><span aria-hidden="true">ℹ️</span><span>Al guardar volverás al resumen para continuar con el siguiente documento.</span></p>
+      <p class="local-note"><span aria-hidden="true">ℹ️</span><span id="document-footer-note">Al guardar volverás al resumen para continuar con el siguiente documento.</span></p>
     </section>
   </main>
 
@@ -2226,6 +2236,10 @@
     let payrollSourceHash = '';
     let savingReview = false;
     const addMonthlyPayroll = document.getElementById('add-monthly-payroll');
+    const addPeriodPayroll = document.getElementById('add-period-payroll');
+    const addDocumentPayroll = document.getElementById('add-document-payroll');
+    const savedDocumentNotice = document.getElementById('saved-document-notice');
+    const documentUploadControls = document.getElementById('document-upload-controls');
     let analysisRunVersion = 0;
     let analysisRunning = false;
     let analysisInputs = new Map();
@@ -2841,6 +2855,7 @@
     }
 
     function updatePeriodCards() {
+      addPeriodPayroll.hidden = loadingDocuments || !isCurrentReviewComplete();
       const label = periodLabel();
       const timesheetCard = document.getElementById('timesheet-card');
       const payrollCard = document.getElementById('payroll-card');
@@ -4106,7 +4121,18 @@
       confirmImageButton.textContent = 'Guardar imagen';
     }
 
+    function isCurrentReviewComplete() {
+      return monthlyReviews.get(periodKey())?.status === 'complete';
+    }
+
     function renderWorkingPreview() {
+      const readOnly = isCurrentReviewComplete();
+      savedDocumentNotice.hidden = !readOnly;
+      documentUploadControls.hidden = readOnly;
+      changeImageButton.hidden = readOnly;
+      document.getElementById('document-footer-note').textContent = readOnly
+        ? 'Puedes consultar esta imagen o iniciar otro recibo sin sustituir la revisión guardada.'
+        : 'Al guardar volverás al resumen para continuar con el siguiente documento.';
       const hasImage = Boolean(workingUrl && (workingFile || workingSaved));
       const needsUpload = Boolean(workingFile && !workingSaved);
       const checkingPrivacy = needsUpload && privacyScanState === 'checking';
@@ -4116,8 +4142,8 @@
       preview.classList.toggle('scan-blocked', privacyBlocked);
       documentActions.hidden = !hasImage;
       const selectionNeedsConsent = false;
-      selectImageButton.disabled = savingDocument || checkingPrivacy || selectionNeedsConsent;
-      changeImageButton.disabled = savingDocument || checkingPrivacy || selectionNeedsConsent;
+      selectImageButton.disabled = readOnly || savingDocument || checkingPrivacy || selectionNeedsConsent;
+      changeImageButton.disabled = readOnly || savingDocument || checkingPrivacy || selectionNeedsConsent;
       changeImageButton.textContent = privacyBlocked ? 'Recortar o cambiar imagen' : 'Cambiar imagen';
       confirmImageButton.disabled = savingDocument || !hasImage || (needsUpload && !readyToUpload);
       confirmImageButton.textContent = savingDocument
@@ -4127,6 +4153,10 @@
           : (privacyBlocked
             ? 'Imagen no aceptada'
             : (needsUpload ? 'Guardar imagen' : 'Volver al resumen')));
+      if (readOnly) {
+        confirmImageButton.disabled = savingDocument;
+        confirmImageButton.textContent = 'Volver al resumen';
+      }
 
       if (hasImage) {
         previewImage.src = workingUrl;
@@ -4239,6 +4269,7 @@
     }
 
     function chooseImage() {
+      if (isCurrentReviewComplete() || savingDocument) return;
       fileInput.value = '';
       fileInput.click();
     }
@@ -4319,6 +4350,10 @@
     }
 
     async function showSelectedFile(file) {
+      if (isCurrentReviewComplete() || savingDocument) {
+        renderWorkingPreview();
+        return;
+      }
       fileError.hidden = true;
       fileError.textContent = '';
 
@@ -4345,17 +4380,17 @@
     async function confirmImage() {
       if (!activeKind || savingDocument) return;
 
+      if (isCurrentReviewComplete()) {
+        showPeriodScreen();
+        return;
+      }
+
       if (workingSaved && !workingFile) {
         showPeriodScreen();
         return;
       }
 
       if (!currentUserId || !workingFile || !workingUrl || !privacyConfirmation.checked) return;
-      if (monthlyReviews.get(periodKey())?.status === 'complete') {
-        fileError.textContent = 'Esta revisión ya está guardada. Abre su resultado y pulsa Añadir otra nómina de este mes para guardar un recibo nuevo sin sustituirla.';
-        fileError.hidden = false;
-        return;
-      }
 
       if (privacyScanState !== 'passed') {
         fileError.textContent = 'La imagen debe superar la comprobación de privacidad antes de guardarse.';
@@ -4431,7 +4466,7 @@
     retryPayrollAnalysisButton.addEventListener('click', () => startPayrollComparison(true));
     confirmComparisonButton.addEventListener('click', confirmMonthlyComparison);
     async function startAnotherPayroll() {
-      if (savingReview || savingDocument || monthlyReviews.get(periodKey())?.status !== 'complete') return;
+      if (loadingDocuments || savingReview || savingDocument || !isCurrentReviewComplete()) return;
       activeReceiptId = newReceiptId();
       addMonthlyPayroll.hidden = true;
       showPeriodScreen();
@@ -4439,6 +4474,12 @@
       if (!loadingDocuments) showPeriodMessage('Nueva nómina de este mes. Añade sus documentos; la anterior sigue guardada en Mi historial.');
     }
     addMonthlyPayroll.addEventListener('click', startAnotherPayroll);
+    addPeriodPayroll.addEventListener('click', startAnotherPayroll);
+    addDocumentPayroll.addEventListener('click', startAnotherPayroll);
+    document.getElementById('open-document-review').addEventListener('click', () => {
+      showPeriodScreen();
+      startMonthlyReview();
+    });
     replaceWrongPayrollButton.addEventListener('click', () => openDocument('payroll'));
     scheduleType.addEventListener('change', markScheduleDirty);
     workPercentage.addEventListener('input', markScheduleDirty);
