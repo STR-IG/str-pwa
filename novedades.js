@@ -86,6 +86,30 @@ function applyHomeCarousels() {
   document.head.appendChild(style);
 }
 
+function applyPrivateAreaLayout() {
+  const privateHeading = Array.from(document.querySelectorAll('.area-heading'))
+    .find((heading) => heading.textContent.trim().toUpperCase() === 'ÁREA PRIVADA');
+  const grid = privateHeading?.nextElementSibling;
+  if (!grid?.classList.contains('area-grid')) return;
+
+  const cards = Array.from(grid.children);
+  const byImage = (src) => cards.find((card) => card.querySelector(`img[src="${src}"]`));
+  const review = byImage('revisa-tu-nomina-card.png');
+  const calculateV = byImage('calcula-tu-v.png');
+  const personalArea = byImage('mi-espacio-str-ig.png');
+  if (!review || !calculateV || !personalArea) return;
+
+  let statistics = byImage('card-estadisticas-nomina.png');
+  if (!statistics) {
+    statistics = document.createElement('article');
+    statistics.className = 'quick-card menu-image-card';
+    statistics.setAttribute('aria-label', 'Estadísticas de nómina, próximamente');
+    statistics.innerHTML = '<img src="card-estadisticas-nomina.png" alt="Estadísticas de nómina, área privada">';
+  }
+
+  grid.replaceChildren(review, statistics, calculateV, personalArea);
+}
+
 function readJson(key, fallback) {
   try {
     const value = JSON.parse(localStorage.getItem(key));
@@ -316,6 +340,7 @@ async function configurePushControl(options) {
 
 export async function initNews(options = {}) {
   applyHomeCarousels();
+  applyPrivateAreaLayout();
   await refreshNewsBadges();
   window.addEventListener('pageshow', () => refreshNewsBadges());
   document.addEventListener('visibilitychange', () => {
