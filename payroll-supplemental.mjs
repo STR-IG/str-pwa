@@ -1,5 +1,6 @@
 // Payroll-only data. Never add these codes to the timesheet comparison keys.
 export const SUPPLEMENTAL_CONCEPTS = [
+  { code: '0053', label: 'Antigüedad' },
   { code: '7001', label: 'Grupo superior · salario' },
   { code: '7016', label: 'Grupo superior · rotatividad' },
   { code: '7017', label: 'Grupo superior · festivo' },
@@ -30,9 +31,9 @@ export function renderSupplemental(container, saved = {}, confirmed = false) {
   const section = document.createElement('section');
   section.id = 'payroll-supplemental';
   const title = document.createElement('h3');
-  title.textContent = 'Otros conceptos de la nómina · grupo superior';
+  title.textContent = 'Otros conceptos de la nómina';
   const note = document.createElement('p');
-  note.textContent = 'Solo se guardan para futuras estadísticas. No se comparan con el registro de jornada. Las cantidades mantienen su unidad original, sin asumir que todas son días. Si no puedes comprobar un dato, déjalo pendiente.';
+  note.textContent = 'Estos conceptos se guardan para futuras estadísticas. No se comparan con el registro de jornada. Las cantidades mantienen su unidad original, sin asumir que todas son días. Si no puedes comprobar un dato, déjalo pendiente.';
   section.append(title, note);
   for (const {code,label} of SUPPLEMENTAL_CONCEPTS) {
     const row = saved?.[code] || {};
