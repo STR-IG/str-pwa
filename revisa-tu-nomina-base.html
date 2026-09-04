@@ -3187,7 +3187,13 @@
       const normalized = normalizeOcrText(text);
       if (!normalized) return false;
 
-      if (PERSONAL_DATA_LABELS.some((pattern) => pattern.test(normalized))) return true;
+      // These are contribution-table headings, not fields identifying the worker.
+      // Remove only the headings for label checks, never the rest of the document.
+      // Identifying values below are still checked against the original OCR text.
+      const labelText = normalized
+        .replace(/\bSEGURIDAD\s+SOCIAL\s+E\s+IRPF\b/g, '')
+        .replace(/\bCUOTA\s+TRABAJADOR\s*(?:\/|\s)\s*A\b/g, '');
+      if (PERSONAL_DATA_LABELS.some((pattern) => pattern.test(labelText))) return true;
 
       const tokens = normalized.match(/[A-Z0-9@._+-]{5,}/g) || [];
       const hasSpanishIdentityNumber = tokens.some((token) => {
@@ -3195,7 +3201,7 @@
         return /^(?:[XYZ]\d{7}[A-Z]|\d{8}[A-Z])$/.test(compact);
       });
       const hasEmail = tokens.some((token) => /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/.test(token));
-      const hasIban = /\bES\d{22}\b/.test(normalized.replace(/\s+/g, ''));
+      const hasIban = /\bES(?:\s*\d){22}\b/.test(normalized);
 
       return hasSpanishIdentityNumber || hasEmail || hasIban;
     }

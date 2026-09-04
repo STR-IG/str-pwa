@@ -97,6 +97,72 @@ async function seedSavedReceipt(bucket, prefix) {
   await bucket.upload(`${prefix}/review`, new Blob([JSON.stringify({ period: prefix.slice('owner-a/'.length).replace('2026/08','2026-08'), status:'complete', timesheet:{}, payroll:{} })]), { upsert: false });
 }
 
+function privacyHarness() {
+  const app = documentHarness(bucketFor('owner-a'));
+  Object.assign(app, { privacyScanVersion: 1, ocrWorkerPromise: null });
+  for (const key of ['privacyScan','privacyScanIcon','privacyScanTitle','privacyScanMessage']) app[key] = element();
+  for (const name of ['PERSONAL_DATA_LABELS','DOCUMENT_KIND_MARKERS']) {
+    const start = source.indexOf(`    const ${name} = `);
+    assert.ok(start >= 0, name);
+    vm.runInContext(source.slice(start, source.indexOf(';', start) + 1), app);
+  }
+  for (const name of ['normalizeOcrText','detectDocumentKind','containsLikelyPersonalData','setPrivacyScanState','checkSelectedFilePrivacy']) vm.runInContext(extract(name), app);
+  return app;
+}
+
+// Synthetic OCR text only: never store real payroll images or personal details in tests.
+const payrollTableText = `DESGLOSE PAGOS: LIQUIDO TOTAL
+DEVENGOS Y DEDUCCIONES
+CODIGO CONCEPTO CANTIDAD IMPORTE DIARIO DEVENGOS DEDUCCIONES
+0001 Salario minimo garantizado 14 50,0000 700,00
+SEGURIDAD SOCIAL E IRPF
+CODIGO CONCEPTO BASE % CUOTA TRABAJADOR/A % EMPRESA CUOTA EMPRESA
+9402 IRPF 700,00 10,00 70,00`;
+
+test('privacy accepts contribution table headings, not just payrolls without that table', () => {
+  const app = privacyHarness();
+  for (const text of [payrollTableText, payrollTableText.toLowerCase(), payrollTableText.replace(/\n/g, ' '),
+    'Seguridad\nSocial   e\nIRPF', 'CUOTA TRABAJADOR / A', 'Cuota trabajador a']) {
+    assert.equal(app.containsLikelyPersonalData(text), false, 'a contribution table is not an identity label');
+  }
+});
+
+test('privacy still rejects identity and contact details even alongside a contribution heading', () => {
+  const app = privacyHarness();
+  for (const label of ['Trabajador/a', 'Trabajador / A', 'Trabajador a', 'Nombre y apellidos', 'DNI', 'NIE', 'NIF', 'Número de empleado', 'NSS', 'NAF',
+    'Número de Seguridad Social', 'Seguridad Social: 12/34567890/12', 'IBAN', 'Cuenta bancaria',
+    'Domicilio', 'Dirección', 'Correo electrónico', 'Teléfono', 'Responsable', 'Centro de trabajo', 'Posición',
+    '12345678Z', 'X1234567L', 'persona@example.invalid', 'ES0000000000000000000000', 'ES00 0000 0000 0000 0000 0000']) {
+    for (const text of [label, `${payrollTableText}\n${label}`, `${label}\n${payrollTableText}`]) {
+      assert.equal(app.containsLikelyPersonalData(text), true, `must reject ${label}`);
+    }
+  }
+});
+
+test('privacy scan enables saving a clean table only after consent; blocked, wrong and failed scans stay disabled', async () => {
+  const app = privacyHarness();
+  app.activeKind = 'payroll';
+  app.workingFile = new Blob(['synthetic image'], {type:'image/png'});
+  app.workingUrl = 'blob:synthetic';
+  app.recognizeTextLocally = async () => payrollTableText;
+  await app.checkSelectedFilePrivacy(app.workingFile, 1);
+  assert.equal(app.privacyScanState, 'passed');
+  assert.equal(app.confirmImageButton.disabled, true, 'manual consent still required');
+  app.privacyConfirmation.checked = true;
+  app.renderWorkingPreview();
+  assert.equal(app.confirmImageButton.disabled, false);
+  for (const [text, state] of [[`${payrollTableText}\nDNI`, 'blocked'], ['REGISTRO DE JORNADA RESUMEN DE VARIABLES', 'wrong-document'], ['', 'failed']]) {
+    app.recognizeTextLocally = async () => text;
+    await app.checkSelectedFilePrivacy(app.workingFile, 1);
+    assert.equal(app.privacyScanState, state);
+    assert.equal(app.confirmImageButton.disabled, true);
+  }
+  app.recognizeTextLocally = async () => { throw new Error('OCR unavailable'); };
+  await app.checkSelectedFilePrivacy(app.workingFile, 1);
+  assert.equal(app.privacyScanState, 'failed');
+  assert.equal(app.confirmImageButton.disabled, true);
+});
+
 test('saved image view offers another receipt, hides replacement controls, and never overwrites (legacy and new)', async () => {
   for (const id of ['', newReceiptId()]) {
     const bucket = bucketFor('owner-a');
