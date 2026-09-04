@@ -96,8 +96,9 @@ function applyPrivateAreaLayout() {
   const byImage = (src) => cards.find((card) => card.querySelector(`img[src="${src}"]`));
   const review = byImage('revisa-tu-nomina-card.png');
   const calculateV = byImage('calcula-tu-v.png');
+  const askStr = byImage('card-preguntale-str-ig.png');
   const personalArea = byImage('mi-espacio-str-ig.png');
-  if (!review || !calculateV || !personalArea) return;
+  if (!review || !calculateV || !askStr || !personalArea) return;
 
   let statistics = byImage('card-estadisticas-nomina.png');
   if (!statistics) {
@@ -107,7 +108,7 @@ function applyPrivateAreaLayout() {
     statistics.innerHTML = '<img src="card-estadisticas-nomina.png" alt="Estadísticas de nómina, área privada">';
   }
 
-  grid.replaceChildren(review, statistics, calculateV, personalArea);
+  grid.replaceChildren(review, statistics, calculateV, askStr, personalArea);
 }
 
 function readJson(key, fallback) {
