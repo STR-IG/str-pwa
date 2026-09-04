@@ -1849,6 +1849,7 @@
             <button id="confirm-comparison" class="primary" type="button">Comprobar cantidades</button>
           </div>
           <p id="comparison-saved" class="analysis-confirmed" role="status" hidden></p>
+          <button id="add-monthly-payroll" class="secondary" type="button" hidden>Añadir otra nómina de este mes</button>
         </div>
       </section>
 
@@ -1929,6 +1930,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@7.0.0/dist/tesseract.min.js" integrity="sha384-2BQ3U3OdKOb0Uczxqr41I9UvZkzr4V9Hv8uSzMMZAlmhsFClvdZX5wi5fDCzG+tM" crossorigin="anonymous"></script>
   <script type="module">
+    import { newReceiptId, receiptCreatedAt, monthReceipts, assertUniquePayroll, sha256 } from './payroll-receipts.mjs?v=1';
     import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 
     const SUPABASE_URL = 'https://icneigdnuntzugisexaz.supabase.co';
@@ -2219,6 +2221,11 @@
     let storageLoadVersion = 0;
     let historyLoadVersion = 0;
     let historyEntries = [];
+    let activeReceiptId = null;
+    let receiptCreated = null;
+    let payrollSourceHash = '';
+    let savingReview = false;
+    const addMonthlyPayroll = document.getElementById('add-monthly-payroll');
     let analysisRunVersion = 0;
     let analysisRunning = false;
     let analysisInputs = new Map();
@@ -2254,14 +2261,18 @@
       return `${monthNames[Number(month.value)]} de ${year.value}`;
     }
 
-    function periodFolder() {
+    function monthFolder() {
       const selectedMonth = String(Number(month.value) + 1).padStart(2, '0');
       return `${currentUserId}/${year.value}/${selectedMonth}`;
     }
 
+    function periodFolder() {
+      return `${monthFolder()}${activeReceiptId ? `/${activeReceiptId}` : ''}`;
+    }
+
     function periodKey() {
       const selectedMonth = String(Number(month.value) + 1).padStart(2, '0');
-      return `${year.value}-${selectedMonth}`;
+      return `${year.value}-${selectedMonth}${activeReceiptId ? `/${activeReceiptId}` : ''}`;
     }
 
     function scheduleStorageKey() {
@@ -2487,6 +2498,9 @@
 
     function hydrateMonthlyReview(review) {
       if (!review || review.status !== 'complete' || review.period !== periodKey()) return false;
+      receiptCreated = review.createdAt || review.updatedAt || receiptCreated;
+      payrollSourceHash = review.payrollSourceHash || '';
+      addMonthlyPayroll.hidden = false;
       const timesheetValues = plainObjectToMap(review.timesheet);
       const payrollValues = plainObjectToMap(review.payroll);
       confirmedTimesheetAnalyses.set(periodKey(), timesheetValues);
@@ -2509,7 +2523,11 @@
     }
 
     async function uploadMonthlyReview(review) {
-      const payload = new Blob([JSON.stringify(review)], { type: 'application/json' });
+      const payload = new Blob([JSON.stringify({ ...review,
+        receiptId: activeReceiptId || `legacy:${year.value}-${Number(month.value) + 1}`,
+        userId: currentUserId, year: Number(year.value), month: Number(month.value) + 1,
+        createdAt: receiptCreated || new Date().toISOString(), payrollSourceHash
+      })], { type: 'application/json' });
       const { error } = await supabase.storage
         .from(STORAGE_BUCKET)
         .upload(storagePath('review'), payload, {
@@ -2521,6 +2539,7 @@
     }
 
     async function invalidateStoredReviewIfNeeded() {
+      addMonthlyPayroll.hidden = true;
       if (!monthlyReviews.has(periodKey())) return;
       confirmedTimesheetAnalyses.delete(periodKey());
       confirmedPayrollAnalyses.delete(periodKey());
@@ -2568,6 +2587,23 @@
     async function loadStoredDocuments() {
       const requestVersion = ++storageLoadVersion;
       clearAllDocuments();
+      addMonthlyPayroll.hidden = true;
+      payrollSourceHash = '';
+      if (currentUserId && activeReceiptId === null) {
+        loadingDocuments = true;
+        updatePeriodCards();
+        try {
+          const receipts = await monthReceipts(supabase.storage.from(STORAGE_BUCKET), monthFolder());
+          if (requestVersion !== storageLoadVersion) return;
+          activeReceiptId = receipts.length ? receipts[receipts.length - 1].id : newReceiptId();
+        } catch {
+          showPeriodMessage('No se ha podido recuperar el historial. Vuelve a seleccionar el mes para reintentar.', true);
+          loadingDocuments = true;
+          updatePeriodCards();
+          return;
+        }
+      }
+      receiptCreated = receiptCreatedAt(activeReceiptId) || new Date().toISOString();
       confirmedTimesheetAnalyses.delete(periodKey());
       confirmedPayrollAnalyses.delete(periodKey());
       monthlyReviews.delete(periodKey());
@@ -2681,8 +2717,8 @@
     function renderPrivateHistory() {
       historyList.textContent = '';
       historyCount.textContent = historyEntries.length === 1
-        ? '1 periodo guardado'
-        : `${historyEntries.length} periodos guardados`;
+        ? '1 recibo guardado'
+        : `${historyEntries.length} recibos guardados`;
       historyLoading.hidden = true;
       historyError.hidden = true;
       historyList.hidden = historyEntries.length === 0;
@@ -2696,14 +2732,14 @@
         const card = document.createElement('button');
         card.type = 'button';
         card.className = `history-card${complete ? ' complete' : ''}${incidents ? ' has-alert' : ''}`;
-        card.setAttribute('aria-label', `Abrir ${monthNames[entry.month - 1]} de ${entry.year}`);
+        card.setAttribute('aria-label', `Abrir nómina ${entry.receiptNumber} de ${monthNames[entry.month - 1]} de ${entry.year}`);
 
         const top = document.createElement('span');
         top.className = 'history-card-top';
 
         const title = document.createElement('strong');
         title.className = 'history-period-title';
-        title.textContent = `${monthNames[entry.month - 1][0].toUpperCase()}${monthNames[entry.month - 1].slice(1)} de ${entry.year}`;
+        title.textContent = `${monthNames[entry.month - 1][0].toUpperCase()}${monthNames[entry.month - 1].slice(1)} de ${entry.year} · Nómina ${entry.receiptNumber}`;
 
         const status = document.createElement('span');
         status.className = 'history-period-status';
@@ -2735,7 +2771,7 @@
         card.appendChild(top);
         card.appendChild(chips);
         card.appendChild(openLabel);
-        card.addEventListener('click', () => openHistoryPeriod(entry.year, entry.month));
+        card.addEventListener('click', () => openHistoryPeriod(entry.year, entry.month, entry.receiptId));
         historyList.appendChild(card);
       });
     }
@@ -2777,20 +2813,19 @@
 
         const entries = await Promise.all(months.map(async ({ year: savedYear, month: savedMonth }) => {
           const folder = `${currentUserId}/${savedYear}/${String(savedMonth).padStart(2, '0')}`;
-          const files = await listAllStorageItems(folder);
-          const hasReview = files.some((item) => Boolean(item.id) && item.name === 'review');
-          const review = hasReview ? await downloadMonthlyReview(`${folder}/review`) : null;
-          return {
-            year: savedYear,
-            month: savedMonth,
-            timesheet: files.some((item) => Boolean(item.id) && item.name === 'timesheet'),
-            payroll: files.some((item) => Boolean(item.id) && item.name === 'payroll'),
-            review
-          };
+          const receipts = await monthReceipts(supabase.storage.from(STORAGE_BUCKET), folder);
+          return Promise.all(receipts.map(async (receipt, index) => ({
+            year: savedYear, month: savedMonth,
+            receiptId: receipt.id, receiptNumber: index + 1,
+            timesheet: receipt.files.some(item => item.id && item.name === 'timesheet'),
+            payroll: receipt.files.some(item => item.id && item.name === 'payroll'),
+            review: receipt.files.some(item => item.id && item.name === 'review')
+              ? await downloadMonthlyReview(`${receipt.folder}/review`) : null
+          })));
         }));
 
         if (requestVersion !== historyLoadVersion) return;
-        historyEntries = entries
+        historyEntries = entries.flat()
           .filter((entry) => entry.timesheet || entry.payroll)
           .sort((a, b) => (b.year - a.year) || (b.month - a.month));
         renderPrivateHistory();
@@ -3825,6 +3860,7 @@
       comparisonResult.hidden = true;
 
       if (confirmed && review) {
+        addMonthlyPayroll.hidden = false;
         Object.entries(review.comparisons || {}).forEach(([key, result]) => applyComparisonCardResult(key, result));
         renderComparisonResult(review);
         comparisonSaved.textContent = '✓ Revisión mensual guardada en tu historial privado.';
@@ -3934,6 +3970,7 @@
     }
 
     async function confirmMonthlyComparison() {
+      if (savingReview) return;
       if (confirmComparisonButton.dataset.action === 'back') {
         showPeriodScreen();
         return;
@@ -3982,6 +4019,22 @@
         incidentCount: incidents,
         updatedAt: new Date().toISOString()
       };
+      savingReview = true;
+      confirmComparisonButton.disabled = true;
+      addMonthlyPayroll.hidden = true;
+      const savingKey = periodKey();
+      try {
+        await uploadMonthlyReview(review);
+      } catch (error) {
+        comparisonError.textContent = 'No se ha podido guardar la revisión. Comprueba la conexión y vuelve a pulsar Comprobar cantidades.';
+        comparisonError.hidden = false;
+        return;
+      } finally {
+        savingReview = false;
+        confirmComparisonButton.disabled = false;
+      }
+      if (savingKey !== periodKey()) return;
+      addMonthlyPayroll.hidden = false;
       confirmedPayrollAnalyses.set(periodKey(), payrollValues);
       monthlyReviews.set(periodKey(), review);
       Object.entries(comparisons).forEach(([key, result]) => applyComparisonCardResult(key, result));
@@ -3998,11 +4051,8 @@
         incidents ? 'Contacta con tus delegados sindicales para resolver la incidencia.' : 'Las cantidades comparadas coinciden.'
       );
       updatePeriodCards();
-      void uploadMonthlyReview(review).catch((error) => {
-        console.error('No se ha podido añadir la comprobación al historial:', error);
-        comparisonError.textContent = 'La comprobación está terminada, pero no se ha podido añadir al historial.';
-        comparisonError.hidden = false;
-      });
+      comparisonSaved.textContent = '✓ Revisión guardada en tu historial privado.';
+      comparisonSaved.hidden = false;
       comparisonResult.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
 
@@ -4138,6 +4188,7 @@
     }
 
     async function showHistoryScreen() {
+      if (savingReview || savingDocument) return;
       periodScreen.hidden = true;
       documentScreen.hidden = true;
       analysisScreen.hidden = true;
@@ -4149,7 +4200,9 @@
       await loadPrivateHistory();
     }
 
-    async function openHistoryPeriod(savedYear, savedMonth) {
+    async function openHistoryPeriod(savedYear, savedMonth, receiptId = '') {
+      if (savingReview || savingDocument) return;
+      activeReceiptId = receiptId;
       ensureYearOption(savedYear);
       year.value = String(savedYear);
       month.value = String(savedMonth - 1);
@@ -4180,6 +4233,7 @@
     }
 
     async function handlePeriodChange() {
+      activeReceiptId = null;
       document.getElementById('analysis-ready-status').hidden = true;
       await loadStoredDocuments();
     }
@@ -4280,6 +4334,10 @@
         return;
       }
 
+      if (activeKind === 'payroll') {
+        payrollSourceHash = '';
+        try { payrollSourceHash = await sha256(file); } catch { /* Saved bytes still checked. */ }
+      }
       openTimesheetCrop(file);
       return;
     }
@@ -4293,6 +4351,11 @@
       }
 
       if (!currentUserId || !workingFile || !workingUrl || !privacyConfirmation.checked) return;
+      if (monthlyReviews.get(periodKey())?.status === 'complete') {
+        fileError.textContent = 'Esta revisión ya está guardada. Abre su resultado y pulsa Añadir otra nómina de este mes para guardar un recibo nuevo sin sustituirla.';
+        fileError.hidden = false;
+        return;
+      }
 
       if (privacyScanState !== 'passed') {
         fileError.textContent = 'La imagen debe superar la comprobación de privacidad antes de guardarse.';
@@ -4307,17 +4370,25 @@
       renderWorkingPreview();
 
       const path = storagePath(activeKind);
-      const { error } = await supabase.storage
+      let error;
+      try {
+        if (activeKind === 'payroll') {
+          await assertUniquePayroll(supabase.storage.from(STORAGE_BUCKET), monthFolder(), workingFile, path, payrollSourceHash);
+        }
+        ({ error } = await supabase.storage
         .from(STORAGE_BUCKET)
         .upload(path, workingFile, {
           cacheControl: '0',
           contentType: workingFile.type,
           upsert: true
-        });
+        }));
+      } catch (failure) { error = failure; }
 
       if (error) {
         savingDocument = false;
-        fileError.textContent = 'No se ha podido guardar la imagen. Comprueba la conexión e inténtalo de nuevo.';
+        fileError.textContent = error.message === 'DUPLICATE_PAYROLL'
+          ? 'Esta nómina ya está guardada en otro recibo de este mes. Puedes abrirla desde Mi historial.'
+          : 'No se ha podido comprobar o guardar la imagen. Comprueba la conexión e inténtalo de nuevo.';
         fileError.hidden = false;
         renderWorkingPreview();
         return;
@@ -4359,6 +4430,15 @@
     replaceWrongTimesheetButton.addEventListener('click', () => openDocument('timesheet'));
     retryPayrollAnalysisButton.addEventListener('click', () => startPayrollComparison(true));
     confirmComparisonButton.addEventListener('click', confirmMonthlyComparison);
+    async function startAnotherPayroll() {
+      if (savingReview || savingDocument || monthlyReviews.get(periodKey())?.status !== 'complete') return;
+      activeReceiptId = newReceiptId();
+      addMonthlyPayroll.hidden = true;
+      showPeriodScreen();
+      await loadStoredDocuments();
+      if (!loadingDocuments) showPeriodMessage('Nueva nómina de este mes. Añade sus documentos; la anterior sigue guardada en Mi historial.');
+    }
+    addMonthlyPayroll.addEventListener('click', startAnotherPayroll);
     replaceWrongPayrollButton.addEventListener('click', () => openDocument('payroll'));
     scheduleType.addEventListener('change', markScheduleDirty);
     workPercentage.addEventListener('input', markScheduleDirty);
@@ -4390,6 +4470,7 @@
     year.addEventListener('change', handlePeriodChange);
 
     topBack.addEventListener('click', (event) => {
+      if (savingReview || savingDocument) { event.preventDefault(); return; }
       if (!comparisonScreen.hidden) {
         event.preventDefault();
         showPeriodScreen();
