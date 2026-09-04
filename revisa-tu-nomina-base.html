@@ -1862,6 +1862,7 @@
         <span id="document-step" class="step-label">PASO 2 DE 3</span>
         <h1 id="document-screen-title" tabindex="-1">Registro de jornada</h1>
         <p id="document-period" class="document-period"></p>
+        <p id="payroll-timesheet-note" class="analysis-confirmed" hidden>El registro de jornada de este mes ya está guardado. Añade solo la nueva nómina.</p>
       </div>
 
       <section class="panel">
@@ -3985,7 +3986,7 @@
     }
 
     async function confirmMonthlyComparison() {
-      if (savingReview) return;
+      if (savingReview || savingDocument || loadingDocuments) return;
       if (confirmComparisonButton.dataset.action === 'back') {
         showPeriodScreen();
         return;
@@ -4072,6 +4073,7 @@
     }
 
     function startMonthlyReview() {
+      if (savingReview || savingDocument || loadingDocuments) return;
       const savedReview = monthlyReviews.get(periodKey());
       if (savedReview?.status === 'complete') {
         startPayrollComparison();
@@ -4193,6 +4195,7 @@
       document.getElementById('document-step').textContent = copy.step;
       document.getElementById('document-screen-title').textContent = copy.title;
       document.getElementById('document-period').textContent = periodLabel();
+      document.getElementById('payroll-timesheet-note').hidden = kind !== 'payroll' || !documents.timesheet.saved || isCurrentReviewComplete();
       document.getElementById('instruction-icon').textContent = copy.icon;
       document.getElementById('instruction-text').textContent = copy.instruction;
       renderWorkingPreview();
@@ -4466,12 +4469,66 @@
     retryPayrollAnalysisButton.addEventListener('click', () => startPayrollComparison(true));
     confirmComparisonButton.addEventListener('click', confirmMonthlyComparison);
     async function startAnotherPayroll() {
-      if (loadingDocuments || savingReview || savingDocument || !isCurrentReviewComplete()) return;
-      activeReceiptId = newReceiptId();
+      if (!currentUserId || loadingDocuments || savingReview || savingDocument || !isCurrentReviewComplete()) return;
+      const sourcePath = storagePath('timesheet');
+      const sourceTimesheet = { ...documents.timesheet };
+      const sourceReview = monthlyReviews.get(periodKey());
+      const sourceValues = new Map(confirmedTimesheetAnalyses.get(periodKey()) || plainObjectToMap(sourceReview.timesheet));
+      const sourceSchedule = { ...currentScheduleSettings() };
+      const nextReceiptId = newReceiptId();
+      const nextPath = `${monthFolder()}/${nextReceiptId}/timesheet`;
+      const addButtons = [addMonthlyPayroll, addPeriodPayroll, addDocumentPayroll];
+      const previousMonthDisabled = month.disabled;
+      const previousYearDisabled = year.disabled;
+      let reusedBlob;
+      savingDocument = true;
+      loadingDocuments = true;
+      month.disabled = true;
+      year.disabled = true;
+      addButtons.forEach(button => { button.disabled = true; button.textContent = 'Preparando nueva nómina…'; });
+      updatePeriodCards();
+      try {
+        // Reuse only the saved, privacy-checked document, never an unsaved crop.
+        reusedBlob = sourceTimesheet.saved ? sourceTimesheet.blob : null;
+        if (!reusedBlob) {
+          const { data, error } = await supabase.storage.from(STORAGE_BUCKET).download(sourcePath);
+          if (error || !data) throw error || new Error('TIMESHEET_UNAVAILABLE');
+          reusedBlob = data;
+        }
+        const { error } = await supabase.storage.from(STORAGE_BUCKET).upload(nextPath, reusedBlob, {
+          cacheControl: '0', contentType: reusedBlob.type || 'image/jpeg', upsert: false
+        });
+        if (error) throw error;
+      } catch {
+        reusedBlob = null;
+      } finally {
+        savingDocument = false;
+        loadingDocuments = false;
+        month.disabled = previousMonthDisabled;
+        year.disabled = previousYearDisabled;
+        addButtons.forEach(button => { button.disabled = false; button.textContent = 'Añadir otra nómina de este mes'; });
+      }
+      if (!reusedBlob) {
+        showPeriodScreen();
+        showPeriodMessage('No se ha podido preparar la nueva nómina con el registro guardado. Comprueba la conexión y vuelve a pulsar Añadir otra nómina de este mes. La revisión anterior no se ha modificado.', true);
+        return;
+      }
+      // Switch receipts only after the independent copy has been saved successfully.
+      clearAllDocuments();
+      activeReceiptId = nextReceiptId;
+      receiptCreated = receiptCreatedAt(nextReceiptId);
+      payrollSourceHash = '';
+      Object.assign(documents.timesheet, {
+        file: null, blob: reusedBlob, url: URL.createObjectURL(reusedBlob),
+        ocrText: sourceTimesheet.ocrText || '', confirmed: true, saved: true, path: nextPath
+      });
+      confirmedTimesheetAnalyses.set(periodKey(), sourceValues);
+      saveWorkSchedule(sourceSchedule);
+      loadWorkSchedule();
       addMonthlyPayroll.hidden = true;
       showPeriodScreen();
-      await loadStoredDocuments();
-      if (!loadingDocuments) showPeriodMessage('Nueva nómina de este mes. Añade sus documentos; la anterior sigue guardada en Mi historial.');
+      showPeriodMessage('Registro de jornada conservado. Añade solo la nueva nómina; la anterior sigue guardada en Mi historial.');
+      openDocument('payroll');
     }
     addMonthlyPayroll.addEventListener('click', startAnotherPayroll);
     addPeriodPayroll.addEventListener('click', startAnotherPayroll);

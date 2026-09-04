@@ -22,14 +22,15 @@ const element = () => ({ hidden: false, disabled: false, textContent: '', value:
 function bucketFor(user, objects = new Map()) {
   const allowed = path => path.startsWith(`${user}/`);
   return {
-    objects, failUploads: false,
+    objects, failUploads: false, failDownloads: false, uploads: [],
     async upload(path, blob, options) {
+      this.uploads.push({path, options});
       if (!allowed(path) || this.failUploads) return { error: new Error('Denied or offline') };
       if (objects.has(path) && !options.upsert) return { error: new Error('Duplicate') };
       objects.set(path, blob); return { error: null };
     },
     async download(path) {
-      return allowed(path) && objects.has(path) ? { data: objects.get(path), error: null } : { error: new Error('Denied or missing') };
+      return !this.failDownloads && allowed(path) && objects.has(path) ? { data: objects.get(path), error: null } : { error: new Error('Denied or missing') };
     },
     async list(path, { offset, limit }) {
       if (path !== user && !allowed(path)) return { data: [], error: null };
@@ -54,15 +55,16 @@ function harness(bucket) {
     storageLoadVersion: 0, historyLoadVersion: 0, loadingDocuments: false, historyEntries: [], savingReview: false, savingDocument: false,
     confirmedTimesheetAnalyses: new Map(), confirmedPayrollAnalyses: new Map(), monthlyReviews: new Map(), workSchedules: new Map(),
     documents: { timesheet: {}, payroll: {} }, comparisonInputs: new Map(), PAYROLL_VARIABLES: [],
+    activeKind: '', workingFile: null, workingUrl: '', workingSaved: false, workingOcrText: '',
     clearAllDocuments() { this; }, loadWorkSchedule() {}, updatePeriodCards() {}, showPeriodMessage() {},
-    showPeriodScreen() {}, ensureYearOption() {}, renderPrivateHistory() {},
+    showPeriodScreen() {}, openDocument() {}, ensureYearOption() {}, renderPrivateHistory() {},
     currentScheduleSettings: () => ({}), buildMonthlyComparisons: () => ({}),
     applyComparisonCardResult() {}, renderComparisonResult() {}, setComparisonProgress() {},
     parseQuantityValue: Number, formatQuantity: String,
     document: { getElementById(id) { if (!nodes.has(id)) nodes.set(id, element()); return nodes.get(id); } }
   });
-  for (const key of ['addMonthlyPayroll','historyCount','historyLoading','historyError','historyList','historyEmpty','refreshHistoryButton','comparisonError','confirmComparisonButton','comparisonSaved','comparisonResult','comparisonDetectedCount']) ctx[key] = element();
-  for (const name of ['monthFolder','periodFolder','periodKey','storagePath','mapToPlainObject','plainObjectToMap','uploadMonthlyReview','hydrateMonthlyReview','downloadMonthlyReview','loadStoredDocuments','listAllStorageItems','loadPrivateHistory','openHistoryPeriod','confirmMonthlyComparison','isCurrentReviewComplete','startAnotherPayroll']) vm.runInContext(extract(name), ctx);
+  for (const key of ['addMonthlyPayroll','addPeriodPayroll','addDocumentPayroll','historyCount','historyLoading','historyError','historyList','historyEmpty','refreshHistoryButton','comparisonError','confirmComparisonButton','comparisonSaved','comparisonResult','comparisonDetectedCount']) ctx[key] = element();
+  for (const name of ['monthFolder','periodFolder','periodKey','storagePath','mapToPlainObject','plainObjectToMap','uploadMonthlyReview','hydrateMonthlyReview','downloadMonthlyReview','loadStoredDocuments','listAllStorageItems','loadPrivateHistory','openHistoryPeriod','confirmMonthlyComparison','isCurrentReviewComplete','clearAllDocuments','revokeWorkingUrlIfTemporary','saveWorkSchedule','startAnotherPayroll']) vm.runInContext(extract(name), ctx);
   return ctx;
 }
 
@@ -75,7 +77,8 @@ function documentHarness(bucket) {
     documentCopy: { timesheet: {}, payroll: {} },
     ALLOWED_IMAGE_TYPES: new Set(['image/png']), MAX_IMAGE_BYTES: 15 * 1024 * 1024,
     openTimesheetCrop() { app.cropOpened = true; },
-    showPeriodScreen() { app.returnedToSummary = true; },
+    showPeriodScreen() { app.returnedToSummary = true; app.updatePeriodCards(); },
+    showPeriodMessage(message, isError) { app.periodMessage = {message, isError}; },
     startMonthlyReview() { app.openedSavedReview = true; }
   });
   for (const key of ['addPeriodPayroll','addDocumentPayroll','savedDocumentNotice','documentUploadControls',
@@ -130,16 +133,16 @@ test('saved image view offers another receipt, hides replacement controls, and n
     assert.notEqual(app.activeReceiptId, id);
     assert.equal(app.month.value, '7'); assert.equal(app.year.value, '2026');
     assert.equal(app.addPeriodPayroll.hidden, true);
-    app.openDocument('timesheet');
+    assert.equal(app.activeKind, 'payroll', 'opens the new payroll, not the timesheet');
+    assert.equal(app.documents.timesheet.confirmed, true);
+    assert.equal(app.documents.payroll.confirmed, false);
+    assert.equal(await bucket.objects.get(app.storagePath('timesheet')).text(), 'saved timesheet');
+    assert.equal(app.document.getElementById('open-payroll').disabled, false);
+    assert.equal(app.document.getElementById('document-count').textContent, '1 de 2 guardados');
+    assert.equal(app.document.getElementById('payroll-timesheet-note').hidden, false);
     assert.equal(app.savedDocumentNotice.hidden, true);
     assert.equal(app.documentUploadControls.hidden, false);
     assert.equal(app.selectImageButton.disabled, false);
-    app.workingFile = new Blob(['new timesheet'], { type: 'image/png' });
-    app.workingUrl = URL.createObjectURL(app.workingFile);
-    app.privacyScanState = 'passed'; app.privacyConfirmation.checked = true;
-    await app.confirmImage();
-    assert.equal(await bucket.objects.get(app.storagePath('timesheet')).text(), 'new timesheet');
-    app.openDocument('payroll');
     app.workingFile = new Blob(['new payroll'], { type: 'image/png' });
     app.workingUrl = URL.createObjectURL(app.workingFile);
     app.privacyScanState = 'passed'; app.privacyConfirmation.checked = true;
@@ -153,7 +156,8 @@ test('saved image view offers another receipt, hides replacement controls, and n
     const savedCount = bucket.objects.size;
     await app.addPeriodPayroll.click();
     assert.equal(app.isCurrentReviewComplete(), false);
-    assert.equal(bucket.objects.size, savedCount, 'starting another receipt does not write or delete data');
+    assert.equal(bucket.objects.size, savedCount + 1, 'only copies the saved timesheet for the new receipt');
+    assert.equal(app.activeKind, 'payroll');
   }
 });
 
@@ -175,6 +179,88 @@ test('new receipt keeps privacy gate; loading or saving cannot start another rec
   }
 });
 
+test('another payroll reuses saved bytes and schedule, survives reload, and still rejects duplicate payrolls', async () => {
+  const bucket = bucketFor('owner-a');
+  await seedSavedReceipt(bucket, 'owner-a/2026/08');
+  const app = documentHarness(bucket);
+  await app.loadStoredDocuments();
+  const schedule = {type:'reduced', percentage:80, duration:'whole'};
+  app.currentScheduleSettings = () => schedule;
+  app.confirmedTimesheetAnalyses.set(app.periodKey(), new Map([['night','10'], ['meals','2']]));
+  // A pending replacement must not be used as the new receipt's timesheet.
+  app.workingFile = new Blob(['unsaved replacement']); app.workingUrl = 'blob:pending';
+  const original = new Map(bucket.objects);
+  await app.addMonthlyPayroll.click();
+  const receiptId = app.activeReceiptId;
+  assert.equal(app.activeKind, 'payroll');
+  assert.deepEqual(JSON.parse(JSON.stringify(app.workSchedules.get(app.periodKey()))), schedule);
+  assert.equal(app.confirmedTimesheetAnalyses.get(app.periodKey()).get('night'), '10');
+  assert.equal(app.monthlyReviews.has(app.periodKey()), false);
+  assert.equal(app.confirmedPayrollAnalyses.has(app.periodKey()), false);
+  assert.equal(bucket.objects.has(app.storagePath('payroll')), false);
+  assert.equal(bucket.uploads.at(-1).options.upsert, false);
+  assert.equal(await bucket.objects.get(app.storagePath('timesheet')).text(), 'saved timesheet');
+  app.workingFile = new Blob(['saved payroll'], {type:'image/png'});
+  app.workingUrl = URL.createObjectURL(app.workingFile);
+  app.privacyScanState = 'passed'; app.privacyConfirmation.checked = true;
+  await app.confirmImage();
+  assert.match(app.fileError.textContent, /ya está guardada en otro recibo/);
+  assert.equal(bucket.objects.has(app.storagePath('payroll')), false);
+  const reopened = documentHarness(bucket);
+  await reopened.loadStoredDocuments();
+  assert.equal(reopened.activeReceiptId, receiptId);
+  assert.equal(reopened.documents.timesheet.confirmed, true);
+  assert.equal(reopened.document.getElementById('open-payroll').disabled, false);
+  assert.equal(reopened.document.getElementById('document-count').textContent, '1 de 2 guardados');
+  for (const [path, blob] of original) assert.equal(await bucket.objects.get(path).text(), await blob.text());
+});
+
+test('failed preparation preserves the original receipt, unlocks the UI, and can be retried', async () => {
+  for (const failure of ['upload', 'download']) {
+    const bucket = bucketFor('owner-a');
+    await seedSavedReceipt(bucket, 'owner-a/2026/08');
+    const original = new Map(bucket.objects);
+    const app = documentHarness(bucket);
+    await app.loadStoredDocuments();
+    if (failure === 'upload') bucket.failUploads = true;
+    else { app.documents.timesheet.blob = null; bucket.failDownloads = true; }
+    await app.addPeriodPayroll.click();
+    assert.equal(app.activeReceiptId, '');
+    assert.equal(app.isCurrentReviewComplete(), true);
+    assert.equal(app.periodMessage.isError, true);
+    assert.equal(app.savingDocument, false); assert.equal(app.loadingDocuments, false);
+    assert.notEqual(app.month.disabled, true); assert.notEqual(app.year.disabled, true);
+    assert.equal(app.addPeriodPayroll.disabled, false);
+    assert.deepEqual(bucket.objects, original);
+    bucket.failUploads = false; bucket.failDownloads = false;
+    await app.addPeriodPayroll.click();
+    assert.notEqual(app.activeReceiptId, '');
+    assert.equal(app.activeKind, 'payroll');
+    assert.equal(bucket.objects.size, original.size + 1);
+  }
+});
+
+test('double-click creates only one receipt and keeps the original active until the copy succeeds', async () => {
+  const bucket = bucketFor('owner-a');
+  await seedSavedReceipt(bucket, 'owner-a/2026/08');
+  const app = documentHarness(bucket);
+  await app.loadStoredDocuments();
+  const upload = bucket.upload.bind(bucket);
+  let release;
+  const pending = new Promise(resolve => { release = resolve; });
+  bucket.upload = async (...args) => { await pending; return upload(...args); };
+  const adding = app.startAnotherPayroll();
+  assert.equal(app.savingDocument, true);
+  assert.equal(app.month.disabled, true); assert.equal(app.year.disabled, true);
+  assert.equal(app.activeReceiptId, '');
+  await app.startAnotherPayroll();
+  release(); await adding;
+  assert.equal(bucket.objects.size, 4);
+  assert.equal(app.activeKind, 'payroll');
+  assert.equal(app.savingDocument, false);
+  assert.equal(app.addPeriodPayroll.disabled, false);
+});
+
 test('August: three separate receipts, add-another action, reopening and legacy compatibility', async () => {
   const bucket = bucketFor('owner-a');
   const app = harness(bucket);
@@ -185,7 +271,8 @@ test('August: three separate receipts, add-another action, reopening and legacy 
     const path = app.storagePath('payroll');
     await assertUniquePayroll(bucket, app.monthFolder(), payroll, path);
     await bucket.upload(path, payroll, { upsert: false });
-    await bucket.upload(app.storagePath('timesheet'), new Blob(['Fictitious timesheet']), { upsert: false });
+    if (i === 0) await bucket.upload(app.storagePath('timesheet'), new Blob(['Fictitious timesheet']), { upsert: false });
+    assert.equal(await bucket.objects.get(app.storagePath('timesheet')).text(), 'Fictitious timesheet');
     app.confirmComparisonButton.dataset.action = 'check';
     await app.confirmMonthlyComparison();
     assert.equal(app.addMonthlyPayroll.hidden, false);
