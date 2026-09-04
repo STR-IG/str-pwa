@@ -61,6 +61,21 @@ test('one receipt, three receipts, decimals, zero and actual mismatches', async 
   assert.equal(result.comparisons.meals.status,'match');
 });
 
+test('payroll-only group concepts persist per receipt without entering monthly comparisons', async () => {
+  const bucket=bucketFor('owner-a');
+  const one=await seed(bucket,folder,{vacation:'10'});
+  const two=await seed(bucket,folder,{vacation:'7'});
+  for(const item of [one,two]) {
+    item.review.supplemental={'7001':{code:'7001',status:'present',quantity:5,amount:119.9,unit:null}};
+    bucket.objects.set(`${item.path}/review`,new Blob([JSON.stringify(item.review)]));
+  }
+  const closed=await closeMonth(bucket,folder,keys,compare);
+  assert.equal(closed.comparisons.vacation.status,'match');
+  assert.deepEqual(Object.keys(closed.comparisons).sort(),[...keys].sort());
+  assert.equal(closed.payroll['7001'],undefined);
+  assert.equal(JSON.parse(await bucket.objects.get(`${one.path}/review`).text()).supplemental['7001'].amount,119.9);
+});
+
 test('incomplete receipts, missing quantities, invalid JSON and conflicting registers prevent closure', async () => {
   for (const issue of ['draft','quantity','register','json']) {
     const bucket = bucketFor('owner-a');

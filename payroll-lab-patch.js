@@ -105,6 +105,7 @@
     const lines = String(text || '').split(/\r?\n/).map(normalizeLine).filter(Boolean);
     for (let i = 0; i < lines.length; i += 1) {
       const line = lines[i];
+      if (/\b(?:7001|7016|7017)\b|GRU(?:PO|P)?[.\s]*SUP|DIFER/.test(line)) continue;
       const pattern = config.labels.find((regex) => regex.test(line));
       if (!pattern) continue;
 

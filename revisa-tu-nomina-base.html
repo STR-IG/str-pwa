@@ -1955,6 +1955,7 @@
   <script type="module">
     import { newReceiptId, receiptCreatedAt, monthReceipts, assertUniquePayroll, sha256 } from './payroll-receipts.mjs?v=1';
     import { closeMonth, readMonthClosure } from './payroll-month.mjs?v=1';
+    import { renderSupplemental, readSupplemental } from './payroll-supplemental.mjs?v=1';
     import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 
     const SUPABASE_URL = 'https://icneigdnuntzugisexaz.supabase.co';
@@ -3196,6 +3197,7 @@
 
     function matchPayrollVariable(line) {
       const normalized = normalizeOcrLine(line);
+      if (/\b(?:7001|7016|7017)\b|GRU(?:PO|P)?[.\s]*SUP|DIFER/.test(normalized)) return null;
       for (const key of PAYROLL_MATCH_ORDER) {
         const variable = PAYROLL_VARIABLES.find((item) => item.key === key);
         for (const pattern of variable?.payrollPatterns || []) {
@@ -3970,6 +3972,7 @@
         comparisonCards.set(key, { card, status, difference });
       });
 
+      renderSupplemental(comparisonFields, review?.supplemental || monthlyReviews.get(periodKey())?.supplemental, confirmed);
       comparisonDetectedCount.textContent = confirmed
         ? `${detected} cantidades confirmadas en nómina`
         : `${detected} cantidades leídas automáticamente de la nómina`;
@@ -4132,6 +4135,13 @@
         payrollValues.set(key, formatQuantity(quantity));
       }
 
+      let supplemental;
+      try { supplemental = readSupplemental(); }
+      catch (error) {
+        comparisonError.textContent = error.message;
+        comparisonError.hidden = false;
+        return;
+      }
       const timesheetValues = confirmedTimesheetAnalyses.get(periodKey()) || new Map();
       const comparisons = {};
       const incidents = 0;
@@ -4145,6 +4155,7 @@
         schedule: currentScheduleSettings(),
         timesheet: mapToPlainObject(timesheetValues),
         payroll: mapToPlainObject(payrollValues),
+        supplemental,
         comparisons,
         incidentCount: incidents,
         updatedAt: new Date().toISOString()
