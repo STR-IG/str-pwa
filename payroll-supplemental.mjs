@@ -65,11 +65,8 @@ export function renderSupplemental(container, saved = {}, confirmed = false) {
       column.append(label,input); values.appendChild(column);
       input.addEventListener('input', () => { card.dataset.manual = 'true'; status.value = 'present'; });
     }
-    status.addEventListener('change', () => {
-      card.dataset.manual = 'true';
-      for (const input of values.querySelectorAll('input')) input.disabled = status.value === 'absent';
-    });
-    for (const input of values.querySelectorAll('input')) input.disabled = status.value === 'absent';
+    status.addEventListener('change', () => { card.dataset.manual = 'true'; });
+    // Absence is a saved status, not an input lock. Typing changes it to present.
     card.append(heading,statusLabel,status,values); section.appendChild(card);
   }
   container.appendChild(section);

@@ -54,6 +54,19 @@ test('actual supplemental UI reads, allows correction, protects manual edits, re
   delete globalThis.document;
 });
 
+test('absent supplemental concepts stay writable in edit mode, typing marks present',()=>{
+  const root=dom();globalThis.document=root;
+  renderSupplemental(root.createElement('div'),{'7001':{status:'absent',quantity:null,amount:null}},false);
+  const quantity=root.getElementById('supplemental-7001-quantity');
+  const amount=root.getElementById('supplemental-7001-amount');
+  assert.equal(quantity.disabled,false);assert.equal(quantity.readOnly,false);
+  assert.equal(amount.disabled,false);assert.equal(amount.readOnly,false);
+  quantity.value='5';quantity.listeners.input();amount.value='119,90';amount.listeners.input();
+  assert.equal(root.getElementById('supplemental-7001-status').value,'present');
+  assert.equal(readSupplemental(root)['7001'].amount,119.9);
+  delete globalThis.document;
+});
+
 test('actual save/reopen persists supplements independently and leaves comparisons unchanged',async()=>{
   const bucket=bucketFor('owner-a');const app=documentHarness(bucket);
   app.readSupplemental=()=>validateSupplemental({'7001':{status:'present',quantity:'5',amount:'119,90'}});
@@ -94,4 +107,17 @@ test('edge validation whitelists codes and rejects ambiguity; API retains auth a
   assert.equal(ctx.normalizeSupplemental([{code:'7001'},{code:'7001'}]).length,0);
   assert.match(code,/admin.auth.getUser\(token\)/);assert.match(code,/private_access_allowlist/);
   assert.match(code,/includeSupplemental === true/);assert.match(code,/return json\(\{ isPayroll: true, concepts \}\)/);
+});
+
+test('manual editing does not start local OCR or remote vision',async()=>{
+  const screen={hidden:false,dataset:{manualEdit:'true'}};
+  const ctx=vm.createContext({document:{getElementById:id=>id==='comparison-screen'?screen:{src:'synthetic'}},
+    running:false,completedForSrc:'',updateSafeWording(){throw Error('unexpected OCR entry');},
+    fetch(){throw Error('unexpected network call');}});
+  const vision=readFileSync(new URL('../payroll-vision-lab.js',import.meta.url),'utf8');
+  vm.runInContext(vision.slice(vision.indexOf('  async function runPayrollVisionRead('),vision.indexOf('  const observer =')),ctx);
+  await ctx.runPayrollVisionRead();
+  const patch=readFileSync(new URL('../payroll-lab-patch.js',import.meta.url),'utf8');
+  vm.runInContext(patch.slice(patch.indexOf('  async function improvePayrollReading('),patch.indexOf('  function guardSavingUnknownValues(')),ctx);
+  await ctx.improvePayrollReading();
 });

@@ -1842,6 +1842,8 @@
             <span id="comparison-detected-count" class="analysis-detected-count">0 cantidades leídas automáticamente</span>
           </div>
 
+          <button id="edit-payroll-values" class="secondary" type="button" hidden>Editar cantidades e importes de esta nómina</button>
+          <button id="cancel-payroll-edit" class="secondary" type="button" hidden>Cancelar edición</button>
           <div id="comparison-fields" class="comparison-fields"></div>
           <p id="comparison-error" class="error" role="alert" hidden></p>
 
@@ -1955,7 +1957,7 @@
   <script type="module">
     import { newReceiptId, receiptCreatedAt, monthReceipts, assertUniquePayroll, sha256 } from './payroll-receipts.mjs?v=1';
     import { closeMonth, readMonthClosure } from './payroll-month.mjs?v=1';
-    import { renderSupplemental, readSupplemental } from './payroll-supplemental.mjs?v=1';
+    import { renderSupplemental, readSupplemental } from './payroll-supplemental.mjs?v=2';
     import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 
     const SUPABASE_URL = 'https://icneigdnuntzugisexaz.supabase.co';
@@ -3893,6 +3895,10 @@
     }
 
     function renderPayrollComparison(extracted, confirmed = false, review = null) {
+      if (confirmed) comparisonScreen.dataset.manualEdit = 'false';
+      document.getElementById('edit-payroll-values').hidden = !confirmed;
+      document.getElementById('cancel-payroll-edit').hidden = confirmed || comparisonScreen.dataset.manualEdit !== 'true';
+      addMonthlyPayroll.hidden = !confirmed;
       comparisonFields.textContent = '';
       comparisonInputs = new Map();
       comparisonCards = new Map();
@@ -4021,8 +4027,26 @@
       );
     }
 
+    function editPayrollValues() {
+      if (savingReview || savingDocument || loadingDocuments || comparisonRunning) return;
+      const review = monthlyReviews.get(periodKey());
+      if (review?.status !== 'complete') return;
+      comparisonScreen.dataset.manualEdit = 'true';
+      renderPayrollComparison(plainObjectToMap(review.payroll), false, review);
+      setComparisonProgress('ready', '✎', 'Edita las cantidades e importes', 'Puedes escribir directamente, también en grupo superior. Los cambios se guardarán solo al pulsar Guardar cantidades de esta nómina.');
+    }
+
+    function cancelPayrollEditing() {
+      if (savingReview || savingDocument || loadingDocuments) return;
+      const review = monthlyReviews.get(periodKey());
+      if (review?.status !== 'complete') return;
+      renderPayrollComparison(plainObjectToMap(review.payroll), true, review);
+      setComparisonProgress('ready', '✓', 'Cantidades guardadas', 'Se conservan los datos anteriores; la edición se ha cancelado.');
+    }
+
     async function startPayrollComparison(force = false) {
       if (savingReview || savingDocument || loadingDocuments || comparisonRunning || !documents.payroll.confirmed) return;
+      comparisonScreen.dataset.manualEdit = 'false';
       showComparisonScreen();
       const savedReview = monthlyReviews.get(periodKey());
       if (savedReview?.status === 'complete' && !force) {
@@ -4591,6 +4615,8 @@
     confirmAnalysisButton.addEventListener('click', handleAnalysisPrimaryAction);
     replaceWrongTimesheetButton.addEventListener('click', () => openDocument('timesheet'));
     retryPayrollAnalysisButton.addEventListener('click', () => startPayrollComparison(true));
+    document.getElementById('edit-payroll-values').addEventListener('click', editPayrollValues);
+    document.getElementById('cancel-payroll-edit').addEventListener('click', cancelPayrollEditing);
     confirmComparisonButton.addEventListener('click', confirmMonthlyComparison);
     async function startAnotherPayroll() {
       if (!currentUserId || loadingDocuments || savingReview || savingDocument || !isCurrentReviewComplete()) return;

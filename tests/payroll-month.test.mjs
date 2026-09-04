@@ -159,9 +159,39 @@ function ui(bucket) {
     comparisonRunning:false,retryPayrollAnalysisButton:node(),closeMonth,readMonthClosure,crypto:webcrypto});
   const get=app.document.getElementById.bind(app.document);
   app.document.getElementById=id=>{const item=get(id); if(!item.appendChild)Object.assign(item,{children:[],appendChild(child){this.children.push(child);return child;}});return item;};
-  for(const name of ['buildMonthlyComparisons','monthlyIncidentCount','hideMonthlyResults','updateMonthlyControls','renderComparisonResult','renderPayrollComparison','renderMonthClosure','handleMonthClosure']) vm.runInContext(extract(name),app);
+  for(const name of ['buildMonthlyComparisons','monthlyIncidentCount','hideMonthlyResults','updateMonthlyControls','renderComparisonResult','renderPayrollComparison','renderMonthClosure','handleMonthClosure','editPayrollValues','cancelPayrollEditing']) vm.runInContext(extract(name),app);
   return app;
 }
+
+test('saved receipt can be edited immediately without OCR; cancel preserves data, save persists corrections', async () => {
+  const bucket=bucketFor('owner-a');
+  const receipt=await seed(bucket,folder,{vacation:'17'});
+  const app=ui(bucket);app.month.value='9';await app.loadStoredDocuments();
+  const review=app.monthlyReviews.get(app.periodKey());
+  app.renderPayrollComparison(new Map(Object.entries(review.payroll)),true,review);
+  assert.equal(app.document.getElementById('edit-payroll-values').hidden,false);
+  assert.ok([...app.comparisonInputs.values()].every(input=>input.readOnly));
+  const original=bucket.objects.get(`${receipt.path}/review`);
+  app.editPayrollValues();
+  assert.equal(app.comparisonScreen.dataset.manualEdit,'true');
+  assert.ok([...app.comparisonInputs.values()].every(input=>!input.readOnly));
+  assert.equal(app.confirmComparisonButton.dataset.action,'check');
+  assert.equal(app.addMonthlyPayroll.hidden,true);
+  app.comparisonInputs.get('vacation').value='16';
+  app.cancelPayrollEditing();
+  assert.equal(app.comparisonInputs.get('vacation').value,'17');
+  assert.equal(bucket.objects.get(`${receipt.path}/review`),original);
+  app.editPayrollValues();app.comparisonInputs.get('vacation').value='16';
+  app.readSupplemental=()=>({'7001':{code:'7001',status:'present',quantity:5,amount:119.9,unit:null}});
+  await app.confirmMonthlyComparison();
+  const saved=JSON.parse(await bucket.objects.get(`${receipt.path}/review`).text());
+  assert.equal(saved.payroll.vacation,'16');assert.equal(saved.supplemental['7001'].amount,119.9);
+  assert.equal(app.comparisonScreen.dataset.manualEdit,'false');
+  assert.ok([...app.comparisonInputs.values()].every(input=>input.readOnly));
+  assert.equal(app.document.getElementById('edit-payroll-values').hidden,false);
+  app.savingReview=true;app.editPayrollValues();
+  assert.equal(app.comparisonScreen.dataset.manualEdit,'false','cannot edit during a save');
+});
 
 test('actual UI: partial receipt is provisional; explicit close sums two payrolls and reopens safely', async () => {
   const bucket=bucketFor('owner-a');

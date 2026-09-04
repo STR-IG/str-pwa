@@ -151,6 +151,7 @@
   }
 
   async function improvePayrollReading() {
+    if (document.getElementById('comparison-screen')?.dataset.manualEdit === 'true') return;
     updateSafeWording();
     const image = document.getElementById('comparison-reference-image');
     const src = image?.src || '';
@@ -173,7 +174,7 @@
         preserve_interword_spaces: '1'
       });
       const text = result?.data?.text || '';
-      if (image.src !== src || document.getElementById('comparison-screen')?.hidden) return;
+      if (image.src !== src || document.getElementById('comparison-screen')?.hidden || document.getElementById('comparison-screen')?.dataset.manualEdit === 'true') return;
       let recovered = 0;
 
       for (const config of missing) {

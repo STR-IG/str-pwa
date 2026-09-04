@@ -121,7 +121,7 @@
   async function runPayrollVisionRead() {
     const screen = document.getElementById('comparison-screen');
     const img = document.getElementById('comparison-reference-image');
-    if (!screen || screen.hidden || !img?.src || running || completedForSrc === img.src) return;
+    if (!screen || screen.hidden || screen.dataset.manualEdit === 'true' || !img?.src || running || completedForSrc === img.src) return;
     if ([...document.querySelectorAll('input[id^="comparison-"]')].some(input => input.readOnly)) return;
     running = true;
     const src = img.src;
@@ -135,7 +135,7 @@
         body: JSON.stringify({ imageDataUrl, includeSupplemental: true })
       });
       const data = await response.json().catch(() => ({}));
-      if (img.src !== src || screen.hidden || [...document.querySelectorAll('input[id^="comparison-"]')].some(input => input.readOnly)) return;
+      if (img.src !== src || screen.hidden || screen.dataset.manualEdit === 'true' || [...document.querySelectorAll('input[id^="comparison-"]')].some(input => input.readOnly)) return;
       if (!response.ok) throw new Error(data?.error || `HTTP_${response.status}`);
       if (data?.isPayroll !== true) {
         clearAndApply([]);
@@ -144,8 +144,8 @@
         return;
       }
       const count = clearAndApply(data?.concepts || []);
-      const { applySupplemental } = await import('./payroll-supplemental.mjs?v=1');
-      if (img.src !== src || screen.hidden) return;
+      const { applySupplemental } = await import('./payroll-supplemental.mjs?v=2');
+      if (img.src !== src || screen.hidden || screen.dataset.manualEdit === 'true') return;
       applySupplemental(data?.supplemental || []);
       setPayrollProgress(count ? 'ready' : 'warning', count ? 'Lectura de nómina terminada' : 'No se han podido leer las cantidades de la nómina', count ? `Se han leído ${count} conceptos de la nómina. Comprueba las cifras antes de comparar.` : 'No se ha rellenado ningún valor dudoso.');
       completedForSrc = src;
