@@ -26,7 +26,7 @@
   function conceptKey(name) {
     const n = norm(name);
     if (!n) return '';
-    if (/\b(?:7001|7016|7017)\b|gru(?:po|p)?\s*sup|difer/.test(n)) return '';
+    if (/\b(?:0029|7001|7016|7017)\b|horas?\s*extra|gru(?:po|p)?\s*sup|difer/.test(n)) return '';
     if ((n.includes('turno') || n.includes('turo')) && n.includes('12')) return 'shift12';
     if (n.includes('dieta') && n.includes('festiv')) return 'holidayDiets';
     if (n.includes('comida') || n.includes('guasch')) return 'meals';
@@ -132,7 +132,7 @@
       const response = await fetch(FUNCTION_URL, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${session.access_token}`, 'apikey': SUPABASE_PUBLISHABLE_KEY, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ imageDataUrl, includeSupplemental: true })
+        body: JSON.stringify({ imageDataUrl, includeSupplemental: true, includeOvertime: true })
       });
       const data = await response.json().catch(() => ({}));
       if (img.src !== src || screen.hidden || screen.dataset.manualEdit === 'true' || [...document.querySelectorAll('input[id^="comparison-"]')].some(input => input.readOnly)) return;
@@ -144,9 +144,12 @@
         return;
       }
       const count = clearAndApply(data?.concepts || []);
-      const { applySupplemental } = await import('./payroll-supplemental.mjs?v=2');
+      const [{ applySupplemental }, { applyOvertime }] = await Promise.all([
+        import('./payroll-supplemental.mjs?v=2'), import('./payroll-overtime.mjs?v=1')
+      ]);
       if (img.src !== src || screen.hidden || screen.dataset.manualEdit === 'true') return;
       applySupplemental(data?.supplemental || []);
+      applyOvertime(data?.overtime);
       setPayrollProgress(count ? 'ready' : 'warning', count ? 'Lectura de nómina terminada' : 'No se han podido leer las cantidades de la nómina', count ? `Se han leído ${count} conceptos de la nómina. Comprueba las cifras antes de comparar.` : 'No se ha rellenado ningún valor dudoso.');
       completedForSrc = src;
     } catch (error) {

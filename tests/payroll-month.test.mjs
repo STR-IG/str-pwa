@@ -67,12 +67,14 @@ test('payroll-only group concepts persist per receipt without entering monthly c
   const two=await seed(bucket,folder,{vacation:'7'});
   for(const item of [one,two]) {
     item.review.supplemental={'7001':{code:'7001',status:'present',quantity:5,amount:119.9,unit:null}};
+    item.review.overtime={code:'0029',status:'present',quantity:8,unitPrice:24,amount:192,unit:'hours'};
     bucket.objects.set(`${item.path}/review`,new Blob([JSON.stringify(item.review)]));
   }
   const closed=await closeMonth(bucket,folder,keys,compare);
   assert.equal(closed.comparisons.vacation.status,'match');
   assert.deepEqual(Object.keys(closed.comparisons).sort(),[...keys].sort());
   assert.equal(closed.payroll['7001'],undefined);
+  assert.equal(closed.payroll['0029'],undefined,'overtime is not a timesheet comparison variable');
   assert.equal(JSON.parse(await bucket.objects.get(`${one.path}/review`).text()).supplemental['7001'].amount,119.9);
 });
 

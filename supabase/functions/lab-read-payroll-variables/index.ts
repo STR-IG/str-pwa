@@ -43,37 +43,34 @@ function extractOutputText(response: any) {
   return chunks.join("\n");
 }
 
-function numberValue(value: unknown, signed = false) {
-  let raw = String(value ?? "").trim();
-  if (!raw) return null;
-  if (raw.includes(",")) raw = raw.replace(/\./g, "").replace(",", ".");
-  if (!/^-?\d+(?:\.\d{1,4})?$/.test(raw)) return null;
-  const n = Number(raw);
-  return Number.isFinite(n) && (signed || n >= 0) && Math.abs(n) <= 1000000 ? n : null;
-}
-
 function normalizeSupplemental(items: any) {
   if (!Array.isArray(items)) return [];
-  return ["0053", "7001", "7016", "7017"].flatMap((code) => {
+  const number = (value: unknown, signed = false) => {
+    let raw = String(value ?? '').trim();
+    if (raw.includes(',')) raw = raw.replace(/\./g, '').replace(',', '.');
+    if (!/^-?\d+(?:\.\d{1,4})?$/.test(raw)) return null;
+    const n = Number(raw);
+    return Number.isFinite(n) && (signed || n >= 0) && Math.abs(n) <= 1000000 ? n : null;
+  };
+  return ['7001', '7016', '7017'].flatMap(code => {
     const matches = items.filter((item: any) => String(item?.code) === code);
     if (matches.length !== 1) return [];
-    return [{
-      code,
-      quantity: numberValue(matches[0].quantity),
-      amount: numberValue(matches[0].amount, true),
-    }];
+    return [{code, quantity:number(matches[0].quantity), amount:number(matches[0].amount, true)}];
   });
 }
 
 function normalizeOvertime(items: any) {
   if (!Array.isArray(items)) return null;
-  const matches = items.filter((item: any) => String(item?.code) === "0029");
+  const matches = items.filter((item: any) => item?.code === '0029');
   if (matches.length !== 1) return null;
-  return {
-    code: "0029",
-    quantity: numberValue(matches[0].quantity),
-    unitPrice: numberValue(matches[0].unitPrice),
+  const number = (value: unknown) => {
+    let raw = String(value ?? '').trim();
+    if (raw.includes(',')) raw = raw.replace(/\./g, '').replace(',', '.');
+    if (!/^\d+(?:\.\d{1,4})?$/.test(raw)) return null;
+    const n = Number(raw);
+    return Number.isFinite(n) && n <= 1000000 ? n : null;
   };
+  return {code: '0029', quantity: number(matches[0].quantity), unitPrice: number(matches[0].unitPrice)};
 }
 
 function parseModelJson(text: string) {
@@ -118,7 +115,9 @@ Deno.serve(async (req: Request) => {
     const includeSupplemental = body?.includeSupplemental === true;
     const includeOvertime = body?.includeOvertime === true;
     const imageDataUrl = String(body?.imageDataUrl ?? "");
-    if (!/^data:image\/(jpeg|png|webp);base64,/i.test(imageDataUrl)) return json({ error: "INVALID_IMAGE" }, 400);
+    if (!/^data:image\/(jpeg|png|webp);base64,/i.test(imageDataUrl)) {
+      return json({ error: "INVALID_IMAGE" }, 400);
+    }
     if (imageDataUrl.length > 12_000_000) return json({ error: "IMAGE_TOO_LARGE" }, 413);
 
     const openaiKey = Deno.env.get("OPENAI_API_KEY");
@@ -126,9 +125,18 @@ Deno.serve(async (req: Request) => {
 
     const prompt = `Analiza esta imagen de una nómina. Queremos cruzarla con el "RESUMEN DE VARIABLES DEL MES" del registro de jornada.\n\nDevuelve SOLO JSON válido, sin markdown, con esta forma exacta:\n{"isPayroll":true,"concepts":[{"name":"texto del concepto en nómina","value":"cantidad/unidades"}]}\n\nReglas:\n- Extrae únicamente la CANTIDAD, UNIDADES u HORAS asociadas a cada concepto variable; NO extraigas el importe en euros ni el precio unitario.\n- Lee cada concepto por su nombre real en la nómina, no por posición fija.\n- Conceptos a buscar: Plus rotatividad, Comidas Can Guasch (puede aparecer como PRF COMIDAS C. GUASCH o similar), Plus nocturno, Plus de turno, Plus festivo, Plus de turno 12 horas, Dietas festivos y Pluses vacaciones.\n- Distingue "Plus de turno" de "Plus de turno 12 horas".\n- Distingue "Plus festivo" de "Dietas festivos".\n- Si un concepto no aparece en la nómina, NO lo inventes y NO lo incluyas.\n- Conserva decimales con coma cuando existan.\n- Si una fila muestra varias cifras, identifica cuál corresponde a cantidad/unidades/horas y evita importes monetarios.\n- Si no puedes reconocer que la imagen corresponde a una nómina o tabla de conceptos salariales, devuelve {"isPayroll":false,"concepts":[]}.\n- Si una cantidad no es legible con seguridad, omite esa fila.`;
 
-    const supplementalPrompt = includeSupplemental ? `\nAdemás, añade al JSON una propiedad independiente "supplemental": [{"code":"0053","quantity":"30","amount":"7,50"}]. El ejemplo solo ilustra el formato: nunca copies sus valores.\nBusca exclusivamente estos conceptos de nómina: 0053 Antigüedad, 7001 Difer. Grupo Sup. Salario, 7016 Difer. Grup. Sup. Pl. Rotat. y 7017 Difer. Grup. Sup. Pl. Festivo. Verifica siempre el código y el concepto; conserva cada fila por separado.\nPara estas filas únicamente, extrae quantity de CANTIDAD y amount de DEVENGOS (importe abonado, no precio unitario ni deducciones). En Antigüedad 0053 no confundas el importe diario/precio unitario con el devengo total. Conserva el signo y decimales. Usa null para una cifra ilegible. Si una fila no aparece, omítela de supplemental. No supongas unidades ni calcules importes. No incluyas datos personales.\nEstos conceptos NO pertenecen a concepts y NO deben compararse con el registro de jornada. Nunca inventes ceros por ausencia. Si no se reconoce nómina, supplemental debe ser [].` : "";
+    const supplementalPrompt = includeSupplemental ? `
+Además, añade al JSON una propiedad independiente "supplemental": [{"code":"7001","quantity":"5","amount":"119,90"}]. El ejemplo solo ilustra el formato: nunca copies sus valores.
+Busca exclusivamente 7001 Difer. Grupo Sup. Salario, 7016 Difer. Grup. Sup. Pl. Rotat. y 7017 Difer. Grup. Sup. Pl. Festivo. Verifica código y concepto; conserva cada fila por separado.
+Para estas tres filas únicamente, extrae quantity de CANTIDAD y amount de DEVENGOS (importe abonado, no precio unitario ni deducciones). Conserva el signo y decimales. Usa null para una cifra ilegible. Si la fila no aparece, omítela de supplemental. No supongas unidades ni calcules importes. No incluyas datos personales.
+Las diferencias de grupo superior NO pertenecen a concepts: no las confundas con Plus rotatividad ni Plus festivo normales. Nunca inventes ceros por ausencia. Si no se reconoce nómina, supplemental debe ser [].` : '';
 
-    const overtimePrompt = includeOvertime ? `\nAdemás, añade al JSON una propiedad independiente "overtime": [{"code":"0029","quantity":null,"unitPrice":null}].\nBusca exclusivamente la fila 0029 Horas extras. Verifica el código y el nombre. En esa fila, quantity es el NÚMERO DE HORAS de CANTIDAD y unitPrice es su PRECIO POR HORA, que puede estar bajo IMPORTE DIARIO / PRECIO UNITARIO. Lee solo las cifras visibles de esta nómina.\nPara esta fila únicamente se permite leer el precio unitario: NO lo confundas con el total de DEVENGOS, deducciones, porcentajes, bases o cotizaciones por horas extras. No derives el precio a partir del grupo profesional ni de otros recibos. No calcules nada ni inventes tarifas.\nSi la fila aparece pero alguna cifra no es legible, devuelve null en esa cifra; nunca cero por falta de lectura. Si no aparece, devuelve overtime: []. Si hay varias filas 0029, conserva cada una en el array para señalar que necesita revisión manual, sin sumarlas ni elegir una. Si no es nómina, overtime: [].\nLas horas extras no pertenecen a concepts: no las confundas con plus festivo, nocturno ni turno 12 horas. No extraigas compensaciones especiales 9G01 ni otros conceptos nuevos. No incluyas datos personales.` : "";
+    const overtimePrompt = includeOvertime ? `
+Además, añade al JSON una propiedad independiente "overtime": [{"code":"0029","quantity":null,"unitPrice":null}].
+Busca exclusivamente la fila 0029 Horas extras. Verifica el código y el nombre. En esa fila, quantity es el NÚMERO DE HORAS de CANTIDAD y unitPrice es su PRECIO POR HORA, que puede estar bajo IMPORTE DIARIO / PRECIO UNITARIO. Lee solo las cifras visibles de esta nómina.
+Para esta fila únicamente se permite leer el precio unitario: NO lo confundas con el total de DEVENGOS, deducciones, porcentajes, bases o cotizaciones por horas extras. No derives el precio a partir del grupo profesional ni de otros recibos. No calcules nada ni inventes tarifas.
+Si la fila aparece pero alguna cifra no es legible, devuelve null en esa cifra; nunca cero por falta de lectura. Si no aparece, devuelve overtime: []. Si hay varias filas 0029, conserva cada una en el array para señalar que necesita revisión manual, sin sumarlas ni elegir una. Si no es nómina, overtime: [].
+Las horas extras no pertenecen a concepts: no las confundas con plus festivo, nocturno ni turno 12 horas. No extraigas compensaciones especiales 9G01 ni otros conceptos nuevos. No incluyas datos personales.` : '';
 
     const openaiResponse = await fetch("https://api.openai.com/v1/responses", {
       method: "POST",
@@ -156,7 +164,9 @@ Deno.serve(async (req: Request) => {
     }
 
     const parsed = parseModelJson(extractOutputText(openaiJson));
-    if (parsed?.isPayroll !== true || !Array.isArray(parsed?.concepts)) return json({ isPayroll: false, concepts: [] });
+    if (parsed?.isPayroll !== true || !Array.isArray(parsed?.concepts)) {
+      return json({ isPayroll: false, concepts: [] });
+    }
 
     const concepts = parsed.concepts
       .map((item: any) => ({
@@ -166,18 +176,14 @@ Deno.serve(async (req: Request) => {
       }))
       .filter((item: any) => item.name && item.value);
 
-    const regular = concepts.filter((item: any) => !/\b(?:0029|0053|7001|7016|7017)\b|antiguedad|horas?\s*extra|gru(?:po|p)?\s*sup|difer/.test(item.normalizedName));
-
     if (includeOvertime) {
-      return json({
-        isPayroll: true,
-        concepts: regular,
-        overtime: normalizeOvertime(parsed.overtime),
-        ...(includeSupplemental ? { supplemental: normalizeSupplemental(parsed.supplemental) } : {}),
-      });
+      const regular = concepts.filter((item: any) => !/\b(?:0029|7001|7016|7017)\b|horas?\s*extra|gru(?:po|p)?\s*sup|difer/.test(item.normalizedName));
+      return json({isPayroll: true, concepts: regular, overtime: normalizeOvertime(parsed.overtime),
+        ...(includeSupplemental ? {supplemental: normalizeSupplemental(parsed.supplemental)} : {})});
     }
     if (includeSupplemental) {
-      return json({ isPayroll: true, concepts: regular, supplemental: normalizeSupplemental(parsed.supplemental) });
+      const regular = concepts.filter((item: any) => !/\b(?:7001|7016|7017)\b|gru(?:po|p)?\s*sup|difer/.test(item.normalizedName));
+      return json({isPayroll:true, concepts:regular, supplemental:normalizeSupplemental(parsed.supplemental)});
     }
     return json({ isPayroll: true, concepts });
   } catch (error) {

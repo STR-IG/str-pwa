@@ -11,37 +11,20 @@
   <script>
     (async () => {
       try {
-        const response = await fetch('revisa-tu-nomina-base.html?v=prod-15', { cache: 'no-store' });
+        const response = await fetch('revisa-tu-nomina-base.html?v=prod-16', { cache: 'no-store' });
         if (!response.ok) throw new Error('BASE_NOT_AVAILABLE');
         let html = await response.text();
         html = html
           .replace('<title>Revisa tu nómina · STR-IG LAB</title>', '<title>Revisa tu nómina · STR-IG</title>')
           .replace('<div class="labbar">🧪 STR-IG LABORATORIO · NO ES PRODUCCIÓN</div>', '')
-          .replace("sessionStorage.setItem('strLabNext', 'revisa-tu-nomina.html');", "sessionStorage.setItem('strAfterLogin', 'revisa-nomina.html');")
-          .replace("cropRect = isPayroll ? { x: 0, y: 0.42, width: 1, height: 0.58 } : { x: 0, y: 0.14, width: 1, height: 0.86 };", "cropRect = isPayroll ? { x: 0, y: 0.10, width: 1, height: 0.90 } : { x: 0, y: 0.14, width: 1, height: 0.86 };")
-          .replace("? 'Mueve el marco y arrastra sus esquinas. Deja dentro completa la tabla «Devengos y deducciones» y excluye los datos personales de la cabecera.'", "? 'Mueve el marco y arrastra sus esquinas. Incluye completas todas las tablas económicas de la nómina: devengos, deducciones, Seguridad Social, IRPF y totales. Excluye únicamente los datos personales de la cabecera.'");
+          .replace("sessionStorage.setItem('strLabNext', 'revisa-tu-nomina.html');", "sessionStorage.setItem('strAfterLogin', 'revisa-nomina.html');");
 
-        const productionStyle = `<style>
-          .labbar{display:none!important}body::before{display:none!important}
-          #timesheet-crop-editor{position:relative;width:calc(100vw - 20px);max-width:760px;margin-left:50%;transform:translateX(-50%);padding:16px 10px 18px}
-          #timesheet-crop-editor .crop-stage{width:100%;max-width:720px;max-height:none;overflow:hidden}
-          #timesheet-crop-editor .crop-stage img{width:100%;height:auto;max-height:none;object-fit:contain}
-          #timesheet-crop-editor .crop-actions{position:sticky;bottom:calc(8px + env(safe-area-inset-bottom));z-index:4;padding:10px 0 2px;background:linear-gradient(to bottom,rgba(247,249,252,0),#f7f9fc 24%)}
-          @media (max-width:600px){
-            #timesheet-crop-editor{width:calc(100vw - 8px);padding:14px 6px 18px;border-radius:14px}
-            #timesheet-crop-editor h3,#timesheet-crop-editor p{margin-left:8px;margin-right:8px}
-            #timesheet-crop-editor .crop-handle{width:28px;height:28px}
-            #timesheet-crop-editor .crop-handle.nw{left:-15px;top:-15px}#timesheet-crop-editor .crop-handle.ne{right:-15px;top:-15px}
-            #timesheet-crop-editor .crop-handle.sw{left:-15px;bottom:-15px}#timesheet-crop-editor .crop-handle.se{right:-15px;bottom:-15px}
-            #timesheet-crop-editor .crop-actions{justify-content:stretch;gap:8px}
-            #timesheet-crop-editor .crop-actions button{flex:1;min-width:0}
-          }
-        </style>`;
+        const productionStyle = '<style>.labbar{display:none!important}body::before{display:none!important}</style>';
         const productionScripts = [
-          '<script src="payroll-lab-patch.js?v=prod-7"><\/script>',
+          '<script src="payroll-lab-patch.js?v=prod-8"><\/script>',
           '<script src="timesheet-crop-guard-lab.js?v=prod-4"><\/script>',
           '<script src="timesheet-vision-lab.js?v=prod-4"><\/script>',
-          '<script src="payroll-vision-lab.js?v=prod-7"><\/script>',
+          '<script src="payroll-vision-lab.js?v=prod-8"><\/script>',
           '<script src="history-lab-patch.js?v=prod-5"><\/script>',
           '<script src="saved-review-open-patch.js?v=prod-4"><\/script>'
         ].join('');
@@ -58,3 +41,4 @@
   </script>
 </body>
 </html>
+

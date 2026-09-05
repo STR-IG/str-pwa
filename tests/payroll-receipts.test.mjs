@@ -5,6 +5,7 @@ import vm from 'node:vm';
 import { webcrypto } from 'node:crypto';
 import { newReceiptId, receiptCreatedAt, monthReceipts, assertUniquePayroll, sha256, listFiles } from '../payroll-receipts.mjs';
 import { readSupplemental } from '../payroll-supplemental.mjs';
+import { readOvertime } from '../payroll-overtime.mjs';
 
 const html = readFileSync(new URL('../revisa-tu-nomina-base.html', import.meta.url), 'utf8');
 const source = html.match(/<script type="module">([\s\S]*?)<\/script>/)[1].replace(/\r/g, '');
@@ -63,7 +64,9 @@ function harness(bucket) {
     applyComparisonCardResult() {}, renderComparisonResult() {}, renderPayrollComparison() {}, setComparisonProgress() {},
     updateMonthlyControls() {}, hideMonthlyResults() {},
     renderSupplemental() {},
+    renderOvertime() {},
     readSupplemental: () => readSupplemental({getElementById: id => nodes.get(id)}),
+    readOvertime: () => readOvertime({getElementById: id => nodes.get(id)}),
     parseQuantityValue: Number, formatQuantity: String,
     document: { getElementById(id) { if (!nodes.has(id)) nodes.set(id, element()); return nodes.get(id); } }
   });
