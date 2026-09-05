@@ -1,4 +1,4 @@
-import { decimal } from './payroll-supplemental.mjs?v=2';
+import { decimal } from './payroll-supplemental.mjs?v=3';
 
 // Payroll-only concept. Its rate belongs to this receipt, never to a group or user.
 export const OVERTIME_CODE = '0029';

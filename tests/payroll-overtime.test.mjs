@@ -176,15 +176,19 @@ test('full Edge handler: opt-in API, auth gating and partial IA result without l
   const raw=readFileSync(new URL('../supabase/functions/lab-read-payroll-variables/index.ts',import.meta.url),'utf8');
   const code=stripTypeScriptTypes(raw.replace(/^import .*;\n/gm,''));
   let handler,allowed=true,requests=0;
-  const model={isPayroll:true,concepts:[{name:'Plus festivo',value:'8'},{name:'0029 Horas extras festivas',value:'4'}],
-    supplemental:[{code:'7001',quantity:5,amount:119.9}],overtime:[{code:'0029',quantity:8,unitPrice:null}]};
+  const model={isPayroll:true,concepts:[{name:'Plus festivo',value:'8'},{name:'0029 Horas extras festivas',value:'4'},
+    {name:'0003 Complemento Personal',value:'30'}], supplemental:[
+      {code:'0003',quantity:30,unitPrice:1.4717,amount:44.15},
+      {code:'0053',quantity:30,unitPrice:1.01,amount:30.3},
+      {code:'7001',quantity:5,amount:119.9}],overtime:[{code:'0029',quantity:8,unitPrice:null}]};
   const ctx=vm.createContext({Request,Response,console,
     Deno:{serve(fn){handler=fn;},env:{get(){return 'synthetic-test-only';}}},
     createClient(){return {auth:{async getUser(){return {data:{user:{email:'test@example.invalid'}},error:null};}},
       from(){return {select(){return this;},ilike(){return this;},eq(){return this;},async maybeSingle(){return {data:allowed?{}:null,error:null};}};}};},
     async fetch(url,options){requests++;const payload=JSON.parse(options.body);
       assert.equal(url,'https://api.openai.com/v1/responses');
-      if(payload.max_output_tokens===1400)assert.match(payload.input[0].content[0].text,/No derives el precio/);
+      if(payload.max_output_tokens===2200)assert.match(payload.input[0].content[0].text,/0003 Complemento Personal/);
+      if(payload.input[0].content[0].text.includes('"overtime"'))assert.match(payload.input[0].content[0].text,/No derives el precio/);
       return new Response(JSON.stringify({output_text:JSON.stringify(model)}));}
   });
   vm.runInContext(code,ctx);
@@ -196,10 +200,12 @@ test('full Edge handler: opt-in API, auth gating and partial IA result without l
   const legacy=await (await handler(request())).json();
   assert.equal(legacy.overtime,undefined);assert.equal(legacy.supplemental,undefined);
   const supplemental=await (await handler(request({includeSupplemental:true}))).json();
-  assert.equal(supplemental.overtime,undefined);assert.equal(supplemental.supplemental[0].amount,119.9);
+  assert.equal(supplemental.overtime,undefined);assert.equal(supplemental.supplemental[0].code,'0003');
+  assert.equal(supplemental.supplemental[0].unitPrice,1.4717);
   const result=await (await handler(request({includeSupplemental:true,includeOvertime:true}))).json();
   assert.deepEqual(result.overtime,{code:'0029',quantity:8,unitPrice:null});
-  assert.equal(result.concepts.length,1);assert.equal(result.supplemental[0].code,'7001');
+  assert.equal(result.concepts.length,1);assert.equal(result.supplemental[0].code,'0003');
+  assert.equal(result.supplemental.at(-1).code,'7001');
   model.overtime=[{code:'0029',quantity:8,unitPrice:24}];
   const priced=await (await handler(request({includeOvertime:true}))).json();
   assert.equal(priced.overtime.unitPrice,24);assert.equal(priced.supplemental,undefined);

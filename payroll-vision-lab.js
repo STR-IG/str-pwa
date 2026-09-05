@@ -26,7 +26,7 @@
   function conceptKey(name) {
     const n = norm(name);
     if (!n) return '';
-    if (/\b(?:0029|7001|7016|7017)\b|horas?\s*extra|gru(?:po|p)?\s*sup|difer/.test(n)) return '';
+    if (/\b(?:0001|0002|0003|0004|0053|0029|7001|7016|7017)\b|horas?\s*extra|gru(?:po|p)?\s*sup|difer/.test(n)) return '';
     if ((n.includes('turno') || n.includes('turo')) && n.includes('12')) return 'shift12';
     if (n.includes('dieta') && n.includes('festiv')) return 'holidayDiets';
     if (n.includes('comida') || n.includes('guasch')) return 'meals';
@@ -145,7 +145,7 @@
       }
       const count = clearAndApply(data?.concepts || []);
       const [{ applySupplemental }, { applyOvertime }] = await Promise.all([
-        import('./payroll-supplemental.mjs?v=2'), import('./payroll-overtime.mjs?v=1')
+        import('./payroll-supplemental.mjs?v=3'), import('./payroll-overtime.mjs?v=2')
       ]);
       if (img.src !== src || screen.hidden || screen.dataset.manualEdit === 'true') return;
       applySupplemental(data?.supplemental || []);

@@ -1002,6 +1002,14 @@
       gap: 10px;
     }
 
+    .comparison-values.supplemental-fixed-values {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    @media (max-width: 640px) {
+      .comparison-values.supplemental-fixed-values { grid-template-columns: 1fr; }
+    }
+
     .comparison-value {
       min-width: 0;
     }
@@ -1592,7 +1600,8 @@
       }
       .actions { grid-template-columns: 1fr; }
       .analysis-actions { grid-template-columns: 1fr; }
-      .comparison-values { grid-template-columns: 1fr; }
+      .comparison-values,
+      .comparison-values.supplemental-fixed-values { grid-template-columns: 1fr; }
       .schedule-grid,
       .salary-results { grid-template-columns: 1fr; }
       .salary-difference { grid-column: auto; }
@@ -2088,8 +2097,8 @@
   <script type="module">
     import { newReceiptId, receiptCreatedAt, monthReceipts, assertUniquePayroll, sha256 } from './payroll-receipts.mjs?v=1';
     import { closeMonth, readMonthClosure } from './payroll-month.mjs?v=1';
-    import { renderSupplemental, readSupplemental } from './payroll-supplemental.mjs?v=2';
-    import { renderOvertime, readOvertime } from './payroll-overtime.mjs?v=1';
+    import { renderSupplemental, readSupplemental } from './payroll-supplemental.mjs?v=3';
+    import { renderOvertime, readOvertime } from './payroll-overtime.mjs?v=2';
     import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 
     const SUPABASE_URL = 'https://icneigdnuntzugisexaz.supabase.co';
@@ -3332,7 +3341,7 @@
 
     function matchPayrollVariable(line) {
       const normalized = normalizeOcrLine(line);
-      if (/\b(?:0029|7001|7016|7017)\b|HORAS?\s*EXTRA|GRU(?:PO|P)?[.\s]*SUP|DIFER/.test(normalized)) return null;
+      if (/\b(?:0001|0002|0003|0004|0053|0029|7001|7016|7017)\b|HORAS?\s*EXTRA|GRU(?:PO|P)?[.\s]*SUP|DIFER/.test(normalized)) return null;
       for (const key of PAYROLL_MATCH_ORDER) {
         const variable = PAYROLL_VARIABLES.find((item) => item.key === key);
         for (const pattern of variable?.payrollPatterns || []) {
