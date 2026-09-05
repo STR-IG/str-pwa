@@ -18,6 +18,8 @@ const elements = {
   review: document.getElementById('review-discounts'),
   preview: document.getElementById('discounts-preview'),
   image: document.getElementById('discounts-preview-image'),
+  privacyConsent: document.getElementById('discounts-privacy-consent'),
+  privacyCheckbox: document.getElementById('confirm-discounts-privacy'),
   actions: document.getElementById('discounts-actions'),
   fileError: document.getElementById('discounts-file-error'),
   status: document.getElementById('discounts-status'),
@@ -31,6 +33,10 @@ const elements = {
 let selectedFile = null;
 let previewUrl = '';
 let activeRequest = null;
+
+function updateReviewAvailability() {
+  elements.review.disabled = Boolean(activeRequest) || !selectedFile || !elements.privacyCheckbox.checked;
+}
 
 function setFileError(message = '') {
   elements.fileError.textContent = message;
@@ -46,8 +52,9 @@ function clearResults() {
 function setBusy(busy) {
   elements.select.disabled = busy;
   elements.change.disabled = busy;
-  elements.review.disabled = busy;
   elements.input.disabled = busy;
+  elements.privacyCheckbox.disabled = busy;
+  elements.review.disabled = busy || !selectedFile || !elements.privacyCheckbox.checked;
 }
 
 function setStatus(kind, title, message) {
@@ -77,6 +84,8 @@ function resetReader() {
   selectedFile = null;
   elements.input.value = '';
   elements.preview.hidden = true;
+  elements.privacyConsent.hidden = true;
+  elements.privacyCheckbox.checked = false;
   elements.actions.hidden = true;
   setFileError();
   clearResults();
@@ -86,6 +95,9 @@ function resetReader() {
 function selectFile(file) {
   setFileError();
   clearResults();
+  elements.privacyCheckbox.checked = false;
+  elements.privacyConsent.hidden = true;
+  updateReviewAvailability();
   if (!file) return;
   if (!ACCEPTED_TYPES.has(file.type)) {
     setFileError('Selecciona una imagen JPG, PNG, WEBP, HEIC o HEIF.');
@@ -100,7 +112,9 @@ function selectFile(file) {
   previewUrl = URL.createObjectURL(file);
   elements.image.src = previewUrl;
   elements.preview.hidden = false;
+  elements.privacyConsent.hidden = false;
   elements.actions.hidden = false;
+  updateReviewAvailability();
 }
 
 function loadImage(url) {
@@ -242,6 +256,11 @@ function readableError(status, code) {
 
 async function reviewDiscounts() {
   if (!selectedFile || activeRequest) return;
+  if (!elements.privacyCheckbox.checked) {
+    setFileError('Confirma que la captura no contiene datos personales antes de revisarla.');
+    updateReviewAvailability();
+    return;
+  }
   setFileError();
   elements.results.hidden = true;
   setBusy(true);
@@ -288,6 +307,10 @@ async function reviewDiscounts() {
 elements.select?.addEventListener('click', chooseImage);
 elements.change?.addEventListener('click', chooseImage);
 elements.review?.addEventListener('click', reviewDiscounts);
+elements.privacyCheckbox?.addEventListener('change', () => {
+  setFileError();
+  updateReviewAvailability();
+});
 elements.input?.addEventListener('change', (event) => selectFile(event.target.files?.[0]));
 window.addEventListener('str:discounts-closed', resetReader);
 window.addEventListener('beforeunload', resetReader);

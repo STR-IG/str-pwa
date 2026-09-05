@@ -17,7 +17,7 @@ test('the period screen keeps Registro and Nómina and adds Descuentos after the
   assert.match(base, /id="open-discounts"[^>]*>Abrir Descuentos</);
   assert.match(base, /id="discounts-screen"/);
   assert.match(wrapper, /revisa-tu-nomina-base\.html\?v=prod-20/);
-  assert.match(wrapper, /discounts-reader\.js\?v=prod-2/);
+  assert.match(wrapper, /discounts-reader\.js\?v=prod-3/);
 });
 
 test('discounts reader uses one temporary image and never calls permanent storage', () => {
@@ -28,6 +28,17 @@ test('discounts reader uses one temporary image and never calls permanent storag
   assert.match(reader, /readDiscounts: true/);
   assert.doesNotMatch(reader, /\.storage\b|STORAGE_BUCKET|\.upload\(/);
   assert.doesNotMatch(edge, /readDiscounts[\s\S]{0,1200}\.from\([^)]*payroll_documents/i);
+});
+
+test('discounts require explicit privacy confirmation before analysis', () => {
+  assert.match(base, /id="discounts-privacy-consent"[^>]*hidden/);
+  assert.match(base, /id="confirm-discounts-privacy"[^>]*type="checkbox"/);
+  assert.match(base, /Confirmo que la captura muestra únicamente la tabla “Seguridad Social e IRPF”/);
+  assert.match(base, /id="review-discounts"[^>]*disabled/);
+  assert.match(reader, /!elements\.privacyCheckbox\.checked/);
+  assert.match(reader, /privacyCheckbox\.checked = false/);
+  assert.match(reader, /privacyConsent\.hidden = false/);
+  assert.match(reader, /addEventListener\('change',[\s\S]*?updateReviewAvailability\(\)/);
 });
 
 test('client catalog includes every requested code and keeps IRPF concepts distinct', () => {

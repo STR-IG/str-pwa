@@ -1302,6 +1302,28 @@
     }
 
     .discounts-privacy strong { display: block; margin-bottom: 3px; }
+    .discounts-consent {
+      display: flex;
+      align-items: flex-start;
+      gap: 11px;
+      margin-top: 14px;
+      padding: 13px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: #fff;
+      color: #252529;
+      font-size: 14px;
+      font-weight: 700;
+      line-height: 1.45;
+      cursor: pointer;
+    }
+    .discounts-consent input {
+      flex: 0 0 auto;
+      width: 21px;
+      height: 21px;
+      margin: 1px 0 0;
+      accent-color: var(--red);
+    }
     .discounts-preview img { max-height: 430px; }
     .discounts-status { margin-top: 15px; }
     .discounts-results { margin-top: 19px; }
@@ -1853,10 +1875,15 @@
           <span class="preview-label">✓ Imagen preparada para revisar</span>
         </div>
 
+        <label id="discounts-privacy-consent" class="discounts-consent" hidden>
+          <input id="confirm-discounts-privacy" type="checkbox">
+          <span>Confirmo que la captura muestra únicamente la tabla “Seguridad Social e IRPF” y no contiene nombre, DNI/NIF, número de Seguridad Social, domicilio ni otros datos personales.</span>
+        </label>
+
         <p id="discounts-file-error" class="error" role="alert" hidden></p>
         <div id="discounts-actions" class="actions" hidden>
           <button id="change-discounts-image" class="secondary" type="button">Cambiar imagen</button>
-          <button id="review-discounts" class="primary" type="button">Revisar descuentos</button>
+          <button id="review-discounts" class="primary" type="button" disabled>Revisar descuentos</button>
         </div>
 
         <div id="discounts-status" class="analysis-progress discounts-status" role="status" aria-live="polite" hidden>
