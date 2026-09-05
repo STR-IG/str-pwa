@@ -1,5 +1,5 @@
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
-import { formatMoney, formatRate, normalizeDiscountsResponse } from './discounts-reader.mjs?v=1';
+import { formatMoney, formatRate, normalizeDiscountsResponse } from './discounts-reader.mjs?v=2';
 
 const SUPABASE_URL = 'https://icneigdnuntzugisexaz.supabase.co';
 const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_apKjcPClIBTHS2wwN6qPsA_6Vm4tk9m';
@@ -144,26 +144,65 @@ function valueBox(label, value) {
   return box;
 }
 
+function rowTitle(row) {
+  return row.code ? `${row.code} · ${row.label}` : row.label;
+}
+
+function detectedValues(row) {
+  if (row.section === 'bases' || row.section === 'contributions') {
+    return [['Importe', formatMoney(row.value)]];
+  }
+  if (row.section === 'worker') {
+    return [
+      ['Base', formatMoney(row.base)],
+      ['% trabajador/a', formatRate(row.rate)],
+      ['Cuota trabajador/a', formatMoney(row.amount)],
+    ];
+  }
+  if (row.section === 'company') {
+    return [
+      ['Base', formatMoney(row.base)],
+      ['% empresa', formatRate(row.rate)],
+      ['Cuota empresa', formatMoney(row.amount)],
+    ];
+  }
+  if (row.section === 'irpf') {
+    return [
+      [row.kind === 'irpf' ? 'Base IRPF' : 'Base', formatMoney(row.base)],
+      ['Porcentaje', formatRate(row.rate)],
+      [row.kind === 'in_kind_irpf' ? 'Retención en especie' : 'Retención', formatMoney(row.amount)],
+    ];
+  }
+  if (row.section === 'worker_total') return [['Cuota trabajador/a', formatMoney(row.amount)]];
+  if (row.section === 'company_total') return [['Cuota empresa', formatMoney(row.amount)]];
+
+  const values = [];
+  if (row.value !== null) values.push(['Importe', formatMoney(row.value)]);
+  if (row.base !== null) values.push(['Base', formatMoney(row.base)]);
+  if (row.rate !== null) values.push(['Porcentaje', formatRate(row.rate)]);
+  if (row.amount !== null) values.push(['Importe detectado', formatMoney(row.amount)]);
+  return values;
+}
+
 function rowCard(row) {
   const article = document.createElement('article');
   article.className = 'discounts-row';
   const heading = document.createElement('h4');
-  heading.textContent = row.label;
+  heading.textContent = rowTitle(row);
   article.appendChild(heading);
   if (row.kind === 'unknown') {
     const text = document.createElement('p');
     text.className = 'discounts-unknown-text';
-    text.textContent = row.sourceText;
+    text.textContent = row.sourceText || 'Texto original no legible';
     article.appendChild(text);
   }
-  const values = document.createElement('div');
-  values.className = 'discounts-values';
-  values.append(
-    valueBox(row.kind === 'irpf' ? 'Base sujeta' : 'Base', formatMoney(row.base)),
-    valueBox('Tipo', formatRate(row.rate)),
-    valueBox(row.kind === 'irpf' ? 'Retención' : 'Descuento', formatMoney(row.amount)),
-  );
-  article.appendChild(values);
+  const detected = detectedValues(row);
+  if (detected.length) {
+    const values = document.createElement('div');
+    values.className = 'discounts-values';
+    detected.forEach(([label, value]) => values.appendChild(valueBox(label, value)));
+    article.appendChild(values);
+  }
   return article;
 }
 
@@ -182,9 +221,12 @@ function renderGroup(title, rows) {
 
 function renderResults(rows) {
   const groups = [
-    ['Seguridad Social', rows.filter((row) => row.section === 'social')],
+    ['Bases y prorratas', rows.filter((row) => row.section === 'bases')],
+    ['Seguridad Social – trabajador/a', rows.filter((row) => row.section === 'worker')],
     ['IRPF', rows.filter((row) => row.section === 'irpf')],
-    ['Totales', rows.filter((row) => row.section === 'total')],
+    ['Seguridad Social – empresa', rows.filter((row) => row.section === 'company')],
+    ['Aportaciones de la empresa', rows.filter((row) => row.section === 'contributions')],
+    ['Total Cotiz. SS e IRPF', rows.filter((row) => row.section === 'worker_total' || row.section === 'company_total')],
     ['Otros conceptos detectados', rows.filter((row) => row.section === 'unknown')],
   ];
   elements.resultsContent.replaceChildren(...groups.map(([title, items]) => renderGroup(title, items)).filter(Boolean));
@@ -228,7 +270,7 @@ async function reviewDiscounts() {
       return;
     }
     renderResults(normalized.rows);
-    setStatus('ready', 'Lectura completada', 'Revisa los datos detectados. Las cifras no legibles se muestran como “No leído”.');
+    setStatus('ready', 'Lectura completada', 'Revisa los datos detectados. Las cifras ausentes o no legibles se muestran como “No indicado”.');
   } catch (error) {
     if (error?.name === 'AbortError') return;
     const message = error?.message === 'SESSION_REQUIRED'

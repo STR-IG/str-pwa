@@ -82,7 +82,11 @@ function parseModelJson(text: string) {
 }
 
 const discountKinds = new Set([
-  "common_contingencies", "mei", "unemployment", "training", "irpf", "total", "unknown",
+  "accrued_total_cc", "accrued_total_accidents", "extra_pay_proration", "march_pay_proration",
+  "other_proration", "common_contingencies", "mei", "unemployment", "training",
+  "solidarity_contribution", "irpf", "in_kind_irpf", "company_fogasa", "company_it",
+  "company_ims", "company_pension_plan", "company_meals", "life_insurance", "christmas_lot",
+  "total", "unknown",
 ]);
 
 function normalizeDiscountNumber(value: unknown, maximum: number) {
@@ -101,22 +105,95 @@ function normalizeDiscountSourceText(value: unknown) {
   return personal ? "" : text;
 }
 
+function normalizeDiscountCode(value: unknown) {
+  return String(value ?? "").replace(/\s+/g, "").trim().toUpperCase().slice(0, 12);
+}
+
+function catalogDiscountKind(code: string, sourceText: string) {
+  const concept = normalizeConcept(sourceText);
+  const matches: Record<string, RegExp> = {
+    "9102": /\bdevengado total cc\b/,
+    "9105": /\bdevengado total acc(?:identes)? d fp\b/,
+    "/341": /\bprorrata (?:de )?pagas? extras?\b/,
+    "9044": /\bprorrata (?:de )?paga (?:de )?marzo\b/,
+    "RDL": /\bprorrat/,
+    "9350": /\bcontingencias? comunes?\b/,
+    "9370": /\bdesempleo\b/,
+    "9380": /\bformacion profesional\b/,
+    "93C0": /\b(?:cuota )?solidaridad\b/,
+    "9402": /^irpf$/,
+    "/402": /\b(?:ret(?:encion)? )?especie\b.*\birpf\b|\birpf\b.*\bespecie\b/,
+    "/361": /\b(?:empr )?fondo (?:de )?gar(?:antia)? salarial\b/,
+    "/352": /\bempresa it\b/,
+    "/353": /\bempresa ims\b/,
+    "4001": /\baportacion empresa pp\b|\baportacion.*plan.*pensiones\b/,
+    "9106": /\bcomedor (?:parte )?empresa\b/,
+    "9117": /\bseguro (?:de )?vida\b/,
+    "9108": /\blote (?:de )?navidad\b/,
+  };
+  if (!concept) return "unknown";
+  if ((code === "SSIR" || !code) && /\btotal cotiz ss e irpf\b/.test(concept)) return "total";
+  if (/\bmei\b|\bmecanismo (?:de )?equidad intergeneracional\b/.test(concept)) return "mei";
+  if (!matches[code]?.test(concept)) return "unknown";
+
+  const kindsByCode: Record<string, string> = {
+    "9102": "accrued_total_cc",
+    "9105": "accrued_total_accidents",
+    "/341": "extra_pay_proration",
+    "9044": "march_pay_proration",
+    "RDL": "other_proration",
+    "9350": "common_contingencies",
+    "9370": "unemployment",
+    "9380": "training",
+    "93C0": "solidarity_contribution",
+    "9402": "irpf",
+    "/402": "in_kind_irpf",
+    "/361": "company_fogasa",
+    "/352": "company_it",
+    "/353": "company_ims",
+    "4001": "company_pension_plan",
+    "9106": "company_meals",
+    "9117": "life_insurance",
+    "9108": "christmas_lot",
+  };
+  return kindsByCode[code] ?? "unknown";
+}
+
+function discountSide(kind: string, rawSide: unknown) {
+  const side = String(rawSide ?? "").trim().toLowerCase();
+  if (["accrued_total_cc", "accrued_total_accidents", "extra_pay_proration", "march_pay_proration", "other_proration"].includes(kind)) return "bases";
+  if (["irpf", "in_kind_irpf"].includes(kind)) return "irpf";
+  if (["company_fogasa", "company_it", "company_ims"].includes(kind)) return "company";
+  if (["company_pension_plan", "company_meals", "life_insurance", "christmas_lot"].includes(kind)) return "contributions";
+  if (["common_contingencies", "mei", "unemployment", "training", "solidarity_contribution"].includes(kind)) {
+    return side === "worker" || side === "company" ? side : "unknown";
+  }
+  if (kind === "total") return side === "worker_total" || side === "company_total" ? side : "unknown";
+  return "unknown";
+}
+
 function normalizeDiscountRows(items: unknown) {
   if (!Array.isArray(items)) return [];
   return items.flatMap((item: any) => {
-    const kind = discountKinds.has(item?.kind) ? item.kind : "unknown";
+    const code = normalizeDiscountCode(item?.code);
     const sourceText = normalizeDiscountSourceText(item?.sourceText);
+    const catalogKind = catalogDiscountKind(code, sourceText);
+    const kind = discountKinds.has(catalogKind) ? catalogKind : "unknown";
+    const side = discountSide(kind, item?.side);
     const row = {
-      kind,
+      kind: side === "unknown" ? "unknown" : kind,
+      code,
+      side,
       sourceText,
+      value: normalizeDiscountNumber(item?.value, 1_000_000),
       base: normalizeDiscountNumber(item?.base, 1_000_000),
       rate: normalizeDiscountNumber(item?.rate, 100),
       amount: normalizeDiscountNumber(item?.amount, 1_000_000),
     };
-    if (kind === "unknown" && !sourceText) return [];
-    if (kind !== "unknown" && row.base === null && row.rate === null && row.amount === null) return [];
+    if (row.kind === "unknown" && !sourceText && !code) return [];
+    if (row.kind !== "unknown" && row.value === null && row.base === null && row.rate === null && row.amount === null) return [];
     return [row];
-  }).slice(0, 20);
+  }).slice(0, 50);
 }
 
 Deno.serve(async (req: Request) => {
@@ -166,26 +243,32 @@ Deno.serve(async (req: Request) => {
       const discountsPrompt = `Analiza únicamente la tabla o sección "Seguridad Social e IRPF" visible en esta captura de nómina.
 
 Devuelve SOLO JSON válido, sin markdown, con esta forma exacta:
-{"isDiscountsSection":true,"quality":"ok","rows":[{"kind":"common_contingencies","sourceText":"Contingencias comunes","base":"2016,74","rate":"4,70","amount":"94,79"}]}
-El ejemplo solo muestra el formato: nunca copies sus cifras.
+{"isDiscountsSection":true,"quality":"ok","rows":[{"code":"9350","sourceText":"Contingencias Comunes","side":"worker","value":null,"base":null,"rate":null,"amount":null}]}
+El ejemplo solo define la estructura. Sustituye sus campos por lo que realmente veas y nunca copies datos que no estén en la captura.
 
-Valores permitidos para kind:
-- common_contingencies: Contingencias comunes.
-- mei: Mecanismo de Equidad Intergeneracional o MEI.
-- unemployment: Desempleo.
-- training: Formación profesional.
-- irpf: IRPF o retención IRPF.
-- total: total explícito de cotizaciones, deducciones o descuentos.
-- unknown: otra fila de esta misma tabla que no corresponda con seguridad a las anteriores.
+Catálogo exacto por CÓDIGO + CONCEPTO:
+- Bases y prorratas: 9102 Devengado Total CC; 9105 Devengado Total Acc/d/fp; /341 Prorrata pagas extras; 9044 Prorrata Paga de Marzo; RDL Otras prorratas.
+- Seguridad Social: 9350 Contingencias Comunes; 9370 Desempleo; 9380 Formación Profesional; 93C0 Cuota solidaridad; MEI o Mecanismo de Equidad Intergeneracional cuando esté escrito expresamente.
+- IRPF: 9402 IRPF; /402 Ret Especie Ingr cta IRPF.
+- Seguridad Social empresa: /361 Empr. fondo gar. salarial; /352 Empresa IT; /353 Empresa IMS.
+- Aportaciones o beneficios de empresa: 4001 Aportación Empresa PP; 9106 Comedor parte empresa; 9117 Seguro vida; 9108 Lote Navidad.
+- Total: la fila titulada "Total Cotiz. SS e IRPF (*)", que puede llevar el código SSIR.
 
 Reglas estrictas:
-- Lee solo filas de cotizaciones, Seguridad Social, IRPF o sus totales. Ignora salario, pluses, devengos y cualquier otra zona.
-- Para cada fila devuelve únicamente las cifras que se vean con claridad: base, rate (porcentaje) y amount (importe descontado o retenido). Usa null para cualquier dato ausente, ambiguo o ilegible.
+- Identifica primero el código y el texto del concepto. No clasifiques por importes ni porcentajes.
+- Devuelve code con el código visible exacto y sourceText solo con el texto visible del concepto.
+- side solo puede ser: bases, worker, irpf, company, contributions, worker_total, company_total o unknown.
+- Las filas de bases y prorratas usan side "bases" y guardan su importe visible en value.
+- Las aportaciones o beneficios de empresa usan side "contributions" y guardan su importe visible en value. No son descuentos de la persona trabajadora.
+- Las filas de Seguridad Social con columnas de trabajador/a y empresa se devuelven dos veces cuando existan datos en ambos lados: mismo code y sourceText, una fila side "worker" y otra side "company".
+- Para worker y company, base es la base visible, rate el porcentaje de ese lado y amount su cuota. Si no se ve el porcentaje, usa null aunque se vean base y cuota.
+- 9402 usa side "irpf" con base, rate y amount como retención. /402 también usa side "irpf", pero debe conservarse como concepto distinto y amount es la retención en especie.
+- /361, /352 y /353 usan side "company". No los mezcles con cuotas del trabajador.
+- Para "Total Cotiz. SS e IRPF (*)", devuelve por separado side "worker_total" y side "company_total" cuando estén presentes, con cada total en amount. No los sumes.
+- Una fila sin correspondencia segura con el catálogo usa side "unknown" y conserva code, sourceText y las cifras visibles en value, base, rate o amount.
+- Usa null para cualquier dato ausente, ambiguo o ilegible. Si un concepto no aparece, no lo incluyas.
 - No calcules valores, no completes operaciones y no inventes conceptos ni ceros.
-- sourceText debe contener solo el nombre visible de la fila, nunca la fila completa.
 - No extraigas ni devuelvas nombre, DNI/NIF/NIE, número de Seguridad Social, domicilio, cuenta bancaria, número de empleado, correo ni ningún otro identificador personal.
-- No confundas aportaciones de empresa con descuentos de la persona trabajadora. Si la columna no se distingue con seguridad, usa null.
-- Si aparece una fila adicional en esta tabla, usa kind unknown y conserva únicamente su nombre visible en sourceText.
 - Si la imagen está borrosa, cortada, no contiene esta sección o no permite leer al menos una cifra con seguridad, devuelve {"isDiscountsSection":false,"quality":"low","rows":[]}.
 - quality solo puede ser "ok" cuando la sección es reconocible y existe al menos una cifra fiable.`;
 
@@ -204,7 +287,7 @@ Reglas estrictas:
               { type: "input_image", image_url: imageDataUrl, detail: "high" },
             ],
           }],
-          max_output_tokens: 1600,
+          max_output_tokens: 2800,
         }),
       });
 
