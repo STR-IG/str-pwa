@@ -1274,32 +1274,74 @@
       font-weight: 700;
     }
 
-    .discounts-placeholder {
-      text-align: center;
-    }
-
-    .discounts-placeholder-icon {
-      display: grid;
-      width: 58px;
-      height: 58px;
-      margin: 0 auto 14px;
-      place-items: center;
-      border-radius: 18px;
-      background: #f7e9eb;
-      font-size: 29px;
-    }
-
-    .discounts-placeholder h2 {
-      margin: 0 0 8px;
-      font-size: 19px;
-    }
-
-    .discounts-placeholder p {
-      max-width: 430px;
-      margin: 0 auto;
+    .discounts-intro {
+      margin-bottom: 16px;
       color: var(--muted);
-      font-size: 14px;
-      line-height: 1.55;
+      text-align: center;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .discounts-privacy {
+      display: flex;
+      gap: 10px;
+      padding: 13px;
+      border-radius: 14px;
+      color: #684900;
+      background: #fff8df;
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .discounts-privacy strong { display: block; margin-bottom: 3px; }
+    .discounts-preview img { max-height: 430px; }
+    .discounts-status { margin-top: 15px; }
+    .discounts-results { margin-top: 19px; }
+    .discounts-results h2 { margin: 0 0 12px; font-size: 18px; }
+    .discounts-group + .discounts-group { margin-top: 17px; }
+    .discounts-group h3 {
+      margin: 0 0 9px;
+      color: var(--red-dark);
+      font-size: 15px;
+    }
+    .discounts-list { display: grid; gap: 10px; }
+    .discounts-row {
+      padding: 13px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: #fbfbfc;
+    }
+    .discounts-row h4 { margin: 0 0 9px; font-size: 14px; line-height: 1.35; }
+    .discounts-values {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+    }
+    .discounts-value {
+      min-width: 0;
+      padding: 9px;
+      border-radius: 10px;
+      background: white;
+    }
+    .discounts-value span {
+      display: block;
+      color: var(--muted);
+      font-size: 9px;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+    .discounts-value strong {
+      display: block;
+      margin-top: 4px;
+      overflow-wrap: anywhere;
+      font-size: 13px;
+    }
+    .discounts-unknown-text {
+      margin: 0;
+      color: #45454a;
+      font-size: 12px;
+      line-height: 1.45;
+      overflow-wrap: anywhere;
     }
 
     .instruction {
@@ -1532,6 +1574,7 @@
     @media (max-width: 390px) {
       .document-line { display: block; }
       .status-pill { display: inline-block; margin-top: 7px; }
+      .discounts-values { grid-template-columns: 1fr; }
       .work-mode-card {
         grid-template-columns: 43px 1fr;
         padding: 14px;
@@ -1752,9 +1795,9 @@
             <div class="document-info">
               <div class="document-line">
                 <h3 class="document-title">Descuentos</h3>
-                <span class="status-pill">Próximamente</span>
+                <span class="status-pill">Disponible</span>
               </div>
-              <p class="document-help">Futuro lector de Seguridad Social e IRPF.</p>
+              <p class="document-help">Lector de Seguridad Social e IRPF.</p>
             </div>
           </div>
           <button id="open-discounts" class="card-button" type="button">Abrir Descuentos</button>
@@ -1785,11 +1828,43 @@
         <p id="discounts-period" class="document-period"></p>
       </div>
 
-      <section class="panel discounts-placeholder">
-        <span class="discounts-placeholder-icon" aria-hidden="true">📉</span>
-        <h2>Lector de descuentos</h2>
-        <p>En una próxima fase podrás añadir aquí un pantallazo de la sección “Seguridad Social e IRPF” de tu nómina.</p>
+      <section class="panel">
+        <p class="discounts-intro">Añade un solo pantallazo de la tabla “Seguridad Social e IRPF” de tu nómina.</p>
+        <div class="discounts-privacy">
+          <span aria-hidden="true">🛡️</span>
+          <div><strong>Antes de seleccionar la imagen</strong>Recorta la cabecera para que no aparezcan nombre, DNI/NIF, número de Seguridad Social, domicilio ni otros datos personales.</div>
+        </div>
+
+        <input id="discounts-image" class="file-input" type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif">
+        <button id="select-discounts-image" class="secondary select-image" type="button">Seleccionar pantallazo</button>
+        <p class="select-hint">La captura no se guardará: se utilizará únicamente durante esta revisión.</p>
+
+        <div id="discounts-preview" class="preview discounts-preview" hidden>
+          <img id="discounts-preview-image" alt="Pantallazo seleccionado de Seguridad Social e IRPF">
+          <span class="preview-label">✓ Imagen preparada para revisar</span>
+        </div>
+
+        <p id="discounts-file-error" class="error" role="alert" hidden></p>
+        <div id="discounts-actions" class="actions" hidden>
+          <button id="change-discounts-image" class="secondary" type="button">Cambiar imagen</button>
+          <button id="review-discounts" class="primary" type="button">Revisar descuentos</button>
+        </div>
+
+        <div id="discounts-status" class="analysis-progress discounts-status" role="status" aria-live="polite" hidden>
+          <span id="discounts-status-icon" class="analysis-progress-icon" aria-hidden="true">🔎</span>
+          <div>
+            <strong id="discounts-status-title">Revisando descuentos…</strong>
+            <p id="discounts-status-message">Buscando únicamente datos de Seguridad Social e IRPF.</p>
+          </div>
+        </div>
+
+        <div id="discounts-results" class="discounts-results" hidden>
+          <h2>Datos detectados</h2>
+          <div id="discounts-results-content"></div>
+        </div>
       </section>
+
+      <p class="local-note"><span aria-hidden="true">🔒</span><span>La imagen no se almacena. El resultado no mostrará identificadores personales.</span></p>
     </section>
 
     <section id="history-screen" aria-labelledby="history-screen-title" hidden>
@@ -2055,11 +2130,11 @@
     const reductionSetup = document.getElementById('reduction-setup');
     const documentsSection = document.getElementById('documents-section');
     const periodScreen = document.getElementById('period-screen');
+    const discountsScreen = document.getElementById('discounts-screen');
     const historyScreen = document.getElementById('history-screen');
     const analysisScreen = document.getElementById('analysis-screen');
     const comparisonScreen = document.getElementById('comparison-screen');
     const documentScreen = document.getElementById('document-screen');
-    const discountsScreen = document.getElementById('discounts-screen');
     const topBack = document.getElementById('top-back');
     const openHistoryButton = document.getElementById('open-history');
     const refreshHistoryButton = document.getElementById('refresh-history');
@@ -4442,20 +4517,6 @@
       await loadPrivateHistory();
     }
 
-    function showDiscountsScreen() {
-      if (savingReview || savingDocument) return;
-      periodScreen.hidden = true;
-      historyScreen.hidden = true;
-      analysisScreen.hidden = true;
-      comparisonScreen.hidden = true;
-      documentScreen.hidden = true;
-      discountsScreen.hidden = false;
-      document.getElementById('discounts-period').textContent = periodLabel();
-      topBack.setAttribute('aria-label', 'Volver al resumen de documentos');
-      window.scrollTo({ top: 0, behavior: 'auto' });
-      document.getElementById('discounts-screen-title').focus({ preventScroll: true });
-    }
-
     async function openHistoryPeriod(savedYear, savedMonth, receiptId = '') {
       if (savingReview || savingDocument) return;
       activeReceiptId = receiptId;
@@ -4477,16 +4538,32 @@
       revokeWorkingUrlIfTemporary();
       activeKind = '';
       documentScreen.hidden = true;
-      discountsScreen.hidden = true;
       historyScreen.hidden = true;
       analysisScreen.hidden = true;
       comparisonScreen.hidden = true;
+      discountsScreen.hidden = true;
       periodScreen.hidden = false;
       topBack.setAttribute('aria-label', 'Volver a la pantalla principal');
       updateScheduleUI();
       updatePeriodCards();
       window.scrollTo({ top: 0, behavior: 'auto' });
       document.getElementById('period-page-title').focus({ preventScroll: true });
+      window.dispatchEvent(new CustomEvent('str:discounts-closed'));
+    }
+
+    function showDiscountsScreen() {
+      if (savingReview || savingDocument) return;
+      periodScreen.hidden = true;
+      historyScreen.hidden = true;
+      analysisScreen.hidden = true;
+      comparisonScreen.hidden = true;
+      documentScreen.hidden = true;
+      discountsScreen.hidden = false;
+      document.getElementById('discounts-period').textContent = periodLabel();
+      topBack.setAttribute('aria-label', 'Volver al resumen de documentos');
+      window.scrollTo({ top: 0, behavior: 'auto' });
+      document.getElementById('discounts-screen-title').focus({ preventScroll: true });
+      window.dispatchEvent(new CustomEvent('str:discounts-opened'));
     }
 
     async function handlePeriodChange() {
@@ -4800,6 +4877,11 @@
 
     topBack.addEventListener('click', (event) => {
       if (savingReview || savingDocument) { event.preventDefault(); return; }
+      if (!discountsScreen.hidden) {
+        event.preventDefault();
+        showPeriodScreen();
+        return;
+      }
       if (!comparisonScreen.hidden) {
         event.preventDefault();
         showPeriodScreen();
@@ -4811,11 +4893,6 @@
         return;
       }
       if (!historyScreen.hidden) {
-        event.preventDefault();
-        showPeriodScreen();
-        return;
-      }
-      if (!discountsScreen.hidden) {
         event.preventDefault();
         showPeriodScreen();
         return;

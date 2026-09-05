@@ -81,6 +81,44 @@ function parseModelJson(text: string) {
   return JSON.parse(cleaned.slice(start, end + 1));
 }
 
+const discountKinds = new Set([
+  "common_contingencies", "mei", "unemployment", "training", "irpf", "total", "unknown",
+]);
+
+function normalizeDiscountNumber(value: unknown, maximum: number) {
+  if (value === null || value === undefined || value === "") return null;
+  let raw = String(value).trim();
+  if (raw.includes(",")) raw = raw.replace(/\./g, "").replace(",", ".");
+  if (!/^-?\d+(?:\.\d{1,4})?$/.test(raw)) return null;
+  const number = Number(raw);
+  return Number.isFinite(number) && Math.abs(number) <= maximum ? number : null;
+}
+
+function normalizeDiscountSourceText(value: unknown) {
+  const text = String(value ?? "").replace(/\s+/g, " ").trim().slice(0, 160);
+  if (!text) return "";
+  const personal = /@|\b(?:dni|nif|nie|naf|domicilio|emplead[oa]|n[uú]mero de seguridad social)\b|\b\d{8}[a-z]\b/i.test(text);
+  return personal ? "" : text;
+}
+
+function normalizeDiscountRows(items: unknown) {
+  if (!Array.isArray(items)) return [];
+  return items.flatMap((item: any) => {
+    const kind = discountKinds.has(item?.kind) ? item.kind : "unknown";
+    const sourceText = normalizeDiscountSourceText(item?.sourceText);
+    const row = {
+      kind,
+      sourceText,
+      base: normalizeDiscountNumber(item?.base, 1_000_000),
+      rate: normalizeDiscountNumber(item?.rate, 100),
+      amount: normalizeDiscountNumber(item?.amount, 1_000_000),
+    };
+    if (kind === "unknown" && !sourceText) return [];
+    if (kind !== "unknown" && row.base === null && row.rate === null && row.amount === null) return [];
+    return [row];
+  }).slice(0, 20);
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   if (req.method !== "POST") return json({ error: "METHOD_NOT_ALLOWED" }, 405);
@@ -112,6 +150,7 @@ Deno.serve(async (req: Request) => {
     if (!allowedRow) return json({ error: "FORBIDDEN" }, 403);
 
     const body = await req.json().catch(() => ({}));
+    const readDiscounts = body?.readDiscounts === true;
     const includeSupplemental = body?.includeSupplemental === true;
     const includeOvertime = body?.includeOvertime === true;
     const imageDataUrl = String(body?.imageDataUrl ?? "");
@@ -122,6 +161,66 @@ Deno.serve(async (req: Request) => {
 
     const openaiKey = Deno.env.get("OPENAI_API_KEY");
     if (!openaiKey) return json({ error: "OPENAI_API_KEY_NOT_CONFIGURED" }, 503);
+
+    if (readDiscounts) {
+      const discountsPrompt = `Analiza únicamente la tabla o sección "Seguridad Social e IRPF" visible en esta captura de nómina.
+
+Devuelve SOLO JSON válido, sin markdown, con esta forma exacta:
+{"isDiscountsSection":true,"quality":"ok","rows":[{"kind":"common_contingencies","sourceText":"Contingencias comunes","base":"2016,74","rate":"4,70","amount":"94,79"}]}
+El ejemplo solo muestra el formato: nunca copies sus cifras.
+
+Valores permitidos para kind:
+- common_contingencies: Contingencias comunes.
+- mei: Mecanismo de Equidad Intergeneracional o MEI.
+- unemployment: Desempleo.
+- training: Formación profesional.
+- irpf: IRPF o retención IRPF.
+- total: total explícito de cotizaciones, deducciones o descuentos.
+- unknown: otra fila de esta misma tabla que no corresponda con seguridad a las anteriores.
+
+Reglas estrictas:
+- Lee solo filas de cotizaciones, Seguridad Social, IRPF o sus totales. Ignora salario, pluses, devengos y cualquier otra zona.
+- Para cada fila devuelve únicamente las cifras que se vean con claridad: base, rate (porcentaje) y amount (importe descontado o retenido). Usa null para cualquier dato ausente, ambiguo o ilegible.
+- No calcules valores, no completes operaciones y no inventes conceptos ni ceros.
+- sourceText debe contener solo el nombre visible de la fila, nunca la fila completa.
+- No extraigas ni devuelvas nombre, DNI/NIF/NIE, número de Seguridad Social, domicilio, cuenta bancaria, número de empleado, correo ni ningún otro identificador personal.
+- No confundas aportaciones de empresa con descuentos de la persona trabajadora. Si la columna no se distingue con seguridad, usa null.
+- Si aparece una fila adicional en esta tabla, usa kind unknown y conserva únicamente su nombre visible en sourceText.
+- Si la imagen está borrosa, cortada, no contiene esta sección o no permite leer al menos una cifra con seguridad, devuelve {"isDiscountsSection":false,"quality":"low","rows":[]}.
+- quality solo puede ser "ok" cuando la sección es reconocible y existe al menos una cifra fiable.`;
+
+      const discountsResponse = await fetch("https://api.openai.com/v1/responses", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${openaiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "gpt-5.6-luna",
+          input: [{
+            role: "user",
+            content: [
+              { type: "input_text", text: discountsPrompt },
+              { type: "input_image", image_url: imageDataUrl, detail: "high" },
+            ],
+          }],
+          max_output_tokens: 1600,
+        }),
+      });
+
+      const discountsJson = await discountsResponse.json().catch(() => ({}));
+      if (!discountsResponse.ok) {
+        console.error("OpenAI discounts vision error", discountsResponse.status, discountsJson);
+        return json({ error: "VISION_PROVIDER_ERROR", status: discountsResponse.status }, 502);
+      }
+
+      const parsedDiscounts = parseModelJson(extractOutputText(discountsJson));
+      const rows = normalizeDiscountRows(parsedDiscounts?.rows);
+      if (parsedDiscounts?.isDiscountsSection !== true || parsedDiscounts?.quality !== "ok" || rows.length === 0) {
+        return json({ isDiscountsSection: false, quality: "low", rows: [] });
+      }
+      return json({ isDiscountsSection: true, quality: "ok", rows });
+    }
 
     const prompt = `Analiza esta imagen de una nómina. Queremos cruzarla con el "RESUMEN DE VARIABLES DEL MES" del registro de jornada.\n\nDevuelve SOLO JSON válido, sin markdown, con esta forma exacta:\n{"isPayroll":true,"concepts":[{"name":"texto del concepto en nómina","value":"cantidad/unidades"}]}\n\nReglas:\n- Extrae únicamente la CANTIDAD, UNIDADES u HORAS asociadas a cada concepto variable; NO extraigas el importe en euros ni el precio unitario.\n- Lee cada concepto por su nombre real en la nómina, no por posición fija.\n- Conceptos a buscar: Plus rotatividad, Comidas Can Guasch (puede aparecer como PRF COMIDAS C. GUASCH o similar), Plus nocturno, Plus de turno, Plus festivo, Plus de turno 12 horas, Dietas festivos y Pluses vacaciones.\n- Distingue "Plus de turno" de "Plus de turno 12 horas".\n- Distingue "Plus festivo" de "Dietas festivos".\n- Si un concepto no aparece en la nómina, NO lo inventes y NO lo incluyas.\n- Conserva decimales con coma cuando existan.\n- Si una fila muestra varias cifras, identifica cuál corresponde a cantidad/unidades/horas y evita importes monetarios.\n- Si no puedes reconocer que la imagen corresponde a una nómina o tabla de conceptos salariales, devuelve {"isPayroll":false,"concepts":[]}.\n- Si una cantidad no es legible con seguridad, omite esa fila.`;
 
