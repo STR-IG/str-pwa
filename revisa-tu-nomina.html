@@ -11,7 +11,7 @@
   <script>
     (async () => {
       try {
-        const response = await fetch('revisa-tu-nomina-base.html?v=prod-16', { cache: 'no-store' });
+        const response = await fetch('revisa-tu-nomina-base.html?v=prod-17', { cache: 'no-store' });
         if (!response.ok) throw new Error('BASE_NOT_AVAILABLE');
         let html = await response.text();
         html = html

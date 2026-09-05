@@ -1274,6 +1274,34 @@
       font-weight: 700;
     }
 
+    .discounts-placeholder {
+      text-align: center;
+    }
+
+    .discounts-placeholder-icon {
+      display: grid;
+      width: 58px;
+      height: 58px;
+      margin: 0 auto 14px;
+      place-items: center;
+      border-radius: 18px;
+      background: #f7e9eb;
+      font-size: 29px;
+    }
+
+    .discounts-placeholder h2 {
+      margin: 0 0 8px;
+      font-size: 19px;
+    }
+
+    .discounts-placeholder p {
+      max-width: 430px;
+      margin: 0 auto;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.55;
+    }
+
     .instruction {
       display: flex;
       gap: 12px;
@@ -1718,6 +1746,20 @@
           <button id="open-payroll" class="card-button" type="button" disabled>Completa primero la jornada</button>
         </article>
 
+        <article id="discounts-card" class="document-card">
+          <div class="document-card-top">
+            <span class="document-icon" aria-hidden="true">📉</span>
+            <div class="document-info">
+              <div class="document-line">
+                <h3 class="document-title">Descuentos</h3>
+                <span class="status-pill">Próximamente</span>
+              </div>
+              <p class="document-help">Futuro lector de Seguridad Social e IRPF.</p>
+            </div>
+          </div>
+          <button id="open-discounts" class="card-button" type="button">Abrir Descuentos</button>
+        </article>
+
         <section id="completion-panel" class="completion-panel" hidden>
           <strong>✓ Los dos documentos están guardados</strong>
           <p>Confirma las cantidades de este recibo. Si tienes varias nóminas, las sumaremos al cerrar la comparación del mes.</p>
@@ -1734,6 +1776,20 @@
 
         <p class="local-note"><span aria-hidden="true">🛡️</span><span>Las imágenes se guardan en un espacio privado asociado a tu cuenta y no tienen enlaces públicos. Podrás recuperarlas al volver a elegir el mismo mes.</span></p>
       </div>
+    </section>
+
+    <section id="discounts-screen" aria-labelledby="discounts-screen-title" hidden>
+      <div class="document-screen-header">
+        <span class="step-label">DESCUENTOS</span>
+        <h1 id="discounts-screen-title" tabindex="-1">Descuentos</h1>
+        <p id="discounts-period" class="document-period"></p>
+      </div>
+
+      <section class="panel discounts-placeholder">
+        <span class="discounts-placeholder-icon" aria-hidden="true">📉</span>
+        <h2>Lector de descuentos</h2>
+        <p>En una próxima fase podrás añadir aquí un pantallazo de la sección “Seguridad Social e IRPF” de tu nómina.</p>
+      </section>
     </section>
 
     <section id="history-screen" aria-labelledby="history-screen-title" hidden>
@@ -2003,6 +2059,7 @@
     const analysisScreen = document.getElementById('analysis-screen');
     const comparisonScreen = document.getElementById('comparison-screen');
     const documentScreen = document.getElementById('document-screen');
+    const discountsScreen = document.getElementById('discounts-screen');
     const topBack = document.getElementById('top-back');
     const openHistoryButton = document.getElementById('open-history');
     const refreshHistoryButton = document.getElementById('refresh-history');
@@ -4385,6 +4442,20 @@
       await loadPrivateHistory();
     }
 
+    function showDiscountsScreen() {
+      if (savingReview || savingDocument) return;
+      periodScreen.hidden = true;
+      historyScreen.hidden = true;
+      analysisScreen.hidden = true;
+      comparisonScreen.hidden = true;
+      documentScreen.hidden = true;
+      discountsScreen.hidden = false;
+      document.getElementById('discounts-period').textContent = periodLabel();
+      topBack.setAttribute('aria-label', 'Volver al resumen de documentos');
+      window.scrollTo({ top: 0, behavior: 'auto' });
+      document.getElementById('discounts-screen-title').focus({ preventScroll: true });
+    }
+
     async function openHistoryPeriod(savedYear, savedMonth, receiptId = '') {
       if (savingReview || savingDocument) return;
       activeReceiptId = receiptId;
@@ -4406,6 +4477,7 @@
       revokeWorkingUrlIfTemporary();
       activeKind = '';
       documentScreen.hidden = true;
+      discountsScreen.hidden = true;
       historyScreen.hidden = true;
       analysisScreen.hidden = true;
       comparisonScreen.hidden = true;
@@ -4612,6 +4684,7 @@
 
     document.getElementById('open-timesheet').addEventListener('click', () => openDocument('timesheet'));
     document.getElementById('open-payroll').addEventListener('click', () => openDocument('payroll'));
+    document.getElementById('open-discounts').addEventListener('click', showDiscountsScreen);
     workModeFull.addEventListener('click', () => selectWorkMode('full'));
     workModeReduced.addEventListener('click', () => selectWorkMode('reduced'));
     startAnalysisButton.addEventListener('click', startMonthlyReview);
@@ -4738,6 +4811,11 @@
         return;
       }
       if (!historyScreen.hidden) {
+        event.preventDefault();
+        showPeriodScreen();
+        return;
+      }
+      if (!discountsScreen.hidden) {
         event.preventDefault();
         showPeriodScreen();
         return;
