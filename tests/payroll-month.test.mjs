@@ -61,6 +61,26 @@ test('one receipt, three receipts, decimals, zero and actual mismatches', async 
   assert.equal(result.comparisons.meals.status,'match');
 });
 
+test('octubre 2025: vacaciones ausentes se comparan automáticamente como cero', async () => {
+  const bucket = bucketFor('owner-a');
+  const app = ui(bucket);
+  app.year.value = '2025';
+  app.month.value = '9';
+  const register = new Map(keys.map(key => [key, '0']));
+  app.confirmedTimesheetAnalyses.set(app.periodKey(), register);
+
+  app.renderPayrollComparison(new Map());
+
+  assert.equal(app.comparisonInputs.get('vacation').value, '0');
+  assert.equal(app.comparisonCards.get('vacation').status.textContent, 'No aparece este mes');
+  const payroll = new Map([...app.comparisonInputs].map(([key, input]) => [key, input.value]));
+  const result = app.buildMonthlyComparisons(register, payroll).vacation;
+  assert.equal(result.register, 0);
+  assert.equal(result.payroll, 0);
+  assert.equal(result.difference, 0);
+  assert.equal(result.status, 'match');
+});
+
 test('payroll-only group concepts persist per receipt without entering monthly comparisons', async () => {
   const bucket=bucketFor('owner-a');
   const one=await seed(bucket,folder,{vacation:'10'});

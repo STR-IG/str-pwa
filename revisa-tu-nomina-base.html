@@ -4066,6 +4066,8 @@
         const result = extracted?.get(key);
         const payrollValue = typeof result === 'string' ? result : (result?.value || '');
         const registerValue = timesheetValues.get(key);
+        const registerQuantity = parseQuantityValue(registerValue);
+        const absentThisMonth = payrollValue === '' && (registerValue === undefined || registerQuantity === 0);
         if (payrollValue !== '') detected += 1;
 
         const card = document.createElement('div');
@@ -4075,8 +4077,8 @@
         const title = document.createElement('strong');
         title.textContent = variable.label;
         const status = document.createElement('span');
-        status.className = 'comparison-status';
-        status.textContent = confirmed ? 'Comprobado' : 'Por comparar';
+        status.className = `comparison-status${absentThisMonth ? ' ok' : ''}`;
+        status.textContent = absentThisMonth ? 'No aparece este mes' : (confirmed ? 'Comprobado' : 'Por comparar');
         top.appendChild(title);
         top.appendChild(status);
 
@@ -4104,7 +4106,7 @@
         input.inputMode = 'decimal';
         input.autocomplete = 'off';
         input.placeholder = 'No aparece';
-        input.value = payrollValue;
+        input.value = absentThisMonth ? '0' : payrollValue;
         input.readOnly = confirmed;
         input.addEventListener('input', () => {
           hideMonthlyResults();
@@ -4125,7 +4127,9 @@
 
         const difference = document.createElement('p');
         difference.className = 'comparison-difference';
-        difference.textContent = 'Confirma la cifra para calcular el desfase.';
+        difference.textContent = absentThisMonth
+          ? 'No aparece este mes; se compara automáticamente como 0.'
+          : 'Confirma la cifra para calcular el desfase.';
         card.appendChild(top);
         card.appendChild(values);
         card.appendChild(difference);
