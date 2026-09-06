@@ -48,15 +48,18 @@
     if (message) message.textContent = messageText;
   }
 
-  function markAsRead(input) {
-    if (!input?.value?.trim()) return;
+  function markState(input, text, resolved) {
     let node = input.parentElement;
     for (let depth = 0; node && depth < 6; depth += 1, node = node.parentElement) {
       const badge = [...node.querySelectorAll('span, div')].find((el) => {
-        const text = el.textContent.trim().toUpperCase();
-        return text === 'REVISADO' || text === 'DETECTADO';
+        const value = el.textContent.trim().toUpperCase();
+        return ['REVISADO', 'DETECTADO', 'COMPROBAR', 'LEÍDO', 'NO APARECE ESTE MES'].includes(value);
       });
-      if (badge) { badge.textContent = 'LEÍDO'; return; }
+      if (badge) {
+        badge.textContent = text;
+        badge.className = `analysis-field-status${resolved ? ' detected' : ''}`;
+        return;
+      }
     }
   }
 
@@ -80,9 +83,11 @@
   }
 
   function clearAndApply(concepts) {
-    Object.values(FIELD_MAP).forEach((id) => {
+    const previousValues = new Map();
+    Object.entries(FIELD_MAP).forEach(([key, id]) => {
       const input = document.getElementById(id);
       if (!input) return;
+      previousValues.set(key, input.value.trim());
       input.value = '';
       input.placeholder = 'No leído automáticamente';
       delete input.dataset.labAutoRead;
@@ -95,17 +100,39 @@
       if (!key || seen.has(key)) continue;
       const id = FIELD_MAP[key];
       const input = document.getElementById(id);
-      const value = String(item?.value || '').trim();
-      if (!input || !value) continue;
+      const value = String(item?.value ?? '').trim();
+      if (!input) continue;
+      seen.add(key);
+      if (!value) {
+        markState(input, 'COMPROBAR', false);
+        continue;
+      }
       input.value = value;
       input.dataset.labAutoRead = 'vision';
       input.dispatchEvent(new Event('input', { bubbles: true }));
-      markAsRead(input);
-      setTimeout(() => markAsRead(input), 0);
-      setTimeout(() => markAsRead(input), 150);
-      seen.add(key);
+      markState(input, 'LEÍDO', true);
+      setTimeout(() => markState(input, 'LEÍDO', true), 0);
+      setTimeout(() => markState(input, 'LEÍDO', true), 150);
       count += 1;
     }
+    Object.entries(FIELD_MAP).forEach(([key, id]) => {
+      if (seen.has(key)) return;
+      const input = document.getElementById(id);
+      if (!input) return;
+      const previous = previousValues.get(key);
+      if (previous) {
+        input.value = previous;
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+        markState(input, 'LEÍDO', true);
+        count += 1;
+        return;
+      }
+      input.value = '0';
+      input.placeholder = 'No aplica';
+      input.dataset.labAutoRead = 'absent';
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      markState(input, 'NO APARECE ESTE MES', true);
+    });
     const counter = document.getElementById('analysis-detected-count');
     if (counter) counter.textContent = `${count} cantidades leídas automáticamente`;
     return count;
@@ -142,7 +169,6 @@
         throw new Error(data?.error || `HTTP_${response.status}`);
       }
       if (data?.isMonthlySummary !== true) {
-        clearAndApply([]);
         setProgress('warning', 'No se reconoce el resumen mensual', 'La imagen no parece contener con suficiente claridad la tabla «Resumen de variables del mes».');
         completedForSrc = src;
         return;

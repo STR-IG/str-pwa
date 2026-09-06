@@ -71,15 +71,18 @@ test('actual supplemental UI reads, allows correction, protects manual edits, re
   delete globalThis.document;
 });
 
-test('absent supplemental concepts stay writable in edit mode, typing marks present',()=>{
+test('absent supplemental concepts show no aplica until changed to present',()=>{
   const root=dom();globalThis.document=root;
   renderSupplemental(root.createElement('div'),{'7001':{status:'absent',quantity:null,amount:null}},false);
   const quantity=root.getElementById('supplemental-7001-quantity');
   const amount=root.getElementById('supplemental-7001-amount');
-  assert.equal(quantity.disabled,false);assert.equal(quantity.readOnly,false);
-  assert.equal(amount.disabled,false);assert.equal(amount.readOnly,false);
+  assert.equal(quantity.disabled,true);assert.equal(quantity.placeholder,'No aplica');
+  assert.equal(amount.disabled,true);assert.equal(amount.placeholder,'No aplica');
+  const status=root.getElementById('supplemental-7001-status');
+  status.value='present';status.listeners.change();
+  assert.equal(quantity.disabled,false);assert.equal(amount.disabled,false);
   quantity.value='5';quantity.listeners.input();amount.value='119,90';amount.listeners.input();
-  assert.equal(root.getElementById('supplemental-7001-status').value,'present');
+  assert.equal(status.value,'present');
   assert.equal(readSupplemental(root)['7001'].amount,119.9);
   delete globalThis.document;
 });

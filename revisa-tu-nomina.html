@@ -17,13 +17,15 @@
         html = html
           .replace('<title>Revisa tu nómina · STR-IG LAB</title>', '<title>Revisa tu nómina · STR-IG</title>')
           .replace('<div class="labbar">🧪 STR-IG LABORATORIO · NO ES PRODUCCIÓN</div>', '')
-          .replace("sessionStorage.setItem('strLabNext', 'revisa-tu-nomina.html');", "sessionStorage.setItem('strAfterLogin', 'revisa-nomina.html');");
+          .replace("sessionStorage.setItem('strLabNext', 'revisa-tu-nomina.html');", "sessionStorage.setItem('strAfterLogin', 'revisa-nomina.html');")
+          .replace("'./payroll-supplemental.mjs?v=3'", "'./payroll-supplemental.mjs?v=4'")
+          .replace("'./payroll-overtime.mjs?v=2'", "'./payroll-overtime.mjs?v=3'");
 
         const productionStyle = '<style>.labbar{display:none!important}body::before{display:none!important}</style>';
         const productionScripts = [
           '<script src="payroll-lab-patch.js?v=prod-9"><\/script>',
           '<script src="timesheet-crop-guard-lab.js?v=prod-4"><\/script>',
-          '<script src="timesheet-vision-lab.js?v=prod-4"><\/script>',
+          '<script src="timesheet-vision-lab.js?v=prod-5"><\/script>',
           '<script src="payroll-vision-lab.js?v=prod-9"><\/script>',
           '<script type="module" src="discounts-reader.js?v=prod-3"><\/script>',
           '<script src="history-lab-patch.js?v=prod-5"><\/script>',

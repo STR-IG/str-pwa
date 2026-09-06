@@ -137,6 +137,9 @@ test('unknown/absent UI stays optional, entering zero works, model omission neve
   t.after(()=>delete globalThis.document);
   const root=dom();globalThis.document=root;
   renderOvertime(root.createElement(),{status:'absent'});
+  assert.equal(root.getElementById('overtime-quantity').disabled,true);
+  assert.equal(root.getElementById('overtime-quantity').placeholder,'No aplica');
+  const status=root.getElementById('overtime-status');status.value='present';status.listeners.change();
   type(root,'overtime-quantity','0');type(root,'overtime-unitPrice','22');
   assert.equal(readOvertime(root).amount,0);assert.equal(readOvertime(root).status,'present');
   renderOvertime(root.createElement());

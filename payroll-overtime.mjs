@@ -59,6 +59,7 @@ export function renderOvertime(container, saved = {}, confirmed = false) {
   status.disabled = confirmed;
   status.style.width = '100%'; status.style.padding = '12px'; status.style.margin = '8px 0 12px';
   const values = root.createElement('div'); values.className = 'comparison-values';
+  const inputs = [];
   for (const [field, text] of [['quantity', 'Número de horas extras'], ['unitPrice', 'Precio por hora (€)']]) {
     const column = root.createElement('div'); column.className = 'comparison-value';
     const fieldLabel = root.createElement('label');
@@ -67,17 +68,27 @@ export function renderOvertime(container, saved = {}, confirmed = false) {
     input.id = fieldLabel.htmlFor; input.type = 'text'; input.inputMode = 'decimal';
     input.placeholder = 'Pendiente'; input.readOnly = confirmed;
     input.value = saved?.[field] == null ? '' : String(saved[field]).replace('.', ',');
+    inputs.push(input);
     input.addEventListener('input', () => {
       section.dataset.manual = 'true'; status.value = 'present'; updateAmount(root);
     });
     column.append(fieldLabel, input); values.appendChild(column);
   }
-  status.addEventListener('change', () => { section.dataset.manual = 'true'; updateAmount(root); });
+  const updateAbsentState = () => {
+    const absent = status.value === 'absent';
+    inputs.forEach((input) => {
+      if (absent) input.value = '';
+      input.disabled = absent;
+      input.placeholder = absent ? 'No aplica' : 'Pendiente';
+    });
+  };
+  status.addEventListener('change', () => { section.dataset.manual = 'true'; updateAbsentState(); updateAmount(root); });
   const amount = root.createElement('output'); amount.id = 'overtime-amount';
   amount.setAttribute('for', 'overtime-quantity overtime-unitPrice');
   amount.setAttribute('aria-live', 'polite'); amount.style.display = 'block'; amount.style.marginTop = '12px';
   section.append(heading, note, label, status, values, amount);
   container.appendChild(section);
+  updateAbsentState();
   updateAmount(root);
 }
 

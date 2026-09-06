@@ -91,17 +91,27 @@ function renderSupplementalCard(root, concept, saved, confirmed) {
     ? [['quantity','Cantidad en esta nómina'],['unitPrice','Importe diario / precio unitario (€)'],['amount','Importe abonado (€)']]
     : [['quantity','Cantidad en este recibo'],['amount','Importe abonado (€)']];
   if (readsUnitPrice) values.className += ' supplemental-fixed-values';
+  const inputs = [];
   for (const [field,text] of fields) {
     const column = root.createElement('div'); column.className = 'comparison-value';
     const label = root.createElement('label'); label.htmlFor = `supplemental-${code}-${field}`; label.textContent = text;
     const input = root.createElement('input'); input.id = label.htmlFor; input.type = 'text'; input.inputMode = 'decimal';
     input.value = row[field] == null ? '' : String(row[field]).replace('.', ',');
     input.placeholder = 'Pendiente'; input.readOnly = confirmed;
+    inputs.push(input);
     column.append(label,input); values.appendChild(column);
     input.addEventListener('input', () => { card.dataset.manual = 'true'; status.value = 'present'; });
   }
-  status.addEventListener('change', () => { card.dataset.manual = 'true'; });
-  // Absence is a saved status, not an input lock. Typing changes it to present.
+  const updateAbsentState = () => {
+    const absent = status.value === 'absent';
+    inputs.forEach((input) => {
+      if (absent) input.value = '';
+      input.disabled = absent;
+      input.placeholder = absent ? 'No aplica' : 'Pendiente';
+    });
+  };
+  status.addEventListener('change', () => { card.dataset.manual = 'true'; updateAbsentState(); });
+  updateAbsentState();
   card.append(heading,statusLabel,status,values);
   return card;
 }

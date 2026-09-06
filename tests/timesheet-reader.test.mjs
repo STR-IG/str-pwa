@@ -78,3 +78,41 @@ test('no toma una cifra de otra línea para completar un concepto', () => {
   assert.equal(values.has('night'), false);
   assert.equal(values.has('holiday'), false);
 });
+
+test('visión distingue vacaciones ausentes en noviembre y leídas en diciembre', () => {
+  const vision = readFileSync(new URL('../timesheet-vision-lab.js', import.meta.url), 'utf8');
+  const extractVision = (name) => {
+    const start = vision.indexOf(`  function ${name}(`);
+    assert.ok(start >= 0, name);
+    return vision.slice(start, vision.indexOf('\n  }', start) + 4);
+  };
+  const badge = {textContent:'COMPROBAR',className:''};
+  const input = {
+    value:'', placeholder:'', dataset:{}, parentElement:{parentElement:null,querySelectorAll:()=>[badge]},
+    dispatchEvent(){badge.textContent=this.value ? 'REVISADO' : 'COMPROBAR';}
+  };
+  const counter = {textContent:''};
+  const ids = {vacation:input};
+  const visionContext = vm.createContext({
+    FIELD_MAP:{vacation:'analysis-vacation'}, Map, Set, String,
+    document:{getElementById:id=>id==='analysis-detected-count'?counter:ids.vacation},
+    Event:class {}, setTimeout:fn=>fn()
+  });
+  vm.runInContext([
+    extractVision('norm'), extractVision('conceptKey'), extractVision('markState'), extractVision('clearAndApply')
+  ].join('\n'), visionContext);
+
+  visionContext.clearAndApply([]);
+  assert.equal(input.value,'0');
+  assert.equal(badge.textContent,'NO APARECE ESTE MES');
+
+  input.value=''; badge.textContent='COMPROBAR';
+  visionContext.clearAndApply([{name:'Pluses vacaciones',value:'3'}]);
+  assert.equal(input.value,'3');
+  assert.equal(badge.textContent,'LEÍDO');
+
+  input.value=''; badge.textContent='COMPROBAR';
+  visionContext.clearAndApply([{name:'Pluses vacaciones',value:null}]);
+  assert.equal(input.value,'');
+  assert.equal(badge.textContent,'COMPROBAR');
+});
