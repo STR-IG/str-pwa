@@ -2951,6 +2951,13 @@
           list.appendChild(item);
         }
         target.appendChild(list);
+        const homeButton = document.createElement('button');
+        homeButton.type = 'button';
+        homeButton.className = 'secondary';
+        homeButton.style.marginTop = '14px';
+        homeButton.textContent = 'Volver al menú principal';
+        homeButton.addEventListener('click', () => { window.location.href = 'index.html'; });
+        target.appendChild(homeButton);
       }
       target.hidden = false;
       target.scrollIntoView({behavior:'smooth', block:'nearest'});
