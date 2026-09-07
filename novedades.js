@@ -111,6 +111,49 @@ function applyPrivateAreaLayout() {
   grid.replaceChildren(review, statistics, calculateV, askStr, personalArea);
 }
 
+function applyBottomNavActivity() {
+  const nav = document.querySelector('.bottom-nav');
+  if (!nav) return;
+  const link = Array.from(nav.querySelectorAll('a'))
+    .find((item) => item.textContent.trim().toLowerCase().includes('derechos'));
+  if (!link) return;
+
+  link.href = 'actividad-sindical.html';
+  link.dataset.newsCategory = 'activity';
+  link.setAttribute('aria-label', 'Actividad sindical');
+  link.innerHTML = '<b>📣</b>Actividad<span class="bottom-nav-news-badge" data-news-badge aria-label="0 novedades sin leer">0</span>';
+
+  if (document.getElementById('str-bottom-nav-activity-style')) return;
+  const style = document.createElement('style');
+  style.id = 'str-bottom-nav-activity-style';
+  style.textContent = `
+    .bottom-nav a { position:relative; }
+    .bottom-nav-news-badge {
+      position:absolute;
+      top:-4px;
+      left:50%;
+      z-index:2;
+      display:none;
+      align-items:center;
+      justify-content:center;
+      min-width:18px;
+      height:18px;
+      margin-left:8px;
+      padding:0 5px;
+      border:2px solid #fff;
+      border-radius:999px;
+      color:#fff;
+      background:#e30613;
+      box-shadow:0 2px 7px rgba(0,0,0,.22);
+      font-size:10px;
+      font-weight:900;
+      line-height:1;
+    }
+    .bottom-nav-news-badge.show { display:flex; }
+  `;
+  document.head.appendChild(style);
+}
+
 function readJson(key, fallback) {
   try {
     const value = JSON.parse(localStorage.getItem(key));
@@ -342,6 +385,7 @@ async function configurePushControl(options) {
 export async function initNews(options = {}) {
   applyHomeCarousels();
   applyPrivateAreaLayout();
+  applyBottomNavActivity();
   await refreshNewsBadges();
   window.addEventListener('pageshow', () => refreshNewsBadges());
   document.addEventListener('visibilitychange', () => {
