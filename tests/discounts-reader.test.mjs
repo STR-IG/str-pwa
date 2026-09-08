@@ -17,7 +17,16 @@ test('the period screen keeps Registro and Nómina and adds Descuentos after the
   assert.match(base, /id="open-discounts"[^>]*>Abrir Descuentos</);
   assert.match(base, /id="discounts-screen"/);
   assert.match(wrapper, /revisa-tu-nomina-base\.html\?v=prod-20/);
-  assert.match(wrapper, /discounts-reader\.js\?v=prod-3/);
+  assert.match(wrapper, /discounts-reader\.js\?v=prod-4/);
+});
+
+test('completed discounts can be saved through the existing monthly review and exited without saving', () => {
+  assert.match(base, /id="save-discounts"[^>]*>✓ Guardar descuentos y continuar<\/button>/);
+  assert.match(base, /id="cancel-discounts"[^>]*>← Volver sin guardar<\/button>/);
+  assert.match(reader, /new CustomEvent\('str:discounts-save'/);
+  assert.match(base, /addEventListener\('str:discounts-save'[\s\S]*?uploadMonthlyReview\(review\)/);
+  assert.match(reader, /getElementById\('top-back'\)\?\.click\(\)/);
+  assert.match(base, /discounts: request\.rows/);
 });
 
 test('discounts reader uses one temporary image and never calls permanent storage', () => {

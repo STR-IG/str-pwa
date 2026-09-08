@@ -1826,7 +1826,7 @@
             <div class="document-info">
               <div class="document-line">
                 <h3 class="document-title">Descuentos</h3>
-                <span class="status-pill">Disponible</span>
+                <span id="discounts-card-status" class="status-pill">Disponible</span>
               </div>
               <p class="document-help">Lector de Seguridad Social e IRPF.</p>
             </div>
@@ -1897,6 +1897,10 @@
         <div id="discounts-results" class="discounts-results" hidden>
           <h2>Datos detectados</h2>
           <div id="discounts-results-content"></div>
+          <div class="actions">
+            <button id="save-discounts" class="primary" type="button">✓ Guardar descuentos y continuar</button>
+            <button id="cancel-discounts" class="secondary" type="button">← Volver sin guardar</button>
+          </div>
         </div>
       </section>
 
@@ -2701,7 +2705,9 @@
     }
 
     function hydrateMonthlyReview(review) {
-      if (!review || review.status !== 'complete' || review.period !== periodKey()) return false;
+      if (!review || review.period !== periodKey()) return false;
+      monthlyReviews.set(periodKey(), review);
+      if (review.status !== 'complete') return false;
       receiptCreated = review.createdAt || review.updatedAt || receiptCreated;
       payrollSourceHash = review.payrollSourceHash || '';
       addMonthlyPayroll.hidden = false;
@@ -2709,7 +2715,6 @@
       const payrollValues = plainObjectToMap(review.payroll);
       confirmedTimesheetAnalyses.set(periodKey(), timesheetValues);
       confirmedPayrollAnalyses.set(periodKey(), payrollValues);
-      monthlyReviews.set(periodKey(), review);
       documents.payroll.paymentInfo = review.paymentInfo || null;
       if (review.schedule && typeof review.schedule === 'object') {
         workSchedules.set(periodKey(), review.schedule);
@@ -2746,6 +2751,7 @@
     async function invalidateStoredReviewIfNeeded() {
       addMonthlyPayroll.hidden = true;
       if (!monthlyReviews.has(periodKey())) return;
+      const savedDiscounts = monthlyReviews.get(periodKey())?.discounts;
       confirmedTimesheetAnalyses.delete(periodKey());
       confirmedPayrollAnalyses.delete(periodKey());
       monthlyReviews.delete(periodKey());
@@ -2754,6 +2760,7 @@
           version: 1,
           status: 'pending',
           period: periodKey(),
+          ...(Array.isArray(savedDiscounts) ? { discounts: savedDiscounts } : {}),
           updatedAt: new Date().toISOString()
         });
       } catch {}
@@ -3189,6 +3196,10 @@
 
       const completed = Number(timesheetComplete) + Number(payrollComplete);
       const savedReview = monthlyReviews.get(periodKey());
+      const discountsSaved = Array.isArray(savedReview?.discounts) && savedReview.discounts.length > 0;
+      document.getElementById('discounts-card').classList.toggle('complete', discountsSaved);
+      document.getElementById('discounts-card-status').textContent = discountsSaved ? 'Guardados' : 'Disponible';
+      document.getElementById('open-discounts').textContent = discountsSaved ? 'Revisar descuentos' : 'Abrir Descuentos';
       const incidents = monthlyIncidentCount(savedReview);
       document.getElementById('document-count').textContent = `${completed} de 2 guardados`;
       document.getElementById('completion-panel').hidden = completed !== 2;
@@ -4433,6 +4444,9 @@
         supplemental,
         overtime,
         ...(documents.payroll.paymentInfo ? { paymentInfo: documents.payroll.paymentInfo } : {}),
+        ...(Array.isArray(monthlyReviews.get(periodKey())?.discounts)
+          ? { discounts: monthlyReviews.get(periodKey()).discounts }
+          : {}),
         comparisons,
         incidentCount: incidents,
         updatedAt: new Date().toISOString()
@@ -4680,7 +4694,9 @@
       topBack.setAttribute('aria-label', 'Volver al resumen de documentos');
       window.scrollTo({ top: 0, behavior: 'auto' });
       document.getElementById('discounts-screen-title').focus({ preventScroll: true });
-      window.dispatchEvent(new CustomEvent('str:discounts-opened'));
+      window.dispatchEvent(new CustomEvent('str:discounts-opened', {
+        detail: { rows: monthlyReviews.get(periodKey())?.discounts || [] }
+      }));
     }
 
     async function handlePeriodChange() {
@@ -4880,6 +4896,33 @@
     document.getElementById('open-timesheet').addEventListener('click', () => openDocument('timesheet'));
     document.getElementById('open-payroll').addEventListener('click', () => openDocument('payroll'));
     document.getElementById('open-discounts').addEventListener('click', showDiscountsScreen);
+    window.addEventListener('str:discounts-save', async (event) => {
+      const request = event.detail;
+      if (!request || !Array.isArray(request.rows) || !request.rows.length) return;
+      request.handled = true;
+      const savingKey = periodKey();
+      const previous = monthlyReviews.get(savingKey) || {};
+      const review = {
+        ...previous,
+        version: previous.version || 2,
+        status: previous.status || 'pending',
+        period: savingKey,
+        discounts: request.rows,
+        updatedAt: new Date().toISOString()
+      };
+      savingReview = true;
+      try {
+        await uploadMonthlyReview(review);
+        if (savingKey !== periodKey()) return;
+        monthlyReviews.set(savingKey, review);
+        request.onSaved?.();
+        showPeriodScreen();
+      } catch {
+        request.onError?.();
+      } finally {
+        savingReview = false;
+      }
+    });
     workModeFull.addEventListener('click', () => selectWorkMode('full'));
     workModeReduced.addEventListener('click', () => selectWorkMode('reduced'));
     startAnalysisButton.addEventListener('click', startMonthlyReview);

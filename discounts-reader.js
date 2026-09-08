@@ -28,11 +28,14 @@ const elements = {
   statusMessage: document.getElementById('discounts-status-message'),
   results: document.getElementById('discounts-results'),
   resultsContent: document.getElementById('discounts-results-content'),
+  save: document.getElementById('save-discounts'),
+  cancel: document.getElementById('cancel-discounts'),
 };
 
 let selectedFile = null;
 let previewUrl = '';
 let activeRequest = null;
+let latestRows = [];
 
 function updateReviewAvailability() {
   elements.review.disabled = Boolean(activeRequest) || !selectedFile || !elements.privacyCheckbox.checked;
@@ -82,6 +85,7 @@ function resetReader() {
   activeRequest = null;
   revokePreview();
   selectedFile = null;
+  latestRows = [];
   elements.input.value = '';
   elements.preview.hidden = true;
   elements.privacyConsent.hidden = true;
@@ -244,7 +248,31 @@ function renderResults(rows) {
     ['Otros conceptos detectados', rows.filter((row) => row.section === 'unknown')],
   ];
   elements.resultsContent.replaceChildren(...groups.map(([title, items]) => renderGroup(title, items)).filter(Boolean));
+  latestRows = rows.map((row) => ({ ...row }));
   elements.results.hidden = false;
+}
+
+function saveDiscounts() {
+  if (!latestRows.length || activeRequest) return;
+  elements.save.disabled = true;
+  elements.cancel.disabled = true;
+  const request = {
+    rows: latestRows,
+    handled: false,
+    onSaved: () => {},
+    onError: () => {
+      elements.save.disabled = false;
+      elements.cancel.disabled = false;
+      setStatus('failed', 'No se han podido guardar', 'Comprueba la conexión y vuelve a intentarlo. Los datos detectados siguen en pantalla.');
+    },
+  };
+  window.dispatchEvent(new CustomEvent('str:discounts-save', { detail: request }));
+  if (!request.handled) request.onError();
+}
+
+function cancelDiscounts() {
+  if (activeRequest) return;
+  document.getElementById('top-back')?.click();
 }
 
 function readableError(status, code) {
@@ -307,10 +335,18 @@ async function reviewDiscounts() {
 elements.select?.addEventListener('click', chooseImage);
 elements.change?.addEventListener('click', chooseImage);
 elements.review?.addEventListener('click', reviewDiscounts);
+elements.save?.addEventListener('click', saveDiscounts);
+elements.cancel?.addEventListener('click', cancelDiscounts);
 elements.privacyCheckbox?.addEventListener('change', () => {
   setFileError();
   updateReviewAvailability();
 });
 elements.input?.addEventListener('change', (event) => selectFile(event.target.files?.[0]));
 window.addEventListener('str:discounts-closed', resetReader);
+window.addEventListener('str:discounts-opened', (event) => {
+  const rows = event.detail?.rows;
+  if (!Array.isArray(rows) || !rows.length) return;
+  renderResults(rows);
+  setStatus('ready', 'Descuentos guardados', 'Estos son los datos confirmados para este recibo.');
+});
 window.addEventListener('beforeunload', resetReader);
