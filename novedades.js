@@ -11,9 +11,13 @@ const DEFAULT_NEWS = [{
   published_at: '2026-09-03T12:37:11Z',
   url: 'menu-comedor.html',
   active: true,
+}, {
+  id: 'activity-comedor-2026-09-07',
+  category: 'activity',
+  published_at: '2026-09-08T09:42:00Z',
+  url: 'actividad-sindical.html',
+  active: true,
 }];
-
-let newsPromise;
 
 function applyHomeCarousels() {
   if (document.getElementById('str-home-carousel-layout')) return;
@@ -115,13 +119,13 @@ function applyBottomNavActivity() {
   const nav = document.querySelector('.bottom-nav');
   if (!nav) return;
   const link = Array.from(nav.querySelectorAll('a'))
-    .find((item) => item.textContent.trim().toLowerCase().includes('derechos'));
+    .find((item) => item.textContent.trim().toLowerCase().includes('actualidad'));
   if (!link) return;
 
   link.href = 'actividad-sindical.html';
   link.dataset.newsCategory = 'activity';
-  link.setAttribute('aria-label', 'Actividad sindical');
-  link.innerHTML = '<b>📣</b>Actividad<span class="bottom-nav-news-badge" data-news-badge aria-label="0 novedades sin leer">0</span>';
+  link.setAttribute('aria-label', 'Actualidad');
+  link.innerHTML = '<b>📰</b>Actualidad<span class="bottom-nav-news-badge" data-news-badge aria-label="0 novedades sin leer">0</span>';
 
   if (document.getElementById('str-bottom-nav-activity-style')) return;
   const style = document.createElement('style');
@@ -178,19 +182,20 @@ function saveReadIds(ids) {
 }
 
 async function loadNews() {
-  if (!newsPromise) {
-    newsPromise = fetch(`${SUPABASE_URL}/rest/v1/app_news?select=id,category,published_at,url,active&active=eq.true&order=published_at.desc`, {
+  try {
+    const response = await fetch(`${SUPABASE_URL}/rest/v1/app_news?select=id,category,published_at,url,active&active=eq.true&order=published_at.desc&_=${Date.now()}`, {
       headers: {
         apikey: SUPABASE_PUBLISHABLE_KEY,
         Authorization: `Bearer ${SUPABASE_PUBLISHABLE_KEY}`,
       },
       cache: 'no-store',
-    })
-      .then((response) => response.ok ? response.json() : Promise.reject(new Error('NEWS_LOAD_FAILED')))
-      .then((items) => Array.isArray(items) ? items : DEFAULT_NEWS)
-      .catch(() => DEFAULT_NEWS);
+    });
+    if (!response.ok) throw new Error('NEWS_LOAD_FAILED');
+    const items = await response.json();
+    return Array.isArray(items) ? items : DEFAULT_NEWS;
+  } catch (_error) {
+    return DEFAULT_NEWS;
   }
-  return newsPromise;
 }
 
 function unreadNews(news) {
@@ -245,7 +250,7 @@ async function subscriptionRequest(body) {
     headers: {
       apikey: SUPABASE_PUBLISHABLE_KEY,
       Authorization: `Bearer ${SUPABASE_PUBLISHABLE_KEY}`,
-      'Content-Type': 'application/json',
+      'Content-Type':'application/json',
     },
     body: JSON.stringify(body),
   });
