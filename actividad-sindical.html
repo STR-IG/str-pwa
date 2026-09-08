@@ -10,87 +10,75 @@
   <link rel="manifest" href="manifest.json">
   <style>
     * { box-sizing:border-box; margin:0; padding:0; }
-    :root { --red:#e30613; --red-dark:#b9000b; --red-soft:#fff0f1; --ink:#161616; --muted:#6e6e73; --paper:#fff; --surface:#f5f5f7; --amber:#a85b00; --amber-soft:#fff4df; --green:#087b55; --green-soft:#e7f7f0; --grey-soft:#ededf0; }
+    :root { --red:#e30613; --red-dark:#b9000b; --red-soft:#fff0f1; --ink:#161616; --muted:#6e6e73; --paper:#fff; --surface:#f5f5f7; }
+    html, body { width:100%; overflow-x:hidden; }
     body { min-height:100vh; padding-bottom:calc(34px + env(safe-area-inset-bottom)); color:var(--ink); background:var(--surface); font-family:Arial,Helvetica,sans-serif; }
     .top { position:sticky; top:0; z-index:10; padding:calc(12px + env(safe-area-inset-top)) 16px 12px; border-bottom:1px solid #e3e3e6; background:rgba(245,245,247,.96); backdrop-filter:blur(12px); }
-    .top-inner { display:flex; align-items:center; gap:13px; max-width:900px; margin:auto; }
+    .top-inner { display:flex; align-items:center; gap:13px; width:min(100%,900px); margin:auto; }
     .back { display:grid; flex:0 0 42px; width:42px; height:42px; place-items:center; border-radius:50%; color:var(--red); background:var(--paper); box-shadow:0 3px 12px rgba(0,0,0,.08); font-size:27px; font-weight:800; line-height:1; text-decoration:none; }
     h1 { font-size:clamp(23px,6vw,30px); line-height:1.05; }
-    main { display:grid; gap:20px; width:min(100%,900px); margin:auto; padding:20px 14px 0; }
-    .card { border-radius:22px; background:var(--paper); box-shadow:0 5px 18px rgba(0,0,0,.07); }
-    .section-heading { padding:4px 2px 0; }
-    .eyebrow { display:block; margin-bottom:7px; color:var(--red); font-size:12px; font-weight:900; letter-spacing:.8px; text-transform:uppercase; }
-    .section-heading h2 { margin-bottom:7px; font-size:clamp(24px,6vw,32px); line-height:1.08; }
-    .section-heading p { max-width:660px; color:var(--muted); font-size:15px; line-height:1.5; }
-    .status-key { display:flex; flex-wrap:wrap; gap:8px; padding:16px; }
-    .status { display:inline-flex; align-items:center; min-height:28px; padding:6px 10px; border-radius:999px; font-size:11px; font-weight:900; letter-spacing:.35px; white-space:nowrap; }
-    .status.in-progress { color:var(--red-dark); background:var(--red-soft); }
-    .status.pending { color:var(--amber); background:var(--amber-soft); }
-    .status.achieved { color:var(--green); background:var(--green-soft); }
-    .status.closed { color:#555; background:var(--grey-soft); }
-    .activity-list { display:grid; gap:12px; }
-    .activity { overflow:hidden; }
-    .activity-status { padding:10px 18px; color:#fff; font-size:12px; font-weight:900; letter-spacing:.55px; text-transform:uppercase; }
-    .activity-status.in-progress { background:var(--red); }
-    .activity-status.pending { background:#d27a00; }
-    .activity-status.achieved { background:var(--green); }
-    .activity-status.closed { background:#66666b; }
-    .activity-body { padding:18px; }
-    .activity-meta { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:10px; }
-    .activity time { color:var(--muted); font-size:13px; font-weight:700; }
-    .activity h3 { margin-bottom:7px; font-size:19px; line-height:1.2; }
-    .activity p { color:var(--muted); font-size:14px; line-height:1.5; }
-    .empty { padding:30px 20px; text-align:center; }
-    .empty-icon { display:grid; width:48px; height:48px; margin:0 auto 13px; place-items:center; border-radius:15px; color:var(--red); background:var(--red-soft); font-size:23px; }
-    .empty h3 { margin-bottom:7px; font-size:18px; }
-    .empty p { max-width:520px; margin:auto; color:var(--muted); font-size:14px; line-height:1.5; }
-    .home { display:block; padding:15px 18px; border-radius:999px; color:#555; background:#e8e8eb; font-size:14px; font-weight:800; text-align:center; text-decoration:none; }
+    main { display:grid; gap:18px; width:min(100%,900px); margin:auto; padding:22px 14px 0; }
+    .intro { padding:2px 2px 4px; }
+    .intro h2 { font-size:clamp(28px,7vw,38px); line-height:1.03; letter-spacing:-.7px; }
+    .intro h2::after { display:block; width:92px; height:5px; margin-top:10px; border-radius:999px; background:var(--red); content:""; }
+    .intro p { margin-top:14px; color:var(--muted); font-size:16px; line-height:1.45; }
+    .feed { display:grid; gap:16px; }
+    .post { overflow:hidden; border-radius:24px; background:var(--paper); box-shadow:0 6px 22px rgba(0,0,0,.08); }
+    .post-media { position:relative; display:block; width:100%; background:#111; }
+    .post-media img { display:block; width:100%; height:auto; }
+    .new-badge { position:absolute; top:12px; left:12px; padding:7px 11px; border:2px solid #fff; border-radius:999px; color:#fff; background:var(--red); box-shadow:0 3px 10px rgba(0,0,0,.18); font-size:11px; font-weight:900; letter-spacing:.45px; }
+    .post-body { padding:18px; }
+    .post-date { display:flex; align-items:center; gap:7px; margin-bottom:10px; color:var(--muted); font-size:13px; font-weight:700; }
+    .post-category { display:block; margin-bottom:7px; color:var(--red); font-size:12px; font-weight:900; letter-spacing:.7px; text-transform:uppercase; }
+    .post h3 { margin-bottom:8px; font-size:clamp(21px,5.7vw,27px); line-height:1.12; }
+    .post p { color:var(--muted); font-size:15px; line-height:1.5; }
+    .post-actions { display:flex; gap:10px; margin-top:17px; }
+    .primary { display:inline-flex; align-items:center; justify-content:center; min-height:46px; padding:0 18px; border-radius:999px; color:var(--red-dark); background:var(--red-soft); font-size:14px; font-weight:900; text-decoration:none; }
+    .home { display:block; margin-top:2px; padding:15px 18px; border-radius:999px; color:#555; background:#e8e8eb; font-size:14px; font-weight:800; text-align:center; text-decoration:none; }
     @media (min-width:700px) {
-      main { padding-top:28px; }
-      .activity-body { padding:22px 24px; }
+      main { padding-top:30px; }
+      .post-body { padding:22px 24px 24px; }
     }
   </style>
 </head>
 <body>
   <header class="top">
-    <div class="top-inner"><a class="back" href="index.html" aria-label="Volver al menú principal">‹</a><h1>Actividad sindical</h1></div>
+    <div class="top-inner">
+      <a class="back" href="index.html" aria-label="Volver al menú principal">‹</a>
+      <h1>Actividad sindical</h1>
+    </div>
   </header>
+
   <main>
-    <section class="section-heading" aria-labelledby="activity-title">
-      <span class="eyebrow">Actualidad STR-IG</span>
-      <h2 id="activity-title">Nuestras actuaciones</h2>
-      <p>Aquí podrás consultar las gestiones, avances y actuaciones de la sección sindical, ordenadas por fecha.</p>
+    <section class="intro">
+      <h2>Te contamos lo que estamos haciendo</h2>
+      <p>Reuniones, comunicados, propuestas y seguimiento de los temas que afectan a la plantilla.</p>
     </section>
 
-    <div class="card status-key" aria-label="Estados de las actuaciones">
-      <span class="status in-progress">EN CURSO</span>
-      <span class="status pending">PENDIENTE</span>
-      <span class="status achieved">CONSEGUIDO</span>
-      <span class="status closed">CERRADO</span>
-    </div>
-
-    <section class="activity-list" aria-label="Listado de actuaciones sindicales">
-      <article class="card empty">
-        <div class="empty-icon" aria-hidden="true">☷</div>
-        <h3>Próximamente, nuevas actuaciones</h3>
-        <p>Publicaremos aquí la actividad de STR-IG con su fecha, estado y la información esencial de cada actuación.</p>
-      </article>
-      <!-- Estructura reutilizable para cada actuación:
-      <article class="card activity">
-        <div class="activity-status achieved">CONSEGUIDO</div>
-        <div class="activity-body">
-          <div class="activity-meta">
-            <time datetime="AAAA-MM-DD">DD de mes de AAAA</time>
+    <section class="feed" aria-label="Últimas publicaciones de actividad sindical">
+      <article class="post">
+        <a class="post-media" href="Cartel-comedor.jpg" aria-label="Abrir comunicado completo sobre el comedor">
+          <img src="Cartel-comedor.jpg" alt="Comunicado STR sobre la reunión del comedor del 7 de septiembre de 2026">
+          <span class="new-badge">NUEVO</span>
+        </a>
+        <div class="post-body">
+          <div class="post-date"><span aria-hidden="true">📅</span><time datetime="2026-09-07">7 de septiembre de 2026</time></div>
+          <span class="post-category">Comedor</span>
+          <h3>Reunión sobre el servicio de comedor</h3>
+          <p>Nos reunimos con la empresa y Sodexo para conocer la propuesta de mejora del servicio, la encuesta que se realizará a la plantilla y trasladar nuestras aportaciones.</p>
+          <div class="post-actions">
+            <a class="primary" href="Cartel-comedor.jpg">Ver comunicado →</a>
           </div>
-          <h3>Título de la actuación</h3>
-          <p>Qué hicimos, qué conseguimos o en qué punto se encuentra la gestión.</p>
         </div>
       </article>
-      Estados disponibles: in-progress, pending, achieved y closed.
-      -->
     </section>
 
     <a class="home" href="index.html">Volver al menú principal</a>
   </main>
+
+  <script type="module">
+    import { markCategoryRead } from './novedades.js';
+    markCategoryRead('activity').catch(() => {});
+  </script>
 </body>
 </html>
