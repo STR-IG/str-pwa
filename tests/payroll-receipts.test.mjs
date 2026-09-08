@@ -61,7 +61,7 @@ function harness(bucket) {
     clearAllDocuments() { this; }, loadWorkSchedule() {}, updatePeriodCards() {}, showPeriodMessage() {},
     showPeriodScreen() {}, openDocument() {}, ensureYearOption() {}, renderPrivateHistory() {},
     currentScheduleSettings: () => ({}), buildMonthlyComparisons: () => ({}),
-    applyComparisonCardResult() {}, renderComparisonResult() {}, renderPayrollComparison() {}, setComparisonProgress() {},
+    applyComparisonCardResult() {}, renderComparisonResult() {}, renderPayrollComparison() {}, renderPaymentInformation() {}, setComparisonProgress() {},
     updateMonthlyControls() {}, hideMonthlyResults() {},
     renderSupplemental() {},
     renderOvertime() {},

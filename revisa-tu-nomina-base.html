@@ -2126,6 +2126,7 @@
     import { closeMonth, readMonthClosure } from './payroll-month.mjs?v=1';
     import { renderSupplemental, readSupplemental } from './payroll-supplemental.mjs?v=3';
     import { renderOvertime, readOvertime } from './payroll-overtime.mjs?v=2';
+    import { extractPaymentBreakdown, relatePaymentAdjustment, formatPaymentMoney } from './payroll-payments.mjs?v=1';
     import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 
     const SUPABASE_URL = 'https://icneigdnuntzugisexaz.supabase.co';
@@ -2394,7 +2395,7 @@
     const PAYROLL_MATCH_ORDER = ['shift12', 'holidayDiets', 'vacation', 'rotation', 'meals', 'night', 'shift', 'holiday'];
     const documents = {
       timesheet: { file: null, blob: null, url: '', ocrText: '', confirmed: false, saved: false, path: '' },
-      payroll: { file: null, blob: null, url: '', ocrText: '', confirmed: false, saved: false, path: '' }
+      payroll: { file: null, blob: null, url: '', ocrText: '', confirmed: false, saved: false, path: '', paymentInfo: null }
     };
     const documentCopy = {
       timesheet: {
@@ -2407,7 +2408,7 @@
         title: 'Nómina',
         step: 'DOCUMENTO 2 DE 2',
         icon: '🧾',
-        instruction: 'Usa la primera página y recorta el apartado «Devengos y deducciones».'
+        instruction: 'Usa la primera página y recorta desde «Desglose pagos» hasta el final de «Devengos y deducciones».'
       }
     };
 
@@ -2709,6 +2710,7 @@
       confirmedTimesheetAnalyses.set(periodKey(), timesheetValues);
       confirmedPayrollAnalyses.set(periodKey(), payrollValues);
       monthlyReviews.set(periodKey(), review);
+      documents.payroll.paymentInfo = review.paymentInfo || null;
       if (review.schedule && typeof review.schedule === 'object') {
         workSchedules.set(periodKey(), review.schedule);
       }
@@ -2783,6 +2785,7 @@
         document.confirmed = false;
         document.saved = false;
         document.path = '';
+        if ('paymentInfo' in document) document.paymentInfo = null;
       });
       activeKind = '';
     }
@@ -4057,6 +4060,71 @@
       comparisonResult.hidden = false;
     }
 
+    async function previousMonthTimesheetValues() {
+      const previous = new Date(Number(year.value), Number(month.value) - 1, 1);
+      const folder = `${currentUserId}/${previous.getFullYear()}/${String(previous.getMonth() + 1).padStart(2, '0')}`;
+      try {
+        const receipts = await monthReceipts(supabase.storage.from(STORAGE_BUCKET), folder);
+        for (const receipt of receipts) {
+          if (!receipt.files.some(file => file.id && file.name === 'review')) continue;
+          const review = await downloadMonthlyReview(`${receipt.folder}/review`);
+          if (review?.status !== 'complete') continue;
+          const values = plainObjectToMap(review.timesheet);
+          if (parseQuantityValue(values.get('unpaidNight')) > 0 || parseQuantityValue(values.get('unpaidHoliday')) > 0) return values;
+        }
+      } catch {}
+      return new Map();
+    }
+
+    function renderPaymentInformation(target, info) {
+      if (!info?.breakdown) return;
+      const card = document.createElement('div');
+      card.className = 'comparison-field';
+      const top = document.createElement('div');
+      top.className = 'comparison-field-top';
+      const title = document.createElement('strong');
+      const status = document.createElement('span');
+      status.className = 'comparison-status';
+      const adjustment = info.adjustment;
+      if (adjustment?.status === 'identified') {
+        title.textContent = `ℹ️ Ajuste detectado: ${formatPaymentMoney(adjustment.amount)}`;
+        status.className += ' ok';
+        status.textContent = 'Información';
+      } else if (adjustment) {
+        title.textContent = '⚠️ Ajuste pendiente de identificar';
+        status.textContent = 'Comprobar';
+      } else {
+        title.textContent = 'Desglose pagos';
+        status.className += ' ok';
+        status.textContent = 'Leído';
+      }
+      top.append(title, status);
+      card.appendChild(top);
+
+      if (adjustment?.status === 'identified') {
+        const concepts = adjustment.matches.map(item => `${formatQuantity(item.hours)} h de ${item.label}`).join(' y ');
+        const message = document.createElement('p');
+        message.className = 'comparison-difference';
+        message.textContent = `${adjustment.sourceMonth === 'previous' ? 'En el Registro de jornada del mes anterior' : 'En tu Registro de jornada'} constan ${concepts}. Este ajuste podría estar relacionado con esas horas. Estado: Información / ajuste identificado.`;
+        card.appendChild(message);
+      } else if (adjustment) {
+        const message = document.createElement('p');
+        message.className = 'comparison-difference';
+        message.textContent = `Se ha detectado una CANTIDAD PDTE de ${formatPaymentMoney(adjustment.amount)}, pero no consta ningún NOPAGA compatible en este mes ni en el anterior.`;
+        card.appendChild(message);
+      }
+
+      const labels = { transfer1: 'TRANSFER. 1', transfer2: 'TRANSFER. 2', pendingAmount: 'CANTIDAD PDTE', netTotal: 'LÍQUIDO TOTAL' };
+      const details = document.createElement('p');
+      details.className = 'comparison-difference';
+      details.textContent = Object.entries(labels)
+        .filter(([key]) => info.breakdown[key] !== null)
+        .map(([key, label]) => `${label}: ${formatPaymentMoney(info.breakdown[key])}`)
+        .join(' · ');
+      card.appendChild(details);
+      target.appendChild(card);
+    }
+
     function renderPayrollComparison(extracted, confirmed = false, review = null) {
       if (confirmed) comparisonScreen.dataset.manualEdit = 'false';
       document.getElementById('edit-payroll-values').hidden = !confirmed;
@@ -4147,6 +4215,7 @@
 
       renderSupplemental(comparisonFields, review?.supplemental || monthlyReviews.get(periodKey())?.supplemental, confirmed);
       renderOvertime(comparisonFields, review?.overtime || monthlyReviews.get(periodKey())?.overtime, confirmed);
+      renderPaymentInformation(comparisonFields, review?.paymentInfo || documents.payroll.paymentInfo);
       comparisonDetectedCount.textContent = confirmed
         ? `${detected} cantidades confirmadas en nómina`
         : `${detected} cantidades leídas automáticamente de la nómina`;
@@ -4267,6 +4336,19 @@
         }
 
         const extracted = extractPayrollVariables(texts);
+        const breakdown = extractPaymentBreakdown(texts);
+        documents.payroll.paymentInfo = relatePaymentAdjustment(
+          breakdown,
+          confirmedTimesheetAnalyses.get(periodKey()),
+          null
+        );
+        if (documents.payroll.paymentInfo?.adjustment?.status === 'pending') {
+          documents.payroll.paymentInfo = relatePaymentAdjustment(
+            breakdown,
+            confirmedTimesheetAnalyses.get(periodKey()),
+            await previousMonthTimesheetValues()
+          );
+        }
         renderPayrollComparison(extracted);
         setComparisonProgress(
           extracted.size ? 'ready' : 'warning',
@@ -4350,6 +4432,7 @@
         payroll: mapToPlainObject(payrollValues),
         supplemental,
         overtime,
+        ...(documents.payroll.paymentInfo ? { paymentInfo: documents.payroll.paymentInfo } : {}),
         comparisons,
         incidentCount: incidents,
         updatedAt: new Date().toISOString()
@@ -4628,10 +4711,10 @@
     function openTimesheetCrop(file) {
       closeTimesheetCrop(); pendingTimesheetFile = file; pendingTimesheetUrl = URL.createObjectURL(file);
       const isPayroll = activeKind === 'payroll';
-      cropRect = isPayroll ? { x: 0, y: 0.42, width: 1, height: 0.58 } : { x: 0, y: 0.14, width: 1, height: 0.86 };
+      cropRect = isPayroll ? { x: 0, y: 0.30, width: 1, height: 0.70 } : { x: 0, y: 0.14, width: 1, height: 0.86 };
       cropEditorTitle.textContent = isPayroll ? 'Recorta la nómina' : 'Recorta el registro de jornada';
       cropEditorHelp.textContent = isPayroll
-        ? 'Mueve el marco y arrastra sus esquinas. Deja dentro completa la tabla «Devengos y deducciones» y excluye los datos personales de la cabecera.'
+        ? 'Mueve el marco y arrastra sus esquinas. Empieza por encima de «DESGLOSE PAGOS» y deja dentro hasta el final de «Devengos y deducciones», excluyendo los datos personales.'
         : 'Mueve el marco y arrastra sus esquinas. Deja dentro todo desde «REGISTRO DE JORNADA» hacia abajo y excluye la cabecera con datos personales.';
       cropSourceImage.onload = () => { renderCropSelection(); cropEditor.scrollIntoView({ behavior: 'smooth', block: 'start' }); };
       cropSourceImage.src = pendingTimesheetUrl; cropEditor.hidden = false; preview.hidden = true; documentActions.hidden = true;
@@ -4709,6 +4792,7 @@
 
       if (activeKind === 'payroll') {
         payrollSourceHash = '';
+        documents.payroll.paymentInfo = null;
         try { payrollSourceHash = await sha256(file); } catch { /* Saved bytes still checked. */ }
       }
       openTimesheetCrop(file);
