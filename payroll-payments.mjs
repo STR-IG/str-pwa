@@ -48,9 +48,9 @@ function rowValue(lines, index, pattern) {
 
 export function hasCompletePaymentBreakdown(text) {
   const normalized = normalizedLine(text);
-  const start = normalized.search(/DESGLOSE\s+PAGOS?/);
+  const start = normalized.search(/(?:DESGLOSE|DESCLOSE)\s+PAGS?\w*|TRANSFER\.?\s*\d+|CANTIDAD\s+PDTE|LIQUIDO\s+TOTAL/);
   if (start < 0) return false;
-  const endMatch = /DEVENGOS?\s+Y\s+DEDUCCIONES?/.exec(normalized.slice(start));
+  const endMatch = /DEVEN\w*|DEDUC\w*|CODIGO\s+CONCEPTO/.exec(normalized.slice(start));
   return Boolean(endMatch && endMatch.index > 0);
 }
 
