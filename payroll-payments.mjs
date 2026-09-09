@@ -51,9 +51,7 @@ export function hasCompletePaymentBreakdown(text) {
   const start = normalized.search(/DESGLOSE\s+PAGOS?/);
   if (start < 0) return false;
   const endMatch = /DEVENGOS?\s+Y\s+DEDUCCIONES?/.exec(normalized.slice(start));
-  if (!endMatch) return false;
-  const block = normalized.slice(start, start + endMatch.index);
-  return TRANSFER_ROW.test(block) && /LIQUIDO\s+TOTAL\b/.test(block);
+  return Boolean(endMatch && endMatch.index > 0);
 }
 
 export function extractPaymentBreakdown(texts) {

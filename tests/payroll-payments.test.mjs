@@ -49,6 +49,7 @@ test('ajuste sin NOPAGA queda pendiente de identificar', () => {
 
 test('rechaza un recorte que empieza en devengos y acepta el bloque completo', () => {
   assert.equal(hasCompletePaymentBreakdown('DEVENGOS Y DEDUCCIONES\n0001 SALARIO'), false);
+  assert.equal(hasCompletePaymentBreakdown('DESGLOSE PAGOS\nDEVENGOS Y DEDUCCIONES'), true);
   assert.equal(hasCompletePaymentBreakdown(`
     DESGLOSE PAGOS
     TRANSFER. 1 2.247,01
