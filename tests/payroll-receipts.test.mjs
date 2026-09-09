@@ -53,7 +53,8 @@ function harness(bucket) {
   const ctx = vm.createContext({
     Blob, URL, Date, Map, Promise, crypto: webcrypto, console,
     newReceiptId, receiptCreatedAt, monthReceipts, assertUniquePayroll, sha256,
-    currentUserId: 'owner-a', STORAGE_BUCKET: 'payroll-documents', supabase: { storage: { from: () => bucket } },
+    currentUserId: 'owner-a', STORAGE_BUCKET: 'payroll-documents', storageBucket: bucket, supabase: { storage: { from: () => bucket } },
+    isAdminMode: false, adminReplacementKind: '', adminContext: null, adminAffiliateEmail: '',
     month: { value: '7' }, year: { value: '2026' }, activeReceiptId: null, receiptCreated: null, payrollSourceHash: '',
     storageLoadVersion: 0, historyLoadVersion: 0, loadingDocuments: false, historyEntries: [], savingReview: false, savingDocument: false,
     confirmedTimesheetAnalyses: new Map(), confirmedPayrollAnalyses: new Map(), monthlyReviews: new Map(), workSchedules: new Map(),
@@ -61,6 +62,7 @@ function harness(bucket) {
     activeKind: '', workingFile: null, workingUrl: '', workingSaved: false, workingOcrText: '',
     clearAllDocuments() { this; }, loadWorkSchedule() {}, updatePeriodCards() {}, showPeriodMessage() {},
     showPeriodScreen() {}, openDocument() {}, ensureYearOption() {}, renderPrivateHistory() {},
+    prepareAdminReplacement() {}, deleteAdminTimesheet() {}, deleteAdminPayroll() {},
     currentScheduleSettings: () => ({}), buildMonthlyComparisons: () => ({}),
     applyComparisonCardResult() {}, renderComparisonResult() {}, renderPayrollComparison() {}, renderPaymentInformation() {}, setComparisonProgress() {},
     updateMonthlyControls() {}, hideMonthlyResults() {},

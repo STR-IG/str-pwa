@@ -1600,6 +1600,8 @@
 
     .actions .primary,
     .actions .secondary { margin: 0; }
+    .admin-context{width:min(100% - 28px,760px);margin:14px auto 0;padding:12px 16px;border:1px solid #f0b8bd;border-radius:14px;background:#fff3f4;color:#8e0010;font-size:14px;font-weight:800;line-height:1.45}
+    .admin-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}.admin-actions button{margin:0}.admin-danger{color:#a4000c!important;border-color:#d9a4a8!important;background:#fff!important}
 
     @media (max-width: 390px) {
       .document-line { display: block; }
@@ -1621,6 +1623,7 @@
         margin-top: 9px;
       }
       .actions { grid-template-columns: 1fr; }
+      .admin-actions { grid-template-columns: 1fr; }
       .analysis-actions { grid-template-columns: 1fr; }
       .comparison-values,
       .comparison-values.supplemental-fixed-values { grid-template-columns: 1fr; }
@@ -1636,6 +1639,7 @@
     <a id="top-back" class="back" href="index.html" aria-label="Volver a la pantalla principal">‹</a>
     <strong>Revisa tu nómina</strong>
   </header>
+  <p id="admin-context" class="admin-context" hidden></p>
 
   <p id="auth-check" class="auth-check">Comprobando el acceso privado…</p>
 
@@ -1833,6 +1837,17 @@
           </div>
           <button id="open-discounts" class="card-button" type="button">Abrir Descuentos</button>
         </article>
+
+        <section id="admin-document-actions" class="panel" hidden>
+          <h2 class="section-title">Gestión administrativa</h2>
+          <p class="document-help">Las sustituciones vuelven a pasar por el mismo recorte, privacidad y lector. No permiten modificar resultados manualmente.</p>
+          <div class="admin-actions">
+            <button id="admin-replace-timesheet" class="secondary" type="button">Sustituir Registro</button>
+            <button id="admin-delete-timesheet" class="secondary admin-danger" type="button">Eliminar Registro</button>
+            <button id="admin-replace-payroll" class="secondary" type="button">Sustituir nómina</button>
+            <button id="admin-delete-payroll" class="secondary admin-danger" type="button">Eliminar nómina</button>
+          </div>
+        </section>
 
         <section id="completion-panel" class="completion-panel" hidden>
           <strong>✓ Los dos documentos están guardados</strong>
@@ -2127,6 +2142,7 @@
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@7.0.0/dist/tesseract.min.js" integrity="sha384-2BQ3U3OdKOb0Uczxqr41I9UvZkzr4V9Hv8uSzMMZAlmhsFClvdZX5wi5fDCzG+tM" crossorigin="anonymous"></script>
   <script type="module">
     import { newReceiptId, receiptCreatedAt, monthReceipts, assertUniquePayroll, sha256 } from './payroll-receipts.mjs?v=1';
+    import { adminPayrollApi } from './admin-payroll-storage.mjs?v=1';
     import { closeMonth, readMonthClosure } from './payroll-month.mjs?v=1';
     import { renderSupplemental, readSupplemental } from './payroll-supplemental.mjs?v=3';
     import { renderOvertime, readOvertime } from './payroll-overtime.mjs?v=2';
@@ -2135,6 +2151,7 @@
 
     const SUPABASE_URL = 'https://icneigdnuntzugisexaz.supabase.co';
     const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_apKjcPClIBTHS2wwN6qPsA_6Vm4tk9m';
+    const ADMIN_DOCUMENTS_ENDPOINT = SUPABASE_URL + '/functions/v1/admin-payroll-documents';
     const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
       auth: { detectSessionInUrl: false, persistSession: true, autoRefreshToken: true }
     });
@@ -2148,18 +2165,33 @@
       return !error && data === true;
     }
 
+    const query = new URLSearchParams(window.location.search);
+    const adminAffiliateEmail = String(query.get('adminAffiliate') || '').trim().toLowerCase();
     const { data: { session } } = await supabase.auth.getSession();
-    if (!(await hasPrivateAccess(session))) {
+    let adminApi = null;
+    let adminContext = null;
+    if (adminAffiliateEmail && session) {
+      try {
+        adminApi = adminPayrollApi({ supabase, endpoint: ADMIN_DOCUMENTS_ENDPOINT, publishableKey: SUPABASE_PUBLISHABLE_KEY, email: adminAffiliateEmail });
+        adminContext = await adminApi.resolve();
+      } catch { window.location.replace('panel-administracion.html'); }
+    }
+    if (!adminAffiliateEmail && !(await hasPrivateAccess(session))) {
       if (session) await supabase.auth.signOut();
       sessionStorage.setItem('strLabNext', 'revisa-tu-nomina.html');
       window.location.replace('acceso-privado.html?next=revisa-tu-nomina.html');
-    } else {
+    } else if (!session) {
+      sessionStorage.setItem('strLabNext', window.location.href);
+      window.location.replace('acceso-privado.html?next=panel-administracion.html');
+    } else if (!adminAffiliateEmail || adminContext) {
       authCheck.hidden = true;
       content.hidden = false;
     }
 
-    const currentUserId = session?.user?.id || '';
+    const isAdminMode = Boolean(adminContext?.userId);
+    const currentUserId = adminContext?.userId || session?.user?.id || '';
     const STORAGE_BUCKET = 'payroll-documents';
+    const storageBucket = isAdminMode ? adminApi.bucket : supabase.storage.from(STORAGE_BUCKET);
 
     const month = document.getElementById('month');
     const year = document.getElementById('year');
@@ -2428,6 +2460,7 @@
     let activeReceiptId = null;
     let receiptCreated = null;
     let payrollSourceHash = '';
+    let adminReplacementKind = '';
     let savingReview = false;
     const addMonthlyPayroll = document.getElementById('add-monthly-payroll');
     const addPeriodPayroll = document.getElementById('add-period-payroll');
@@ -2464,6 +2497,24 @@
     }
     month.value = String(now.getMonth());
     year.value = String(now.getFullYear());
+    if (isAdminMode) {
+      const selectedAdminYear = Number(query.get('adminYear'));
+      const selectedAdminMonth = Number(query.get('adminMonth'));
+      if (Number.isInteger(selectedAdminYear) && selectedAdminYear >= 2000 && selectedAdminYear <= 2100) {
+        if (![...year.options].some(option => Number(option.value) === selectedAdminYear)) {
+          const option = document.createElement('option'); option.value = String(selectedAdminYear); option.textContent = String(selectedAdminYear); year.appendChild(option);
+        }
+        year.value = String(selectedAdminYear);
+      }
+      if (Number.isInteger(selectedAdminMonth) && selectedAdminMonth >= 1 && selectedAdminMonth <= 12) month.value = String(selectedAdminMonth - 1);
+      const selectedReceipt = String(query.get('adminReceipt') || '');
+      activeReceiptId = /^receipt-\d{13}-[0-9a-f-]{36}$/.test(selectedReceipt) ? selectedReceipt : null;
+      const affiliateName = adminContext.affiliate?.display_name || adminAffiliateEmail;
+      const context = document.getElementById('admin-context'); context.textContent = `Administración · ${affiliateName} · ${adminAffiliateEmail}`; context.hidden = false;
+      topBack.href = 'panel-administracion.html';
+      document.getElementById('discounts-card').hidden = true;
+      document.getElementById('admin-document-actions').hidden = false;
+    }
 
     function periodLabel() {
       return `${monthNames[Number(month.value)]} de ${year.value}`;
@@ -2723,7 +2774,7 @@
     }
 
     async function downloadMonthlyReview(path = storagePath('review')) {
-      const { data: blob, error } = await supabase.storage.from(STORAGE_BUCKET).download(path);
+      const { data: blob, error } = await storageBucket.download(path);
       if (error || !blob?.text) return null;
       try {
         return JSON.parse(await blob.text());
@@ -2738,9 +2789,7 @@
         userId: currentUserId, year: Number(year.value), month: Number(month.value) + 1,
         createdAt: receiptCreated || new Date().toISOString(), payrollSourceHash
       })], { type: 'application/json' });
-      const { error } = await supabase.storage
-        .from(STORAGE_BUCKET)
-        .upload(storagePath('review'), payload, {
+      const { error } = await storageBucket.upload(storagePath('review'), payload, {
           cacheControl: '0',
           contentType: 'application/json',
           upsert: true
@@ -2764,6 +2813,82 @@
           updatedAt: new Date().toISOString()
         });
       } catch {}
+    }
+
+    async function invalidateAdminReceiptReview(receipt) {
+      if (!isAdminMode || !receipt.files.some(file => file.id && file.name === 'review')) return;
+      const reviewPath = `${receipt.folder}/review`;
+      const saved = await downloadMonthlyReview(reviewPath);
+      const receiptPeriod = `${year.value}-${String(Number(month.value) + 1).padStart(2, '0')}${receipt.id ? `/${receipt.id}` : ''}`;
+      const pending = new Blob([JSON.stringify({
+        version: 1, status: 'pending', period: receiptPeriod,
+        receiptId: receipt.id || `legacy:${year.value}-${Number(month.value) + 1}`,
+        userId: currentUserId, year: Number(year.value), month: Number(month.value) + 1,
+        createdAt: saved?.createdAt || new Date().toISOString(), updatedAt: new Date().toISOString(),
+        ...(Array.isArray(saved?.discounts) ? { discounts: saved.discounts } : {})
+      })], { type: 'application/json' });
+      const { error } = await storageBucket.upload(reviewPath, pending, { cacheControl: '0', contentType: 'application/json', upsert: true });
+      if (error) throw error;
+    }
+
+    async function saveAdminTimesheetForMonth(blob) {
+      const receipts = await monthReceipts(storageBucket, monthFolder());
+      const targets = new Set([storagePath('timesheet'), ...receipts.map(receipt => `${receipt.folder}/timesheet`)]);
+      for (const path of targets) {
+        const { error } = await storageBucket.upload(path, blob, { cacheControl: '0', contentType: blob.type || 'image/jpeg', upsert: true });
+        if (error) throw error;
+      }
+      for (const receipt of receipts) {
+        if (`${receipt.folder}/review` !== storagePath('review')) await invalidateAdminReceiptReview(receipt);
+      }
+    }
+
+    function adminActionDescription(kind) {
+      const affiliate = adminContext?.affiliate?.display_name || adminAffiliateEmail;
+      const documentName = kind === 'timesheet' ? 'Registro de jornada' : `nómina de este recibo`;
+      return `${documentName} · ${periodLabel()} · ${affiliate}`;
+    }
+
+    function prepareAdminReplacement(kind) {
+      if (!isAdminMode || !documents[kind]?.saved) return;
+      if (!window.confirm(`Vas a sustituir ${adminActionDescription(kind)}. La nueva imagen pasará por el lector actual. ¿Continuar?`)) return;
+      adminReplacementKind = kind;
+      openDocument(kind);
+      chooseImage();
+    }
+
+    async function deleteAdminPayroll() {
+      if (!isAdminMode || !documents.payroll.saved || savingDocument) return;
+      if (!window.confirm(`¿Seguro que quieres eliminar esta nómina?\n\n${adminActionDescription('payroll')}`)) return;
+      savingDocument = true;
+      try {
+        const { error } = await storageBucket.remove([storagePath('payroll')]);
+        if (error) throw error;
+        await invalidateStoredReviewIfNeeded();
+        adminReplacementKind = '';
+        await loadStoredDocuments();
+        showPeriodMessage('Nómina eliminada. El Registro y los demás recibos del mes permanecen intactos.');
+      } catch { showPeriodMessage('No se ha podido eliminar la nómina. No se ha modificado ningún otro documento.', true); }
+      finally { savingDocument = false; updatePeriodCards(); }
+    }
+
+    async function deleteAdminTimesheet() {
+      if (!isAdminMode || !documents.timesheet.saved || savingDocument) return;
+      if (!window.confirm(`¿Seguro que quieres eliminar el Registro de jornada?\n\n${adminActionDescription('timesheet')}\n\nLas nóminas del mes se conservarán.`)) return;
+      savingDocument = true;
+      try {
+        const receipts = await monthReceipts(storageBucket, monthFolder());
+        const paths = receipts.filter(receipt => receipt.files.some(file => file.id && file.name === 'timesheet')).map(receipt => `${receipt.folder}/timesheet`);
+        if (paths.length) {
+          const { error } = await storageBucket.remove(paths);
+          if (error) throw error;
+        }
+        for (const receipt of receipts) await invalidateAdminReceiptReview(receipt);
+        adminReplacementKind = '';
+        await loadStoredDocuments();
+        showPeriodMessage('Registro eliminado. Las nóminas del mes permanecen intactas.');
+      } catch { showPeriodMessage('No se ha podido eliminar el Registro. No se han borrado las nóminas.', true); }
+      finally { savingDocument = false; updatePeriodCards(); }
     }
 
     function showPeriodMessage(message = '', isError = false) {
@@ -2806,7 +2931,7 @@
         loadingDocuments = true;
         updatePeriodCards();
         try {
-          const receipts = await monthReceipts(supabase.storage.from(STORAGE_BUCKET), monthFolder());
+          const receipts = await monthReceipts(storageBucket, monthFolder());
           if (requestVersion !== storageLoadVersion) return;
           activeReceiptId = receipts.length ? receipts[receipts.length - 1].id : newReceiptId();
         } catch {
@@ -2832,9 +2957,7 @@
       updatePeriodCards();
 
       const folder = periodFolder();
-      const { data: storedFiles, error: listError } = await supabase.storage
-        .from(STORAGE_BUCKET)
-        .list(folder, {
+      const { data: storedFiles, error: listError } = await storageBucket.list(folder, {
           limit: 10,
           offset: 0,
           sortBy: { column: 'name', order: 'asc' }
@@ -2857,7 +2980,7 @@
       const [downloads, storedReview] = await Promise.all([
         Promise.all(storedKinds.map(async (kind) => {
         const path = `${folder}/${kind}`;
-        const { data: blob, error } = await supabase.storage.from(STORAGE_BUCKET).download(path);
+        const { data: blob, error } = await storageBucket.download(path);
         return { kind, path, blob, error };
         })),
         hasStoredReview ? downloadMonthlyReview(`${folder}/review`) : Promise.resolve(null)
@@ -2897,9 +3020,7 @@
       let offset = 0;
 
       while (true) {
-        const { data, error } = await supabase.storage
-          .from(STORAGE_BUCKET)
-          .list(path, {
+        const { data, error } = await storageBucket.list(path, {
             limit: pageSize,
             offset,
             sortBy: { column: 'name', order: 'asc' }
@@ -2997,7 +3118,7 @@
       target.className = 'comparison-result';
       target.hidden = false;
       try {
-        const bucket = supabase.storage.from(STORAGE_BUCKET);
+        const bucket = storageBucket;
         const result = await (close ? closeMonth : readMonthClosure)(bucket, folder, COMPARABLE_KEYS, buildMonthlyComparisons);
         if (key !== periodKey()) return;
         renderMonthClosure(result, target, label);
@@ -3111,7 +3232,7 @@
 
         const entries = await Promise.all(months.map(async ({ year: savedYear, month: savedMonth }) => {
           const folder = `${currentUserId}/${savedYear}/${String(savedMonth).padStart(2, '0')}`;
-          const receipts = await monthReceipts(supabase.storage.from(STORAGE_BUCKET), folder);
+          const receipts = await monthReceipts(storageBucket, folder);
           return Promise.all(receipts.map(async (receipt, index) => ({
             year: savedYear, month: savedMonth,
             receiptId: receipt.id, receiptNumber: index + 1,
@@ -3148,6 +3269,12 @@
       const openPayroll = document.getElementById('open-payroll');
       const timesheetComplete = documents.timesheet.confirmed;
       const payrollComplete = documents.payroll.confirmed;
+      if (isAdminMode) {
+        document.getElementById('admin-replace-timesheet').disabled = !timesheetComplete || loadingDocuments;
+        document.getElementById('admin-delete-timesheet').disabled = !timesheetComplete || loadingDocuments;
+        document.getElementById('admin-replace-payroll').disabled = !payrollComplete || loadingDocuments;
+        document.getElementById('admin-delete-payroll').disabled = !payrollComplete || loadingDocuments;
+      }
 
       document.getElementById('timesheet-card-title').textContent = `Registro de jornada · ${label}`;
       document.getElementById('payroll-card-title').textContent = `Nómina · ${label}`;
@@ -3757,6 +3884,7 @@
         input.autocomplete = 'off';
         input.placeholder = 'No aparece';
         input.value = value;
+        input.readOnly = isAdminMode;
         input.addEventListener('input', () => {
           status.className = `analysis-field-status${input.value.trim() ? ' detected' : ''}`;
           status.textContent = input.value.trim() ? 'Revisado' : 'Comprobar';
@@ -4080,7 +4208,7 @@
       const previous = new Date(Number(year.value), Number(month.value) - 1, 1);
       const folder = `${currentUserId}/${previous.getFullYear()}/${String(previous.getMonth() + 1).padStart(2, '0')}`;
       try {
-        const receipts = await monthReceipts(supabase.storage.from(STORAGE_BUCKET), folder);
+        const receipts = await monthReceipts(storageBucket, folder);
         for (const receipt of receipts) {
           if (!receipt.files.some(file => file.id && file.name === 'review')) continue;
           const review = await downloadMonthlyReview(`${receipt.folder}/review`);
@@ -4153,7 +4281,7 @@
 
     function renderPayrollComparison(extracted, confirmed = false, review = null) {
       if (confirmed) comparisonScreen.dataset.manualEdit = 'false';
-      document.getElementById('edit-payroll-values').hidden = !confirmed;
+      document.getElementById('edit-payroll-values').hidden = isAdminMode || !confirmed;
       document.getElementById('cancel-payroll-edit').hidden = confirmed || comparisonScreen.dataset.manualEdit !== 'true';
       addMonthlyPayroll.hidden = !confirmed;
       comparisonFields.textContent = '';
@@ -4208,7 +4336,7 @@
         input.autocomplete = 'off';
         input.placeholder = 'No aparece';
         input.value = absentThisMonth ? '0' : payrollValue;
-        input.readOnly = confirmed;
+        input.readOnly = isAdminMode || confirmed;
         input.addEventListener('input', () => {
           hideMonthlyResults();
           document.getElementById('month-controls-comparison').hidden = true;
@@ -4242,6 +4370,10 @@
       renderSupplemental(comparisonFields, review?.supplemental || monthlyReviews.get(periodKey())?.supplemental, confirmed);
       renderOvertime(comparisonFields, review?.overtime || monthlyReviews.get(periodKey())?.overtime, confirmed);
       renderPaymentInformation(comparisonFields, review?.paymentInfo || documents.payroll.paymentInfo);
+      if (isAdminMode) {
+        comparisonFields.querySelectorAll('input,textarea').forEach(control => { control.readOnly = true; });
+        comparisonFields.querySelectorAll('select').forEach(control => { control.disabled = true; });
+      }
       comparisonDetectedCount.textContent = confirmed
         ? `${detected} cantidades confirmadas en nómina`
         : `${detected} cantidades leídas automáticamente de la nómina`;
@@ -4562,7 +4694,7 @@
     }
 
     function renderWorkingPreview() {
-      const readOnly = isCurrentReviewComplete();
+      const readOnly = isCurrentReviewComplete() && !(isAdminMode && adminReplacementKind === activeKind);
       savedDocumentNotice.hidden = !readOnly;
       documentUploadControls.hidden = readOnly;
       changeImageButton.hidden = readOnly;
@@ -4686,6 +4818,7 @@
       privacyScanVersion += 1;
       setPrivacyScanState('idle');
       revokeWorkingUrlIfTemporary();
+      adminReplacementKind = '';
       activeKind = '';
       documentScreen.hidden = true;
       historyScreen.hidden = true;
@@ -4725,7 +4858,7 @@
     }
 
     function chooseImage() {
-      if (isCurrentReviewComplete() || savingDocument) return;
+      if ((isCurrentReviewComplete() && !(isAdminMode && adminReplacementKind === activeKind)) || savingDocument) return;
       fileInput.value = '';
       fileInput.click();
     }
@@ -4837,7 +4970,7 @@
     async function confirmImage() {
       if (!activeKind || savingDocument) return;
 
-      if (isCurrentReviewComplete()) {
+      if (isCurrentReviewComplete() && !(isAdminMode && adminReplacementKind === activeKind)) {
         showPeriodScreen();
         return;
       }
@@ -4865,15 +4998,17 @@
       let error;
       try {
         if (activeKind === 'payroll') {
-          await assertUniquePayroll(supabase.storage.from(STORAGE_BUCKET), monthFolder(), workingFile, path, payrollSourceHash);
+          await assertUniquePayroll(storageBucket, monthFolder(), workingFile, path, payrollSourceHash);
         }
-        ({ error } = await supabase.storage
-        .from(STORAGE_BUCKET)
-        .upload(path, workingFile, {
-          cacheControl: '0',
-          contentType: workingFile.type,
-          upsert: true
-        }));
+        if (isAdminMode && activeKind === 'timesheet') {
+          await saveAdminTimesheetForMonth(workingFile);
+        } else {
+          ({ error } = await storageBucket.upload(path, workingFile, {
+            cacheControl: '0',
+            contentType: workingFile.type,
+            upsert: true
+          }));
+        }
       } catch (failure) { error = failure; }
 
       if (error) {
@@ -4899,6 +5034,7 @@
       document.path = path;
       workingFile = null;
       workingSaved = true;
+      adminReplacementKind = '';
       savingDocument = false;
       showPeriodScreen();
     }
@@ -4975,11 +5111,11 @@
         // Reuse only the saved, privacy-checked document, never an unsaved crop.
         reusedBlob = sourceTimesheet.saved ? sourceTimesheet.blob : null;
         if (!reusedBlob) {
-          const { data, error } = await supabase.storage.from(STORAGE_BUCKET).download(sourcePath);
+          const { data, error } = await storageBucket.download(sourcePath);
           if (error || !data) throw error || new Error('TIMESHEET_UNAVAILABLE');
           reusedBlob = data;
         }
-        const { error } = await supabase.storage.from(STORAGE_BUCKET).upload(nextPath, reusedBlob, {
+        const { error } = await storageBucket.upload(nextPath, reusedBlob, {
           cacheControl: '0', contentType: reusedBlob.type || 'image/jpeg', upsert: false
         });
         if (error) throw error;
@@ -5017,6 +5153,10 @@
     addMonthlyPayroll.addEventListener('click', startAnotherPayroll);
     addPeriodPayroll.addEventListener('click', startAnotherPayroll);
     addDocumentPayroll.addEventListener('click', startAnotherPayroll);
+    document.getElementById('admin-replace-timesheet').addEventListener('click', () => prepareAdminReplacement('timesheet'));
+    document.getElementById('admin-replace-payroll').addEventListener('click', () => prepareAdminReplacement('payroll'));
+    document.getElementById('admin-delete-timesheet').addEventListener('click', deleteAdminTimesheet);
+    document.getElementById('admin-delete-payroll').addEventListener('click', deleteAdminPayroll);
     for (const place of ['period', 'comparison']) {
       document.getElementById(`close-month-${place}`).addEventListener('click', () => handleMonthClosure(true));
       document.getElementById(`view-month-${place}`).addEventListener('click', () => handleMonthClosure(false));

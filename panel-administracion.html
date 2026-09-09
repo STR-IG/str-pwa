@@ -45,8 +45,10 @@
     .detail{min-width:0;padding:15px;border-radius:15px;background:#f7f7f8}
     .detail dt{margin-bottom:5px;color:var(--grey);font-size:12px;font-weight:800;text-transform:uppercase}.detail dd{margin:0;overflow-wrap:anywhere;font-size:15px;font-weight:800}
     .privacy-note{margin:17px 2px 0;color:var(--grey);font-size:13px;line-height:1.5}
+    .documents-admin{margin-top:18px}.documents-admin h2{margin:0 0 5px;font-size:21px}.documents-admin>p{margin:0 0 14px;color:var(--grey);font-size:14px;line-height:1.45}
+    .period-list{display:grid;gap:10px}.period-admin{display:grid;grid-template-columns:1fr auto;align-items:center;gap:12px;padding:15px;border:1px solid var(--line);border-radius:15px}.period-admin strong{display:block}.period-admin small{display:block;margin-top:5px;color:var(--grey);line-height:1.45}.period-admin a{display:inline-grid;place-items:center;min-height:42px;padding:0 15px;border-radius:999px;color:var(--white);background:var(--red);font-size:13px;font-weight:900;text-decoration:none}
     .denied{text-align:center}.denied h1{font-size:26px}.denied p{color:var(--grey);line-height:1.5}.denied a{display:inline-grid;place-items:center;min-height:50px;margin-top:10px;padding:0 22px;border-radius:999px;color:var(--white);background:var(--red);font-weight:800;text-decoration:none}
-    @media(max-width:560px){main{width:min(100% - 24px,760px);padding-top:16px}.hero,.panel{padding:18px}.details{grid-template-columns:1fr}.module{align-items:flex-start}}
+    @media(max-width:560px){main{width:min(100% - 24px,760px);padding-top:16px}.hero,.panel{padding:18px}.details{grid-template-columns:1fr}.module{align-items:flex-start}.period-admin{grid-template-columns:1fr}.period-admin a{width:100%}}
   </style>
 </head>
 <body>
@@ -87,6 +89,14 @@
         </dl>
         <p class="privacy-note">Ficha de consulta. No muestra contraseñas ni crea copias de los datos del afiliado.</p>
       </article>
+      <article class="panel documents-admin">
+        <h2>Nóminas y Registro</h2>
+        <p>Consulta y gestión administrativa mediante los mismos flujos privados de Revisa tu nómina.</p>
+        <p id="period-loading" class="empty">Consultando periodos…</p>
+        <div id="period-list" class="period-list"></div>
+        <p id="period-error" class="error" hidden></p>
+        <a id="open-empty-period" class="existing-link" href="#" hidden>Abrir un mes sin documentos</a>
+      </article>
     </section>
 
     <section id="denied" class="screen panel denied" hidden>
@@ -98,11 +108,13 @@
 
   <script type="module">
     import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+    import { adminPayrollApi } from './admin-payroll-storage.mjs?v=1';
 
     const PAGE='panel-administracion.html';
     const SUPABASE_URL='https://icneigdnuntzugisexaz.supabase.co';
     const SUPABASE_PUBLISHABLE_KEY='sb_publishable_apKjcPClIBTHS2wwN6qPsA_6Vm4tk9m';
     const MANAGE_AFFILIATES=SUPABASE_URL+'/functions/v1/manage-affiliates';
+    const ADMIN_DOCUMENTS=SUPABASE_URL+'/functions/v1/admin-payroll-documents';
     const supabase=createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY,{auth:{detectSessionInUrl:false,persistSession:true,autoRefreshToken:true}});
     const screens={home:document.getElementById('home'),affiliates:document.getElementById('affiliates'),detail:document.getElementById('affiliate-detail'),denied:document.getElementById('denied')};
     const loading=document.getElementById('loading');
@@ -112,6 +124,7 @@
     const error=document.getElementById('affiliate-error');
     let affiliates=[];
     let loaded=false;
+    let currentAffiliate=null;
 
     function show(name){loading.hidden=true;Object.entries(screens).forEach(([key,screen])=>{screen.hidden=key!==name});window.scrollTo({top:0,behavior:'auto'})}
     function normalized(value){return String(value||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim()}
@@ -127,13 +140,51 @@
       return result;
     }
 
+    function adminPeriodUrl(affiliate,period={}){
+      const params=new URLSearchParams({adminAffiliate:affiliate.email});
+      if(period.year)params.set('adminYear',String(period.year));
+      if(period.month)params.set('adminMonth',String(period.month));
+      if(period.receiptId)params.set('adminReceipt',period.receiptId);
+      return `revisa-tu-nomina.html?${params}`;
+    }
+
+    async function loadPeriods(affiliate){
+      const loadingPeriods=document.getElementById('period-loading');
+      const periodList=document.getElementById('period-list');
+      const periodError=document.getElementById('period-error');
+      const emptyLink=document.getElementById('open-empty-period');
+      loadingPeriods.hidden=false;periodError.hidden=true;periodList.replaceChildren();emptyLink.hidden=true;
+      try{
+        const api=adminPayrollApi({supabase,endpoint:ADMIN_DOCUMENTS,publishableKey:SUPABASE_PUBLISHABLE_KEY,email:affiliate.email});
+        const result=await api.summary();
+        if(currentAffiliate?.email!==affiliate.email)return;
+        const periods=Array.isArray(result.periods)?result.periods:[];
+        loadingPeriods.hidden=true;
+        periods.forEach(period=>{
+          const row=document.createElement('div');row.className='period-admin';
+          const copy=document.createElement('span');
+          const monthName=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'][period.month-1];
+          addText(copy,'strong',`${monthName[0].toUpperCase()}${monthName.slice(1)} de ${period.year}`);
+          addText(copy,'small',`Registro: ${period.timesheet?'existente':'no existente'} · ${period.payrollCount} ${period.payrollCount===1?'nómina':'nóminas'} · Cierre: ${period.closure?'guardado':'pendiente'}`);
+          const link=addText(row,'a','Abrir mes');link.href=adminPeriodUrl(affiliate,{...period,receiptId:period.receipts?.[0]?.id||''});row.prepend(copy);periodList.appendChild(row);
+        });
+        if(!periods.length){loadingPeriods.textContent='Este afiliado todavía no tiene periodos guardados.';loadingPeriods.hidden=false}
+        emptyLink.href=adminPeriodUrl(affiliate);emptyLink.hidden=false;
+      }catch(problem){
+        loadingPeriods.hidden=true;periodError.hidden=false;
+        periodError.textContent=problem.message==='AFFILIATE_ACCOUNT_NOT_FOUND'?'El afiliado todavía no ha activado una cuenta privada. No se pueden gestionar documentos hasta que exista su cuenta autenticada.':'No se han podido consultar los periodos de este afiliado.';
+      }
+    }
+
     function openDetail(affiliate){
+      currentAffiliate=affiliate;
       document.getElementById('detail-name').textContent=affiliate.display_name||affiliate.email;
       document.getElementById('detail-number').textContent=affiliate.employee_number||'No indicado';
       document.getElementById('detail-status').textContent=affiliate.active===false?'Acceso inactivo':'Acceso activo';
       document.getElementById('detail-email').textContent=affiliate.email||'No indicado';
       document.getElementById('detail-phone').textContent=affiliate.phone||'No indicado';
       show('detail');
+      loadPeriods(affiliate);
     }
 
     function renderAffiliates(){

@@ -269,6 +269,7 @@ test('UI rejects unconfirmed quantities and prevents duplicate close actions; er
   await seed(bucket,folder,{vacation:'17'});
   const app=ui(bucket); app.month.value='9';
   await app.loadStoredDocuments();
+  app.confirmedTimesheetAnalyses.get(app.periodKey()).set('meals','1');
   app.comparisonScreen.hidden=false;
   app.renderPayrollComparison(new Map([['vacation','17']]));
   const before=new Map(bucket.objects);

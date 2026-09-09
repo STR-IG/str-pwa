@@ -11,11 +11,14 @@ test('documents keep Registro and Nómina and add Descuentos with the same card 
   assert.match(html, /id="open-timesheet"[\s\S]*id="open-payroll"[\s\S]*id="open-discounts"/);
 });
 
-test('discounts opens a base screen only, without upload, OCR or storage wiring', () => {
-  const screen = html.match(/<section id="discounts-screen"[\s\S]*?<\/section>\s*<\/section>/)?.[0] || '';
-  assert.match(screen, /Lector de descuentos/);
+test('discounts keeps its existing isolated reader screen and save event', () => {
+  const start = html.indexOf('<section id="discounts-screen"');
+  const end = html.indexOf('<section id="history-screen"', start);
+  const screen = html.slice(start, end);
   assert.match(screen, /Seguridad Social e IRPF/);
-  assert.doesNotMatch(screen, /<input|type="file"|supabase|ocr|Guardar imagen/i);
+  assert.match(screen, /id="discounts-image"/);
+  assert.match(screen, /id="save-discounts"/);
+  assert.doesNotMatch(screen, /supabase/i);
   assert.match(html, /open-discounts'\)\.addEventListener\('click', showDiscountsScreen\)/);
 });
 
