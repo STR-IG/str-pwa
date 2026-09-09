@@ -327,11 +327,6 @@ async function configurePushControl(options) {
   const onboardingDismiss = document.getElementById(options.onboardingDismissId);
   if (!button) return;
 
-  const isInstalled = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
-  if (!isInstalled) {
-    if (panel) panel.hidden = true;
-    return;
-  }
   if (panel) panel.hidden = false;
 
   let onboardingDismissed = false;
@@ -382,7 +377,7 @@ async function configurePushControl(options) {
     }
   } catch (_error) {}
   button.addEventListener('click', () => activateFrom(button));
-  if (isInstalled && !onboardingDismissed && Notification.permission === 'default' && onboarding) {
+  if (!onboardingDismissed && Notification.permission === 'default' && onboarding) {
     onboarding.hidden = false;
   }
 }
