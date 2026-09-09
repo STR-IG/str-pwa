@@ -2130,7 +2130,7 @@
     import { closeMonth, readMonthClosure } from './payroll-month.mjs?v=1';
     import { renderSupplemental, readSupplemental } from './payroll-supplemental.mjs?v=3';
     import { renderOvertime, readOvertime } from './payroll-overtime.mjs?v=2';
-    import { extractPaymentBreakdown, relatePaymentAdjustment, formatPaymentMoney } from './payroll-payments.mjs?v=1';
+    import { extractPaymentBreakdown, relatePaymentAdjustment, formatPaymentMoney, hasCompletePaymentBreakdown } from './payroll-payments.mjs?v=2';
     import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 
     const SUPABASE_URL = 'https://icneigdnuntzugisexaz.supabase.co';
@@ -3505,6 +3505,11 @@
             ? 'Esta imagen parece una nómina. Selecciona el registro de jornada del mes.'
             : 'Esta imagen parece un registro de jornada. Selecciona la nómina del mes.'
         },
+        'missing-payment-breakdown': {
+          icon: '!',
+          title: '⚠️ Falta la parte superior de la nómina',
+          message: 'Ajusta el recorte para incluir también el bloque “Desglose pagos”.'
+        },
         failed: {
           icon: '!',
           title: 'No hemos podido comprobar la imagen',
@@ -4125,12 +4130,22 @@
         card.appendChild(message);
       }
 
-      const labels = { transfer1: 'TRANSFER. 1', transfer2: 'TRANSFER. 2', pendingAmount: 'CANTIDAD PDTE', netTotal: 'LÍQUIDO TOTAL' };
+      const transfers = Array.isArray(info.breakdown.transfers)
+        ? info.breakdown.transfers
+        : [
+            { number: 1, amount: info.breakdown.transfer1 },
+            { number: 2, amount: info.breakdown.transfer2 }
+          ].filter(item => item.amount !== null && item.amount !== undefined);
+      const values = [
+        ...transfers.map(item => [`TRANSFER. ${item.number}`, item.amount]),
+        ['CANTIDAD PDTE', info.breakdown.pendingAmount],
+        ['LÍQUIDO TOTAL', info.breakdown.netTotal]
+      ];
       const details = document.createElement('p');
       details.className = 'comparison-difference';
-      details.textContent = Object.entries(labels)
-        .filter(([key]) => info.breakdown[key] !== null)
-        .map(([key, label]) => `${label}: ${formatPaymentMoney(info.breakdown[key])}`)
+      details.textContent = values
+        .filter(([, value]) => value !== null && value !== undefined)
+        .map(([label, value]) => `${label}: ${formatPaymentMoney(value)}`)
         .join(' · ');
       card.appendChild(details);
       target.appendChild(card);
@@ -4509,7 +4524,11 @@
             ? 'failed'
             : (containsLikelyPersonalData(recognizedText)
               ? 'blocked'
-              : (detectedKind && detectedKind !== activeKind ? 'wrong-document' : 'passed'))
+              : (detectedKind && detectedKind !== activeKind
+                ? 'wrong-document'
+                : (activeKind === 'payroll' && !hasCompletePaymentBreakdown(recognizedText)
+                  ? 'missing-payment-breakdown'
+                  : 'passed')))
         );
       } catch {
         if (scanVersion !== privacyScanVersion || workingFile !== file) return;
@@ -4553,7 +4572,7 @@
       const hasImage = Boolean(workingUrl && (workingFile || workingSaved));
       const needsUpload = Boolean(workingFile && !workingSaved);
       const checkingPrivacy = needsUpload && privacyScanState === 'checking';
-      const privacyBlocked = needsUpload && ['blocked', 'wrong-document', 'failed'].includes(privacyScanState);
+      const privacyBlocked = needsUpload && ['blocked', 'wrong-document', 'missing-payment-breakdown', 'failed'].includes(privacyScanState);
       const readyToUpload = needsUpload && privacyConfirmation.checked && privacyScanState === 'passed';
       preview.hidden = !hasImage;
       preview.classList.toggle('scan-blocked', privacyBlocked);

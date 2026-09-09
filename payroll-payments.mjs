@@ -1,9 +1,9 @@
 const PAYMENT_ROWS = [
-  ['transfer1', /TRANSFER\.?\s*1\b/],
-  ['transfer2', /TRANSFER\.?\s*2\b/],
   ['pendingAmount', /CANTIDAD\s+PDTE\.?(?=\s|$)/],
   ['netTotal', /LIQUIDO\s+TOTAL\b/]
 ];
+
+const TRANSFER_ROW = /TRANSFER\.?\s*(\d+)\b/;
 
 function normalizedLine(value) {
   return String(value || '')
@@ -42,12 +42,23 @@ function rowValue(lines, index, pattern) {
   const sameLine = signedMoney(tail);
   if (sameLine !== null) return sameLine;
   const next = lines[index + 1] || '';
-  if (PAYMENT_ROWS.some(([, rowPattern]) => rowPattern.test(next)) || /DEVENGOS?\s+Y\s+DEDUCCIONES?/.test(next)) return null;
+  if (TRANSFER_ROW.test(next) || PAYMENT_ROWS.some(([, rowPattern]) => rowPattern.test(next)) || /DEVENGOS?\s+Y\s+DEDUCCIONES?/.test(next)) return null;
   return signedMoney(next);
 }
 
+export function hasCompletePaymentBreakdown(text) {
+  const normalized = normalizedLine(text);
+  const start = normalized.search(/DESGLOSE\s+PAGOS?/);
+  if (start < 0) return false;
+  const endMatch = /DEVENGOS?\s+Y\s+DEDUCCIONES?/.exec(normalized.slice(start));
+  if (!endMatch) return false;
+  const block = normalized.slice(start, start + endMatch.index);
+  return TRANSFER_ROW.test(block) && /LIQUIDO\s+TOTAL\b/.test(block);
+}
+
 export function extractPaymentBreakdown(texts) {
-  const found = { transfer1: null, transfer2: null, pendingAmount: null, netTotal: null };
+  const found = { transfers: [], transfer1: null, transfer2: null, pendingAmount: null, netTotal: null };
+  const transferNumbers = new Set();
   for (const text of Array.isArray(texts) ? texts : [texts]) {
     const lines = String(text || '').split(/\r?\n/).map(normalizedLine).filter(Boolean);
     const start = lines.findIndex(line => /DESGLOSE\s+PAGOS?/.test(line));
@@ -55,13 +66,26 @@ export function extractPaymentBreakdown(texts) {
     const fromStart = lines.slice(start);
     const end = fromStart.findIndex((line, index) => index > 0 && /DEVENGOS?\s+Y\s+DEDUCCIONES?/.test(line));
     const block = end >= 0 ? fromStart.slice(0, end) : fromStart.slice(0, 16);
+    block.forEach((line, index) => {
+      const match = TRANSFER_ROW.exec(line);
+      if (!match) return;
+      const number = Number(match[1]);
+      if (!Number.isInteger(number) || transferNumbers.has(number)) return;
+      const amount = rowValue(block, index, TRANSFER_ROW);
+      if (amount === null) return;
+      transferNumbers.add(number);
+      found.transfers.push({ number, amount });
+      if (number === 1) found.transfer1 = amount;
+      if (number === 2) found.transfer2 = amount;
+    });
     for (const [key, pattern] of PAYMENT_ROWS) {
       if (found[key] !== null) continue;
       const index = block.findIndex(line => pattern.test(line));
       if (index >= 0) found[key] = rowValue(block, index, pattern);
     }
   }
-  return Object.values(found).some(value => value !== null) ? found : null;
+  found.transfers.sort((a, b) => a.number - b.number);
+  return found.transfers.length || found.pendingAmount !== null || found.netTotal !== null ? found : null;
 }
 
 function quantity(values, key) {

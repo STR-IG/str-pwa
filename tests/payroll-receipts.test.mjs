@@ -6,6 +6,7 @@ import { webcrypto } from 'node:crypto';
 import { newReceiptId, receiptCreatedAt, monthReceipts, assertUniquePayroll, sha256, listFiles } from '../payroll-receipts.mjs';
 import { readSupplemental } from '../payroll-supplemental.mjs';
 import { readOvertime } from '../payroll-overtime.mjs';
+import { hasCompletePaymentBreakdown } from '../payroll-payments.mjs';
 
 const html = readFileSync(new URL('../revisa-tu-nomina-base.html', import.meta.url), 'utf8');
 const source = html.match(/<script type="module">([\s\S]*?)<\/script>/)[1].replace(/\r/g, '');
@@ -68,6 +69,7 @@ function harness(bucket) {
     readSupplemental: () => readSupplemental({getElementById: id => nodes.get(id)}),
     readOvertime: () => readOvertime({getElementById: id => nodes.get(id)}),
     parseQuantityValue: Number, formatQuantity: String,
+    hasCompletePaymentBreakdown,
     document: { getElementById(id) { if (!nodes.has(id)) nodes.set(id, element()); return nodes.get(id); } }
   });
   for (const key of ['addMonthlyPayroll','addPeriodPayroll','addDocumentPayroll','historyCount','historyLoading','historyError','historyList','historyEmpty','refreshHistoryButton','comparisonError','confirmComparisonButton','comparisonSaved','comparisonResult','comparisonDetectedCount']) ctx[key] = element();
@@ -118,7 +120,7 @@ function privacyHarness() {
 }
 
 // Synthetic OCR text only: never store real payroll images or personal details in tests.
-const payrollTableText = `DESGLOSE PAGOS: LIQUIDO TOTAL
+const payrollTableText = `DESGLOSE PAGOS: TRANSFER. 1 630,00 LIQUIDO TOTAL 630,00
 DEVENGOS Y DEDUCCIONES
 CODIGO CONCEPTO CANTIDAD IMPORTE DIARIO DEVENGOS DEDUCCIONES
 0001 Salario minimo garantizado 14 50,0000 700,00
@@ -158,7 +160,12 @@ test('privacy scan enables saving a clean table only after consent; blocked, wro
   app.privacyConfirmation.checked = true;
   app.renderWorkingPreview();
   assert.equal(app.confirmImageButton.disabled, false);
-  for (const [text, state] of [[`${payrollTableText}\nDNI`, 'blocked'], ['REGISTRO DE JORNADA RESUMEN DE VARIABLES', 'wrong-document'], ['', 'failed']]) {
+  for (const [text, state] of [
+    [`${payrollTableText}\nDNI`, 'blocked'],
+    ['REGISTRO DE JORNADA RESUMEN DE VARIABLES', 'wrong-document'],
+    ['DEVENGOS Y DEDUCCIONES CODIGO CONCEPTO CANTIDAD IMPORTE', 'missing-payment-breakdown'],
+    ['', 'failed']
+  ]) {
     app.recognizeTextLocally = async () => text;
     await app.checkSelectedFilePrivacy(app.workingFile, 1);
     assert.equal(app.privacyScanState, state);
