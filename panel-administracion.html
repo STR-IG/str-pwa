@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#e30613">
+  <title>Panel de administración · STR-IG</title>
+  <link rel="icon" type="image/png" href="icono-str-ig.png">
+  <link rel="apple-touch-icon" href="icono-str-ig.png">
+  <link rel="manifest" href="manifest.json">
+  <style>
+    *{box-sizing:border-box}
+    :root{--red:#e30613;--red-dark:#b9000b;--black:#161616;--grey:#6e6e73;--line:#dedee2;--light:#f5f5f7;--white:#fff;--green:#17623a;--green-soft:#eef8f1}
+    body{min-height:100vh;margin:0;padding-bottom:48px;color:var(--black);background:var(--light);font-family:Arial,Helvetica,sans-serif}
+    button,input{font:inherit}
+    .topbar{position:sticky;top:0;z-index:10;display:flex;align-items:center;gap:14px;min-height:66px;padding:10px 16px;background:var(--black);color:var(--white)}
+    .back{display:grid;place-items:center;width:44px;height:44px;border-radius:50%;color:var(--white);text-decoration:none;font-size:32px}
+    .topbar strong{font-size:18px}
+    main{width:min(100% - 28px,760px);margin:0 auto;padding-top:24px}
+    .loading{padding:64px 20px;text-align:center;color:var(--grey)}
+    .screen[hidden]{display:none}
+    .hero{padding:24px;border-radius:24px;color:var(--white);background:linear-gradient(135deg,var(--red),#a8000b);box-shadow:0 10px 26px rgba(185,0,11,.16)}
+    .eyebrow{display:block;margin-bottom:7px;font-size:12px;font-weight:900;letter-spacing:.7px;text-transform:uppercase}
+    h1{margin:0;font-size:clamp(27px,5vw,34px);line-height:1.1}
+    .hero p{margin:9px 0 0;line-height:1.45}
+    .panel{margin-top:18px;padding:20px;border:1px solid rgba(0,0,0,.04);border-radius:22px;background:var(--white);box-shadow:0 6px 22px rgba(0,0,0,.07)}
+    .module{display:flex;align-items:center;justify-content:space-between;gap:16px;width:100%;padding:18px;border:1px solid var(--line);border-radius:17px;background:var(--white);text-align:left;cursor:pointer}
+    .module strong{display:block;font-size:18px}.module span{display:block;margin-top:5px;color:var(--grey);font-size:14px;line-height:1.4}.module b{color:var(--red);font-size:28px}
+    .existing-link{display:inline-block;margin-top:16px;color:var(--red-dark);font-size:14px;font-weight:800;text-decoration:none}
+    .screen-head{display:flex;align-items:center;gap:12px;margin-bottom:18px}
+    .screen-back{display:grid;place-items:center;flex:0 0 42px;height:42px;border:1px solid var(--line);border-radius:50%;color:var(--black);background:var(--white);font-size:25px;cursor:pointer}
+    .screen-head h1{font-size:26px}.screen-head p{margin:3px 0 0;color:var(--grey);font-size:14px}
+    label{display:block;margin-bottom:8px;font-size:14px;font-weight:800}
+    .search{width:100%;min-height:54px;padding:13px 15px;border:1px solid #cfcfd4;border-radius:14px;outline:none;font-size:16px}
+    .search:focus{border-color:var(--red);box-shadow:0 0 0 3px rgba(227,6,19,.1)}
+    .count{margin:12px 2px;color:var(--grey);font-size:13px;font-weight:800}
+    .affiliate-list{display:grid;gap:10px}
+    .affiliate{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;padding:15px;border:1px solid var(--line);border-radius:15px;background:var(--white);text-align:left;cursor:pointer}
+    .affiliate strong{display:block;font-size:16px}.affiliate small{display:block;margin-top:4px;color:var(--grey);font-size:13px}.affiliate b{color:var(--red);font-size:24px}
+    .state{display:inline-flex;align-items:center;gap:7px;margin-top:8px;padding:5px 9px;border-radius:999px;color:var(--green);background:var(--green-soft);font-size:12px;font-weight:900;text-transform:uppercase}
+    .state.inactive{color:#7a5510;background:#fff7e8}
+    .empty,.error{padding:20px;border-radius:15px;color:var(--grey);background:var(--white);text-align:center;line-height:1.5}
+    .error{color:#8e0010;background:#fff0f1}
+    .details{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:0}
+    .detail{min-width:0;padding:15px;border-radius:15px;background:#f7f7f8}
+    .detail dt{margin-bottom:5px;color:var(--grey);font-size:12px;font-weight:800;text-transform:uppercase}.detail dd{margin:0;overflow-wrap:anywhere;font-size:15px;font-weight:800}
+    .privacy-note{margin:17px 2px 0;color:var(--grey);font-size:13px;line-height:1.5}
+    .denied{text-align:center}.denied h1{font-size:26px}.denied p{color:var(--grey);line-height:1.5}.denied a{display:inline-grid;place-items:center;min-height:50px;margin-top:10px;padding:0 22px;border-radius:999px;color:var(--white);background:var(--red);font-weight:800;text-decoration:none}
+    @media(max-width:560px){main{width:min(100% - 24px,760px);padding-top:16px}.hero,.panel{padding:18px}.details{grid-template-columns:1fr}.module{align-items:flex-start}}
+  </style>
+</head>
+<body>
+  <header class="topbar"><a class="back" href="index.html" aria-label="Volver al menú principal">‹</a><strong>Administración STR-IG</strong></header>
+  <main>
+    <p id="loading" class="loading">Comprobando acceso de Administrador…</p>
+
+    <section id="home" class="screen" hidden>
+      <div class="hero"><span class="eyebrow">Acceso exclusivo Administrador</span><h1>Panel de administración STR-IG</h1><p>Consulta la información existente de los afiliados.</p></div>
+      <div class="panel">
+        <button id="open-affiliates" class="module" type="button">
+          <span><strong>Afiliados</strong><span>Buscar y consultar fichas de afiliados.</span></span><b aria-hidden="true">›</b>
+        </button>
+        <a class="existing-link" href="alta-afiliados.html">Abrir la herramienta actual de altas</a>
+      </div>
+    </section>
+
+    <section id="affiliates" class="screen" hidden>
+      <div class="screen-head"><button class="screen-back" type="button" data-back="home" aria-label="Volver al panel">‹</button><div><h1>Gestión de afiliados</h1><p>Consulta y búsqueda</p></div></div>
+      <div class="panel">
+        <label for="affiliate-search">Buscar afiliado</label>
+        <input id="affiliate-search" class="search" type="search" autocomplete="off" placeholder="Nombre, email, número o teléfono">
+        <p id="affiliate-count" class="count">Cargando afiliados…</p>
+        <div id="affiliate-list" class="affiliate-list"></div>
+        <p id="affiliate-error" class="error" hidden>No se ha podido consultar el listado.</p>
+      </div>
+    </section>
+
+    <section id="affiliate-detail" class="screen" hidden>
+      <div class="screen-head"><button class="screen-back" type="button" data-back="affiliates" aria-label="Volver al listado">‹</button><div><h1>Ficha del afiliado</h1><p>Información existente</p></div></div>
+      <article class="panel">
+        <h2 id="detail-name" style="margin:0 0 14px;font-size:23px"></h2>
+        <dl class="details">
+          <div class="detail"><dt>Número de afiliado</dt><dd id="detail-number">—</dd></div>
+          <div class="detail"><dt>Estado de acceso</dt><dd id="detail-status">—</dd></div>
+          <div class="detail"><dt>Email personal</dt><dd id="detail-email">—</dd></div>
+          <div class="detail"><dt>Teléfono</dt><dd id="detail-phone">—</dd></div>
+        </dl>
+        <p class="privacy-note">Ficha de consulta. No muestra contraseñas ni crea copias de los datos del afiliado.</p>
+      </article>
+    </section>
+
+    <section id="denied" class="screen panel denied" hidden>
+      <h1>Acceso restringido</h1>
+      <p>Esta página es exclusiva para usuarios con rol Administrador.</p>
+      <a href="index.html">Volver al menú principal</a>
+    </section>
+  </main>
+
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+
+    const PAGE='panel-administracion.html';
+    const SUPABASE_URL='https://icneigdnuntzugisexaz.supabase.co';
+    const SUPABASE_PUBLISHABLE_KEY='sb_publishable_apKjcPClIBTHS2wwN6qPsA_6Vm4tk9m';
+    const MANAGE_AFFILIATES=SUPABASE_URL+'/functions/v1/manage-affiliates';
+    const supabase=createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY,{auth:{detectSessionInUrl:false,persistSession:true,autoRefreshToken:true}});
+    const screens={home:document.getElementById('home'),affiliates:document.getElementById('affiliates'),detail:document.getElementById('affiliate-detail'),denied:document.getElementById('denied')};
+    const loading=document.getElementById('loading');
+    const search=document.getElementById('affiliate-search');
+    const list=document.getElementById('affiliate-list');
+    const count=document.getElementById('affiliate-count');
+    const error=document.getElementById('affiliate-error');
+    let affiliates=[];
+    let loaded=false;
+
+    function show(name){loading.hidden=true;Object.entries(screens).forEach(([key,screen])=>{screen.hidden=key!==name});window.scrollTo({top:0,behavior:'auto'})}
+    function normalized(value){return String(value||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim()}
+    function matches(affiliate,query){const value=normalized(query);if(!value)return true;return [affiliate.display_name,affiliate.email,affiliate.employee_number,affiliate.phone].some(field=>normalized(field).includes(value))}
+    function addText(parent,tag,text){const element=document.createElement(tag);element.textContent=text;parent.appendChild(element);return element}
+
+    async function adminRequest(action){
+      const {data:{session}}=await supabase.auth.getSession();
+      if(!session?.access_token){const problem=new Error('NO_SESSION');problem.status=401;throw problem}
+      const response=await fetch(MANAGE_AFFILIATES,{method:'POST',headers:{Authorization:`Bearer ${session.access_token}`,'Content-Type':'application/json',apikey:SUPABASE_PUBLISHABLE_KEY},body:JSON.stringify({action})});
+      const result=await response.json().catch(()=>({}));
+      if(!response.ok){const problem=new Error(result?.error||'REQUEST_FAILED');problem.status=response.status;throw problem}
+      return result;
+    }
+
+    function openDetail(affiliate){
+      document.getElementById('detail-name').textContent=affiliate.display_name||affiliate.email;
+      document.getElementById('detail-number').textContent=affiliate.employee_number||'No indicado';
+      document.getElementById('detail-status').textContent=affiliate.active===false?'Acceso inactivo':'Acceso activo';
+      document.getElementById('detail-email').textContent=affiliate.email||'No indicado';
+      document.getElementById('detail-phone').textContent=affiliate.phone||'No indicado';
+      show('detail');
+    }
+
+    function renderAffiliates(){
+      const filtered=affiliates.filter(affiliate=>matches(affiliate,search.value));
+      list.replaceChildren();
+      count.textContent=`${filtered.length} ${filtered.length===1?'afiliado':'afiliados'}${search.value.trim()?' encontrado'+(filtered.length===1?'':'s'):''}`;
+      if(!filtered.length){const empty=addText(list,'p',search.value.trim()?'No hay resultados para esta búsqueda.':'No hay afiliados para mostrar.');empty.className='empty';return}
+      filtered.forEach(affiliate=>{
+        const button=document.createElement('button');button.type='button';button.className='affiliate';
+        const copy=document.createElement('span');addText(copy,'strong',affiliate.display_name||affiliate.email);addText(copy,'small',`${affiliate.employee_number||'Sin número'} · ${affiliate.email||'Sin email'}`);
+        const state=addText(copy,'span',affiliate.active===false?'Acceso inactivo':'Acceso activo');state.className=`state${affiliate.active===false?' inactive':''}`;
+        addText(button,'b','›').setAttribute('aria-hidden','true');button.prepend(copy);button.addEventListener('click',()=>openDetail(affiliate));list.appendChild(button);
+      });
+    }
+
+    async function loadAffiliates(){
+      if(loaded){renderAffiliates();return}
+      error.hidden=true;count.textContent='Cargando afiliados…';list.replaceChildren();
+      try{const result=await adminRequest('list');affiliates=Array.isArray(result.affiliates)?result.affiliates:[];loaded=true;renderAffiliates()}
+      catch(problem){if(problem.status===403){show('denied');return}count.textContent='';error.hidden=false}
+    }
+
+    document.getElementById('open-affiliates').addEventListener('click',()=>{show('affiliates');loadAffiliates()});
+    document.querySelectorAll('[data-back]').forEach(button=>button.addEventListener('click',()=>show(button.dataset.back)));
+    search.addEventListener('input',renderAffiliates);
+
+    const {data:{session}}=await supabase.auth.getSession();
+    if(!session){sessionStorage.setItem('strAfterLogin',PAGE);window.location.replace(`acceso-privado.html?next=${PAGE}`)}
+    else{
+      try{await adminRequest('authorize');show('home')}
+      catch(problem){if(problem.status===401){sessionStorage.setItem('strAfterLogin',PAGE);window.location.replace(`acceso-privado.html?next=${PAGE}`)}else show('denied')}
+    }
+  </script>
+</body>
+</html>
