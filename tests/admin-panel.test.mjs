@@ -43,3 +43,13 @@ test('el acceso del menú permanece oculto para afiliados normales', () => {
   assert.match(index, /if \(response\.ok\) card\.classList\.add\('show'\)/);
   assert.match(index, /href="panel-administracion\.html"/);
 });
+
+test('la prueba interna de Gemini reutiliza la sesión del administrador sin exponer secretos', () => {
+  assert.match(panel, />Probar conexión Gemini</);
+  assert.match(panel, /Probando conexión\.\.\./);
+  assert.match(panel, /✅ Conexión Gemini correcta/);
+  assert.match(panel, /Authorization:`Bearer \$\{session\.access_token\}`/);
+  assert.match(panel, /body:JSON\.stringify\(\{action:'connection_test'\}\)/);
+  assert.doesNotMatch(panel, /GEMINI_API_KEY|SUPABASE_SERVICE_ROLE_KEY/);
+  assert.doesNotMatch(panel, /console\.(log|error|warn)/);
+});
