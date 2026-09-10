@@ -54,6 +54,45 @@ test('el administrador no puede editar manualmente los resultados leídos', () =
   assert.match(page, /edit-payroll-values'\)\.hidden = isAdminMode/);
 });
 
+test('Descuentos usa el mismo lector y permite consultar, sustituir, reprocesar o eliminar solo sus datos', () => {
+  assert.doesNotMatch(page, /getElementById\('discounts-card'\)\.hidden = true/);
+  assert.match(page, /Consultar Descuentos/);
+  assert.match(page, /Añadir Descuentos/);
+  assert.match(page, /prepareAdminDiscounts\('replace'\)/);
+  assert.match(page, /prepareAdminDiscounts\('reprocess'\)/);
+  assert.match(page, /deleteAdminDiscounts/);
+  assert.match(page, /delete updated\.discounts/);
+  assert.match(page, /showDiscountsScreen\(\{ fresh: true \}\)/);
+  assert.match(page, /str:discounts-opened/);
+  assert.doesNotMatch(endpoint, /discounts-reader|readDiscounts|ocr/i);
+});
+
+test('eliminar Descuentos conserva Nómina, Registro, comparación y cierre del recibo', async () => {
+  let uploaded = null;
+  const previous = {
+    status: 'complete', scope: 'receipt',
+    timesheet: { vacation: '3' }, payroll: { vacation: '3' },
+    comparisons: { vacation: { status: 'match' } },
+    discounts: [{ code: '9350', amount: 120.5 }]
+  };
+  const reviews = new Map([['2026-08/receipt-test', previous]]);
+  const ctx = vm.createContext({
+    Date, Map, Array, isAdminMode: true, savingReview: false, savingDocument: false,
+    monthlyReviews: reviews, periodKey: () => '2026-08/receipt-test',
+    adminActionDescription: () => 'Descuentos · agosto de 2026 · afiliado de prueba',
+    window: { confirm: () => true },
+    uploadMonthlyReview: async review => { uploaded = review; },
+    updatePeriodCards() {}, showPeriodMessage() {}
+  });
+  vm.runInContext(extract('deleteAdminDiscounts'), ctx);
+  await ctx.deleteAdminDiscounts();
+  assert.equal(uploaded.discounts, undefined);
+  assert.deepEqual(uploaded.timesheet, previous.timesheet);
+  assert.deepEqual(uploaded.payroll, previous.payroll);
+  assert.deepEqual(uploaded.comparisons, previous.comparisons);
+  assert.equal(uploaded.status, 'complete');
+});
+
 test('el adaptador envía token y afiliado en cada operación y nunca una clave secreta', async () => {
   const calls = [];
   const originalFetch = globalThis.fetch;

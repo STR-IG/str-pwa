@@ -1846,6 +1846,9 @@
             <button id="admin-delete-timesheet" class="secondary admin-danger" type="button">Eliminar Registro</button>
             <button id="admin-replace-payroll" class="secondary" type="button">Sustituir nómina</button>
             <button id="admin-delete-payroll" class="secondary admin-danger" type="button">Eliminar nómina</button>
+            <button id="admin-replace-discounts" class="secondary" type="button" hidden>Sustituir Descuentos</button>
+            <button id="admin-reprocess-discounts" class="secondary" type="button" hidden>Volver a procesar Descuentos</button>
+            <button id="admin-delete-discounts" class="secondary admin-danger" type="button" hidden>Eliminar Descuentos</button>
           </div>
         </section>
 
@@ -2512,7 +2515,7 @@
       const affiliateName = adminContext.affiliate?.display_name || adminAffiliateEmail;
       const context = document.getElementById('admin-context'); context.textContent = `Administración · ${affiliateName} · ${adminAffiliateEmail}`; context.hidden = false;
       topBack.href = 'panel-administracion.html';
-      document.getElementById('discounts-card').hidden = true;
+      document.getElementById('discounts-card').hidden = false;
       document.getElementById('admin-document-actions').hidden = false;
     }
 
@@ -2845,7 +2848,9 @@
 
     function adminActionDescription(kind) {
       const affiliate = adminContext?.affiliate?.display_name || adminAffiliateEmail;
-      const documentName = kind === 'timesheet' ? 'Registro de jornada' : `nómina de este recibo`;
+      const documentName = kind === 'timesheet'
+        ? 'Registro de jornada'
+        : (kind === 'discounts' ? 'Descuentos de este recibo' : 'nómina de este recibo');
       return `${documentName} · ${periodLabel()} · ${affiliate}`;
     }
 
@@ -2889,6 +2894,37 @@
         showPeriodMessage('Registro eliminado. Las nóminas del mes permanecen intactas.');
       } catch { showPeriodMessage('No se ha podido eliminar el Registro. No se han borrado las nóminas.', true); }
       finally { savingDocument = false; updatePeriodCards(); }
+    }
+
+    function prepareAdminDiscounts(action) {
+      const saved = Array.isArray(monthlyReviews.get(periodKey())?.discounts)
+        && monthlyReviews.get(periodKey()).discounts.length > 0;
+      if (!isAdminMode || !saved || savingReview || savingDocument) return;
+      const verb = action === 'reprocess' ? 'volver a procesar' : 'sustituir';
+      if (!window.confirm(`Vas a ${verb} los Descuentos de este recibo.\n\n${adminActionDescription('discounts')}\n\nNecesitarás seleccionar de nuevo la captura. ¿Continuar?`)) return;
+      showDiscountsScreen({ fresh: true });
+    }
+
+    async function deleteAdminDiscounts() {
+      const key = periodKey();
+      const previous = monthlyReviews.get(key);
+      if (!isAdminMode || !Array.isArray(previous?.discounts) || !previous.discounts.length || savingReview || savingDocument) return;
+      if (!window.confirm(`¿Seguro que quieres eliminar los Descuentos de este recibo?\n\n${adminActionDescription('discounts')}\n\nLa Nómina y el Registro se conservarán.`)) return;
+      const updated = { ...previous, updatedAt: new Date().toISOString() };
+      delete updated.discounts;
+      savingReview = true;
+      try {
+        await uploadMonthlyReview(updated);
+        if (key !== periodKey()) return;
+        monthlyReviews.set(key, updated);
+        updatePeriodCards();
+        showPeriodMessage('Descuentos eliminados. La Nómina, el Registro y la comparación permanecen intactos.');
+      } catch {
+        showPeriodMessage('No se han podido eliminar los Descuentos. No se ha modificado ningún otro dato.', true);
+      } finally {
+        savingReview = false;
+        updatePeriodCards();
+      }
     }
 
     function showPeriodMessage(message = '', isError = false) {
@@ -3326,7 +3362,14 @@
       const discountsSaved = Array.isArray(savedReview?.discounts) && savedReview.discounts.length > 0;
       document.getElementById('discounts-card').classList.toggle('complete', discountsSaved);
       document.getElementById('discounts-card-status').textContent = discountsSaved ? 'Guardados' : 'Disponible';
-      document.getElementById('open-discounts').textContent = discountsSaved ? 'Revisar descuentos' : 'Abrir Descuentos';
+      document.getElementById('open-discounts').textContent = isAdminMode
+        ? (discountsSaved ? 'Consultar Descuentos' : 'Añadir Descuentos')
+        : (discountsSaved ? 'Revisar descuentos' : 'Abrir Descuentos');
+      if (isAdminMode) {
+        document.getElementById('admin-replace-discounts').hidden = !discountsSaved;
+        document.getElementById('admin-reprocess-discounts').hidden = !discountsSaved;
+        document.getElementById('admin-delete-discounts').hidden = !discountsSaved;
+      }
       const incidents = monthlyIncidentCount(savedReview);
       document.getElementById('document-count').textContent = `${completed} de 2 guardados`;
       document.getElementById('completion-panel').hidden = completed !== 2;
@@ -4834,7 +4877,7 @@
       window.dispatchEvent(new CustomEvent('str:discounts-closed'));
     }
 
-    function showDiscountsScreen() {
+    function showDiscountsScreen(options = {}) {
       if (savingReview || savingDocument) return;
       periodScreen.hidden = true;
       historyScreen.hidden = true;
@@ -4847,7 +4890,7 @@
       window.scrollTo({ top: 0, behavior: 'auto' });
       document.getElementById('discounts-screen-title').focus({ preventScroll: true });
       window.dispatchEvent(new CustomEvent('str:discounts-opened', {
-        detail: { rows: monthlyReviews.get(periodKey())?.discounts || [] }
+        detail: { rows: options?.fresh === true ? [] : (monthlyReviews.get(periodKey())?.discounts || []) }
       }));
     }
 
@@ -5050,7 +5093,10 @@
 
     document.getElementById('open-timesheet').addEventListener('click', () => openDocument('timesheet'));
     document.getElementById('open-payroll').addEventListener('click', () => openDocument('payroll'));
-    document.getElementById('open-discounts').addEventListener('click', showDiscountsScreen);
+    document.getElementById('open-discounts').addEventListener('click', () => showDiscountsScreen());
+    document.getElementById('admin-replace-discounts').addEventListener('click', () => prepareAdminDiscounts('replace'));
+    document.getElementById('admin-reprocess-discounts').addEventListener('click', () => prepareAdminDiscounts('reprocess'));
+    document.getElementById('admin-delete-discounts').addEventListener('click', deleteAdminDiscounts);
     window.addEventListener('str:discounts-save', async (event) => {
       const request = event.detail;
       if (!request || !Array.isArray(request.rows) || !request.rows.length) return;

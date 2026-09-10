@@ -19,7 +19,7 @@ test('discounts keeps its existing isolated reader screen and save event', () =>
   assert.match(screen, /id="discounts-image"/);
   assert.match(screen, /id="save-discounts"/);
   assert.doesNotMatch(screen, /supabase/i);
-  assert.match(html, /open-discounts'\)\.addEventListener\('click', showDiscountsScreen\)/);
+  assert.match(html, /open-discounts'\)\.addEventListener\('click', \(\) => showDiscountsScreen\(\)\)/);
 });
 
 test('back navigation returns from Descuentos and existing document handlers stay unchanged', () => {
