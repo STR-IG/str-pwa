@@ -33,6 +33,13 @@ test("la petición oficial es mínima, no se almacena y conserva el prompt fijo"
   assert.match(source, /model: GEMINI_MODEL/);
 });
 
+test("extrae el texto de la respuesta REST oficial de Interactions", () => {
+  assert.match(source, /Array\.isArray\(result\?\.steps\)/);
+  assert.match(source, /step\?\.type === "model_output"/);
+  assert.match(source, /content\?\.type === "text"/);
+  assert.match(source, /const response = extractGeminiText\(result\)/);
+});
+
 test("los fallos previstos se traducen a errores seguros", () => {
   for (const code of [
     "GEMINI_NOT_CONFIGURED",

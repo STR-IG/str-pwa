@@ -38,6 +38,20 @@ function isExpectedTestResponse(value: string) {
     "conexión gemini correcta";
 }
 
+function extractGeminiText(result: any) {
+  if (typeof result?.output_text === "string" && result.output_text.trim()) {
+    return result.output_text.trim();
+  }
+  if (!Array.isArray(result?.steps)) return "";
+  return result.steps
+    .filter((step: any) => step?.type === "model_output" && Array.isArray(step.content))
+    .flatMap((step: any) => step.content)
+    .filter((content: any) => content?.type === "text" && typeof content.text === "string")
+    .map((content: any) => content.text)
+    .join("")
+    .trim();
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: headers(req) });
   if (req.method !== "POST") return json(req, { error: "METHOD_NOT_ALLOWED" }, 405);
@@ -110,7 +124,7 @@ Deno.serve(async (req: Request) => {
     }
 
     const result = await geminiResponse.json().catch(() => ({}));
-    const response = String(result?.output_text ?? "").trim();
+    const response = extractGeminiText(result);
     if (!response) return json(req, { error: "GEMINI_EMPTY_RESPONSE" }, 502);
     if (!isExpectedTestResponse(response)) {
       return json(req, { error: "GEMINI_UNEXPECTED_RESPONSE" }, 502);
