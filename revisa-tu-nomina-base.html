@@ -3421,8 +3421,14 @@
         .trim();
     }
 
+    function isTheoreticalPc30(text) {
+      const normalized = normalizeOcrLine(text);
+      return /\bTEOR(?:ICO)?\b/.test(normalized) && /\bPC\s*3[0O]\b/.test(normalized);
+    }
+
     function matchTimesheetVariable(line) {
       const normalized = normalizeOcrLine(line);
+      if (isTheoreticalPc30(normalized)) return null;
       for (const key of TIMESHEET_MATCH_ORDER) {
         const variable = TIMESHEET_VARIABLES.find((item) => item.key === key);
         if (variable?.patterns.some((pattern) => pattern.test(normalized))) return variable;

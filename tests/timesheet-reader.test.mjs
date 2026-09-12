@@ -18,6 +18,7 @@ const functions = [
   'normalizeOcrText',
   'detectDocumentKind',
   'normalizeOcrLine',
+  'isTheoreticalPc30',
   'matchTimesheetVariable',
   'numericCandidates',
   'normalizeDetectedQuantity',
@@ -82,6 +83,54 @@ test('no toma una cifra de otra línea para completar un concepto', () => {
   assert.equal(values.has('holiday'), false);
 });
 
+test('enero 2026 excluye los teóricos PC30 y conserva solo los pluses ordinarios', () => {
+  const values = Object.fromEntries([...context.parseTimesheetText(`
+    RESUMEN DE VARIABLES DEL MES
+    CONCEPTO CANTIDAD
+    Plus rotatividad 23
+    Plus rotativid. teór. PC30 7
+    Plus Nocturno teórico PC30 1,25
+    Plus de turno teor PC30 5
+    Plus Festivo teorico PC30 8
+    Plus Nocturno 56
+    Plus Festivo 42
+    Plus de turno 12 horas 3
+    Dietas Festivos 3
+    NOPAGA PNocturn teór 2,17
+    NOPAGA PFestivo teórico 3,42
+    SALDOS
+  `)].map(([key, result]) => [key, result.value]));
+
+  assert.deepEqual(values, {
+    rotation: '23',
+    night: '56',
+    holiday: '42',
+    unpaidNight: '2,17',
+    unpaidHoliday: '3,42',
+    shift12: '3',
+    holidayDiets: '3',
+  });
+});
+
+test('visión ignora teóricos PC30 antes de clasificar conceptos ordinarios', () => {
+  const vision = readFileSync(new URL('../timesheet-vision-lab.js', import.meta.url), 'utf8');
+  const extractVision = (name) => {
+    const start = vision.indexOf(`  function ${name}(`);
+    assert.ok(start >= 0, name);
+    return vision.slice(start, vision.indexOf('\n  }', start) + 4);
+  };
+  const visionContext = vm.createContext({ String });
+  vm.runInContext([
+    extractVision('norm'), extractVision('isTheoreticalPc30'), extractVision('conceptKey')
+  ].join('\n'), visionContext);
+
+  assert.equal(visionContext.conceptKey('Plus Nocturno teór. PC30'), '');
+  assert.equal(visionContext.conceptKey('Plus Festivo teorico PC30'), '');
+  assert.equal(visionContext.conceptKey('Plus Nocturno'), 'night');
+  assert.equal(visionContext.conceptKey('Plus Festivo'), 'holiday');
+  assert.equal(visionContext.conceptKey('NOPAGA PNocturn teór'), 'night');
+});
+
 test('0036 Comidas Can Guasch toma 2 de CANTIDAD y conserva el resto de conceptos', () => {
   const values = Object.fromEntries([...context.parsePayrollText(`
     DEVENGOS Y DEDUCCIONES
@@ -137,7 +186,7 @@ test('visión distingue vacaciones ausentes en noviembre y leídas en diciembre'
     Event:class {}, setTimeout:fn=>fn()
   });
   vm.runInContext([
-    extractVision('norm'), extractVision('conceptKey'), extractVision('markState'), extractVision('clearAndApply')
+    extractVision('norm'), extractVision('isTheoreticalPc30'), extractVision('conceptKey'), extractVision('markState'), extractVision('clearAndApply')
   ].join('\n'), visionContext);
 
   visionContext.clearAndApply([]);

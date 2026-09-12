@@ -23,9 +23,14 @@
     return String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').replace(/\s+/g, ' ').trim();
   }
 
+  function isTheoreticalPc30(value) {
+    const n = norm(value);
+    return /\bteor(?:ico)?\b/.test(n) && /\bpc\s*3[0o]\b/.test(n);
+  }
+
   function conceptKey(name) {
     const n = norm(name);
-    if (!n) return '';
+    if (!n || isTheoreticalPc30(n)) return '';
     if ((n.includes('turno') || n.includes('turo')) && n.includes('12')) return 'shift12';
     if (n.includes('dieta') && n.includes('festiv')) return 'holidayDiets';
     if (n.includes('comida') || n.includes('guasch')) return 'meals';
