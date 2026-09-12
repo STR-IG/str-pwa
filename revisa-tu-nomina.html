@@ -19,7 +19,10 @@
           .replace('<div class="labbar">🧪 STR-IG LABORATORIO · NO ES PRODUCCIÓN</div>', '')
           .replace("sessionStorage.setItem('strLabNext', 'revisa-tu-nomina.html');", "sessionStorage.setItem('strAfterLogin', 'revisa-nomina.html');")
           .replace("'./payroll-supplemental.mjs?v=3'", "'./payroll-supplemental.mjs?v=4'")
-          .replace("'./payroll-overtime.mjs?v=2'", "'./payroll-overtime.mjs?v=3'");
+          .replace("'./payroll-overtime.mjs?v=2'", "'./payroll-overtime.mjs?v=3'")
+          .replace(/input\.readOnly = isAdminMode \|\| confirmed;/g, 'input.readOnly = confirmed;')
+          .replace(/document\.getElementById\('edit-payroll-values'\)\.hidden = isAdminMode \|\| !confirmed;/g, "document.getElementById('edit-payroll-values').hidden = !confirmed;")
+          .replace(/comparisonFields\.querySelectorAll\('input,textarea'\)\.forEach\(control => \{ control\.readOnly = true; \}\);/g, "comparisonFields.querySelectorAll('input,textarea').forEach(control => { control.readOnly = confirmed; });");
 
         const productionStyle = '<style>.labbar{display:none!important}body::before{display:none!important}</style>';
         const productionScripts = [
