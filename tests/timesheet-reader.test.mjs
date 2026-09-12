@@ -131,6 +131,14 @@ test('visión ignora teóricos PC30 antes de clasificar conceptos ordinarios', (
   assert.equal(visionContext.conceptKey('NOPAGA PNocturn teór'), 'night');
 });
 
+test('el lector visual pide omitir PC30 y continuar hasta la fila ordinaria', () => {
+  const edge = readFileSync(new URL('../supabase/functions/lab-read-timesheet-summary/index.ts', import.meta.url), 'utf8');
+  assert.match(edge, /EXCLUYE cualquier fila cuyo nombre contenga/);
+  assert.match(edge, /continúa recorriendo toda la tabla/);
+  assert.match(edge, /Plus Nocturno 56/);
+  assert.match(edge, /!isTheoreticalPc30\(item\.name\)/);
+});
+
 test('0036 Comidas Can Guasch toma 2 de CANTIDAD y conserva el resto de conceptos', () => {
   const values = Object.fromEntries([...context.parsePayrollText(`
     DEVENGOS Y DEDUCCIONES
