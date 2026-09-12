@@ -12,8 +12,8 @@ function extract(name) {
   return source.slice(start, source.indexOf('\n    }', start) + 6);
 }
 
-const configStart = source.indexOf('    const TIMESHEET_VARIABLES');
-const configEnd = source.indexOf('    const COMPARABLE_KEYS', configStart);
+const configStart = source.indexOf('    const DOCUMENT_KIND_MARKERS');
+const configEnd = source.indexOf('    const documents', configStart);
 const functions = [
   'normalizeOcrText',
   'detectDocumentKind',
@@ -23,6 +23,9 @@ const functions = [
   'normalizeDetectedQuantity',
   'quantityFromConceptLine',
   'parseTimesheetText',
+  'matchPayrollVariable',
+  'quantityFromPayrollLine',
+  'parsePayrollText',
 ].map(extract).join('\n');
 
 const context = vm.createContext({ Map, Set, String, Number, Math, Object });
@@ -77,6 +80,41 @@ test('no toma una cifra de otra línea para completar un concepto', () => {
 
   assert.equal(values.has('night'), false);
   assert.equal(values.has('holiday'), false);
+});
+
+test('0036 Comidas Can Guasch toma 2 de CANTIDAD y conserva el resto de conceptos', () => {
+  const values = Object.fromEntries([...context.parsePayrollText(`
+    DEVENGOS Y DEDUCCIONES
+    CÓDIGO CONCEPTO CANTIDAD IMPORTE DIARIO DEVENGOS DEDUCCIONES
+    0016 Plus rotatividad 30 5,1916 155,75
+    0013 Plus Nocturno 55,08 6,8800 378,95
+    0010 Plus de turno 15 7,4600 111,90
+    0017 Plus Festivo 48 17,2101 826,08
+    0036 Comidas Can Guasch 2 1,7800 3,56
+    0006 Plus de turno 12 horas 4 10,5600 42,24
+    0034 Dietas Festivos 4 14,9500 59,80
+    Total: 1.578,28
+  `)].map(([key, result]) => [key, result.value]));
+
+  assert.deepEqual(values, {
+    rotation: '30',
+    meals: '2',
+    night: '55,08',
+    shift: '15',
+    holiday: '48',
+    shift12: '4',
+    holidayDiets: '4',
+  });
+});
+
+test('visión enruta el código exacto 0036 a Comidas sin usar importes', () => {
+  const vision = readFileSync(new URL('../payroll-vision-lab.js', import.meta.url), 'utf8');
+  const start = vision.indexOf('  function norm(');
+  const end = vision.indexOf('\n  function markAsRead', start);
+  const visionContext = vm.createContext({ String });
+  vm.runInContext(vision.slice(start, end), visionContext);
+  assert.equal(visionContext.conceptKey('0036 Comidas Can Guasch'), 'meals');
+  assert.equal(visionContext.conceptKey('0036'), 'meals');
 });
 
 test('visión distingue vacaciones ausentes en noviembre y leídas en diciembre', () => {

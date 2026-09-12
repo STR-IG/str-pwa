@@ -27,6 +27,7 @@
     const n = norm(name);
     if (!n) return '';
     if (/\b(?:0001|0002|0003|0004|0053|0029|7001|7016|7017)\b|horas?\s*extra|gru(?:po|p)?\s*sup|difer/.test(n)) return '';
+    if (/\b0036\b/.test(n)) return 'meals';
     if ((n.includes('turno') || n.includes('turo')) && n.includes('12')) return 'shift12';
     if (n.includes('dieta') && n.includes('festiv')) return 'holidayDiets';
     if (n.includes('comida') || n.includes('guasch')) return 'meals';
