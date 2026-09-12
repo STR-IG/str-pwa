@@ -1842,6 +1842,7 @@
           <h2 class="section-title">Gestión administrativa</h2>
           <p class="document-help">Las sustituciones vuelven a pasar por el mismo recorte, privacidad y lector. No permiten modificar resultados manualmente.</p>
           <div class="admin-actions">
+            <button id="admin-calculate-v" class="secondary" type="button">Calcular / revisar V</button>
             <button id="admin-replace-timesheet" class="secondary" type="button">Sustituir Registro</button>
             <button id="admin-delete-timesheet" class="secondary admin-danger" type="button">Eliminar Registro</button>
             <button id="admin-replace-payroll" class="secondary" type="button">Sustituir nómina</button>
@@ -5203,6 +5204,16 @@
     document.getElementById('admin-replace-payroll').addEventListener('click', () => prepareAdminReplacement('payroll'));
     document.getElementById('admin-delete-timesheet').addEventListener('click', deleteAdminTimesheet);
     document.getElementById('admin-delete-payroll').addEventListener('click', deleteAdminPayroll);
+    document.getElementById('admin-calculate-v').addEventListener('click', () => {
+      if (!isAdminMode) return;
+      const params = new URLSearchParams({
+        adminAffiliate: adminAffiliateEmail,
+        adminYear: year.value,
+        adminMonth: String(Number(month.value) + 1)
+      });
+      if (activeReceiptId) params.set('adminReceipt', activeReceiptId);
+      window.location.href = `area-privada.html?${params}`;
+    });
     for (const place of ['period', 'comparison']) {
       document.getElementById(`close-month-${place}`).addEventListener('click', () => handleMonthClosure(true));
       document.getElementById(`view-month-${place}`).addEventListener('click', () => handleMonthClosure(false));

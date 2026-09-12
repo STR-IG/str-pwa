@@ -149,6 +149,22 @@ Deno.serve(async (req: Request) => {
     const usageMonthNumber = (expectedVMonthIndex % 12) + 1;
     const usageMonth = `${usageYear}-${String(usageMonthNumber).padStart(2, "0")}-01`;
 
+    if (body?.adminContext !== undefined) {
+      if (!adminRole) return json({ error: "FORBIDDEN" }, 403);
+      const targetEmail = String(body.adminContext?.affiliate ?? "").trim().toLowerCase();
+      if (!targetEmail || body.adminContext?.vMonth !== requestedVMonth) {
+        return json({ error: "INVALID_ADMIN_CONTEXT" }, 400);
+      }
+      const { data: targetAffiliate, error: targetError } = await admin
+        .from("private_access_allowlist")
+        .select("email")
+        .ilike("email", targetEmail)
+        .eq("active", true)
+        .maybeSingle();
+      if (targetError) return json({ error: "AUTHORIZATION_CHECK_FAILED" }, 500);
+      if (!targetAffiliate) return json({ error: "AFFILIATE_NOT_FOUND" }, 404);
+    }
+
     if (payrolls.some((payroll: any) => Array.isArray(payroll?.specialFlags) && payroll.specialFlags.length > 0)) {
       return json({ error: "CASE_REQUIRES_REVIEW" }, 422);
     }

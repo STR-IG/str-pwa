@@ -475,6 +475,33 @@
       line-height: 1.45;
     }
 
+    .admin-v-context {
+      margin: 0 0 18px;
+      padding: 14px 16px;
+      border-radius: 16px;
+      background: #fff1f2;
+      color: var(--red-dark);
+      text-align: center;
+    }
+
+    .admin-v-context strong,
+    .admin-v-context span { display: block; }
+
+    .admin-v-context span { margin-top: 4px; color: var(--ink); }
+
+    .admin-receipt-selectors {
+      display: grid;
+      gap: 12px;
+      margin-top: 16px;
+      text-align: left;
+    }
+
+    .admin-receipt-selectors label { margin: 0; }
+
+    .admin-receipt-selectors select { margin-top: 6px; }
+
+    body.admin-v-mode .manual-v-upload { display: none; }
+
     .v-intro-card {
       display: grid;
       gap: 16px;
@@ -763,6 +790,10 @@
       </form>
 
       <div id="member-area" class="step">
+        <div id="admin-v-context" class="admin-v-context" hidden>
+          <strong id="admin-v-affiliate"></strong>
+          <span id="admin-v-period"></span>
+        </div>
         <div id="instructions-screen" class="member-screen active">
           <div class="verified" aria-hidden="true">V</div>
           <h2 class="instructions-heading">Calcula tu V</h2>
@@ -798,7 +829,13 @@
         <div id="upload-screen" class="member-screen">
           <h2 class="member-title">Sube tus nóminas</h2>
           <p class="member-copy">Primero añade la nómina con la V y después las tres nóminas anteriores.</p>
-          <div class="payroll-period">
+          <div id="admin-payroll-selection" class="payroll-period" hidden>
+            <strong class="upload-section-title">Nóminas guardadas del afiliado</strong>
+            <p>Selecciona el recibo de cada periodo. Si hay varias nóminas, la selección es obligatoria.</p>
+            <div id="admin-receipt-selectors" class="admin-receipt-selectors"></div>
+            <button id="admin-load-payrolls" class="secondary" type="button">Usar estas nóminas</button>
+          </div>
+          <div class="payroll-period manual-v-upload">
             <strong class="upload-section-title">1. Nómina que contiene «Pluses vacaciones»</strong>
             <p>La cantidad de este concepto indica los días V y su devengo es lo pagado por Grifols.</p>
             <div class="upload-card vacation-payroll-upload" data-v-upload-card>
@@ -814,8 +851,8 @@
             <input id="v-payroll-month" type="month" required>
             <p>Al elegirlo, verás debajo los tres meses anteriores que debes subir.</p>
           </div>
-          <h3 class="previous-payrolls-title">2. Nóminas anteriores</h3>
-          <div class="upload-list">
+          <h3 class="previous-payrolls-title manual-v-upload">2. Nóminas anteriores</h3>
+          <div class="upload-list manual-v-upload">
             <div class="upload-card" data-upload-card="0">
               <div class="upload-preview" data-upload-preview="0" aria-hidden="true">1</div>
               <div>
@@ -891,6 +928,7 @@
 
   <script type="module">
     import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+    import { adminPayrollApi } from './admin-payroll-storage.mjs?v=1';
 
     const SUPABASE_URL = 'https://icneigdnuntzugisexaz.supabase.co';
     const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_apKjcPClIBTHS2wwN6qPsA_6Vm4tk9m';
@@ -898,6 +936,7 @@
     const VERIFY_OTP_ENDPOINT = `${SUPABASE_URL}/functions/v1/verify-custom-otp`;
     const READ_V_ENDPOINT = `${SUPABASE_URL}/functions/v1/read-v-payroll`;
     const CALCULATE_V_ENDPOINT = `${SUPABASE_URL}/functions/v1/calculate-v-payrolls`;
+    const ADMIN_DOCUMENTS_ENDPOINT = `${SUPABASE_URL}/functions/v1/admin-payroll-documents`;
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
       auth: {
@@ -930,6 +969,14 @@
       year: 'numeric',
       timeZone: 'UTC'
     });
+    const query = new URLSearchParams(window.location.search);
+    const adminAffiliateEmail = String(query.get('adminAffiliate') || '').trim().toLowerCase();
+    const requestedAdminYear = Number(query.get('adminYear'));
+    const requestedAdminMonth = Number(query.get('adminMonth'));
+    const requestedAdminReceipt = String(query.get('adminReceipt') || '');
+    let adminApi = null;
+    let adminContext = null;
+    let adminPeriods = [];
     let pendingEmail = '';
     let vPayrollFile = null;
     let vPreviewUrl = null;
@@ -940,6 +987,10 @@
     let grifolsPaidTotal = 0;
     let vacationDays = 1;
     let readingInProgress = false;
+
+    function isAdminMode() {
+      return Boolean(adminContext?.userId);
+    }
 
     function activateStep(step) {
       emailForm.classList.remove('active');
@@ -976,11 +1027,17 @@
       sessionStorage.removeItem('strPendingEmail');
       document.body.classList.add('member-mode');
       activateStep(memberArea);
-      showMemberScreen(instructionsScreen, 'Área exclusiva para personas afiliadas a STR.');
+      if (isAdminMode()) {
+        showUploadScreen();
+      } else {
+        showMemberScreen(instructionsScreen, 'Área exclusiva para personas afiliadas a STR.');
+      }
     }
 
     function showUploadScreen() {
-      showMemberScreen(uploadScreen, 'Sube únicamente las tres capturas necesarias para calcular tu V.');
+      showMemberScreen(uploadScreen, isAdminMode()
+        ? 'Revisión administrativa con las nóminas guardadas del afiliado seleccionado.'
+        : 'Sube únicamente las tres capturas necesarias para calcular tu V.');
     }
 
     function showInstructionsScreen() {
@@ -1059,6 +1116,116 @@
       const [year, month] = vMonth.split('-').map(Number);
       const date = new Date(Date.UTC(year, month - 4 + offset, 1));
       return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}`;
+    }
+
+    function adminPeriodPath(period, receiptId) {
+      const month = String(period.month).padStart(2, '0');
+      return `${adminContext.userId}/${period.year}/${month}${receiptId ? `/${receiptId}` : ''}/payroll`;
+    }
+
+    function receiptOptionLabel(receipt) {
+      return `Nómina ${receipt.number}`;
+    }
+
+    function renderAdminReceiptSelectors(vMonth) {
+      const container = document.getElementById('admin-receipt-selectors');
+      container.replaceChildren();
+      const months = [vMonth, 0, 1, 2].map((value, index) => index === 0 ? value : payrollMonthBeforeV(vMonth, index - 1));
+      months.forEach((value, index) => {
+        const [year, month] = value.split('-').map(Number);
+        const period = adminPeriods.find(item => item.year === year && item.month === month);
+        const receipts = (period?.receipts || []).filter(receipt => receipt.payroll);
+        const label = document.createElement('label');
+        const dateLabel = payrollMonthFormatter.format(new Date(Date.UTC(year, month - 1, 1)));
+        label.textContent = index === 0 ? `Nómina con la V · ${dateLabel}` : `Nómina anterior · ${dateLabel}`;
+        const select = document.createElement('select');
+        select.dataset.adminPayrollMonth = value;
+        if (receipts.length !== 1) {
+          const prompt = document.createElement('option');
+          prompt.value = '';
+          prompt.textContent = receipts.length ? 'Selecciona una nómina' : 'No hay nómina guardada';
+          select.appendChild(prompt);
+        }
+        receipts.forEach((receipt) => {
+          const option = document.createElement('option');
+          option.value = receipt.id || '__legacy__';
+          option.textContent = receiptOptionLabel(receipt);
+          select.appendChild(option);
+        });
+        if (index === 0 && receipts.some(receipt => receipt.id === requestedAdminReceipt)) select.value = requestedAdminReceipt;
+        select.disabled = receipts.length === 0;
+        select.addEventListener('change', () => {
+          vPayrollFile = null;
+          selectedFiles = [null, null, null];
+          readPayrollsButton.disabled = true;
+          setStatus(uploadMessage);
+        });
+        label.appendChild(select);
+        container.appendChild(label);
+      });
+      document.getElementById('admin-load-payrolls').disabled = months.some(value => {
+        const select = container.querySelector(`[data-admin-payroll-month="${value}"]`);
+        return !select || select.disabled;
+      });
+    }
+
+    async function loadAdminPayrolls() {
+      const selects = [...document.querySelectorAll('[data-admin-payroll-month]')];
+      if (selects.length !== 4 || selects.some(select => !select.value)) {
+        setStatus(uploadMessage, 'Selecciona una nómina de cada periodo antes de continuar.');
+        return;
+      }
+      const button = document.getElementById('admin-load-payrolls');
+      button.disabled = true;
+      button.textContent = 'Cargando…';
+      setStatus(uploadMessage);
+      try {
+        const files = await Promise.all(selects.map(async (select) => {
+          const [year, month] = select.dataset.adminPayrollMonth.split('-').map(Number);
+          const receiptId = select.value === '__legacy__' ? '' : select.value;
+          const { data, error } = await adminApi.bucket.download(adminPeriodPath({ year, month }, receiptId));
+          if (error || !data) throw new Error('DOWNLOAD_FAILED');
+          return new File([data], `nomina-${year}-${String(month).padStart(2, '0')}.jpg`, { type: data.type || 'image/jpeg' });
+        }));
+        vPayrollFile = files[0];
+        selectedFiles = files.slice(1);
+        updateVacationUploadCard(vPayrollFile);
+        selectedFiles.forEach((file, index) => updateUploadCard(index, file));
+        setStatus(uploadMessage, 'Nóminas guardadas preparadas. Ya puedes calcular o revisar la V.');
+      } catch {
+        vPayrollFile = null;
+        selectedFiles = [null, null, null];
+        readPayrollsButton.disabled = true;
+        setStatus(uploadMessage, 'No se han podido cargar las nóminas guardadas. Vuelve al periodo e inténtalo de nuevo.');
+      } finally {
+        button.disabled = false;
+        button.textContent = 'Usar estas nóminas';
+      }
+    }
+
+    async function initializeAdminMode(session) {
+      if (!adminAffiliateEmail || !session?.access_token) throw new Error('UNAUTHORIZED');
+      if (!Number.isInteger(requestedAdminYear) || requestedAdminYear < 2000 || requestedAdminYear > 2100
+        || !Number.isInteger(requestedAdminMonth) || requestedAdminMonth < 1 || requestedAdminMonth > 12) {
+        throw new Error('INVALID_MONTH');
+      }
+      adminApi = adminPayrollApi({ supabase, endpoint: ADMIN_DOCUMENTS_ENDPOINT, publishableKey: SUPABASE_PUBLISHABLE_KEY, email: adminAffiliateEmail });
+      adminContext = await adminApi.resolve();
+      adminPeriods = (await adminApi.summary()).periods || [];
+      const vMonth = `${requestedAdminYear}-${String(requestedAdminMonth).padStart(2, '0')}`;
+      document.body.classList.add('admin-v-mode');
+      document.querySelector('.topbar strong').textContent = 'Administración STR-IG';
+      document.querySelector('.topbar .back').href = `revisa-tu-nomina.html?${new URLSearchParams({ adminAffiliate: adminAffiliateEmail, adminYear: String(requestedAdminYear), adminMonth: String(requestedAdminMonth), ...(requestedAdminReceipt ? { adminReceipt: requestedAdminReceipt } : {}) })}`;
+      document.getElementById('admin-v-context').hidden = false;
+      document.getElementById('admin-v-affiliate').textContent = `Calcula tu V — ${adminContext.affiliate?.display_name || adminAffiliateEmail}`;
+      document.getElementById('admin-v-period').textContent = payrollMonthFormatter.format(new Date(Date.UTC(requestedAdminYear, requestedAdminMonth - 1, 1)));
+      document.getElementById('admin-payroll-selection').hidden = false;
+      document.querySelector('#upload-screen > .member-title').textContent = 'Calcular / revisar V';
+      document.querySelector('#upload-screen > .member-copy').textContent = 'Selecciona las nóminas guardadas del afiliado para este cálculo.';
+      readPayrollsButton.textContent = 'Calcular / revisar V';
+      vPayrollMonthInput.value = vMonth;
+      updatePayrollMonthLabels();
+      renderAdminReceiptSelectors(vMonth);
     }
 
     function updatePayrollMonthLabels() {
@@ -1378,7 +1545,9 @@
         }
         payrollReadings = readings;
         readingProgress.textContent = 'Calculando tu V…';
-        const calculation = await callPrivateFunction(CALCULATE_V_ENDPOINT, { payrolls: payrollReadings, vMonth }, 30000);
+        const calculationBody = { payrolls: payrollReadings, vMonth };
+        if (isAdminMode()) calculationBody.adminContext = { affiliate: adminAffiliateEmail, vMonth };
+        const calculation = await callPrivateFunction(CALCULATE_V_ENDPOINT, calculationBody, 30000);
         dailyValue = Number(calculation.dailyValue);
         if (!Number.isFinite(dailyValue) || dailyValue <= 0) throw new Error('INVALID_RESULT');
         updateResult();
@@ -1402,7 +1571,7 @@
         readingInProgress = false;
         readingProgress.hidden = true;
         readPayrollsButton.disabled = !canReadPayrolls();
-        readPayrollsButton.textContent = 'Leer y comparar mi V';
+        readPayrollsButton.textContent = isAdminMode() ? 'Calcular / revisar V' : 'Leer y comparar mi V';
       }
     });
 
@@ -1418,17 +1587,35 @@
 
     document.getElementById('start-over').addEventListener('click', () => {
       resetCalculator();
+      if (isAdminMode()) {
+        const vMonth = `${requestedAdminYear}-${String(requestedAdminMonth).padStart(2, '0')}`;
+        vPayrollMonthInput.value = vMonth;
+        updatePayrollMonthLabels();
+        renderAdminReceiptSelectors(vMonth);
+      }
       showUploadScreen();
     });
 
+    document.getElementById('admin-load-payrolls').addEventListener('click', loadAdminPayrolls);
+
     const { data: { session } } = await supabase.auth.getSession();
     if (session) {
-      if (await isAuthorizedSession(session)) {
+      if (adminAffiliateEmail) {
+        try {
+          await initializeAdminMode(session);
+          showSignedIn(session);
+        } catch {
+          window.location.replace('panel-administracion.html');
+        }
+      } else if (await isAuthorizedSession(session)) {
         showSignedIn(session);
       } else {
         await supabase.auth.signOut();
         showSignedOut();
       }
+    } else if (adminAffiliateEmail) {
+      sessionStorage.setItem('strLabNext', 'panel-administracion.html');
+      window.location.replace('acceso-privado.html?next=panel-administracion.html');
     } else {
       const savedEmail = sessionStorage.getItem('strPendingEmail');
       if (savedEmail) showCodeStep(savedEmail);

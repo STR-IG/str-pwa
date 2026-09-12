@@ -16,7 +16,7 @@ test('the period screen keeps Registro and Nómina and adds Descuentos after the
   assert.ok(timesheet > 0 && timesheet < payroll && payroll < discounts);
   assert.match(base, /id="open-discounts"[^>]*>Abrir Descuentos</);
   assert.match(base, /id="discounts-screen"/);
-  assert.match(wrapper, /revisa-tu-nomina-base\.html\?v=prod-22/);
+  assert.match(wrapper, /revisa-tu-nomina-base\.html\?v=prod-23/);
   assert.match(wrapper, /discounts-reader\.js\?v=prod-4/);
 });
 

@@ -20,6 +20,15 @@ test('la ficha existente agrega periodos y abre el mismo flujo de Revisa tu nóm
   assert.match(panel, /period\.payrollCount/);
 });
 
+test('el periodo administrativo abre el mismo Calcula tu V con afiliado, mes y recibo', () => {
+  assert.match(page, /id="admin-calculate-v"/);
+  assert.match(page, /window\.location\.href = `area-privada\.html\?\$\{params\}`/);
+  assert.match(page, /adminAffiliate: adminAffiliateEmail/);
+  assert.match(page, /adminYear: year\.value/);
+  assert.match(page, /adminMonth: String\(Number\(month\.value\) \+ 1\)/);
+  assert.match(page, /params\.set\('adminReceipt', activeReceiptId\)/);
+});
+
 test('el modo administrativo reutiliza lectores y bucket, sin un segundo OCR', () => {
   assert.match(page, /const storageBucket = isAdminMode \? adminApi\.bucket : supabase\.storage\.from\(STORAGE_BUCKET\)/);
   assert.match(page, /assertUniquePayroll\(storageBucket/);
