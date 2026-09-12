@@ -6,10 +6,17 @@ const source = await readFile(new URL("../supabase/functions/gemini-str/index.ts
 
 test("Gemini queda aislado en una función privada para la prueba técnica", () => {
   assert.match(source, /admin\.auth\.getUser\(token\)/);
-  assert.match(source, /\.from\("committee_admins"\)/);
+  assert.match(source, /activeRow\(admin, "committee_admins", callerEmail\)/);
   assert.match(source, /\.eq\("active", true\)/);
   assert.match(source, /connection_test/);
   assert.match(source, /FORBIDDEN/);
+});
+
+test("connection_test sigue siendo solo de administradores y el fallback exige afiliación activa", () => {
+  assert.match(source, /action === "connection_test" && !callerIsAdmin/);
+  assert.match(source, /activeRow\(admin, "private_access_allowlist", callerEmail\)/);
+  assert.match(source, /adminAffiliate/);
+  assert.match(source, /!callerIsAdmin/);
 });
 
 test("la clave de Gemini solo se obtiene desde el secreto del servidor", () => {
@@ -31,6 +38,15 @@ test("la petición oficial es mínima, no se almacena y conserva el prompt fijo"
   assert.match(source, /Responde únicamente: conexión Gemini correcta/);
   assert.match(source, /store: false/);
   assert.match(source, /model: GEMINI_MODEL/);
+});
+
+test("el fallback usa imagen inline recortada y salida JSON estructurada", () => {
+  assert.match(source, /type: "image", data: fallbackInput!/);
+  assert.match(source, /response_format/);
+  assert.match(source, /mime_type: "application\/json"/);
+  assert.match(source, /validateFallbackResult/);
+  assert.match(source, /GEMINI_INVALID_RESPONSE/);
+  assert.doesNotMatch(source, /console\.(?:log|error)\([^\n]*(?:image_data_url|response)\)/);
 });
 
 test("extrae el texto de la respuesta REST oficial de Interactions", () => {

@@ -99,7 +99,8 @@
       const value = String(item?.value || '').trim();
       if (!input || input.readOnly || !value) continue;
       input.value = value;
-      input.dataset.labAutoRead = 'vision';
+      input.dataset.labAutoRead = item?.engine === 'gemini' ? 'gemini' : 'vision';
+      input.dataset.readerEngine = item?.engine === 'gemini' ? 'gemini' : 'str';
       input.dispatchEvent(new Event('input', { bubbles: true }));
       markAsRead(input);
       setTimeout(() => markAsRead(input), 0);
@@ -144,7 +145,25 @@
         completedForSrc = src;
         return;
       }
-      const count = clearAndApply(data?.concepts || []);
+      let concepts = data?.concepts || [];
+      try {
+        const fallback = await import('./gemini-document-fallback.mjs?v=1');
+        const localValues = fallback.inputValues(FIELD_MAP);
+        const remoteValues = fallback.conceptValues(concepts, conceptKey);
+        const expectedKeys = new Set();
+        Object.entries(FIELD_MAP).forEach(([key, id]) => {
+          const input = document.getElementById(id);
+          const registerText = input?.closest('.comparison-field')?.querySelector('.comparison-fixed')?.textContent || '';
+          const registerValue = Number(registerText.replace(/\s+/g, '').replace(',', '.'));
+          if (Number.isFinite(registerValue) && registerValue > 0) expectedKeys.add(key);
+        });
+        const requestedKeys = fallback.payrollFallbackKeys(remoteValues, localValues, expectedKeys);
+        if (requestedKeys.length) {
+          const fields = await fallback.readGeminiFallback({ session, documentType: 'payroll', img, requestedKeys });
+          if (fields) concepts = fallback.mergeGeminiFields(concepts, fields, requestedKeys, localValues, conceptKey);
+        }
+      } catch {}
+      const count = clearAndApply(concepts);
       const [{ applySupplemental }, { applyOvertime }] = await Promise.all([
         import('./payroll-supplemental.mjs?v=3'), import('./payroll-overtime.mjs?v=2')
       ]);

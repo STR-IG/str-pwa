@@ -113,7 +113,8 @@
         continue;
       }
       input.value = value;
-      input.dataset.labAutoRead = 'vision';
+      input.dataset.labAutoRead = item?.engine === 'gemini' ? 'gemini' : 'vision';
+      input.dataset.readerEngine = item?.engine === 'gemini' ? 'gemini' : 'str';
       input.dispatchEvent(new Event('input', { bubbles: true }));
       markState(input, 'LEÍDO', true);
       setTimeout(() => markState(input, 'LEÍDO', true), 0);
@@ -178,7 +179,18 @@
         completedForSrc = src;
         return;
       }
-      const count = clearAndApply(data?.concepts || []);
+      let concepts = data?.concepts || [];
+      try {
+        const fallback = await import('./gemini-document-fallback.mjs?v=1');
+        const localValues = fallback.inputValues(FIELD_MAP);
+        const remoteValues = fallback.conceptValues(concepts, conceptKey);
+        const requestedKeys = fallback.timesheetFallbackKeys(remoteValues, localValues);
+        if (requestedKeys.length) {
+          const fields = await fallback.readGeminiFallback({ session, documentType: 'timesheet', img, requestedKeys });
+          if (fields) concepts = fallback.mergeGeminiFields(concepts, fields, requestedKeys, localValues, conceptKey);
+        }
+      } catch {}
+      const count = clearAndApply(concepts);
       setProgress(count ? 'ready' : 'warning', count ? 'Lectura visual terminada' : 'No se han podido leer las cantidades', count ? `Se han leído ${count} conceptos del resumen mensual. Comprueba las cifras antes de confirmar.` : 'No se ha rellenado ningún valor dudoso.');
       completedForSrc = src;
     } catch (error) {
