@@ -37,8 +37,8 @@ export async function collectMonth(bucket, folder, keys) {
     if (!keys.some(key => quantity(review.timesheet?.[key]) !== null)) fail(`${label}: falta confirmar el registro de jornada mensual.`);
     for (const key of keys) {
       values[key] = quantity(review.payroll?.[key]);
-      // Older forms omitted a concept only when absent from both documents.
-      if (review.version !== 2 && review.payroll?.[key] === undefined && review.timesheet?.[key] === undefined) values[key] = 0;
+      // A concept omitted from both sources means it did not apply that month.
+      if (review.payroll?.[key] === undefined && review.timesheet?.[key] === undefined) values[key] = 0;
       if (values[key] === null) fail(`${label}: quedan conceptos sin confirmar. Abre el recibo y pulsa Volver a leer nómina; confirma todas las cantidades, incluido 0 solo si el concepto no aparece.`);
       // The existing timesheet form explicitly uses a blank for an absent concept.
       reference[key] = review.timesheet?.[key] === undefined ? 0 : quantity(review.timesheet[key]);
