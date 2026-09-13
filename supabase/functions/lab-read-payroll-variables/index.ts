@@ -139,12 +139,15 @@ function normalizeSupplemental(items: any) {
     return Number.isFinite(n) && (signed || n >= 0) && Math.abs(n) <= 1000000 ? n : null;
   };
   const catalog = PAYROLL_CONCEPT_CATALOG.filter((item) => item.output === 'supplemental');
-  return catalog.flatMap(({code, unitPrice}) => {
+  return catalog.flatMap(({code, label, unitPrice, quantity}) => {
+    const metadata = {label, output:'supplemental', dynamic:true,
+      quantityExpected:quantity !== false, unitPriceExpected:unitPrice === true,
+      amountLabel:code === '0038' ? 'Importe descontado (€)' : 'Importe (€)'};
     const matches = items.filter((item: any) => canonicalPayrollCode(item?.code) === code);
     if (matches.length === 0) return [];
-    if (matches.length > 1) return [{code, ambiguous:true, quantity:null, amount:null,
+    if (matches.length > 1) return [{code, ...metadata, ambiguous:true, quantity:null, amount:null,
       ...(unitPrice ? {unitPrice:null} : {})}];
-    const row = {code, quantity:number(matches[0].quantity), amount:number(matches[0].amount, true),
+    const row = {code, ...metadata, quantity:number(matches[0].quantity), amount:number(matches[0].amount, true),
       ...(unitPrice ? {unitPrice:number(matches[0].unitPrice, true)} : {})};
     return [row];
   });

@@ -115,7 +115,7 @@ test('old administrative reviews only reread on the explicit action and reuse th
   assert.match(base,/documents\.payroll\.blob \|\| documents\.payroll\.file/);
   assert.match(vision,/confirmButton\?\.dataset\.action === 'check'/);
   assert.match(vision,/clearAndApply\(concepts, allowLockedAfterRead\)/);
-  assert.match(vision,/applySupplemental\(data\?\.supplemental \|\| \[\], document, \{ allowLocked: allowLockedAfterRead \}\)/);
+  assert.match(vision,/applySupplemental\(data\?\.supplemental \|\| \[\], document, completedReading\)/);
 });
 
 
@@ -139,6 +139,54 @@ test('0038 reads an amount-only deduction and a completed read separates absent 
   assert.equal(saved['7016'].status,'absent');
   assert.equal(saved['7017'].status,'unknown');
   delete globalThis.document;
+});
+
+test('catalog supplemental concepts render only when returned and persist through the existing review shape',()=>{
+  const root=dom();globalThis.document=root;const container=root.createElement('div');renderSupplemental(container);
+  const metadata=(code,label,quantityExpected=false,unitPriceExpected=false)=>({
+    code,label,output:'supplemental',dynamic:true,quantityExpected,unitPriceExpected,amountLabel:'Importe (€)'
+  });
+  applySupplemental([
+    {...metadata('0262','Ayuda escolar hasta 23',true),quantity:3,amount:300},
+    {...metadata('9A00','Prestaciones IT 0 %'),amount:-120.25},
+    {...metadata('1001','Paga Extra de Julio'),amount:2000},
+    {...metadata('7013','Difer. Grup. Sup. Pl. Noct.',true),quantity:5.5,amount:44},
+    {...metadata('/552','Líq. Dif. Meses Anteriores'),amount:-41.8},
+    {code:'9350',label:'Contingencias Comunes',output:'discounts',dynamic:true,amount:50},
+  ],root,{readingComplete:true});
+  assert.equal(root.getElementById('supplemental-0262-status').value,'present');
+  assert.equal(root.getElementById('supplemental-0262-quantity').value,'3');
+  assert.equal(root.getElementById('supplemental-9A00-amount').value,'-120,25');
+  assert.equal(root.getElementById('supplemental-1001-amount').value,'2000');
+  assert.equal(root.getElementById('supplemental-7013-quantity').value,'5,5');
+  assert.equal(root.getElementById('supplemental-/552-amount').value,'-41,8');
+  assert.equal(root.getElementById('supplemental-0265-status'),undefined,'an absent dynamic concept is not rendered');
+  assert.equal(root.getElementById('supplemental-9350-status'),undefined,'SS/IRPF stays outside the main review');
+  const saved=readSupplemental(root);
+  assert.equal(saved['0262'].quantity,3);assert.equal(saved['9A00'].amount,-120.25);
+  assert.equal(saved['1001'].amount,2000);assert.equal(saved['7013'].quantity,5.5);assert.equal(saved['/552'].amount,-41.8);
+  const reopened=dom();globalThis.document=reopened;renderSupplemental(reopened.createElement('div'),saved,true);
+  assert.equal(reopened.getElementById('supplemental-0262-quantity').value,'3');
+  assert.equal(reopened.getElementById('supplemental-9A00-amount').readOnly,true);
+  delete globalThis.document;
+});
+
+test('mayo 2022 keeps the seven existing comparison quantities unchanged',()=>{
+  const ids={rotation:'comparison-rotation',meals:'comparison-meals',night:'comparison-night',shift:'comparison-shift',
+    holiday:'comparison-holiday',shift12:'comparison-shift12',holidayDiets:'comparison-holidayDiets',vacation:'comparison-vacation'};
+  const inputs=Object.fromEntries(Object.values(ids).map(id=>[id,{value:'',placeholder:'',dataset:{},readOnly:false,
+    dispatchEvent(){},parentElement:null}]));
+  const ctx=vm.createContext({FIELD_MAP:ids,document:{getElementById:id=>inputs[id]},Event:class{},setTimeout(fn){fn();}});
+  const vision=readFileSync(new URL('../payroll-vision-lab.js',import.meta.url),'utf8');
+  vm.runInContext(vision.slice(vision.indexOf('  function norm('),vision.indexOf('  async function getSession(')),ctx);
+  ctx.clearAndApply([
+    {name:'0016 Plus rotatividad',value:'23'}, {name:'0010 Plus de turno',value:'11'},
+    {name:'0013 Plus Nocturno',value:'56'}, {name:'0017 Plus Festivo',value:'42'},
+    {name:'0080 Plus de turno 12 horas',value:'3'}, {name:'0034 Dietas Festivos',value:'3'},
+    {name:'0046 Comidas Can Guasch',value:'2'},
+  ]);
+  assert.deepEqual([inputs[ids.rotation].value,inputs[ids.shift].value,inputs[ids.night].value,inputs[ids.holiday].value,
+    inputs[ids.shift12].value,inputs[ids.holidayDiets].value,inputs[ids.meals].value],['23','11','56','42','3','3','2']);
 });
 
 test('actual save/reopen persists supplements independently and leaves comparisons unchanged',async()=>{
@@ -196,13 +244,15 @@ test('edge validation whitelists codes and rejects ambiguity; API retains auth a
     {code:'9999',quantity:1,amount:1},
   ]);
   assert.deepEqual(Array.from(rows, row=>row.code),['0001','0003','0053','7001']);
+  assert.equal(rows[0].output,'supplemental');assert.equal(rows[0].dynamic,true);
+  assert.equal(rows[0].label,'Salario mín. garantizado');assert.equal(rows[0].unitPriceExpected,true);
   assert.equal(rows[0].unitPrice,56.531);assert.equal(rows[1].amount,44.15);assert.equal(rows[2].amount,30.3);
   assert.equal(rows[3].amount,119.9);assert.equal('unitPrice' in rows[3],false);
   assert.equal(ctx.normalizeSupplemental([{code:'7001'},{code:'7001'}])[0].ambiguous,true);
   assert.equal(ctx.normalizeSupplemental([{code:'0002'},{code:'0002'}])[0].ambiguous,true);
   assert.match(code,/admin.auth.getUser\(token\)/);assert.match(code,/private_access_allowlist/);
   assert.match(code,/includeSupplemental === true/);assert.match(code,/return json\(\{ isPayroll: true, concepts \}\)/);
-  assert.match(code,/0001 Salario mín\. garantizado/);assert.match(code,/unitPrice de IMPORTE DIARIO/);
+  assert.match(code,/code:'0001', label:'Salario mín\. garantizado'/);assert.match(code,/unitPrice de IMPORTE DIARIO/);
 });
 
 
@@ -237,6 +287,8 @@ test('el catálogo general reconoce códigos existentes y un caso nuevo de cada 
   assert.equal(byCode['0038'].quantity,null,'amount-only deductions do not require quantity');
   assert.equal(byCode['0211'].unitPrice,1.78);
   assert.equal(byCode['0211'].amount,-3.56);
+  assert.equal(byCode['0014'].output,'supplemental');assert.equal(byCode['0014'].dynamic,true);
+  assert.equal(byCode['0014'].label,'Ayuda escolar hasta 18');assert.equal(byCode['0014'].quantityExpected,true);
   assert.equal(rows.some(row=>row.code==='0010'),false,'main comparison remains separate');
 });
 

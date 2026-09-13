@@ -20,11 +20,32 @@ export function decimal(value, signed = false) {
   return Number.isFinite(number) && (signed || number >= 0) && Math.abs(number) <= 1000000 ? number : null;
 }
 
+const STATIC_SUPPLEMENTAL_CODES = new Set(SUPPLEMENTAL_CONCEPTS.map(({code}) => code));
+
+function dynamicConcept(item) {
+  if (item?.output !== 'supplemental' || item?.dynamic !== true) return null;
+  const code = String(item.code ?? '').trim().toUpperCase();
+  const label = String(item.label ?? '').replace(/[\u0000-\u001f\u007f]/g, '').replace(/\s+/g, ' ').trim().slice(0, 120);
+  if (!/^(?:\/\d{3}|[A-Z0-9]{2,5})$/.test(code) || !label || STATIC_SUPPLEMENTAL_CODES.has(code)) return null;
+  return {
+    code,
+    label,
+    group: 'detected',
+    dynamic: true,
+    output: 'supplemental',
+    quantity: item.quantityExpected !== false,
+    unitPrice: item.unitPriceExpected === true,
+    amountLabel: String(item.amountLabel || 'Importe (€)').slice(0, 60),
+  };
+}
+
 export function validateSupplemental(rows = {}) {
-  return Object.fromEntries(SUPPLEMENTAL_CONCEPTS.map(({code, label, unitPrice: readsUnitPrice, quantity: readsQuantity = true}) => {
+  const dynamic = Object.values(rows).map(dynamicConcept).filter(Boolean);
+  return Object.fromEntries([...SUPPLEMENTAL_CONCEPTS, ...dynamic].map(({code, label, unitPrice: readsUnitPrice, quantity: readsQuantity = true, dynamic: isDynamic = false, output, amountLabel}) => {
     const row = rows[code] || {};
     const status = ['present', 'absent'].includes(row.status) ? row.status : 'unknown';
     const result = {code, status, quantity:null, amount:null, unit:null,
+      ...(isDynamic ? {dynamic:true, output, label, quantityExpected:readsQuantity, unitPriceExpected:readsUnitPrice, amountLabel} : {}),
       ...(readsUnitPrice ? {unitPrice:null} : {})};
     if (status !== 'present') return [code, result];
 
@@ -41,13 +62,16 @@ export function validateSupplemental(rows = {}) {
       }
     }
 
-    if (!readsQuantity && result.amount === null) {
+    if (isDynamic && fields.every(([field]) => result[field] === null)) {
+      throw new Error(`Introduce al menos un dato de «${label}», o déjalo pendiente.`);
+    }
+    if (!isDynamic && !readsQuantity && result.amount === null) {
       throw new Error(`Completa el importe de «${label}», o déjalo pendiente.`);
     }
-    if (readsQuantity && !readsUnitPrice && (result.quantity === null || result.amount === null)) {
+    if (!isDynamic && readsQuantity && !readsUnitPrice && (result.quantity === null || result.amount === null)) {
       throw new Error(`Completa la cantidad y el importe de «${label}», o déjalo pendiente.`);
     }
-    if (readsQuantity && readsUnitPrice && result.quantity === null && result.unitPrice === null && result.amount === null) {
+    if (!isDynamic && readsQuantity && readsUnitPrice && result.quantity === null && result.unitPrice === null && result.amount === null) {
       throw new Error(`Introduce al menos un dato de «${label}», o déjalo pendiente.`);
     }
     return [code, result];
@@ -79,6 +103,13 @@ function renderSupplementalCard(root, concept, saved, confirmed) {
   card.className = 'comparison-field';
   card.style.marginBottom = '14px';
   card.dataset.supplementalCode = code;
+  if (concept.dynamic) {
+    card.dataset.supplementalDynamic = 'true';
+    card.dataset.supplementalLabel = conceptLabel;
+    card.dataset.supplementalQuantity = readsQuantity ? 'true' : 'false';
+    card.dataset.supplementalUnitPrice = readsUnitPrice ? 'true' : 'false';
+    card.dataset.supplementalAmountLabel = amountLabel;
+  }
   const heading = root.createElement('strong');
   heading.textContent = `${code} · ${conceptLabel}`;
   heading.style.display = 'block';
@@ -148,6 +179,19 @@ export function renderSupplemental(container, saved = {}, confirmed = false) {
       section.appendChild(renderSupplementalCard(root, concept, saved, confirmed));
     }
   }
+  const dynamicHeading = root.createElement('h4');
+  dynamicHeading.id = 'payroll-supplemental-dynamic-heading';
+  dynamicHeading.textContent = 'Otros conceptos detectados';
+  dynamicHeading.style.margin = '18px 0 6px';
+  const dynamicContainer = root.createElement('div');
+  dynamicContainer.id = 'payroll-supplemental-dynamic';
+  for (const row of Object.values(saved)) {
+    const concept = dynamicConcept(row);
+    if (concept) dynamicContainer.appendChild(renderSupplementalCard(root, concept, saved, confirmed));
+  }
+  dynamicHeading.hidden = dynamicContainer.children.length === 0;
+  dynamicContainer.hidden = dynamicHeading.hidden;
+  section.append(dynamicHeading, dynamicContainer);
   container.appendChild(section);
 }
 
@@ -159,15 +203,52 @@ export function readSupplemental(root = document) {
       ...(readsQuantity ? {quantity:get('quantity')} : {}),
       ...(readsUnitPrice ? {unitPrice:get('unitPrice')} : {})};
   }
+  const dynamicContainer = root.getElementById('payroll-supplemental-dynamic');
+  for (const card of dynamicContainer?.children || []) {
+    const concept = dynamicConcept({
+      code: card.dataset.supplementalCode,
+      label: card.dataset.supplementalLabel,
+      output: 'supplemental',
+      dynamic: true,
+      quantityExpected: card.dataset.supplementalQuantity !== 'false',
+      unitPriceExpected: card.dataset.supplementalUnitPrice === 'true',
+      amountLabel: card.dataset.supplementalAmountLabel,
+    });
+    if (!concept) continue;
+    const get = field => root.getElementById(`supplemental-${concept.code}-${field}`)?.value;
+    rows[concept.code] = {code:concept.code, status:get('status'), amount:get('amount'), dynamic:true, output:'supplemental',
+      label:concept.label, quantityExpected:concept.quantity, unitPriceExpected:concept.unitPrice, amountLabel:concept.amountLabel,
+      ...(concept.quantity ? {quantity:get('quantity')} : {}),
+      ...(concept.unitPrice ? {unitPrice:get('unitPrice')} : {})};
+  }
   return validateSupplemental(rows);
 }
 
 export function applySupplemental(items, root = document, options = {}) {
   const allowLocked = options?.allowLocked === true;
   const readingComplete = options?.readingComplete === true;
+  const dynamicContainer = root.getElementById('payroll-supplemental-dynamic');
+  for (const item of items || []) {
+    const concept = dynamicConcept(item);
+    if (concept && dynamicContainer && !root.getElementById(`supplemental-${concept.code}-status`)) {
+      dynamicContainer.appendChild(renderSupplementalCard(root, concept, {}, false));
+    }
+  }
+  const dynamicHeading = root.getElementById('payroll-supplemental-dynamic-heading');
+  if (dynamicContainer) dynamicContainer.hidden = dynamicContainer.children.length === 0;
+  if (dynamicHeading) dynamicHeading.hidden = dynamicContainer?.children.length === 0;
   const counts = new Map();
   for (const item of items || []) counts.set(String(item.code), (counts.get(String(item.code)) || 0) + 1);
-  for (const {code, unitPrice: readsUnitPrice, quantity: readsQuantity = true} of SUPPLEMENTAL_CONCEPTS) {
+  const dynamicConcepts = [...(dynamicContainer?.children || [])].map((card) => dynamicConcept({
+    code: card.dataset.supplementalCode,
+    label: card.dataset.supplementalLabel,
+    output: 'supplemental',
+    dynamic: true,
+    quantityExpected: card.dataset.supplementalQuantity !== 'false',
+    unitPriceExpected: card.dataset.supplementalUnitPrice === 'true',
+    amountLabel: card.dataset.supplementalAmountLabel,
+  })).filter(Boolean);
+  for (const {code, unitPrice: readsUnitPrice, quantity: readsQuantity = true} of [...SUPPLEMENTAL_CONCEPTS, ...dynamicConcepts]) {
     const status = root.getElementById(`supplemental-${code}-status`);
     const card = status?.closest('[data-supplemental-code]');
     if (!status || (status.disabled && !allowLocked) || card?.dataset.manual === 'true') continue;

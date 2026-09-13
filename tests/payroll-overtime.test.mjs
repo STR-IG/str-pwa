@@ -197,7 +197,7 @@ test('full Edge handler: opt-in API, auth gating and partial IA result without l
       from(){return {select(){return this;},ilike(){return this;},eq(){return this;},async maybeSingle(){return {data:allowed?{}:null,error:null};}};}};},
     async fetch(url,options){requests++;const payload=JSON.parse(options.body);
       assert.equal(url,'https://api.openai.com/v1/responses');
-      if(payload.max_output_tokens===2200)assert.match(payload.input[0].content[0].text,/0003 Complemento Personal/);
+      if(payload.max_output_tokens===2200)assert.match(payload.input[0].content[0].text,/0003 · Complemento Personal/);
       if(payload.input[0].content[0].text.includes('"overtime"'))assert.match(payload.input[0].content[0].text,/No derives el precio/);
       return new Response(JSON.stringify({output_text:JSON.stringify(model)}));}
   });
