@@ -2762,18 +2762,18 @@
     function hydrateMonthlyReview(review) {
       if (!review || review.period !== periodKey()) return false;
       monthlyReviews.set(periodKey(), review);
-      if (review.status !== 'complete') return false;
       receiptCreated = review.createdAt || review.updatedAt || receiptCreated;
       payrollSourceHash = review.payrollSourceHash || '';
-      addMonthlyPayroll.hidden = false;
       const timesheetValues = plainObjectToMap(review.timesheet);
       const payrollValues = plainObjectToMap(review.payroll);
-      confirmedTimesheetAnalyses.set(periodKey(), timesheetValues);
-      confirmedPayrollAnalyses.set(periodKey(), payrollValues);
+      if (timesheetValues.size) confirmedTimesheetAnalyses.set(periodKey(), timesheetValues);
+      if (payrollValues.size) confirmedPayrollAnalyses.set(periodKey(), payrollValues);
       documents.payroll.paymentInfo = review.paymentInfo || null;
       if (review.schedule && typeof review.schedule === 'object') {
         workSchedules.set(periodKey(), review.schedule);
       }
+      if (review.status !== 'complete') return false;
+      addMonthlyPayroll.hidden = false;
       return true;
     }
 
@@ -2801,37 +2801,66 @@
       if (error) throw error;
     }
 
-    async function invalidateStoredReviewIfNeeded() {
+    function resetReviewDocument(review, kind, receiptPeriod = periodKey()) {
+      const pending = {
+        ...(review || {}),
+        version: review?.version || 2,
+        status: 'pending',
+        period: receiptPeriod,
+        updatedAt: new Date().toISOString()
+      };
+      delete pending.comparisons;
+      delete pending.incidentCount;
+      if (kind === 'timesheet') {
+        delete pending.timesheet;
+        if (pending.paymentInfo?.adjustment?.sourceMonth === 'current') {
+          pending.paymentInfo = {
+            ...pending.paymentInfo,
+            adjustment: {
+              amount: pending.paymentInfo.breakdown?.pendingAmount,
+              status: 'pending',
+              sourceMonth: null,
+              matches: []
+            }
+          };
+        }
+      } else if (kind === 'payroll') {
+        delete pending.payroll;
+        delete pending.supplemental;
+        delete pending.overtime;
+        delete pending.paymentInfo;
+        delete pending.payrollSourceHash;
+      }
+      return pending;
+    }
+
+    async function invalidateStoredReviewIfNeeded(kind = activeKind) {
       addMonthlyPayroll.hidden = true;
-      if (!monthlyReviews.has(periodKey())) return;
-      const savedDiscounts = monthlyReviews.get(periodKey())?.discounts;
-      confirmedTimesheetAnalyses.delete(periodKey());
-      confirmedPayrollAnalyses.delete(periodKey());
-      monthlyReviews.delete(periodKey());
+      const key = periodKey();
+      const saved = monthlyReviews.get(key);
+      if (!saved) return;
+      const pending = resetReviewDocument(saved, kind, key);
+      if (kind === 'timesheet') confirmedTimesheetAnalyses.delete(key);
+      if (kind === 'payroll') confirmedPayrollAnalyses.delete(key);
+      monthlyReviews.set(key, pending);
       try {
-        await uploadMonthlyReview({
-          version: 1,
-          status: 'pending',
-          period: periodKey(),
-          ...(Array.isArray(savedDiscounts) ? { discounts: savedDiscounts } : {}),
-          updatedAt: new Date().toISOString()
-        });
+        await uploadMonthlyReview(pending);
       } catch {}
     }
 
-    async function invalidateAdminReceiptReview(receipt) {
+    async function invalidateAdminReceiptReview(receipt, kind = 'timesheet') {
       if (!isAdminMode || !receipt.files.some(file => file.id && file.name === 'review')) return;
       const reviewPath = `${receipt.folder}/review`;
       const saved = await downloadMonthlyReview(reviewPath);
       const receiptPeriod = `${year.value}-${String(Number(month.value) + 1).padStart(2, '0')}${receipt.id ? `/${receipt.id}` : ''}`;
-      const pending = new Blob([JSON.stringify({
-        version: 1, status: 'pending', period: receiptPeriod,
-        receiptId: receipt.id || `legacy:${year.value}-${Number(month.value) + 1}`,
-        userId: currentUserId, year: Number(year.value), month: Number(month.value) + 1,
-        createdAt: saved?.createdAt || new Date().toISOString(), updatedAt: new Date().toISOString(),
-        ...(Array.isArray(saved?.discounts) ? { discounts: saved.discounts } : {})
-      })], { type: 'application/json' });
-      const { error } = await storageBucket.upload(reviewPath, pending, { cacheControl: '0', contentType: 'application/json', upsert: true });
+      const pending = resetReviewDocument(saved, kind, receiptPeriod);
+      pending.receiptId = receipt.id || `legacy:${year.value}-${Number(month.value) + 1}`;
+      pending.userId = currentUserId;
+      pending.year = Number(year.value);
+      pending.month = Number(month.value) + 1;
+      pending.createdAt = saved?.createdAt || new Date().toISOString();
+      const payload = new Blob([JSON.stringify(pending)], { type: 'application/json' });
+      const { error } = await storageBucket.upload(reviewPath, payload, { cacheControl: '0', contentType: 'application/json', upsert: true });
       if (error) throw error;
     }
 
@@ -2870,7 +2899,7 @@
       try {
         const { error } = await storageBucket.remove([storagePath('payroll')]);
         if (error) throw error;
-        await invalidateStoredReviewIfNeeded();
+        await invalidateStoredReviewIfNeeded('payroll');
         adminReplacementKind = '';
         await loadStoredDocuments();
         showPeriodMessage('Nómina eliminada. El Registro y los demás recibos del mes permanecen intactos.');
@@ -2889,7 +2918,7 @@
           const { error } = await storageBucket.remove(paths);
           if (error) throw error;
         }
-        for (const receipt of receipts) await invalidateAdminReceiptReview(receipt);
+        for (const receipt of receipts) await invalidateAdminReceiptReview(receipt, 'timesheet');
         adminReplacementKind = '';
         await loadStoredDocuments();
         showPeriodMessage('Registro eliminado. Las nóminas del mes permanecen intactas.');

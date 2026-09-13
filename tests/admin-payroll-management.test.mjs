@@ -131,6 +131,53 @@ test('la política conserva aislamiento por UUID y permite leer archivos creados
   assert.match(policy, /storage\.filename\(name\) = any/);
 });
 
+
+test('el reseteo de revisión elimina solo los datos derivados del documento elegido', () => {
+  const ctx=vm.createContext({ Date, periodKey: () => '2026-08/receipt-test' });
+  vm.runInContext(extract('resetReviewDocument'),ctx);
+  const complete={
+    version:2,status:'complete',period:'2026-08/receipt-test',
+    timesheet:{vacation:'3'},payroll:{vacation:'3'},
+    supplemental:{'0001':{status:'present',quantity:30}},
+    overtime:{status:'absent'},
+    paymentInfo:{
+      breakdown:{pendingAmount:-41.8,netTotal:1500},
+      adjustment:{amount:-41.8,status:'identified',sourceMonth:'current',matches:[{key:'unpaidHoliday',hours:3.42}]}
+    },
+    payrollSourceHash:'hash',comparisons:{vacation:{status:'match'}},incidentCount:0,
+    schedule:{type:'full'},discounts:[{code:'9350'}]
+  };
+  const withoutTimesheet=ctx.resetReviewDocument(complete,'timesheet');
+  assert.equal(withoutTimesheet.timesheet,undefined);
+  assert.deepEqual(withoutTimesheet.payroll,complete.payroll);
+  assert.deepEqual(withoutTimesheet.supplemental,complete.supplemental);
+  assert.deepEqual(withoutTimesheet.paymentInfo.breakdown,complete.paymentInfo.breakdown);
+  assert.equal(withoutTimesheet.paymentInfo.adjustment.status,'pending');
+  assert.equal(withoutTimesheet.paymentInfo.adjustment.sourceMonth,null);
+  assert.deepEqual(withoutTimesheet.paymentInfo.adjustment.matches,[]);
+  assert.equal(withoutTimesheet.comparisons,undefined);
+  assert.equal(withoutTimesheet.status,'pending');
+
+  const withoutPayroll=ctx.resetReviewDocument(complete,'payroll');
+  assert.equal(withoutPayroll.payroll,undefined);
+  assert.equal(withoutPayroll.supplemental,undefined);
+  assert.equal(withoutPayroll.overtime,undefined);
+  assert.equal(withoutPayroll.paymentInfo,undefined);
+  assert.equal(withoutPayroll.payrollSourceHash,undefined);
+  assert.deepEqual(withoutPayroll.timesheet,complete.timesheet);
+  assert.deepEqual(withoutPayroll.schedule,complete.schedule);
+  assert.deepEqual(withoutPayroll.discounts,complete.discounts);
+  assert.equal(withoutPayroll.comparisons,undefined);
+  assert.equal(withoutPayroll.status,'pending');
+});
+
+test('el borrado administrativo indica explícitamente qué parte se resetea y permite hidratar la parte conservada', () => {
+  assert.match(page,/invalidateStoredReviewIfNeeded\('payroll'\)/);
+  assert.match(page,/invalidateAdminReceiptReview\(receipt, 'timesheet'\)/);
+  assert.match(page,/if \(timesheetValues\.size\) confirmedTimesheetAnalyses\.set/);
+  assert.match(page,/if \(payrollValues\.size\) confirmedPayrollAnalyses\.set/);
+});
+
 test('dos nóminas conservan recibos separados al sustituir/eliminar Registro o una nómina', async () => {
   const bucket = bucketFor('owner-a');
   bucket.remove = async paths => { paths.forEach(path => bucket.objects.delete(path)); return { data: paths, error: null }; };
@@ -139,7 +186,14 @@ test('dos nóminas conservan recibos separados al sustituir/eliminar Registro o 
   for (const [index, folder] of folders.entries()) {
     bucket.objects.set(`${folder}/timesheet`, new Blob(['old register']));
     bucket.objects.set(`${folder}/payroll`, new Blob([`payroll-${index + 1}`]));
-    bucket.objects.set(`${folder}/review`, new Blob([JSON.stringify({ status: 'complete', createdAt: '2026-08-01T00:00:00.000Z', discounts: [{ code: '9350' }] })]));
+    bucket.objects.set(`${folder}/review`, new Blob([JSON.stringify({
+      status: 'complete', createdAt: '2026-08-01T00:00:00.000Z',
+      timesheet: { rotation: '23' }, payroll: { rotation: '23' },
+      supplemental: { '0001': { status: 'present', quantity: 30 } },
+      paymentInfo: { liquidTotal: 1500 },
+      comparisons: { rotation: { status: 'match' } },
+      discounts: [{ code: '9350' }]
+    })]));
   }
   const ctx = vm.createContext({
     Blob, Date, Set, Map, Promise, crypto: webcrypto, console, monthReceipts,
@@ -157,7 +211,7 @@ test('dos nóminas conservan recibos separados al sustituir/eliminar Registro o 
       bucket.objects.set(path, new Blob([JSON.stringify({ status: 'pending' })]));
     }
   });
-  for (const name of ['invalidateAdminReceiptReview', 'saveAdminTimesheetForMonth', 'deleteAdminPayroll', 'deleteAdminTimesheet']) {
+  for (const name of ['resetReviewDocument', 'invalidateAdminReceiptReview', 'saveAdminTimesheetForMonth', 'deleteAdminPayroll', 'deleteAdminTimesheet']) {
     vm.runInContext(extract(name), ctx);
   }
 
@@ -166,8 +220,14 @@ test('dos nóminas conservan recibos separados al sustituir/eliminar Registro o 
   await ctx.invalidateAdminReceiptReview(currentReceipt);
   for (const folder of folders) {
     assert.equal(await bucket.objects.get(`${folder}/timesheet`).text(), 'replacement register');
-    assert.equal(JSON.parse(await bucket.objects.get(`${folder}/review`).text()).status, 'pending');
-    assert.equal(JSON.parse(await bucket.objects.get(`${folder}/review`).text()).discounts[0].code, '9350');
+    const pending = JSON.parse(await bucket.objects.get(`${folder}/review`).text());
+    assert.equal(pending.status, 'pending');
+    assert.equal(pending.timesheet, undefined);
+    assert.equal(pending.payroll.rotation, '23');
+    assert.equal(pending.supplemental['0001'].quantity, 30);
+    assert.equal(pending.paymentInfo.liquidTotal, 1500);
+    assert.equal(pending.comparisons, undefined);
+    assert.equal(pending.discounts[0].code, '9350');
   }
   await ctx.deleteAdminPayroll();
   assert.equal(bucket.objects.has(`${folders[0]}/payroll`), false);
