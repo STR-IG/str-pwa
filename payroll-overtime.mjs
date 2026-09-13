@@ -56,6 +56,7 @@ export function renderOvertime(container, saved = {}, confirmed = false) {
     option.value = value; option.textContent = text; status.appendChild(option);
   }
   status.value = ['present', 'absent'].includes(saved?.status) ? saved.status : 'unknown';
+  section.hidden = status.value === 'absent';
   status.disabled = confirmed;
   status.style.width = '100%'; status.style.padding = '12px'; status.style.margin = '8px 0 12px';
   const values = root.createElement('div'); values.className = 'comparison-values';
@@ -116,5 +117,6 @@ export function applyOvertime(item, root = document, options = {}) {
     input.disabled = status.value === 'absent';
     input.placeholder = status.value === 'absent' ? 'No aplica' : 'Pendiente';
   }
+  if (card) card.hidden = status.value === 'absent';
   updateAmount(root);
 }

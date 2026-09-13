@@ -137,6 +137,7 @@ test('unknown/absent UI stays optional, entering zero works, model omission neve
   t.after(()=>delete globalThis.document);
   const root=dom();globalThis.document=root;
   renderOvertime(root.createElement(),{status:'absent'});
+  assert.equal(root.getElementById('payroll-overtime').hidden,true);
   assert.equal(root.getElementById('overtime-quantity').disabled,true);
   assert.equal(root.getElementById('overtime-quantity').placeholder,'No aplica');
   const status=root.getElementById('overtime-status');status.value='present';status.listeners.change();
@@ -146,13 +147,16 @@ test('unknown/absent UI stays optional, entering zero works, model omission neve
   applyOvertime(null,root);assert.equal(readOvertime(root).status,'unknown');
   applyOvertime({code:'9G01',quantity:1,unitPrice:999},root);assert.equal(readOvertime(root).quantity,null);
   applyOvertime({code:'0029',quantity:8,unitPrice:null},root);
-  assert.equal(readOvertime(root).quantity,8);assert.equal(readOvertime(root).amount,null);
+  assert.equal(root.getElementById('overtime-quantity').value,'8');
+  assert.equal(readOvertime(root).status,'unknown');assert.equal(readOvertime(root).amount,null);
   renderOvertime(root.createElement());
   applyOvertime(null,root,{readingComplete:true});
   assert.equal(readOvertime(root).status,'absent');
+  assert.equal(root.getElementById('payroll-overtime').hidden,true);
   assert.equal(root.getElementById('overtime-quantity').placeholder,'No aplica');
   renderOvertime(root.createElement());
   applyOvertime({code:'0029',quantity:8,unitPrice:null},root,{readingComplete:true});
+  assert.equal(root.getElementById('payroll-overtime').hidden,false);
   assert.equal(readOvertime(root).status,'unknown','a detected row with an unreadable price stays pending');
 });
 

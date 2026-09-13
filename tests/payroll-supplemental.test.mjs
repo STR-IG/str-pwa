@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import vm from 'node:vm';
 import {readFileSync} from 'node:fs';
 import {SUPPLEMENTAL_CONCEPTS, decimal, validateSupplemental, renderSupplemental, readSupplemental, applySupplemental} from '../payroll-supplemental.mjs';
+import {renderOvertime, readOvertime, applyOvertime} from '../payroll-overtime.mjs';
 import {bucketFor, documentHarness, extract} from './payroll-receipts.test.mjs';
 
 function dom() {
@@ -12,6 +13,7 @@ function dom() {
       set id(value){this._id=value;nodes.set(value,this);}, get id(){return this._id;},
       append(...children){for(const child of children){child.parent=this;this.children.push(child);}},
       appendChild(child){this.append(child);return child;},
+      setAttribute(name,value){this[name]=value;},
       addEventListener(type,fn){this.listeners[type]=fn;},
       closest(){return this.dataset.supplementalCode ? this : this.parent?.closest();},
       querySelectorAll(tag){return this.children.flatMap(child=>[...(child.tag===tag?[child]:[]),...child.querySelectorAll(tag)]);}
@@ -76,6 +78,7 @@ test('absent supplemental concepts show no aplica until changed to present',()=>
   renderSupplemental(root.createElement('div'),{'7001':{status:'absent',quantity:null,amount:null}},false);
   const quantity=root.getElementById('supplemental-7001-quantity');
   const amount=root.getElementById('supplemental-7001-amount');
+  assert.equal(root.getElementById('supplemental-7001-status').closest().hidden,true);
   assert.equal(quantity.disabled,true);assert.equal(quantity.placeholder,'No aplica');
   assert.equal(amount.disabled,true);assert.equal(amount.placeholder,'No aplica');
   const status=root.getElementById('supplemental-7001-status');
@@ -131,7 +134,9 @@ test('0038 reads an amount-only deduction and a completed read separates absent 
   assert.equal(root.getElementById('supplemental-7016-status').value,'absent');
   assert.equal(root.getElementById('supplemental-7016-quantity').disabled,true);
   assert.equal(root.getElementById('supplemental-7016-quantity').placeholder,'No aplica');
+  assert.equal(root.getElementById('supplemental-7016-status').closest().hidden,true);
   assert.equal(root.getElementById('supplemental-7017-status').value,'unknown');
+  assert.equal(root.getElementById('supplemental-7017-status').closest().hidden,false);
   const saved=readSupplemental(root);
   assert.equal(saved['0038'].status,'present');
   assert.equal(saved['0038'].amount,12);
@@ -171,7 +176,28 @@ test('catalog supplemental concepts render only when returned and persist throug
   delete globalThis.document;
 });
 
-test('mayo 2022 keeps the seven existing comparison quantities unchanged',()=>{
+test('septiembre 2022 keeps present concepts, hides absent cards and preserves comparison quantities',()=>{
+  const root=dom();globalThis.document=root;const container=root.createElement('div');
+  renderSupplemental(container);renderOvertime(container);
+  const metadata={code:'4002',label:'Aportación Empl. obl. PP',output:'supplemental',dynamic:true,
+    quantityExpected:false,unitPriceExpected:false,amountLabel:'Importe (€)',amount:13.09};
+  applySupplemental([
+    {code:'0001',quantity:30,unitPrice:50,amount:1500},{code:'0002',quantity:30,unitPrice:10,amount:300},
+    {code:'0003',quantity:30,unitPrice:2,amount:60},{code:'0004',quantity:30,unitPrice:8,amount:240},
+    {code:'0053',quantity:30,unitPrice:1,amount:30},{code:'0038',amount:12},metadata,
+  ],root,{readingComplete:true});
+  applyOvertime(null,root,{readingComplete:true});
+  for(const code of ['0001','0002','0003','0004','0053','0038','4002']) {
+    assert.equal(root.getElementById(`supplemental-${code}-status`).value,'present');
+    assert.equal(root.getElementById(`supplemental-${code}-status`).closest().hidden,false);
+  }
+  assert.equal(root.getElementById('supplemental-0038-amount').value,'12');
+  assert.equal(root.getElementById('supplemental-4002-amount').value,'13,09');
+  for(const code of ['7001','7016','7017']) assert.equal(root.getElementById(`supplemental-${code}-status`).closest().hidden,true);
+  assert.equal(root.getElementById('payroll-overtime').hidden,true);
+  assert.equal(readOvertime(root).status,'absent');
+  assert.equal(readSupplemental(root)['4002'].amount,13.09);
+
   const ids={rotation:'comparison-rotation',meals:'comparison-meals',night:'comparison-night',shift:'comparison-shift',
     holiday:'comparison-holiday',shift12:'comparison-shift12',holidayDiets:'comparison-holidayDiets',vacation:'comparison-vacation'};
   const inputs=Object.fromEntries(Object.values(ids).map(id=>[id,{value:'',placeholder:'',dataset:{},readOnly:false,
@@ -187,6 +213,7 @@ test('mayo 2022 keeps the seven existing comparison quantities unchanged',()=>{
   ]);
   assert.deepEqual([inputs[ids.rotation].value,inputs[ids.shift].value,inputs[ids.night].value,inputs[ids.holiday].value,
     inputs[ids.shift12].value,inputs[ids.holidayDiets].value,inputs[ids.meals].value],['23','11','56','42','3','3','2']);
+  delete globalThis.document;
 });
 
 test('actual save/reopen persists supplements independently and leaves comparisons unchanged',async()=>{

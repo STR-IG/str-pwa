@@ -175,7 +175,7 @@
       } catch {}
       const count = clearAndApply(concepts, allowLockedAfterRead);
       const [{ applySupplemental }, { applyOvertime }] = await Promise.all([
-        import('./payroll-supplemental.mjs?v=7'), import('./payroll-overtime.mjs?v=4')
+        import('./payroll-supplemental.mjs?v=8'), import('./payroll-overtime.mjs?v=5')
       ]);
       if (img.src !== src || screen.hidden || screen.dataset.manualEdit === 'true') return;
       const completedReading = { allowLocked: allowLockedAfterRead, readingComplete: true };

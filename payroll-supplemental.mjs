@@ -124,6 +124,7 @@ function renderSupplementalCard(root, concept, saved, confirmed) {
     const option = root.createElement('option'); option.value = value; option.textContent = text; status.appendChild(option);
   }
   status.value = row.status || 'unknown';
+  card.hidden = status.value === 'absent';
   status.disabled = confirmed;
   status.style.width = '100%';
   status.style.margin = '8px 0 12px';
@@ -189,7 +190,7 @@ export function renderSupplemental(container, saved = {}, confirmed = false) {
     const concept = dynamicConcept(row);
     if (concept) dynamicContainer.appendChild(renderSupplementalCard(root, concept, saved, confirmed));
   }
-  dynamicHeading.hidden = dynamicContainer.children.length === 0;
+  dynamicHeading.hidden = ![...dynamicContainer.children].some((card) => !card.hidden);
   dynamicContainer.hidden = dynamicHeading.hidden;
   section.append(dynamicHeading, dynamicContainer);
   container.appendChild(section);
@@ -235,8 +236,6 @@ export function applySupplemental(items, root = document, options = {}) {
     }
   }
   const dynamicHeading = root.getElementById('payroll-supplemental-dynamic-heading');
-  if (dynamicContainer) dynamicContainer.hidden = dynamicContainer.children.length === 0;
-  if (dynamicHeading) dynamicHeading.hidden = dynamicContainer?.children.length === 0;
   const counts = new Map();
   for (const item of items || []) counts.set(String(item.code), (counts.get(String(item.code)) || 0) + 1);
   const dynamicConcepts = [...(dynamicContainer?.children || [])].map((card) => dynamicConcept({
@@ -268,5 +267,9 @@ export function applySupplemental(items, root = document, options = {}) {
       input.disabled = status.value === 'absent';
       input.placeholder = status.value === 'absent' ? 'No aplica' : 'Pendiente';
     }
+    if (card) card.hidden = status.value === 'absent';
   }
+  const hasVisibleDynamic = [...(dynamicContainer?.children || [])].some((card) => !card.hidden);
+  if (dynamicContainer) dynamicContainer.hidden = !hasVisibleDynamic;
+  if (dynamicHeading) dynamicHeading.hidden = !hasVisibleDynamic;
 }
