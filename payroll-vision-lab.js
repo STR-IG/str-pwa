@@ -81,10 +81,10 @@
     return canvas.toDataURL('image/jpeg', 0.92);
   }
 
-  function clearAndApply(concepts) {
+  function clearAndApply(concepts, allowLocked = false) {
     Object.values(FIELD_MAP).forEach((id) => {
       const input = document.getElementById(id);
-      if (!input || input.readOnly) return;
+      if (!input || (input.readOnly && !allowLocked)) return;
       input.value = '';
       input.placeholder = 'No leído automáticamente';
       delete input.dataset.labAutoRead;
@@ -97,7 +97,7 @@
       if (!key || seen.has(key)) continue;
       const input = document.getElementById(FIELD_MAP[key]);
       const value = String(item?.value || '').trim();
-      if (!input || input.readOnly || !value) continue;
+      if (!input || (input.readOnly && !allowLocked) || !value) continue;
       input.value = value;
       input.dataset.labAutoRead = item?.engine === 'gemini' ? 'gemini' : 'vision';
       input.dataset.readerEngine = item?.engine === 'gemini' ? 'gemini' : 'str';
@@ -120,11 +120,20 @@
     return session;
   }
 
+  function allowsLockedAdminRead(screen) {
+    const adminAffiliate = new URLSearchParams(window.location.search).get('adminAffiliate');
+    const confirmButton = document.getElementById('confirm-comparison');
+    return Boolean(adminAffiliate)
+      && confirmButton?.dataset.action === 'check'
+      && screen?.dataset.manualEdit !== 'true';
+  }
+
   async function runPayrollVisionRead() {
     const screen = document.getElementById('comparison-screen');
     const img = document.getElementById('comparison-reference-image');
     if (!screen || screen.hidden || screen.dataset.manualEdit === 'true' || !img?.src || running || completedForSrc === img.src) return;
-    if ([...document.querySelectorAll('input[id^="comparison-"]')].some(input => input.readOnly)) return;
+    const allowLocked = allowsLockedAdminRead(screen);
+    if (!allowLocked && [...document.querySelectorAll('input[id^="comparison-"]')].some(input => input.readOnly)) return;
     running = true;
     const src = img.src;
     setPayrollProgress('checking', 'Leyendo la nómina con visión…', 'Buscamos las cantidades de los mismos conceptos variables del registro de jornada.');
@@ -137,10 +146,11 @@
         body: JSON.stringify({ imageDataUrl, includeSupplemental: true, includeOvertime: true })
       });
       const data = await response.json().catch(() => ({}));
-      if (img.src !== src || screen.hidden || screen.dataset.manualEdit === 'true' || [...document.querySelectorAll('input[id^="comparison-"]')].some(input => input.readOnly)) return;
+      const allowLockedAfterRead = allowsLockedAdminRead(screen);
+      if (img.src !== src || screen.hidden || screen.dataset.manualEdit === 'true' || (!allowLockedAfterRead && [...document.querySelectorAll('input[id^="comparison-"]')].some(input => input.readOnly))) return;
       if (!response.ok) throw new Error(data?.error || `HTTP_${response.status}`);
       if (data?.isPayroll !== true) {
-        clearAndApply([]);
+        clearAndApply([], allowLockedAfterRead);
         setPayrollProgress('warning', 'No se reconoce la nómina', 'La imagen no permite identificar con seguridad los conceptos variables de la nómina.');
         completedForSrc = src;
         return;
@@ -163,12 +173,12 @@
           if (fields) concepts = fallback.mergeGeminiFields(concepts, fields, requestedKeys, localValues, conceptKey);
         }
       } catch {}
-      const count = clearAndApply(concepts);
+      const count = clearAndApply(concepts, allowLockedAfterRead);
       const [{ applySupplemental }, { applyOvertime }] = await Promise.all([
-        import('./payroll-supplemental.mjs?v=3'), import('./payroll-overtime.mjs?v=2')
+        import('./payroll-supplemental.mjs?v=5'), import('./payroll-overtime.mjs?v=2')
       ]);
       if (img.src !== src || screen.hidden || screen.dataset.manualEdit === 'true') return;
-      applySupplemental(data?.supplemental || []);
+      applySupplemental(data?.supplemental || [], document, { allowLocked: allowLockedAfterRead });
       applyOvertime(data?.overtime);
       setPayrollProgress(count ? 'ready' : 'warning', count ? 'Lectura de nómina terminada' : 'No se han podido leer las cantidades de la nómina', count ? `Se han leído ${count} conceptos de la nómina. Comprueba las cifras antes de comparar.` : 'No se ha rellenado ningún valor dudoso.');
       completedForSrc = src;

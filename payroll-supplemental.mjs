@@ -148,19 +148,20 @@ export function readSupplemental(root = document) {
   return validateSupplemental(rows);
 }
 
-export function applySupplemental(items, root = document) {
+export function applySupplemental(items, root = document, options = {}) {
+  const allowLocked = options?.allowLocked === true;
   const counts = new Map();
   for (const item of items || []) counts.set(String(item.code), (counts.get(String(item.code)) || 0) + 1);
   for (const {code, unitPrice: readsUnitPrice} of SUPPLEMENTAL_CONCEPTS) {
     const status = root.getElementById(`supplemental-${code}-status`);
     const card = status?.closest('[data-supplemental-code]');
-    if (!status || status.disabled || card?.dataset.manual === 'true') continue;
+    if (!status || (status.disabled && !allowLocked) || card?.dataset.manual === 'true') continue;
     const item = counts.get(code) === 1 ? items.find(item => String(item.code) === code) : null;
     // Omission or ambiguity is unknown, never an automatic zero/absence.
     status.value = item ? 'present' : 'unknown';
     for (const field of readsUnitPrice ? ['quantity','unitPrice','amount'] : ['quantity','amount']) {
       const input = root.getElementById(`supplemental-${code}-${field}`);
-      if (!input || input.readOnly) continue;
+      if (!input || (input.readOnly && !allowLocked)) continue;
       const value = decimal(item?.[field], field !== 'quantity');
       input.value = value === null ? '' : String(value).replace('.', ',');
     }

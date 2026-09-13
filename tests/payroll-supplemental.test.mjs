@@ -87,6 +87,37 @@ test('absent supplemental concepts show no aplica until changed to present',()=>
   delete globalThis.document;
 });
 
+
+test('administrative reread populates fixed concepts despite a visual lock and keeps the normal lock',()=>{
+  const rows=[
+    {code:'0001',quantity:30,unitPrice:50.191,amount:1505.73},
+    {code:'0002',quantity:30,unitPrice:17.567,amount:527.01},
+    {code:'0003',quantity:30,unitPrice:1.3073,amount:39.22},
+    {code:'0004',quantity:30,unitPrice:7.581,amount:227.43},
+    {code:'0053',quantity:30,unitPrice:.8707,amount:26.12},
+  ];
+  const root=dom();globalThis.document=root;
+  renderSupplemental(root.createElement('div'),{},true);
+  applySupplemental(rows,root);
+  assert.equal(root.getElementById('supplemental-0001-quantity').value,'');
+  applySupplemental(rows,root,{allowLocked:true});
+  for(const {code} of rows){
+    assert.equal(root.getElementById(`supplemental-${code}-status`).value,'present');
+    assert.equal(root.getElementById(`supplemental-${code}-quantity`).value,'30');
+  }
+  delete globalThis.document;
+});
+
+test('old administrative reviews only reread on the explicit action and reuse the saved image',()=>{
+  const base=readFileSync(new URL('../revisa-tu-nomina-base.html',import.meta.url),'utf8');
+  const vision=readFileSync(new URL('../payroll-vision-lab.js',import.meta.url),'utf8');
+  assert.match(base,/retryPayrollAnalysisButton\.addEventListener\('click', \(\) => startPayrollComparison\(true\)\)/);
+  assert.match(base,/documents\.payroll\.blob \|\| documents\.payroll\.file/);
+  assert.match(vision,/confirmButton\?\.dataset\.action === 'check'/);
+  assert.match(vision,/clearAndApply\(concepts, allowLockedAfterRead\)/);
+  assert.match(vision,/applySupplemental\(data\?\.supplemental \|\| \[\], document, \{ allowLocked: allowLockedAfterRead \}\)/);
+});
+
 test('actual save/reopen persists supplements independently and leaves comparisons unchanged',async()=>{
   const bucket=bucketFor('owner-a');const app=documentHarness(bucket);
   app.readSupplemental=()=>validateSupplemental({
