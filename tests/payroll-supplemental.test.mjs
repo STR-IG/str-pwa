@@ -21,7 +21,7 @@ function dom() {
 }
 
 test('distinct payroll-only codes, decimals, signed amounts, unknown and absent never fabricated as zero',()=>{
-  assert.deepEqual(SUPPLEMENTAL_CONCEPTS.map(x=>x.code),['0001','0002','0003','0004','0053','7001','7016','7017']);
+  assert.deepEqual(SUPPLEMENTAL_CONCEPTS.map(x=>x.code),['0001','0002','0003','0004','0053','0038','7001','7016','7017']);
   assert.equal(decimal('1.234,56',true),1234.56);
   assert.equal(decimal('-12,34',true),-12.34);
   assert.equal(decimal(''),null);assert.equal(decimal('NaN'),null);assert.equal(decimal('-1'),null);
@@ -118,6 +118,29 @@ test('old administrative reviews only reread on the explicit action and reuse th
   assert.match(vision,/applySupplemental\(data\?\.supplemental \|\| \[\], document, \{ allowLocked: allowLockedAfterRead \}\)/);
 });
 
+
+test('0038 reads an amount-only deduction and a completed read separates absent from ambiguous',()=>{
+  const root=dom();globalThis.document=root;renderSupplemental(root.createElement('div'));
+  applySupplemental([
+    {code:'0038',quantity:null,amount:'12,00'},
+    {code:'7017',ambiguous:true,quantity:null,amount:null}
+  ],root,{readingComplete:true});
+  assert.equal(root.getElementById('supplemental-0038-status').value,'present');
+  assert.equal(root.getElementById('supplemental-0038-quantity'),undefined);
+  assert.equal(root.getElementById('supplemental-0038-amount').value,'12');
+  assert.equal(root.getElementById('supplemental-7016-status').value,'absent');
+  assert.equal(root.getElementById('supplemental-7016-quantity').disabled,true);
+  assert.equal(root.getElementById('supplemental-7016-quantity').placeholder,'No aplica');
+  assert.equal(root.getElementById('supplemental-7017-status').value,'unknown');
+  const saved=readSupplemental(root);
+  assert.equal(saved['0038'].status,'present');
+  assert.equal(saved['0038'].amount,12);
+  assert.equal(saved['0038'].quantity,null);
+  assert.equal(saved['7016'].status,'absent');
+  assert.equal(saved['7017'].status,'unknown');
+  delete globalThis.document;
+});
+
 test('actual save/reopen persists supplements independently and leaves comparisons unchanged',async()=>{
   const bucket=bucketFor('owner-a');const app=documentHarness(bucket);
   app.readSupplemental=()=>validateSupplemental({
@@ -175,8 +198,8 @@ test('edge validation whitelists codes and rejects ambiguity; API retains auth a
   assert.deepEqual(Array.from(rows, row=>row.code),['0001','0003','0053','7001']);
   assert.equal(rows[0].unitPrice,56.531);assert.equal(rows[1].amount,44.15);assert.equal(rows[2].amount,30.3);
   assert.equal(rows[3].amount,119.9);assert.equal('unitPrice' in rows[3],false);
-  assert.equal(ctx.normalizeSupplemental([{code:'7001'},{code:'7001'}]).length,0);
-  assert.equal(ctx.normalizeSupplemental([{code:'0002'},{code:'0002'}]).length,0);
+  assert.equal(ctx.normalizeSupplemental([{code:'7001'},{code:'7001'}])[0].ambiguous,true);
+  assert.equal(ctx.normalizeSupplemental([{code:'0002'},{code:'0002'}])[0].ambiguous,true);
   assert.match(code,/admin.auth.getUser\(token\)/);assert.match(code,/private_access_allowlist/);
   assert.match(code,/includeSupplemental === true/);assert.match(code,/return json\(\{ isPayroll: true, concepts \}\)/);
   assert.match(code,/0001 Salario mín\. garantizado/);assert.match(code,/unitPrice de IMPORTE DIARIO/);

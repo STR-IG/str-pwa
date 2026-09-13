@@ -141,7 +141,9 @@ function normalizeSupplemental(items: any) {
   const catalog = PAYROLL_CONCEPT_CATALOG.filter((item) => item.output === 'supplemental');
   return catalog.flatMap(({code, unitPrice}) => {
     const matches = items.filter((item: any) => canonicalPayrollCode(item?.code) === code);
-    if (matches.length !== 1) return [];
+    if (matches.length === 0) return [];
+    if (matches.length > 1) return [{code, ambiguous:true, quantity:null, amount:null,
+      ...(unitPrice ? {unitPrice:null} : {})}];
     const row = {code, quantity:number(matches[0].quantity), amount:number(matches[0].amount, true),
       ...(unitPrice ? {unitPrice:number(matches[0].unitPrice, true)} : {})};
     return [row];
@@ -151,7 +153,8 @@ function normalizeSupplemental(items: any) {
 function normalizeOvertime(items: any) {
   if (!Array.isArray(items)) return null;
   const matches = items.filter((item: any) => item?.code === '0029');
-  if (matches.length !== 1) return null;
+  if (matches.length === 0) return null;
+  if (matches.length > 1) return {code:'0029', ambiguous:true, quantity:null, unitPrice:null};
   const number = (value: unknown) => {
     let raw = String(value ?? '').trim();
     if (raw.includes(',')) raw = raw.replace(/\./g, '').replace(',', '.');
@@ -410,6 +413,8 @@ ${supplementalCatalog}
 Reglas del catálogo adicional:
 - Extrae quantity de CANTIDAD, unitPrice de IMPORTE DIARIO o PRECIO UNITARIO y amount de DEVENGOS o DEDUCCIONES cuando esas columnas existan.
 - Un concepto válido puede no tener CANTIDAD ni precio unitario. En ese caso conserva quantity o unitPrice como null y devuelve el importe visible; no descartes la fila.
+- Para 0038 Cuota Sindical lee el importe visible en DEDUCCIONES como amount. No lo conviertas en quantity y no exijas CANTIDAD ni precio unitario.
+- Si existen varias filas con el mismo código, devuélvelas todas; la aplicación las mantendrá como lectura pendiente/ambigua.
 - 0211 es el código real de PRF Comidas C. Guasch Ex.; admite "2111" únicamente como deformación OCR del código y devuelve code "0211".
 - En 0147 y 0148 el año forma parte del texto y puede cambiar.
 - Mantén exactamente 9A00; no lo conviertas en 9400.

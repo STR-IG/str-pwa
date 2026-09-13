@@ -32,7 +32,7 @@ function updateAmount(root) {
   const quantity = decimal(root.getElementById('overtime-quantity')?.value);
   const price = decimal(root.getElementById('overtime-unitPrice')?.value);
   const amount = overtimeAmount(quantity, price);
-  output.textContent = status === 'absent' ? 'Confirmado: no hay horas extras en este recibo.'
+  output.textContent = status === 'absent' ? 'No aparece en esta nómina.'
     : status !== 'present' || amount === null ? 'Importe pendiente: completa las horas y el precio cuando los conozcas.'
     : `Importe calculado: ${amount.toLocaleString('es-ES', {minimumFractionDigits: 2, maximumFractionDigits: 2})} €`;
 }
@@ -51,7 +51,7 @@ export function renderOvertime(container, saved = {}, confirmed = false) {
   label.textContent = 'Estado del concepto';
   const status = root.createElement('select');
   status.id = label.htmlFor;
-  for (const [value, text] of [['unknown', 'Pendiente / no leído'], ['present', 'Aparece en esta nómina'], ['absent', 'Confirmo que no aparece']]) {
+  for (const [value, text] of [['unknown', 'Pendiente / no leído'], ['present', 'Aparece en esta nómina'], ['absent', 'No aparece en esta nómina']]) {
     const option = root.createElement('option');
     option.value = value; option.textContent = text; status.appendChild(option);
   }
@@ -97,18 +97,24 @@ export function readOvertime(root = document) {
   return validateOvertime({status: value('status'), quantity: value('quantity'), unitPrice: value('unitPrice')});
 }
 
-export function applyOvertime(item, root = document) {
+export function applyOvertime(item, root = document, options = {}) {
+  const allowLocked = options?.allowLocked === true;
+  const readingComplete = options?.readingComplete === true;
   const status = root.getElementById('overtime-status');
   const card = root.getElementById('payroll-overtime');
-  if (!status || status.disabled || card?.dataset.manual === 'true') return;
+  if (!status || (status.disabled && !allowLocked) || card?.dataset.manual === 'true') return;
   // Only this exact row; no rate inferred from a group or another receipt.
   const row = item?.code === OVERTIME_CODE ? item : null;
-  status.value = row ? 'present' : 'unknown';
+  const completeRow = row && !row.ambiguous
+    && decimal(row.quantity) !== null && decimal(row.unitPrice) !== null;
+  status.value = completeRow ? 'present' : (row ? 'unknown' : (readingComplete ? 'absent' : 'unknown'));
   for (const field of ['quantity', 'unitPrice']) {
     const input = root.getElementById(`overtime-${field}`);
-    if (!input || input.readOnly) continue;
+    if (!input || (input.readOnly && !allowLocked)) continue;
     const value = decimal(row?.[field]);
     input.value = value === null ? '' : String(value).replace('.', ',');
+    input.disabled = status.value === 'absent';
+    input.placeholder = status.value === 'absent' ? 'No aplica' : 'Pendiente';
   }
   updateAmount(root);
 }

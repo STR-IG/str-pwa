@@ -147,6 +147,13 @@ test('unknown/absent UI stays optional, entering zero works, model omission neve
   applyOvertime({code:'9G01',quantity:1,unitPrice:999},root);assert.equal(readOvertime(root).quantity,null);
   applyOvertime({code:'0029',quantity:8,unitPrice:null},root);
   assert.equal(readOvertime(root).quantity,8);assert.equal(readOvertime(root).amount,null);
+  renderOvertime(root.createElement());
+  applyOvertime(null,root,{readingComplete:true});
+  assert.equal(readOvertime(root).status,'absent');
+  assert.equal(root.getElementById('overtime-quantity').placeholder,'No aplica');
+  renderOvertime(root.createElement());
+  applyOvertime({code:'0029',quantity:8,unitPrice:null},root,{readingComplete:true});
+  assert.equal(readOvertime(root).status,'unknown','a detected row with an unreadable price stays pending');
 });
 
 test('IA normalizer accepts only one exact 0029 row, preserves unknowns and rejects invalid rates',()=>{
@@ -157,7 +164,7 @@ test('IA normalizer accepts only one exact 0029 row, preserves unknowns and reje
   assert.equal(ctx.normalizeOvertime([{code:'0029',quantity:'8',unitPrice:null}]).unitPrice,null);
   assert.equal(ctx.normalizeOvertime([{code:'0029',quantity:0,unitPrice:20}]).quantity,0);
   assert.equal(ctx.normalizeOvertime([{code:'0029',unitPrice:-1}]).unitPrice,null);
-  assert.equal(ctx.normalizeOvertime([{code:'0029'},{code:'0029'}]),null);
+  assert.equal(ctx.normalizeOvertime([{code:'0029'},{code:'0029'}]).ambiguous,true);
   assert.equal(ctx.normalizeOvertime([{code:'9G01',quantity:2,unitPrice:100}]),null);
   assert.match(code,/includeOvertime === true/);assert.match(code,/admin.auth.getUser\(token\)/);
   assert.match(code,/private_access_allowlist/);assert.match(code,/return json\(\{ isPayroll: true, concepts \}\)/);

@@ -175,11 +175,12 @@
       } catch {}
       const count = clearAndApply(concepts, allowLockedAfterRead);
       const [{ applySupplemental }, { applyOvertime }] = await Promise.all([
-        import('./payroll-supplemental.mjs?v=5'), import('./payroll-overtime.mjs?v=2')
+        import('./payroll-supplemental.mjs?v=6'), import('./payroll-overtime.mjs?v=4')
       ]);
       if (img.src !== src || screen.hidden || screen.dataset.manualEdit === 'true') return;
-      applySupplemental(data?.supplemental || [], document, { allowLocked: allowLockedAfterRead });
-      applyOvertime(data?.overtime);
+      const completedReading = { allowLocked: allowLockedAfterRead, readingComplete: true };
+      applySupplemental(data?.supplemental || [], document, completedReading);
+      applyOvertime(data?.overtime, document, completedReading);
       setPayrollProgress(count ? 'ready' : 'warning', count ? 'Lectura de nómina terminada' : 'No se han podido leer las cantidades de la nómina', count ? `Se han leído ${count} conceptos de la nómina. Comprueba las cifras antes de comparar.` : 'No se ha rellenado ningún valor dudoso.');
       completedForSrc = src;
     } catch (error) {

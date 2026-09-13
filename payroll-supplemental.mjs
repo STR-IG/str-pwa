@@ -5,6 +5,7 @@ export const SUPPLEMENTAL_CONCEPTS = [
   { code: '0003', label: 'Complemento personal', group: 'fixed', unitPrice: true },
   { code: '0004', label: 'Complemento puesto de trabajo', group: 'fixed', unitPrice: true },
   { code: '0053', label: 'Antigüedad', group: 'fixed', unitPrice: true },
+  { code: '0038', label: 'Cuota sindical', group: 'deductions', unitPrice: false, quantity: false, amountLabel: 'Importe descontado (€)' },
   { code: '7001', label: 'Grupo superior · salario', group: 'higherRole', unitPrice: false },
   { code: '7016', label: 'Grupo superior · rotatividad', group: 'higherRole', unitPrice: false },
   { code: '7017', label: 'Grupo superior · festivo', group: 'higherRole', unitPrice: false },
@@ -20,16 +21,18 @@ export function decimal(value, signed = false) {
 }
 
 export function validateSupplemental(rows = {}) {
-  return Object.fromEntries(SUPPLEMENTAL_CONCEPTS.map(({code, label, unitPrice: readsUnitPrice}) => {
+  return Object.fromEntries(SUPPLEMENTAL_CONCEPTS.map(({code, label, unitPrice: readsUnitPrice, quantity: readsQuantity = true}) => {
     const row = rows[code] || {};
     const status = ['present', 'absent'].includes(row.status) ? row.status : 'unknown';
     const result = {code, status, quantity:null, amount:null, unit:null,
       ...(readsUnitPrice ? {unitPrice:null} : {})};
     if (status !== 'present') return [code, result];
 
-    const fields = readsUnitPrice
-      ? [['quantity', 'cantidad'], ['unitPrice', 'precio unitario'], ['amount', 'importe abonado']]
-      : [['quantity', 'cantidad'], ['amount', 'importe abonado']];
+    const fields = [
+      ...(readsQuantity ? [['quantity', 'cantidad']] : []),
+      ...(readsUnitPrice ? [['unitPrice', 'precio unitario']] : []),
+      ['amount', readsQuantity ? 'importe abonado' : 'importe descontado']
+    ];
     for (const [field, fieldLabel] of fields) {
       const raw = String(row[field] ?? '').trim();
       result[field] = decimal(raw, field !== 'quantity');
@@ -38,10 +41,13 @@ export function validateSupplemental(rows = {}) {
       }
     }
 
-    if (!readsUnitPrice && (result.quantity === null || result.amount === null)) {
+    if (!readsQuantity && result.amount === null) {
+      throw new Error(`Completa el importe de «${label}», o déjalo pendiente.`);
+    }
+    if (readsQuantity && !readsUnitPrice && (result.quantity === null || result.amount === null)) {
       throw new Error(`Completa la cantidad y el importe de «${label}», o déjalo pendiente.`);
     }
-    if (readsUnitPrice && result.quantity === null && result.unitPrice === null && result.amount === null) {
+    if (readsQuantity && readsUnitPrice && result.quantity === null && result.unitPrice === null && result.amount === null) {
       throw new Error(`Introduce al menos un dato de «${label}», o déjalo pendiente.`);
     }
     return [code, result];
@@ -55,6 +61,11 @@ const SUPPLEMENTAL_GROUPS = [
     note: 'Se leen y guardan por cada nómina para futuras estadísticas. No se comparan con el registro de jornada. Si una cifra no se distingue, puede quedar pendiente.',
   },
   {
+    key: 'deductions',
+    title: 'Deducciones de nómina',
+    note: 'Se leen por recibo y no se comparan con el registro de jornada.',
+  },
+  {
     key: 'higherRole',
     title: 'Funciones de grupo superior',
     note: 'Son conceptos propios de la nómina y tampoco se comparan con el registro de jornada.',
@@ -62,7 +73,7 @@ const SUPPLEMENTAL_GROUPS = [
 ];
 
 function renderSupplementalCard(root, concept, saved, confirmed) {
-  const {code, label: conceptLabel, unitPrice: readsUnitPrice} = concept;
+  const {code, label: conceptLabel, unitPrice: readsUnitPrice, quantity: readsQuantity = true, amountLabel = 'Importe abonado (€)'} = concept;
   const row = saved?.[code] || {};
   const card = root.createElement('div');
   card.className = 'comparison-field';
@@ -78,7 +89,7 @@ function renderSupplementalCard(root, concept, saved, confirmed) {
   statusLabel.style.display = 'block';
   const status = root.createElement('select');
   status.id = statusLabel.htmlFor;
-  for (const [value,text] of [['unknown','Pendiente / no leído'],['present','Aparece en esta nómina'],['absent','Confirmo que no aparece']]) {
+  for (const [value,text] of [['unknown','Pendiente / no leído'],['present','Aparece en esta nómina'],['absent','No aparece en esta nómina']]) {
     const option = root.createElement('option'); option.value = value; option.textContent = text; status.appendChild(option);
   }
   status.value = row.status || 'unknown';
@@ -87,9 +98,11 @@ function renderSupplementalCard(root, concept, saved, confirmed) {
   status.style.margin = '8px 0 12px';
   status.style.padding = '12px';
   const values = root.createElement('div'); values.className = 'comparison-values';
-  const fields = readsUnitPrice
-    ? [['quantity','Cantidad en esta nómina'],['unitPrice','Importe diario / precio unitario (€)'],['amount','Importe abonado (€)']]
-    : [['quantity','Cantidad en este recibo'],['amount','Importe abonado (€)']];
+  const fields = [
+    ...(readsQuantity ? [['quantity', readsUnitPrice ? 'Cantidad en esta nómina' : 'Cantidad en este recibo']] : []),
+    ...(readsUnitPrice ? [['unitPrice','Importe diario / precio unitario (€)']] : []),
+    ['amount', amountLabel]
+  ];
   if (readsUnitPrice) values.className += ' supplemental-fixed-values';
   const inputs = [];
   for (const [field,text] of fields) {
@@ -140,9 +153,10 @@ export function renderSupplemental(container, saved = {}, confirmed = false) {
 
 export function readSupplemental(root = document) {
   const rows = {};
-  for (const {code, unitPrice: readsUnitPrice} of SUPPLEMENTAL_CONCEPTS) {
+  for (const {code, unitPrice: readsUnitPrice, quantity: readsQuantity = true} of SUPPLEMENTAL_CONCEPTS) {
     const get = field => root.getElementById(`supplemental-${code}-${field}`)?.value;
-    rows[code] = {status:get('status'),quantity:get('quantity'),amount:get('amount'),
+    rows[code] = {status:get('status'),amount:get('amount'),
+      ...(readsQuantity ? {quantity:get('quantity')} : {}),
       ...(readsUnitPrice ? {unitPrice:get('unitPrice')} : {})};
   }
   return validateSupplemental(rows);
@@ -150,20 +164,28 @@ export function readSupplemental(root = document) {
 
 export function applySupplemental(items, root = document, options = {}) {
   const allowLocked = options?.allowLocked === true;
+  const readingComplete = options?.readingComplete === true;
   const counts = new Map();
   for (const item of items || []) counts.set(String(item.code), (counts.get(String(item.code)) || 0) + 1);
-  for (const {code, unitPrice: readsUnitPrice} of SUPPLEMENTAL_CONCEPTS) {
+  for (const {code, unitPrice: readsUnitPrice, quantity: readsQuantity = true} of SUPPLEMENTAL_CONCEPTS) {
     const status = root.getElementById(`supplemental-${code}-status`);
     const card = status?.closest('[data-supplemental-code]');
     if (!status || (status.disabled && !allowLocked) || card?.dataset.manual === 'true') continue;
     const item = counts.get(code) === 1 ? items.find(item => String(item.code) === code) : null;
-    // Omission or ambiguity is unknown, never an automatic zero/absence.
-    status.value = item ? 'present' : 'unknown';
-    for (const field of readsUnitPrice ? ['quantity','unitPrice','amount'] : ['quantity','amount']) {
+    const fields = [
+      ...(readsQuantity ? ['quantity'] : []),
+      ...(readsUnitPrice ? ['unitPrice'] : []),
+      'amount'
+    ];
+    const readable = item && !item.ambiguous && fields.some((field) => decimal(item?.[field], field !== 'quantity') !== null);
+    status.value = readable ? 'present' : (item ? 'unknown' : (readingComplete ? 'absent' : 'unknown'));
+    for (const field of fields) {
       const input = root.getElementById(`supplemental-${code}-${field}`);
       if (!input || (input.readOnly && !allowLocked)) continue;
       const value = decimal(item?.[field], field !== 'quantity');
       input.value = value === null ? '' : String(value).replace('.', ',');
+      input.disabled = status.value === 'absent';
+      input.placeholder = status.value === 'absent' ? 'No aplica' : 'Pendiente';
     }
   }
 }
