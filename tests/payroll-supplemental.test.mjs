@@ -162,7 +162,7 @@ test('all three production readers exclude fixed payroll and group differences f
 
 test('edge validation whitelists codes and rejects ambiguity; API retains auth and opt-in compatibility',()=>{
   const code=readFileSync(new URL('../supabase/functions/lab-read-payroll-variables/index.ts',import.meta.url),'utf8');
-  const fn=code.slice(code.indexOf('function normalizeSupplemental('),code.indexOf('function parseModelJson('))
+  const fn=code.slice(code.indexOf('const PAYROLL_CONCEPT_CATALOG'),code.indexOf('function parseModelJson('))
     .replace(/: any|: unknown/g,'');
   const ctx=vm.createContext({});vm.runInContext(fn,ctx);
   const rows=ctx.normalizeSupplemental([
@@ -180,6 +180,41 @@ test('edge validation whitelists codes and rejects ambiguity; API retains auth a
   assert.match(code,/admin.auth.getUser\(token\)/);assert.match(code,/private_access_allowlist/);
   assert.match(code,/includeSupplemental === true/);assert.match(code,/return json\(\{ isPayroll: true, concepts \}\)/);
   assert.match(code,/0001 Salario mín\. garantizado/);assert.match(code,/unitPrice de IMPORTE DIARIO/);
+});
+
+
+test('el catálogo general reconoce códigos existentes y un caso nuevo de cada bloque sin alterar comparaciones',()=>{
+  const code=readFileSync(new URL('../supabase/functions/lab-read-payroll-variables/index.ts',import.meta.url),'utf8');
+  const fn=code.slice(code.indexOf('const PAYROLL_CONCEPT_CATALOG'),code.indexOf('function parseModelJson('))
+    .replace(/: any|: unknown/g,'');
+  const ctx=vm.createContext({});vm.runInContext(fn,ctx);
+
+  for(const existing of ['0001','0002','0003','0004','0010','0013','0016','0017','0053','0080','0034','0038','0046','0207','0208','4002']){
+    assert.equal(ctx.payrollConceptByCode(existing)?.code,existing);
+  }
+  assert.equal(ctx.payrollConceptByCode('9A00')?.label,'Prestaciones IT 0 %');
+  assert.equal(ctx.payrollConceptByCode('9400'),null,'9A00 is never rewritten as 9400');
+  assert.equal(ctx.payrollConceptByCode('2111')?.code,'0211','the documented OCR alias keeps the real code');
+
+  const rows=ctx.normalizeSupplemental([
+    {code:'0014',quantity:7,amount:'700,00'},
+    {code:'9A00',amount:'-120,25'},
+    {code:'1001',amount:'2.000,00'},
+    {code:'7013',quantity:'5,5',amount:'44,00'},
+    {code:'/552',amount:'-41,80'},
+    {code:'0038',amount:'12,00'},
+    {code:'2111',quantity:2,unitPrice:'1,7800',amount:'-3,56'}
+  ]);
+  const byCode=Object.fromEntries(Array.from(rows,row=>[row.code,row]));
+  assert.equal(byCode['0014'].quantity,7,'help quantities have no concept-specific cap');
+  assert.equal(byCode['9A00'].amount,-120.25);
+  assert.equal(byCode['1001'].amount,2000);
+  assert.equal(byCode['7013'].quantity,5.5);
+  assert.equal(byCode['/552'].amount,-41.8);
+  assert.equal(byCode['0038'].quantity,null,'amount-only deductions do not require quantity');
+  assert.equal(byCode['0211'].unitPrice,1.78);
+  assert.equal(byCode['0211'].amount,-3.56);
+  assert.equal(rows.some(row=>row.code==='0010'),false,'main comparison remains separate');
 });
 
 test('manual editing does not start local OCR or remote vision',async()=>{

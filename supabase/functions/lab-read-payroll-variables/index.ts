@@ -43,6 +43,92 @@ function extractOutputText(response: any) {
   return chunks.join("\n");
 }
 
+const PAYROLL_CONCEPT_CATALOG = [
+  {code:'0001', label:'Salario mín. garantizado', output:'supplemental', unitPrice:true},
+  {code:'0002', label:'Plus convenio', output:'supplemental', unitPrice:true},
+  {code:'0003', label:'Complemento Personal', output:'supplemental', unitPrice:true},
+  {code:'0004', label:'Comp. Puesto Trabajo / CPT', output:'supplemental', unitPrice:true},
+  {code:'0010', label:'Plus de turno', output:'comparison'},
+  {code:'0013', label:'Plus Nocturno', output:'comparison'},
+  {code:'0016', label:'Plus rotatividad', output:'comparison'},
+  {code:'0017', label:'Plus Festivo', output:'comparison'},
+  {code:'0024', label:'Pluses Vacaciones', output:'comparison'},
+  {code:'0029', label:'Horas extras', output:'overtime', unitPrice:true},
+  {code:'0034', label:'Dietas Festivos', output:'comparison'},
+  {code:'0036', label:'Comidas Can Guasch', output:'comparison'},
+  {code:'0046', label:'Comidas Can Guasch', output:'comparison'},
+  {code:'0053', label:'Antigüedad', output:'supplemental', unitPrice:true},
+  {code:'0080', label:'Plus de turno 12 horas', output:'comparison'},
+  {code:'0127', label:'Comidas P10', output:'supplemental', unitPrice:true},
+  {code:'/552', label:'Líq. Dif. Meses Anteriores', output:'supplemental', quantity:false},
+  {code:'0038', label:'Cuota Sindical', output:'supplemental', quantity:false},
+  {code:'0043', label:'Facturas Personal', output:'supplemental', quantity:false},
+  {code:'0059', label:'Anticipos', output:'supplemental', quantity:false},
+  {code:'0112', label:'Anticipo a cta convenio', output:'supplemental', quantity:false},
+  {code:'0207', label:'PRF Seguro Salud (exento)', output:'supplemental', quantity:false},
+  {code:'0208', label:'PRF Seguro Salud', output:'supplemental', quantity:false},
+  {code:'0211', codeAliases:['2111'], label:'PRF Comidas C. Guasch Ex.', output:'supplemental', unitPrice:true},
+  {code:'4002', label:'Aportación Empl. obl. PP', output:'supplemental', quantity:false},
+  {code:'4003', label:'Aportación Empl. vol. PP', output:'supplemental', quantity:false},
+  {code:'0044', label:'Paga de Marzo', output:'supplemental', quantity:false},
+  {code:'1001', label:'Paga Extra de Julio', output:'supplemental', quantity:false},
+  {code:'1002', label:'Paga Extra de Diciembre', output:'supplemental', quantity:false},
+  {code:'1003', label:'Paga Extra de Octubre', output:'supplemental', quantity:false},
+  {code:'0147', label:'Plan RV Target Contrib. [año]', output:'supplemental', quantity:false},
+  {code:'0148', label:'Plan RV Absentismo [año]', output:'supplemental', quantity:false},
+  {code:'0014', label:'Ayuda escolar hasta 18', output:'supplemental'},
+  {code:'0262', label:'Ayuda escolar hasta 23', output:'supplemental'},
+  {code:'0265', label:'Ayuda familiar dependiente', output:'supplemental'},
+  {code:'0201', label:'PRF Guardería (exento)', output:'supplemental', quantity:false},
+  {code:'0033', label:'Subvención Formación', output:'supplemental', quantity:false},
+  {code:'7001', label:'Difer. Grupo Sup. Salario', output:'supplemental'},
+  {code:'7013', label:'Difer. Grup. Sup. Pl. Noct.', output:'supplemental'},
+  {code:'7016', label:'Difer. Grup. Sup. Pl. Rotat.', output:'supplemental'},
+  {code:'7017', label:'Difer. Grup. Sup. Pl. Festivo', output:'supplemental'},
+  {code:'PA40', label:'Prestaciones Obl. Emp. 60 %', output:'supplemental', quantity:false},
+  {code:'960S', label:'Prestaciones IT 60 %', output:'supplemental', quantity:false},
+  {code:'975S', label:'Prestaciones IT 75 %', output:'supplemental', quantity:false},
+  {code:'9A00', label:'Prestaciones IT 0 %', output:'supplemental', quantity:false},
+  {code:'9C07', label:'Complemento IT A', output:'supplemental', quantity:false},
+  {code:'9C13', label:'Complemento IT B', output:'supplemental', quantity:false},
+  {code:'9C21', label:'Complemento IT C', output:'supplemental', quantity:false},
+  {code:'/347', label:'Base CC período IT', output:'supplemental', quantity:false},
+  {code:'/348', label:'Base CP período IT', output:'supplemental', quantity:false},
+  {code:'9102', label:'Devengado Total CC', output:'discounts'},
+  {code:'9105', label:'Devengado Total Acc/d/fp', output:'discounts'},
+  {code:'/341', label:'Prorrata pagas extras', output:'discounts'},
+  {code:'9044', label:'Prorrata Paga de Marzo', output:'discounts'},
+  {code:'RDL', label:'Otras prorratas', output:'discounts'},
+  {code:'9350', label:'Contingencias Comunes', output:'discounts'},
+  {code:'9370', label:'Desempleo', output:'discounts'},
+  {code:'9380', label:'Formación Profesional', output:'discounts'},
+  {code:'/361', label:'Empr. fondo gar. salarial', output:'discounts'},
+  {code:'/352', label:'Empresa IT', output:'discounts'},
+  {code:'/353', label:'Empresa IMS', output:'discounts'},
+  {code:'9402', label:'IRPF', output:'discounts'},
+  {code:'4001', label:'Aportación Empresa PP', output:'discounts'},
+  {code:'9104', label:'Prorrata otros devengos', output:'discounts'},
+  {code:'9106', label:'Comedor parte empresa', output:'discounts'},
+  {code:'9107', label:'Prima accidentes', output:'discounts'},
+  {code:'9108', label:'Lote Navidad', output:'discounts'},
+  {code:'9117', label:'Seguro vida', output:'discounts'},
+  {code:'/402', label:'Ret Especie Ingr cta IRPF', output:'discounts'},
+  {code:'SSIR', label:'Total Cotiz. SS e IRPF', output:'discounts'},
+];
+
+function canonicalPayrollCode(value: unknown) {
+  const raw = String(value ?? '').replace(/\s+/g, '').toUpperCase();
+  const normalized = /^\d{1,4}$/.test(raw) ? raw.padStart(4, '0') : raw;
+  return PAYROLL_CONCEPT_CATALOG.find((item) =>
+    item.code === normalized || item.codeAliases?.includes(normalized)
+  )?.code || normalized;
+}
+
+function payrollConceptByCode(value: unknown) {
+  const code = canonicalPayrollCode(value);
+  return PAYROLL_CONCEPT_CATALOG.find((item) => item.code === code) || null;
+}
+
 function normalizeSupplemental(items: any) {
   if (!Array.isArray(items)) return [];
   const number = (value: unknown, signed = false) => {
@@ -52,18 +138,9 @@ function normalizeSupplemental(items: any) {
     const n = Number(raw);
     return Number.isFinite(n) && (signed || n >= 0) && Math.abs(n) <= 1000000 ? n : null;
   };
-  const canonicalCode = (value: unknown) => {
-    const raw = String(value ?? '').replace(/\s+/g, '').toUpperCase();
-    return /^\d{1,4}$/.test(raw) ? raw.padStart(4, '0') : raw;
-  };
-  const catalog = [
-    {code:'0001', unitPrice:true}, {code:'0002', unitPrice:true},
-    {code:'0003', unitPrice:true}, {code:'0004', unitPrice:true},
-    {code:'0053', unitPrice:true}, {code:'7001', unitPrice:false},
-    {code:'7016', unitPrice:false}, {code:'7017', unitPrice:false},
-  ];
+  const catalog = PAYROLL_CONCEPT_CATALOG.filter((item) => item.output === 'supplemental');
   return catalog.flatMap(({code, unitPrice}) => {
-    const matches = items.filter((item: any) => canonicalCode(item?.code) === code);
+    const matches = items.filter((item: any) => canonicalPayrollCode(item?.code) === code);
     if (matches.length !== 1) return [];
     const row = {code, quantity:number(matches[0].quantity), amount:number(matches[0].amount, true),
       ...(unitPrice ? {unitPrice:number(matches[0].unitPrice, true)} : {})};
@@ -317,24 +394,32 @@ Reglas estrictas:
       return json({ isDiscountsSection: true, quality: "ok", rows });
     }
 
+    const supplementalCatalog = PAYROLL_CONCEPT_CATALOG
+      .filter((item) => item.output === 'supplemental')
+      .map((item) => `- ${item.code} · ${item.label}${item.codeAliases?.length ? ` (alias OCR de código: ${item.codeAliases.join(', ')})` : ''}.`)
+      .join('\n');
+
     const prompt = `Analiza esta imagen de una nómina. Queremos cruzarla con el "RESUMEN DE VARIABLES DEL MES" del registro de jornada.\n\nDevuelve SOLO JSON válido, sin markdown, con esta forma exacta:\n{"isPayroll":true,"concepts":[{"name":"texto del concepto en nómina","value":"cantidad/unidades"}]}\n\nReglas:\n- Extrae únicamente la CANTIDAD, UNIDADES u HORAS asociadas a cada concepto variable; NO extraigas el importe en euros ni el precio unitario.\n- Lee cada concepto por su nombre real en la nómina, no por posición fija.\n- Conceptos a buscar: Plus rotatividad, 0036 Comidas Can Guasch (también Comidas C. Guasch o PRF COMIDAS C. GUASCH EX.), Plus nocturno, Plus de turno, Plus festivo, Plus de turno 12 horas, Dietas festivos y Pluses vacaciones.\n- Para 0036 Comidas Can Guasch devuelve como value únicamente la cifra visible en su columna CANTIDAD. Por ejemplo, en "0036 | Comidas Can Guasch | 2 | 1,7800 | 3,56", value es "2". No uses IMPORTE DIARIO ni DEVENGOS y no calcules la cantidad dividiendo importes.\n- Distingue "Plus de turno" de "Plus de turno 12 horas".\n- Distingue "Plus festivo" de "Dietas festivos".\n- Si un concepto no aparece en la nómina, NO lo inventes y NO lo incluyas.\n- Conserva decimales con coma cuando existan.\n- Si una fila muestra varias cifras, identifica cuál corresponde a cantidad/unidades/horas y evita importes monetarios.\n- Si no puedes reconocer que la imagen corresponde a una nómina o tabla de conceptos salariales, devuelve {"isPayroll":false,"concepts":[]}.\n- Si una cantidad no es legible con seguridad, omite esa fila.`;
 
     const supplementalPrompt = includeSupplemental ? `
 Además, añade al JSON una propiedad independiente "supplemental": [{"code":"0001","quantity":null,"unitPrice":null,"amount":null},{"code":"7001","quantity":null,"amount":null}]. Los ejemplos solo ilustran la estructura: sustituye los null únicamente por cifras realmente visibles.
 
-Busca exclusivamente estas filas, identificándolas siempre por CÓDIGO + CONCEPTO:
-- 0001 Salario mín. garantizado / Salario mínimo garantizado.
-- 0002 Plus convenio.
-- 0003 Complemento Personal.
-- 0004 Comp. Puesto Trabajo / Complemento Puesto de Trabajo.
-- 0053 Antigüedad.
-- 7001 Difer. Grupo Sup. Salario.
-- 7016 Difer. Grup. Sup. Pl. Rotat.
-- 7017 Difer. Grup. Sup. Pl. Festivo.
+Catálogo adicional por CÓDIGO + CONCEPTO:
+${supplementalCatalog}
 
-Para 0001, 0002, 0003, 0004 y 0053 extrae quantity de CANTIDAD, unitPrice de IMPORTE DIARIO o PRECIO UNITARIO y amount de DEVENGOS. Son conceptos fijos mensuales de la nómina: NO pertenecen a concepts y NO se comparan con el registro de jornada.
-Para 7001, 7016 y 7017 extrae únicamente quantity de CANTIDAD y amount de DEVENGOS. No devuelvas unitPrice para estas filas. Son funciones de grupo superior y tampoco pertenecen a concepts: no las confundas con Plus rotatividad ni Plus festivo normales.
-Conserva signos y hasta cuatro decimales. Usa null para una cifra ausente o ilegible. Si una fila no aparece, omítela de supplemental. No calcules, no completes operaciones, no supongas unidades y no inventes ceros por ausencia. No incluyas datos personales. Si no se reconoce una nómina, supplemental debe ser [].` : '';
+Reglas del catálogo adicional:
+- Extrae quantity de CANTIDAD, unitPrice de IMPORTE DIARIO o PRECIO UNITARIO y amount de DEVENGOS o DEDUCCIONES cuando esas columnas existan.
+- Un concepto válido puede no tener CANTIDAD ni precio unitario. En ese caso conserva quantity o unitPrice como null y devuelve el importe visible; no descartes la fila.
+- 0211 es el código real de PRF Comidas C. Guasch Ex.; admite "2111" únicamente como deformación OCR del código y devuelve code "0211".
+- En 0147 y 0148 el año forma parte del texto y puede cambiar.
+- Mantén exactamente 9A00; no lo conviertas en 9400.
+- Los conceptos IT pueden aparecer simultáneamente y no son excluyentes.
+- Los códigos 7001, 7013, 7016 y 7017 pueden aparecer en "DIF. MESES ANTERIORES", no solo en la tabla principal.
+- No impongas límites específicos al número de hijos, dependientes, comidas, horas, ayudas o beneficiarios.
+- Conserva signos y hasta cuatro decimales. Usa null para una cifra ausente o ilegible.
+- Si una fila no aparece, omítela de supplemental. No calcules, no completes operaciones, no supongas unidades y no inventes ceros por ausencia.
+- Estos conceptos no pertenecen a concepts y no se incorporan a la comparación con el Registro.
+- No incluyas datos personales. Si no se reconoce una nómina, supplemental debe ser [].` : '';
 
     const overtimePrompt = includeOvertime ? `
 Además, añade al JSON una propiedad independiente "overtime": [{"code":"0029","quantity":null,"unitPrice":null}].
