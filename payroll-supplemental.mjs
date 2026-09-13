@@ -96,6 +96,19 @@ const SUPPLEMENTAL_GROUPS = [
   },
 ];
 
+function updateSupplementalVisibility(root) {
+  for (const group of SUPPLEMENTAL_GROUPS) {
+    const container = root.getElementById(`payroll-supplemental-group-${group.key}`);
+    if (container) container.hidden = ![...container.children].some((child) => child.dataset?.supplementalCode && !child.hidden);
+  }
+  const section = root.getElementById('payroll-supplemental');
+  if (section) {
+    const groupsVisible = SUPPLEMENTAL_GROUPS.some((group) => !root.getElementById(`payroll-supplemental-group-${group.key}`)?.hidden);
+    const dynamicVisible = !root.getElementById('payroll-supplemental-dynamic')?.hidden;
+    section.hidden = !groupsVisible && !dynamicVisible;
+  }
+}
+
 function renderSupplementalCard(root, concept, saved, confirmed) {
   const {code, label: conceptLabel, unitPrice: readsUnitPrice, quantity: readsQuantity = true, amountLabel = 'Importe abonado (€)'} = concept;
   const row = saved?.[code] || {};
@@ -169,16 +182,19 @@ export function renderSupplemental(container, saved = {}, confirmed = false) {
   title.textContent = 'Otros conceptos de la nómina';
   section.appendChild(title);
   for (const group of SUPPLEMENTAL_GROUPS) {
+    const groupContainer = root.createElement('div');
+    groupContainer.id = `payroll-supplemental-group-${group.key}`;
     const heading = root.createElement('h4');
     heading.textContent = group.title;
     heading.style.margin = '18px 0 6px';
     const note = root.createElement('p');
     note.textContent = group.note;
     note.style.margin = '0 0 12px';
-    section.append(heading, note);
+    groupContainer.append(heading, note);
     for (const concept of SUPPLEMENTAL_CONCEPTS.filter(item => item.group === group.key)) {
-      section.appendChild(renderSupplementalCard(root, concept, saved, confirmed));
+      groupContainer.appendChild(renderSupplementalCard(root, concept, saved, confirmed));
     }
+    section.appendChild(groupContainer);
   }
   const dynamicHeading = root.createElement('h4');
   dynamicHeading.id = 'payroll-supplemental-dynamic-heading';
@@ -194,6 +210,7 @@ export function renderSupplemental(container, saved = {}, confirmed = false) {
   dynamicContainer.hidden = dynamicHeading.hidden;
   section.append(dynamicHeading, dynamicContainer);
   container.appendChild(section);
+  updateSupplementalVisibility(root);
 }
 
 export function readSupplemental(root = document) {
@@ -272,4 +289,5 @@ export function applySupplemental(items, root = document, options = {}) {
   const hasVisibleDynamic = [...(dynamicContainer?.children || [])].some((card) => !card.hidden);
   if (dynamicContainer) dynamicContainer.hidden = !hasVisibleDynamic;
   if (dynamicHeading) dynamicHeading.hidden = !hasVisibleDynamic;
+  updateSupplementalVisibility(root);
 }

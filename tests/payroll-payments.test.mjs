@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { extractPaymentBreakdown, hasCompletePaymentBreakdown, relatePaymentAdjustment } from '../payroll-payments.mjs';
+import { extractPaymentBreakdown, hasCompletePaymentBreakdown, hasValidPayrollCrop, payrollRegularizationMonth, payrollRegularizationMatchesMonth, relatePaymentAdjustment } from '../payroll-payments.mjs';
 
 test('noviembre 2025: cantidad pendiente negativa se relaciona con NOPAGA festivo del mes', () => {
   const breakdown = extractPaymentBreakdown(`
@@ -60,6 +60,23 @@ test('rechaza un recorte que empieza en devengos y acepta el bloque completo', (
   `), true);
 });
 
+test('R.ENERO con diferencias anteriores se acepta solo en el mes regularizado', () => {
+  const januaryAdjustment = `
+    R.ENERO
+    DIF. MESES ANTERIORES
+    CODIGO CONCEPTO DEVENGOS DEDUCCIONES
+    /552 LIQ. DIF. MESES ANTERIORES 125,40
+  `;
+  assert.equal(hasCompletePaymentBreakdown(januaryAdjustment), false);
+  assert.equal(payrollRegularizationMonth(januaryAdjustment), 1);
+  assert.equal(hasValidPayrollCrop(januaryAdjustment), true);
+  assert.equal(payrollRegularizationMatchesMonth(januaryAdjustment, 1), true);
+  assert.equal(payrollRegularizationMatchesMonth(januaryAdjustment, 3), false);
+  assert.equal(payrollRegularizationMonth('R.ENERO\nCODIGO CONCEPTO DEVENGOS'), null,'the month label alone is not enough');
+  assert.equal(payrollRegularizationMonth('DIF. MESES ANTERIORES\nCODIGO CONCEPTO DEVENGOS'), null,'differences without a target month are not enough');
+  assert.equal(payrollRegularizationMonth('R.FEB\nDIF MESES ANTERIORES\nSALARIO 10,00'), 2,'other months are not hard-coded to January');
+});
+
 test('guarda transferencias numeradas futuras sin inventar cantidad pendiente', () => {
   const breakdown = extractPaymentBreakdown(`
     DESGLOSE PAGOS
@@ -84,5 +101,7 @@ test('el flujo existente amplía el recorte y guarda la información en el recib
   assert.match(html, /paymentInfo: documents\.payroll\.paymentInfo/);
   assert.match(html, /await previousMonthTimesheetValues\(\)/);
   assert.match(html, /missing-payment-breakdown/);
-  assert.match(html, /!hasCompletePaymentBreakdown\(recognizedText\)/);
+  assert.match(html, /!hasValidPayrollCrop\(recognizedText\)/);
+  assert.match(html, /!payrollRegularizationMatchesMonth\(recognizedText, Number\(month\.value\) \+ 1\)/);
+  assert.match(html, /wrong-regularization-period/);
 });

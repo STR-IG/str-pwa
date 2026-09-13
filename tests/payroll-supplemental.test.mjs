@@ -55,6 +55,7 @@ test('actual supplemental UI reads, allows correction, protects manual edits, re
   assert.equal(root.getElementById('supplemental-0001-unitPrice').value,'56,531');
   assert.equal(root.getElementById('supplemental-0053-amount').value,'30,3');
   assert.equal(root.getElementById('supplemental-7001-amount').value,'119,9');
+  assert.equal(root.getElementById('payroll-supplemental-group-higherRole').hidden,false);
   const qty=root.getElementById('supplemental-7001-quantity');qty.value='6';qty.listeners.input();
   applySupplemental(rows,root);assert.equal(qty.value,'6');
   const saved=readSupplemental(root);assert.equal(saved['7001'].quantity,6);
@@ -137,6 +138,7 @@ test('0038 reads an amount-only deduction and a completed read separates absent 
   assert.equal(root.getElementById('supplemental-7016-status').closest().hidden,true);
   assert.equal(root.getElementById('supplemental-7017-status').value,'unknown');
   assert.equal(root.getElementById('supplemental-7017-status').closest().hidden,false);
+  assert.equal(root.getElementById('payroll-supplemental-group-higherRole').hidden,false,'an ambiguous row keeps its section visible');
   const saved=readSupplemental(root);
   assert.equal(saved['0038'].status,'present');
   assert.equal(saved['0038'].amount,12);
@@ -194,6 +196,7 @@ test('septiembre 2022 keeps present concepts, hides absent cards and preserves c
   assert.equal(root.getElementById('supplemental-0038-amount').value,'12');
   assert.equal(root.getElementById('supplemental-4002-amount').value,'13,09');
   for(const code of ['7001','7016','7017']) assert.equal(root.getElementById(`supplemental-${code}-status`).closest().hidden,true);
+  assert.equal(root.getElementById('payroll-supplemental-group-higherRole').hidden,true);
   assert.equal(root.getElementById('payroll-overtime').hidden,true);
   assert.equal(readOvertime(root).status,'absent');
   assert.equal(readSupplemental(root)['4002'].amount,13.09);

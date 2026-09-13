@@ -2150,7 +2150,7 @@
     import { closeMonth, readMonthClosure } from './payroll-month.mjs?v=1';
     import { renderSupplemental, readSupplemental } from './payroll-supplemental.mjs?v=3';
     import { renderOvertime, readOvertime } from './payroll-overtime.mjs?v=2';
-    import { extractPaymentBreakdown, relatePaymentAdjustment, formatPaymentMoney, hasCompletePaymentBreakdown } from './payroll-payments.mjs?v=4';
+    import { extractPaymentBreakdown, relatePaymentAdjustment, formatPaymentMoney, hasValidPayrollCrop, payrollRegularizationMatchesMonth } from './payroll-payments.mjs?v=5';
     import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 
     const SUPABASE_URL = 'https://icneigdnuntzugisexaz.supabase.co';
@@ -3716,6 +3716,11 @@
           title: '⚠️ Falta la parte superior de la nómina',
           message: 'Ajusta el recorte para incluir también el bloque “Desglose pagos”.'
         },
+        'wrong-regularization-period': {
+          icon: '!',
+          title: 'Esta regularización corresponde a otro mes',
+          message: 'Vuelve al resumen y selecciona el mes indicado en la nómina antes de añadirla como otro recibo.'
+        },
         failed: {
           icon: '!',
           title: 'No hemos podido comprobar la imagen',
@@ -4737,9 +4742,11 @@
               ? 'blocked'
               : (detectedKind && detectedKind !== activeKind
                 ? 'wrong-document'
-                : (activeKind === 'payroll' && !hasCompletePaymentBreakdown(recognizedText)
-                  ? 'missing-payment-breakdown'
-                  : 'passed')))
+                : (activeKind === 'payroll' && !payrollRegularizationMatchesMonth(recognizedText, Number(month.value) + 1)
+                  ? 'wrong-regularization-period'
+                  : (activeKind === 'payroll' && !hasValidPayrollCrop(recognizedText)
+                    ? 'missing-payment-breakdown'
+                    : 'passed'))))
         );
       } catch {
         if (scanVersion !== privacyScanVersion || workingFile !== file) return;
@@ -4783,7 +4790,7 @@
       const hasImage = Boolean(workingUrl && (workingFile || workingSaved));
       const needsUpload = Boolean(workingFile && !workingSaved);
       const checkingPrivacy = needsUpload && privacyScanState === 'checking';
-      const privacyBlocked = needsUpload && ['blocked', 'wrong-document', 'missing-payment-breakdown', 'failed'].includes(privacyScanState);
+      const privacyBlocked = needsUpload && ['blocked', 'wrong-document', 'missing-payment-breakdown', 'wrong-regularization-period', 'failed'].includes(privacyScanState);
       const readyToUpload = needsUpload && privacyConfirmation.checked && privacyScanState === 'passed';
       preview.hidden = !hasImage;
       preview.classList.toggle('scan-blocked', privacyBlocked);

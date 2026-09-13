@@ -54,6 +54,32 @@ export function hasCompletePaymentBreakdown(text) {
   return Boolean(endMatch && endMatch.index > 0);
 }
 
+const REGULARIZATION_MONTHS = [
+  ['ENERO', 'ENE'], ['FEBRERO', 'FEB'], ['MARZO', 'MAR'], ['ABRIL', 'ABR'],
+  ['MAYO', 'MAY'], ['JUNIO', 'JUN'], ['JULIO', 'JUL'], ['AGOSTO', 'AGO'],
+  ['SEPTIEMBRE', 'SETIEMBRE', 'SEP', 'SET'], ['OCTUBRE', 'OCT'],
+  ['NOVIEMBRE', 'NOV'], ['DICIEMBRE', 'DIC']
+];
+
+export function payrollRegularizationMonth(text) {
+  const normalized = normalizedLine(text);
+  if (!/DIF\.?\s+MESES?\s+ANTERIORES?/.test(normalized)) return null;
+  if (!/(?:DEVENGOS?|DEDUCCIONES?|CODIGO\s+CONCEPTO|SALARIO|PLUS|CUOTA)/.test(normalized)) return null;
+  const label = /\b(?:R|REG|REGULARIZACION)\.?\s*(?:DE\s+)?([A-Z]+)\b/.exec(normalized)?.[1];
+  if (!label) return null;
+  const index = REGULARIZATION_MONTHS.findIndex((aliases) => aliases.includes(label));
+  return index < 0 ? null : index + 1;
+}
+
+export function hasValidPayrollCrop(text) {
+  return hasCompletePaymentBreakdown(text) || payrollRegularizationMonth(text) !== null;
+}
+
+export function payrollRegularizationMatchesMonth(text, selectedMonth) {
+  const regularizedMonth = payrollRegularizationMonth(text);
+  return regularizedMonth === null || regularizedMonth === Number(selectedMonth);
+}
+
 export function extractPaymentBreakdown(texts) {
   const found = { transfers: [], transfer1: null, transfer2: null, pendingAmount: null, netTotal: null };
   const transferNumbers = new Set();
