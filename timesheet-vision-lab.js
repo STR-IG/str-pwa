@@ -23,14 +23,14 @@
     return String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').replace(/\s+/g, ' ').trim();
   }
 
-  function isTheoreticalPc30(value) {
+  function isTheoreticalPc(value) {
     const n = norm(value);
-    return /\bteor(?:ico)?\b/.test(n) && /\bpc\s*3[0o]\b/.test(n);
+    return /\bteor(?:ico)?\b/.test(n) && /\bpc\s*(?:1[0o]|3[0o])\b/.test(n);
   }
 
   function conceptKey(name) {
     const n = norm(name);
-    if (!n || isTheoreticalPc30(n)) return '';
+    if (!n || isTheoreticalPc(n)) return '';
     if ((n.includes('turno') || n.includes('turo')) && n.includes('12')) return 'shift12';
     if (n.includes('dieta') && n.includes('festiv')) return 'holidayDiets';
     if (n.includes('comida') || n.includes('guasch')) return 'meals';
@@ -92,6 +92,8 @@
     Object.entries(FIELD_MAP).forEach(([key, id]) => {
       const input = document.getElementById(id);
       if (!input) return;
+      const card = input.closest?.('.analysis-field');
+      if (card) card.hidden = false;
       previousValues.set(key, input.value.trim());
       input.value = '';
       input.placeholder = 'No leído automáticamente';
@@ -107,6 +109,8 @@
       const input = document.getElementById(id);
       const value = String(item?.value ?? '').trim();
       if (!input) continue;
+      const card = input.closest?.('.analysis-field');
+      if (card) card.hidden = false;
       seen.add(key);
       if (!value) {
         markState(input, 'COMPROBAR', false);
@@ -133,11 +137,13 @@
         count += 1;
         return;
       }
-      input.value = '0';
+      input.value = '';
       input.placeholder = 'No aplica';
       input.dataset.labAutoRead = 'absent';
       input.dispatchEvent(new Event('input', { bubbles: true }));
       markState(input, 'NO APARECE ESTE MES', true);
+      const card = input.closest?.('.analysis-field');
+      if (card) card.hidden = true;
     });
     const counter = document.getElementById('analysis-detected-count');
     if (counter) counter.textContent = `${count} cantidades leídas automáticamente`;

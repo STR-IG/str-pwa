@@ -2128,6 +2128,20 @@
 
         </div>
 
+        <div id="regularization-period" class="privacy-scan passed" hidden>
+          <span class="privacy-scan-icon" aria-hidden="true">↩</span>
+          <div>
+            <strong>Nómina de regularización</strong>
+            <p>Indica el mes al que corresponde. Se guardará como un recibo adicional de ese mes.</p>
+            <div class="crop-actions">
+              <select id="regularization-month" aria-label="Mes de la regularización"></select>
+              <input id="regularization-year" type="number" min="2000" max="2100" aria-label="Año de la regularización">
+              <button id="confirm-regularization-period" class="secondary" type="button">Confirmar mes</button>
+            </div>
+            <p id="regularization-period-status"></p>
+          </div>
+        </div>
+
         <div id="image-preview" class="preview" hidden>
           <img id="preview-image" alt="Vista previa de la imagen seleccionada">
           <div class="preview-label"><span aria-hidden="true">✓</span><span id="preview-status-text">Imagen lista para guardar</span></div>
@@ -2150,7 +2164,7 @@
     import { closeMonth, readMonthClosure } from './payroll-month.mjs?v=1';
     import { renderSupplemental, readSupplemental } from './payroll-supplemental.mjs?v=3';
     import { renderOvertime, readOvertime } from './payroll-overtime.mjs?v=2';
-    import { extractPaymentBreakdown, relatePaymentAdjustment, formatPaymentMoney, hasValidPayrollCrop, payrollRegularizationMatchesMonth } from './payroll-payments.mjs?v=5';
+    import { extractPaymentBreakdown, relatePaymentAdjustment, formatPaymentMoney, hasValidPayrollCrop, payrollRegularizationMonth } from './payroll-payments.mjs?v=6';
     import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 
     const SUPABASE_URL = 'https://icneigdnuntzugisexaz.supabase.co';
@@ -2277,6 +2291,11 @@
     const privacyScanIcon = document.getElementById('privacy-scan-icon');
     const privacyScanTitle = document.getElementById('privacy-scan-title');
     const privacyScanMessage = document.getElementById('privacy-scan-message');
+    const regularizationPeriod = document.getElementById('regularization-period');
+    const regularizationMonth = document.getElementById('regularization-month');
+    const regularizationYear = document.getElementById('regularization-year');
+    const confirmRegularizationPeriod = document.getElementById('confirm-regularization-period');
+    const regularizationPeriodStatus = document.getElementById('regularization-period-status');
     const preview = document.getElementById('image-preview');
     const previewImage = document.getElementById('preview-image');
     const fileError = document.getElementById('file-error');
@@ -2489,6 +2508,8 @@
     let cropRect = { x: 0, y: 0.14, width: 1, height: 0.86 };
     let cropGesture = null;
     let workingOcrText = '';
+    let detectedRegularizationMonth = null;
+    let confirmedRegularizationPeriod = null;
     let ocrWorkerPromise = null;
     let ocrQueue = Promise.resolve();
 
@@ -2501,6 +2522,10 @@
     }
     month.value = String(now.getMonth());
     year.value = String(now.getFullYear());
+    monthNames.forEach((name, index) => {
+      const option = document.createElement('option'); option.value = String(index + 1);
+      option.textContent = `${name[0].toUpperCase()}${name.slice(1)}`; regularizationMonth.appendChild(option);
+    });
     if (isAdminMode) {
       const selectedAdminYear = Number(query.get('adminYear'));
       const selectedAdminMonth = Number(query.get('adminMonth'));
@@ -2769,6 +2794,9 @@
       if (timesheetValues.size) confirmedTimesheetAnalyses.set(periodKey(), timesheetValues);
       if (payrollValues.size) confirmedPayrollAnalyses.set(periodKey(), payrollValues);
       documents.payroll.paymentInfo = review.paymentInfo || null;
+      documents.payroll.documentType = review.documentType || '';
+      documents.payroll.attributionPeriod = review.attributionPeriod || null;
+      documents.payroll.paymentPeriod = review.paymentPeriod || null;
       if (review.schedule && typeof review.schedule === 'object') {
         workSchedules.set(periodKey(), review.schedule);
       }
@@ -3450,14 +3478,14 @@
         .trim();
     }
 
-    function isTheoreticalPc30(text) {
+    function isTheoreticalPc(text) {
       const normalized = normalizeOcrLine(text);
-      return /\bTEOR(?:ICO)?\b/.test(normalized) && /\bPC\s*3[0O]\b/.test(normalized);
+      return /\bTEOR(?:ICO)?\b/.test(normalized) && /\bPC\s*(?:1[0O]|3[0O])\b/.test(normalized);
     }
 
     function matchTimesheetVariable(line) {
       const normalized = normalizeOcrLine(line);
-      if (isTheoreticalPc30(normalized)) return null;
+      if (isTheoreticalPc(normalized)) return null;
       for (const key of TIMESHEET_MATCH_ORDER) {
         const variable = TIMESHEET_VARIABLES.find((item) => item.key === key);
         if (variable?.patterns.some((pattern) => pattern.test(normalized))) return variable;
@@ -4379,8 +4407,9 @@
         const result = extracted?.get(key);
         const payrollValue = typeof result === 'string' ? result : (result?.value || '');
         const registerValue = timesheetValues.get(key);
+        if (registerValue === undefined || String(registerValue).trim() === '') return;
         const registerQuantity = parseQuantityValue(registerValue);
-        const absentThisMonth = payrollValue === '' && (registerValue === undefined || registerQuantity === 0);
+        const absentThisMonth = payrollValue === '' && registerQuantity === 0;
         if (payrollValue !== '') detected += 1;
 
         const card = document.createElement('div');
@@ -4674,6 +4703,11 @@
         payroll: mapToPlainObject(payrollValues),
         supplemental,
         overtime,
+        ...(documents.payroll.documentType === 'regularization' ? {
+          documentType: 'regularization',
+          attributionPeriod: documents.payroll.attributionPeriod,
+          paymentPeriod: documents.payroll.paymentPeriod
+        } : {}),
         ...(documents.payroll.paymentInfo ? { paymentInfo: documents.payroll.paymentInfo } : {}),
         ...(Array.isArray(monthlyReviews.get(periodKey())?.discounts)
           ? { discounts: monthlyReviews.get(periodKey()).discounts }
@@ -4735,6 +4769,14 @@
         workingOcrText = recognizedText;
         const readableCharacters = normalizeOcrText(recognizedText).replace(/[^A-Z0-9]/g, '').length;
         const detectedKind = detectDocumentKind(recognizedText);
+        detectedRegularizationMonth = activeKind === 'payroll' ? payrollRegularizationMonth(recognizedText) : null;
+        confirmedRegularizationPeriod = null;
+        regularizationPeriod.hidden = detectedRegularizationMonth === null;
+        if (detectedRegularizationMonth !== null) {
+          regularizationMonth.value = String(detectedRegularizationMonth);
+          regularizationYear.value = year.value;
+          regularizationPeriodStatus.textContent = `Confirma ${monthNames[detectedRegularizationMonth - 1]} de ${year.value} antes de guardar.`;
+        }
         setPrivacyScanState(
           readableCharacters < 8
             ? 'failed'
@@ -4742,11 +4784,9 @@
               ? 'blocked'
               : (detectedKind && detectedKind !== activeKind
                 ? 'wrong-document'
-                : (activeKind === 'payroll' && !payrollRegularizationMatchesMonth(recognizedText, Number(month.value) + 1)
-                  ? 'wrong-regularization-period'
-                  : (activeKind === 'payroll' && !hasValidPayrollCrop(recognizedText)
+                : (activeKind === 'payroll' && !hasValidPayrollCrop(recognizedText)
                     ? 'missing-payment-breakdown'
-                    : 'passed'))))
+                    : 'passed')))
         );
       } catch {
         if (scanVersion !== privacyScanVersion || workingFile !== file) return;
@@ -4765,6 +4805,9 @@
       savingDocument = false;
       closeTimesheetCrop();
       setPrivacyScanState('idle');
+      detectedRegularizationMonth = null;
+      confirmedRegularizationPeriod = null;
+      regularizationPeriod.hidden = true;
       privacyConfirmation.checked = false;
       fileInput.value = '';
       selectImageButton.disabled = true;
@@ -4791,7 +4834,8 @@
       const needsUpload = Boolean(workingFile && !workingSaved);
       const checkingPrivacy = needsUpload && privacyScanState === 'checking';
       const privacyBlocked = needsUpload && ['blocked', 'wrong-document', 'missing-payment-breakdown', 'wrong-regularization-period', 'failed'].includes(privacyScanState);
-      const readyToUpload = needsUpload && privacyConfirmation.checked && privacyScanState === 'passed';
+      const regularizationReady = detectedRegularizationMonth === null || Boolean(confirmedRegularizationPeriod);
+      const readyToUpload = needsUpload && privacyConfirmation.checked && privacyScanState === 'passed' && regularizationReady;
       preview.hidden = !hasImage;
       preview.classList.toggle('scan-blocked', privacyBlocked);
       documentActions.hidden = !hasImage;
@@ -4821,7 +4865,7 @@
             : (privacyBlocked
               ? 'Imagen no aceptada: recórtala o cámbiala'
               : (privacyScanState === 'passed'
-                ? 'Control superado: imagen lista para guardar'
+                ? (regularizationReady ? 'Control superado: imagen lista para guardar' : 'Confirma el mes de la regularización')
                 : 'Imagen pendiente de comprobación')));
       } else {
         previewImage.removeAttribute('src');
@@ -5053,6 +5097,62 @@
       return;
     }
 
+    confirmRegularizationPeriod.addEventListener('click', () => {
+      const selectedMonth = Number(regularizationMonth.value);
+      const selectedYear = Number(regularizationYear.value);
+      if (!Number.isInteger(selectedMonth) || selectedMonth < 1 || selectedMonth > 12 || !Number.isInteger(selectedYear) || selectedYear < 2000 || selectedYear > 2100) {
+        regularizationPeriodStatus.textContent = 'Revisa el mes y el año.';
+        confirmedRegularizationPeriod = null;
+        renderWorkingPreview();
+        return;
+      }
+      confirmedRegularizationPeriod = {
+        month: selectedMonth, year: selectedYear,
+        paymentMonth: Number(month.value) + 1, paymentYear: Number(year.value)
+      };
+      regularizationPeriodStatus.textContent = `Confirmado: ${monthNames[selectedMonth - 1]} de ${selectedYear}.`;
+      renderWorkingPreview();
+    });
+
+    async function prepareRegularizationReceipt() {
+      const target = confirmedRegularizationPeriod;
+      if (!target) return;
+      if (target.prepared) return;
+      const targetMonthFolder = `${currentUserId}/${target.year}/${String(target.month).padStart(2, '0')}`;
+      const receipts = await monthReceipts(storageBucket, targetMonthFolder);
+      let source = null;
+      for (const receipt of receipts) {
+        if (!receipt.files.some(item => item.id && item.name === 'timesheet')) continue;
+        const reviewResult = receipt.files.some(item => item.id && item.name === 'review')
+          ? await storageBucket.download(`${receipt.folder}/review`) : null;
+        let review = null;
+        try { review = reviewResult?.data?.text ? JSON.parse(await reviewResult.data.text()) : null; } catch {}
+        if (review?.timesheet && Object.keys(review.timesheet).length) { source = { receipt, review }; break; }
+      }
+      if (!source) throw new Error('TARGET_TIMESHEET_UNAVAILABLE');
+      const downloaded = await storageBucket.download(`${source.receipt.folder}/timesheet`);
+      if (downloaded.error || !downloaded.data) throw downloaded.error || new Error('TARGET_TIMESHEET_UNAVAILABLE');
+      const nextReceiptId = newReceiptId();
+      const nextTimesheetPath = `${targetMonthFolder}/${nextReceiptId}/timesheet`;
+      const copied = await storageBucket.upload(nextTimesheetPath, downloaded.data, {
+        cacheControl: '0', contentType: downloaded.data.type || 'image/jpeg', upsert: false
+      });
+      if (copied.error) throw copied.error;
+
+      const selectedFile = workingFile; const selectedUrl = workingUrl; const selectedOcr = workingOcrText;
+      workingFile = null; workingUrl = ''; clearAllDocuments();
+      ensureYearOption(target.year); year.value = String(target.year); month.value = String(target.month - 1);
+      activeReceiptId = nextReceiptId; receiptCreated = receiptCreatedAt(nextReceiptId);
+      Object.assign(documents.timesheet, {
+        file: null, blob: downloaded.data, url: URL.createObjectURL(downloaded.data), ocrText: '',
+        confirmed: true, saved: true, path: nextTimesheetPath
+      });
+      confirmedTimesheetAnalyses.set(periodKey(), plainObjectToMap(source.review.timesheet));
+      if (source.review.schedule) saveWorkSchedule(source.review.schedule);
+      activeKind = 'payroll'; workingFile = selectedFile; workingUrl = selectedUrl; workingOcrText = selectedOcr; workingSaved = false;
+      target.prepared = true;
+    }
+
     async function confirmImage() {
       if (!activeKind || savingDocument) return;
 
@@ -5080,9 +5180,10 @@
       selectImageButton.disabled = true;
       renderWorkingPreview();
 
-      const path = storagePath(activeKind);
       let error;
       try {
+        if (activeKind === 'payroll' && confirmedRegularizationPeriod) await prepareRegularizationReceipt();
+        const path = storagePath(activeKind);
         if (activeKind === 'payroll') {
           await assertUniquePayroll(storageBucket, monthFolder(), workingFile, path, payrollSourceHash);
         }
@@ -5101,7 +5202,9 @@
         savingDocument = false;
         fileError.textContent = error.message === 'DUPLICATE_PAYROLL'
           ? 'Esta nómina ya está guardada en otro recibo de este mes. Puedes abrirla desde Mi historial.'
-          : 'No se ha podido comprobar o guardar la imagen. Comprueba la conexión e inténtalo de nuevo.';
+          : (error.message === 'TARGET_TIMESHEET_UNAVAILABLE'
+            ? 'Para guardar la regularización, primero debe existir un Registro de jornada confirmado en el mes elegido.'
+            : 'No se ha podido comprobar o guardar la imagen. Comprueba la conexión e inténtalo de nuevo.');
         fileError.hidden = false;
         renderWorkingPreview();
         return;
@@ -5117,7 +5220,12 @@
       document.ocrText = workingOcrText;
       document.confirmed = true;
       document.saved = true;
-      document.path = path;
+      document.path = storagePath(activeKind);
+      if (activeKind === 'payroll' && confirmedRegularizationPeriod) {
+        document.documentType = 'regularization';
+        document.attributionPeriod = { year: Number(year.value), month: Number(month.value) + 1 };
+        document.paymentPeriod = { year: confirmedRegularizationPeriod.paymentYear, month: confirmedRegularizationPeriod.paymentMonth };
+      }
       workingFile = null;
       workingSaved = true;
       adminReplacementKind = '';

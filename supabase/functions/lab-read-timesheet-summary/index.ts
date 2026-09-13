@@ -22,9 +22,9 @@ function normalizeConcept(value: unknown) {
     .trim();
 }
 
-function isTheoreticalPc30(value: unknown) {
+function isTheoreticalPc(value: unknown) {
   const normalized = normalizeConcept(value);
-  return /\bteor(?:ico)?\b/.test(normalized) && /\bpc\s*3[0o]\b/.test(normalized);
+  return /\bteor(?:ico)?\b/.test(normalized) && /\bpc\s*(?:1[0o]|3[0o])\b/.test(normalized);
 }
 
 function normalizeValue(value: unknown) {
@@ -106,9 +106,9 @@ Reglas:
 - La cantidad es la cifra de la columna CANTIDAD de esa misma fila.
 - Conserva decimales con coma si aparecen (ej. 57,25 o 42,98).
 - Si un concepto no aparece ese mes, NO lo inventes y NO lo incluyas.
-- EXCLUYE cualquier fila cuyo nombre contenga a la vez una variante de "teór/teor/teórico/teorico" y "PC30". Son conceptos teóricos y NO son el plus ordinario.
-- Aunque aparezca una fila teórica PC30, continúa recorriendo toda la tabla y devuelve la fila ordinaria independiente del mismo plus si existe. Ejemplo: ignora "Plus Nocturno teór. PC30 1,25" y devuelve "Plus Nocturno 56".
-- Esta exclusión PC30 NO se aplica a los conceptos NOPAGA PNocturn teór o NOPAGA PFestivo teór.
+- EXCLUYE cualquier fila cuyo nombre contenga a la vez una variante de "teór/teor/teórico/teorico" y "PC10" o "PC30". Son conceptos teóricos y NO son el plus ordinario.
+- Aunque aparezca una fila teórica PC10 o PC30, continúa recorriendo toda la tabla y devuelve la fila ordinaria independiente del mismo plus si existe. Ejemplo: ignora "Plus Nocturno teór. PC10 1,25" y devuelve "Plus Nocturno 48".
+- Esta exclusión NO se aplica a los conceptos NOPAGA PNocturn teór o NOPAGA PFestivo teór que no lleven PC10/PC30.
 - Distingue "Plus de turno" de "Plus de turno 12 horas".
 - Distingue "Plus Festivo" de "Dietas Festivos".
 - Pueden aparecer, entre otros: Plus Festivo, Plus rotatividad, Plus de turno, Comidas Can Guasch, Plus Nocturno, Plus de turno 12 horas, Dietas Festivos, Pluses Vacaciones y conceptos NOPAGA.
@@ -152,7 +152,7 @@ Reglas:
         normalizedName: normalizeConcept(item?.name),
         value: normalizeValue(item?.value),
       }))
-      .filter((item: any) => item.name && item.value && !isTheoreticalPc30(item.name));
+      .filter((item: any) => item.name && item.value && !isTheoreticalPc(item.name));
 
     return json({ isMonthlySummary: true, concepts });
   } catch (error) {

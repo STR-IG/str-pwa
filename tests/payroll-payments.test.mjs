@@ -60,7 +60,7 @@ test('rechaza un recorte que empieza en devengos y acepta el bloque completo', (
   `), true);
 });
 
-test('R.ENERO con diferencias anteriores se acepta solo en el mes regularizado', () => {
+test('R.ENERO con diferencias anteriores se detecta y puede atribuirse desde el mes de pago', () => {
   const januaryAdjustment = `
     R.ENERO
     DIF. MESES ANTERIORES
@@ -102,6 +102,8 @@ test('el flujo existente amplía el recorte y guarda la información en el recib
   assert.match(html, /await previousMonthTimesheetValues\(\)/);
   assert.match(html, /missing-payment-breakdown/);
   assert.match(html, /!hasValidPayrollCrop\(recognizedText\)/);
-  assert.match(html, /!payrollRegularizationMatchesMonth\(recognizedText, Number\(month\.value\) \+ 1\)/);
-  assert.match(html, /wrong-regularization-period/);
+  assert.match(html, /detectedRegularizationMonth = activeKind === 'payroll' \? payrollRegularizationMonth\(recognizedText\) : null/);
+  assert.match(html, /confirmRegularizationPeriod\.addEventListener/);
+  assert.match(html, /documentType: 'regularization'/);
+  assert.match(html, /prepareRegularizationReceipt/);
 });

@@ -6,7 +6,7 @@ import { webcrypto } from 'node:crypto';
 import { newReceiptId, receiptCreatedAt, monthReceipts, assertUniquePayroll, sha256, listFiles } from '../payroll-receipts.mjs';
 import { readSupplemental } from '../payroll-supplemental.mjs';
 import { readOvertime } from '../payroll-overtime.mjs';
-import { hasCompletePaymentBreakdown, hasValidPayrollCrop, payrollRegularizationMatchesMonth } from '../payroll-payments.mjs';
+import { hasCompletePaymentBreakdown, hasValidPayrollCrop, payrollRegularizationMonth } from '../payroll-payments.mjs';
 
 const html = readFileSync(new URL('../revisa-tu-nomina-base.html', import.meta.url), 'utf8');
 const source = html.match(/<script type="module">([\s\S]*?)<\/script>/)[1].replace(/\r/g, '');
@@ -71,7 +71,7 @@ function harness(bucket) {
     readSupplemental: () => readSupplemental({getElementById: id => nodes.get(id)}),
     readOvertime: () => readOvertime({getElementById: id => nodes.get(id)}),
     parseQuantityValue: Number, formatQuantity: String,
-    hasCompletePaymentBreakdown, hasValidPayrollCrop, payrollRegularizationMatchesMonth,
+    hasCompletePaymentBreakdown, hasValidPayrollCrop, payrollRegularizationMonth,
     document: { getElementById(id) { if (!nodes.has(id)) nodes.set(id, element()); return nodes.get(id); } }
   });
   for (const key of ['addMonthlyPayroll','addPeriodPayroll','addDocumentPayroll','historyCount','historyLoading','historyError','historyList','historyEmpty','refreshHistoryButton','comparisonError','confirmComparisonButton','comparisonSaved','comparisonResult','comparisonDetectedCount']) ctx[key] = element();
@@ -84,6 +84,7 @@ function documentHarness(bucket) {
   Object.assign(app, {
     activeKind: '', workingFile: null, workingUrl: '', workingSaved: false, workingOcrText: '',
     privacyScanState: 'idle', periodLabel: () => 'agosto de 2026', monthlyIncidentCount: () => 0,
+    detectedRegularizationMonth: null, confirmedRegularizationPeriod: null,
     window: { scrollTo() {} }, resetDocumentScreen() {},
     documentCopy: { timesheet: {}, payroll: {} },
     ALLOWED_IMAGE_TYPES: new Set(['image/png']), MAX_IMAGE_BYTES: 15 * 1024 * 1024,
@@ -96,6 +97,7 @@ function documentHarness(bucket) {
     'privacyConfirmation','fileInput','selectImageButton','selectHint','preview','previewImage','previewStatusText',
     'fileError','documentActions','changeImageButton','confirmImageButton','startAnalysisButton',
     'periodScreen','historyScreen','analysisScreen','comparisonScreen','documentScreen','topBack']) app[key] = element();
+  for (const key of ['regularizationPeriod','regularizationMonth','regularizationYear','confirmRegularizationPeriod','regularizationPeriodStatus']) app[key] = element();
   for (const name of ['clearAllDocuments','revokeWorkingUrlIfTemporary','invalidateStoredReviewIfNeeded',
     'updatePeriodCards','renderWorkingPreview','openDocument','chooseImage','showSelectedFile','confirmImage']) vm.runInContext(extract(name), app);
   const bindings = source.slice(source.indexOf("    addMonthlyPayroll.addEventListener('click'"), source.indexOf("    replaceWrongPayrollButton.addEventListener"));

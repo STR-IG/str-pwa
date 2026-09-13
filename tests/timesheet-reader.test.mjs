@@ -18,7 +18,7 @@ const functions = [
   'normalizeOcrText',
   'detectDocumentKind',
   'normalizeOcrLine',
-  'isTheoreticalPc30',
+  'isTheoreticalPc',
   'matchTimesheetVariable',
   'numericCandidates',
   'normalizeDetectedQuantity',
@@ -112,7 +112,27 @@ test('enero 2026 excluye los teóricos PC30 y conserva solo los pluses ordinario
   });
 });
 
-test('visión ignora teóricos PC30 antes de clasificar conceptos ordinarios', () => {
+test('febrero 2023 excluye PC10 y conserva todas las cantidades ordinarias', () => {
+  const values = Object.fromEntries([...context.parseTimesheetText(`
+    RESUMEN DE VARIABLES DEL MES CONCEPTO CANTIDAD
+    Plus de turno 12 horas 2
+    Dietas Festivos 2
+    Plus Festivo 30
+    Plus rotatividad teór. PC10 8
+    Plus rotatividad 22
+    Plus de turno teór. PC10 5
+    Plus de turno 14
+    Comidas Can Guasch 7
+    Plus Nocturno teór. PC10 1,25
+    Plus Nocturno 48
+  `)].map(([key, result]) => [key, result.value]));
+  assert.deepEqual(values, {
+    shift12: '2', holidayDiets: '2', holiday: '30', rotation: '22',
+    shift: '14', meals: '7', night: '48'
+  });
+});
+
+test('visión ignora teóricos PC10 y PC30 antes de clasificar conceptos ordinarios', () => {
   const vision = readFileSync(new URL('../timesheet-vision-lab.js', import.meta.url), 'utf8');
   const extractVision = (name) => {
     const start = vision.indexOf(`  function ${name}(`);
@@ -121,22 +141,24 @@ test('visión ignora teóricos PC30 antes de clasificar conceptos ordinarios', (
   };
   const visionContext = vm.createContext({ String });
   vm.runInContext([
-    extractVision('norm'), extractVision('isTheoreticalPc30'), extractVision('conceptKey')
+    extractVision('norm'), extractVision('isTheoreticalPc'), extractVision('conceptKey')
   ].join('\n'), visionContext);
 
   assert.equal(visionContext.conceptKey('Plus Nocturno teór. PC30'), '');
+  assert.equal(visionContext.conceptKey('Plus rotatividad teórico PC10'), '');
+  assert.equal(visionContext.conceptKey('Plus de turno teór. PC1O'), '');
   assert.equal(visionContext.conceptKey('Plus Festivo teorico PC30'), '');
   assert.equal(visionContext.conceptKey('Plus Nocturno'), 'night');
   assert.equal(visionContext.conceptKey('Plus Festivo'), 'holiday');
   assert.equal(visionContext.conceptKey('NOPAGA PNocturn teór'), 'night');
 });
 
-test('el lector visual pide omitir PC30 y continuar hasta la fila ordinaria', () => {
+test('el lector visual pide omitir PC10/PC30 y continuar hasta la fila ordinaria', () => {
   const edge = readFileSync(new URL('../supabase/functions/lab-read-timesheet-summary/index.ts', import.meta.url), 'utf8');
   assert.match(edge, /EXCLUYE cualquier fila cuyo nombre contenga/);
   assert.match(edge, /continúa recorriendo toda la tabla/);
-  assert.match(edge, /Plus Nocturno 56/);
-  assert.match(edge, /!isTheoreticalPc30\(item\.name\)/);
+  assert.match(edge, /Plus Nocturno 48/);
+  assert.match(edge, /!isTheoreticalPc\(item\.name\)/);
 });
 
 test('0036 Comidas Can Guasch toma 2 de CANTIDAD y conserva el resto de conceptos', () => {
@@ -183,7 +205,7 @@ test('visión distingue vacaciones ausentes en noviembre y leídas en diciembre'
   };
   const badge = {textContent:'COMPROBAR',className:''};
   const input = {
-    value:'', placeholder:'', dataset:{}, parentElement:{parentElement:null,querySelectorAll:()=>[badge]},
+    value:'', placeholder:'', dataset:{}, hidden:false, closest(){return this.card;}, card:{hidden:false}, parentElement:{parentElement:null,querySelectorAll:()=>[badge]},
     dispatchEvent(){badge.textContent=this.value ? 'REVISADO' : 'COMPROBAR';}
   };
   const counter = {textContent:''};
@@ -194,17 +216,19 @@ test('visión distingue vacaciones ausentes en noviembre y leídas en diciembre'
     Event:class {}, setTimeout:fn=>fn()
   });
   vm.runInContext([
-    extractVision('norm'), extractVision('isTheoreticalPc30'), extractVision('conceptKey'), extractVision('markState'), extractVision('clearAndApply')
+    extractVision('norm'), extractVision('isTheoreticalPc'), extractVision('conceptKey'), extractVision('markState'), extractVision('clearAndApply')
   ].join('\n'), visionContext);
 
   visionContext.clearAndApply([]);
-  assert.equal(input.value,'0');
+  assert.equal(input.value,'');
   assert.equal(badge.textContent,'NO APARECE ESTE MES');
+  assert.equal(input.card.hidden,true);
 
   input.value=''; badge.textContent='COMPROBAR';
   visionContext.clearAndApply([{name:'Pluses vacaciones',value:'3'}]);
   assert.equal(input.value,'3');
   assert.equal(badge.textContent,'LEÍDO');
+  assert.equal(input.card.hidden,false);
 
   input.value=''; badge.textContent='COMPROBAR';
   visionContext.clearAndApply([{name:'Pluses vacaciones',value:null}]);
