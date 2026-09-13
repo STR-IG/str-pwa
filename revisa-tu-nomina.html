@@ -11,7 +11,7 @@
   <script>
     (async () => {
       try {
-        const response = await fetch('revisa-tu-nomina-base.html?v=prod-24', { cache: 'no-store' });
+        const response = await fetch('revisa-tu-nomina-base.html?v=prod-25', { cache: 'no-store' });
         if (!response.ok) throw new Error('BASE_NOT_AVAILABLE');
         let html = await response.text();
         html = html
@@ -20,6 +20,8 @@
           .replace("sessionStorage.setItem('strLabNext', 'revisa-tu-nomina.html');", "sessionStorage.setItem('strAfterLogin', 'revisa-nomina.html');")
           .replace("'./payroll-supplemental.mjs?v=3'", "'./payroll-supplemental.mjs?v=7'")
           .replace("'./payroll-overtime.mjs?v=2'", "'./payroll-overtime.mjs?v=4'")
+          .replace('<p id="select-hint" class="select-hint">Marca primero la casilla de aceptación.</p>', '<p id="select-hint" class="select-hint">Marca primero la casilla de aceptación.</p><p class="select-hint">⚠️ Selecciona una imagen que ya tengas guardada en tu dispositivo. No hagas la foto directamente desde aquí, ya que podría no procesarse correctamente.</p>')
+          .replace('<p class="select-hint">La captura no se guardará: se utilizará únicamente durante esta revisión.</p>', '<p class="select-hint">⚠️ Selecciona una imagen que ya tengas guardada en tu dispositivo. No hagas la foto directamente desde aquí, ya que podría no procesarse correctamente.</p><p class="select-hint">La captura no se guardará: se utilizará únicamente durante esta revisión.</p>')
           .replace(/input\.readOnly = isAdminMode \|\| confirmed;/g, 'input.readOnly = confirmed;')
           .replace(/document\.getElementById\('edit-payroll-values'\)\.hidden = isAdminMode \|\| !confirmed;/g, "document.getElementById('edit-payroll-values').hidden = !confirmed;")
           .replace(/comparisonFields\.querySelectorAll\('input,textarea'\)\.forEach\(control => \{ control\.readOnly = true; \}\);/g, "comparisonFields.querySelectorAll('input,textarea').forEach(control => { control.readOnly = confirmed; });");
@@ -49,4 +51,3 @@
   </script>
 </body>
 </html>
-
