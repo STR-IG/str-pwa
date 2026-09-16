@@ -19,7 +19,9 @@
     .hero-track::-webkit-scrollbar { display:none; }
     .hero-slide { flex:0 0 100%; width:100%; height:100%; scroll-snap-align:start; scroll-snap-stop:always; background-position:center; background-size:cover; background-repeat:no-repeat; }
     .hero-slide:first-child { background-image:url("card-demo-app.png"); cursor:pointer; }
-    .hero-slide.dia-afiliacion { background-image:url("Card-dia-afiliacion.jpg"); background-size:contain; background-color:#fff; cursor:pointer; }
+    .hero-slide.dia-afiliacion { position:relative; overflow:hidden; background:#111; cursor:pointer; }
+    .hero-slide.dia-afiliacion::before { position:absolute; inset:-24px; background:url("Card-dia-afiliacion.jpg") center / cover no-repeat; filter:blur(18px) brightness(.62); transform:scale(1.08); content:""; }
+    .hero-slide.dia-afiliacion::after { position:absolute; inset:3% 4% 8%; background:url("Card-dia-afiliacion.jpg") center / contain no-repeat; content:""; }
     .hero-dots { position:absolute; left:50%; bottom:8px; z-index:4; display:flex; gap:8px; transform:translateX(-50%); padding:7px 10px; border-radius:999px; background:#fff; box-shadow:0 2px 8px rgba(0,0,0,.12); }
     .hero-dot { width:9px; height:9px; padding:0; border:0; border-radius:50%; background:#b7b7b7; cursor:pointer; }
     .hero-dot.active { background:var(--red); }
@@ -126,7 +128,7 @@
     #permisos { display:none; }
     #permisos:target { display:block; }
     @media (max-width:700px) {
-      .hero { min-height:0; height:66.67vw; max-height:520px; border-radius:0 0 24px 24px; }
+      .hero { min-height:0; height:95vw; max-height:520px; border-radius:0 0 24px 24px; }
       .hero-track { height:100%; }
       .hero-slide { background-position:center center; background-size:contain; background-color:#fff; }
       .quick-card:hover { transform:none; }
