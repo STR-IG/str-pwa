@@ -254,7 +254,37 @@ initNews({
 
 const heroCarousel = document.getElementById('hero-carousel');
 const heroDots = Array.from(document.querySelectorAll('.hero-dot'));
-if (heroCarousel && heroDots.length) { const setActiveHeroDot = (index) => { heroDots.forEach((dot, dotIndex) => dot.classList.toggle('active', dotIndex === index)); }; heroDots.forEach((dot) => { dot.addEventListener('click', () => { const index = Number(dot.dataset.slide || 0); heroCarousel.scrollTo({ left:index * heroCarousel.clientWidth, behavior:'smooth' }); setActiveHeroDot(index); }); }); let heroScrollTimer; heroCarousel.addEventListener('scroll', () => { clearTimeout(heroScrollTimer); heroScrollTimer = setTimeout(() => { const index = Math.round(heroCarousel.scrollLeft / Math.max(heroCarousel.clientWidth, 1)); setActiveHeroDot(Math.max(0, Math.min(index, heroDots.length - 1))); }, 60); }, { passive:true }); }
+if (heroCarousel && heroDots.length) {
+  const HERO_AUTOPLAY_DELAY = 15000;
+  let heroAutoplayTimer;
+  let heroScrollTimer;
+  const visibleHeroIndex = () => Math.max(0, Math.min(Math.round(heroCarousel.scrollLeft / Math.max(heroCarousel.clientWidth, 1)), heroDots.length - 1));
+  const setActiveHeroDot = (index) => { heroDots.forEach((dot, dotIndex) => dot.classList.toggle('active', dotIndex === index)); };
+  const scheduleHeroAutoplay = () => {
+    clearTimeout(heroAutoplayTimer);
+    heroAutoplayTimer = setTimeout(() => {
+      const nextIndex = (visibleHeroIndex() + 1) % heroDots.length;
+      heroCarousel.scrollTo({ left:nextIndex * heroCarousel.clientWidth, behavior:'smooth' });
+      setActiveHeroDot(nextIndex);
+    }, HERO_AUTOPLAY_DELAY);
+  };
+  heroDots.forEach((dot) => {
+    dot.addEventListener('click', () => {
+      const index = Number(dot.dataset.slide || 0);
+      heroCarousel.scrollTo({ left:index * heroCarousel.clientWidth, behavior:'smooth' });
+      setActiveHeroDot(index);
+      scheduleHeroAutoplay();
+    });
+  });
+  heroCarousel.addEventListener('scroll', () => {
+    clearTimeout(heroScrollTimer);
+    heroScrollTimer = setTimeout(() => {
+      setActiveHeroDot(visibleHeroIndex());
+      scheduleHeroAutoplay();
+    }, 60);
+  }, { passive:true });
+  scheduleHeroAutoplay();
+}
 
 if ('serviceWorker' in navigator) { window.addEventListener('load', async () => { try { const registration = await navigator.serviceWorker.register('./service-worker.js', { updateViaCache:'none' }); registration.update(); let refreshing=false; navigator.serviceWorker.addEventListener('controllerchange', () => { if (refreshing) return; refreshing=true; window.location.reload(); }); } catch (error) { console.error('Error al registrar el Service Worker:', error); } }); }
 </script>

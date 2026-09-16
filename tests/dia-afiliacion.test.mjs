@@ -32,3 +32,12 @@ test('actividad sindical incluye el Día de la Afiliación y reutiliza el contad
   assert.match(home, /class="news-notification-badge" data-news-badge/);
   assert.match(news, /id: 'activity-dia-afiliacion-2026-10-24'/);
 });
+
+test('el carrusel avanza cada 15 segundos, vuelve al inicio y reinicia tras interacción', () => {
+  const html = read('index.html');
+  assert.match(html, /const HERO_AUTOPLAY_DELAY = 15000/);
+  assert.match(html, /const nextIndex = \(visibleHeroIndex\(\) \+ 1\) % heroDots\.length/);
+  assert.match(html, /dot\.addEventListener\('click',[\s\S]*?scheduleHeroAutoplay\(\)/);
+  assert.match(html, /heroCarousel\.addEventListener\('scroll',[\s\S]*?setActiveHeroDot\(visibleHeroIndex\(\)\);[\s\S]*?scheduleHeroAutoplay\(\)/);
+  assert.match(html, /scrollTo\(\{ left:nextIndex \* heroCarousel\.clientWidth, behavior:'smooth' \}\)/);
+});
