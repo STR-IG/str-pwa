@@ -35,64 +35,21 @@
     .post-actions { display:flex; gap:10px; margin-top:17px; }
     .primary { display:inline-flex; align-items:center; justify-content:center; min-height:46px; padding:0 18px; border-radius:999px; color:var(--red-dark); background:var(--red-soft); font-size:14px; font-weight:900; text-decoration:none; }
     .home { display:block; margin-top:2px; padding:15px 18px; border-radius:999px; color:#555; background:#e8e8eb; font-size:14px; font-weight:800; text-align:center; text-decoration:none; }
-    @media (min-width:700px) {
-      main { padding-top:30px; }
-      .post-body { padding:22px 24px 24px; }
-    }
+    @media (min-width:700px) { main { padding-top:30px; } .post-body { padding:22px 24px 24px; } }
   </style>
 </head>
 <body>
-  <header class="top">
-    <div class="top-inner">
-      <a class="back" href="index.html" aria-label="Volver al menú principal">‹</a>
-      <h1>Actividad sindical</h1>
-    </div>
-  </header>
-
+  <header class="top"><div class="top-inner"><a class="back" href="index.html" aria-label="Volver al menú principal">‹</a><h1>Actividad sindical</h1></div></header>
   <main>
-    <section class="intro">
-      <h2>Te contamos lo que estamos haciendo</h2>
-      <p>Reuniones, comunicados, propuestas y seguimiento de los temas que afectan a la plantilla.</p>
-    </section>
-
+    <section class="intro"><h2>Te contamos lo que estamos haciendo</h2><p>Reuniones, comunicados, propuestas y seguimiento de los temas que afectan a la plantilla.</p></section>
     <section class="feed" aria-label="Últimas publicaciones de actividad sindical">
       <article class="post">
-        <a class="post-media" href="dia-afiliacion.html" aria-label="Abrir Día de la Afiliación STR">
-          <img src="Card-dia-afiliacion.jpg" alt="Cartel oficial del Día de la Afiliación STR del 24 de octubre">
-          <span class="new-badge">NUEVO</span>
-        </a>
-        <div class="post-body">
-          <div class="post-date"><span aria-hidden="true">📅</span><time datetime="2026-10-24">24 de octubre de 2026</time></div>
-          <span class="post-category">Día de la Afiliación</span>
-          <h3>Celebramos el Día de la Afiliación STR</h3>
-          <p>Una jornada para compartir, encontrarnos y disfrutar de las actividades organizadas por STR en La Colina Events Tarragona.</p>
-          <div class="post-actions"><a class="primary" href="dia-afiliacion.html">Ver actividad →</a></div>
-        </div>
-      </article>
-
-      <article class="post">
-        <a class="post-media" href="comunicado-comedor.html" aria-label="Abrir comunicado completo sobre el comedor">
-          <img src="Cartel-comedor.jpg" alt="Comunicado STR sobre la reunión del comedor del 7 de septiembre de 2026">
-          <span class="new-badge">NUEVO</span>
-        </a>
-        <div class="post-body">
-          <div class="post-date"><span aria-hidden="true">📅</span><time datetime="2026-09-07">7 de septiembre de 2026</time></div>
-          <span class="post-category">Comedor</span>
-          <h3>Reunión sobre el servicio de comedor</h3>
-          <p>Nos reunimos con la empresa y Sodexo para conocer la propuesta de mejora del servicio, la encuesta que se realizará a la plantilla y trasladar nuestras aportaciones.</p>
-          <div class="post-actions">
-            <a class="primary" href="comunicado-comedor.html">Ver comunicado →</a>
-          </div>
-        </div>
+        <a class="post-media" href="dia-afiliacion.html" aria-label="Abrir Día de la Afiliación STR"><img src="Card-dia-afiliacion.jpg" alt="Cartel oficial del Día de la Afiliación STR del 24 de octubre"><span class="new-badge">NUEVO</span></a>
+        <div class="post-body"><div class="post-date"><span aria-hidden="true">📅</span><time datetime="2026-10-24">24 de octubre de 2026</time></div><span class="post-category">Día de la Afiliación</span><h3>Celebramos el Día de la Afiliación STR</h3><p>Una jornada para compartir, encontrarnos y disfrutar de las actividades organizadas por STR en La Colina Events Tarragona.</p><div class="post-actions"><a class="primary" href="dia-afiliacion.html">Ver actividad →</a></div></div>
       </article>
     </section>
-
     <a class="home" href="index.html">Volver al menú principal</a>
   </main>
-
-  <script type="module">
-    import { markCategoryRead } from './novedades.js';
-    markCategoryRead('activity').catch(() => {});
-  </script>
+  <script type="module">import { markCategoryRead } from './novedades.js'; markCategoryRead('activity').catch(() => {});</script>
 </body>
 </html>
