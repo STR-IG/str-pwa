@@ -9,7 +9,7 @@ test('el carrusel conserva la demo y sustituye solo la segunda diapositiva', () 
   assert.match(html, /<a class="hero-slide" href="demo-app\.html"/);
   assert.match(html, /<a class="hero-slide dia-afiliacion" href="dia-afiliacion\.html"/);
   assert.doesNotMatch(html, /hero-slide conoce-app/);
-  assert.match(html, /\.hero-slide\.dia-afiliacion[^}]*Card-dia-afiliacion\.jpg[^}]*background-size:contain/);
+  assert.match(html, /\.hero-slide\.dia-afiliacion[^}]*card-carrusel-dia-afiliado\.png[^}]*background-size:contain/);
 });
 
 test('la ficha reutiliza el cartel completo y ofrece la inscripción externa segura', () => {
