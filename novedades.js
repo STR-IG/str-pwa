@@ -16,6 +16,12 @@ const DEFAULT_NEWS = [{
   category: 'activity',
   published_at: '2026-09-08T09:42:00Z',
   url: 'actividad-sindical.html',
+  active: false,
+}, {
+  id: 'activity-dia-afiliacion-2026-10-24',
+  category: 'activity',
+  published_at: '2026-09-16T12:00:00Z',
+  url: 'dia-afiliacion.html',
   active: true,
 }];
 

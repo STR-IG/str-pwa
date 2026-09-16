@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#e30613">
+  <title>Día de la Afiliación · STR-IG</title>
+  <link rel="icon" type="image/png" href="icono-str-ig.png">
+  <link rel="apple-touch-icon" href="icono-str-ig.png">
+  <link rel="manifest" href="manifest.json">
+  <style>
+    * { box-sizing:border-box; margin:0; padding:0; }
+    :root { --red:#e30613; --ink:#161616; --paper:#fff; --surface:#f5f5f7; }
+    body { min-height:100vh; padding-bottom:calc(38px + env(safe-area-inset-bottom)); color:var(--ink); background:var(--surface); font-family:Arial,Helvetica,sans-serif; }
+    .top { position:sticky; top:0; z-index:10; padding:calc(12px + env(safe-area-inset-top)) 16px 12px; border-bottom:1px solid #e3e3e6; background:rgba(245,245,247,.96); backdrop-filter:blur(12px); }
+    .top-inner { display:flex; align-items:center; gap:13px; width:min(100%,760px); margin:auto; }
+    .back { display:grid; flex:0 0 42px; width:42px; height:42px; place-items:center; border-radius:50%; color:var(--red); background:var(--paper); box-shadow:0 3px 12px rgba(0,0,0,.08); font-size:27px; font-weight:800; line-height:1; text-decoration:none; }
+    h1 { font-size:clamp(21px,5.5vw,29px); line-height:1.1; }
+    main { width:min(100% - 28px,760px); margin:auto; padding-top:22px; }
+    .card { overflow:hidden; border-radius:24px; background:var(--paper); box-shadow:0 7px 24px rgba(0,0,0,.09); }
+    .poster { display:block; width:100%; height:auto; }
+    .actions { padding:18px; }
+    .signup { display:grid; min-height:56px; place-items:center; border-radius:999px; color:#fff; background:var(--red); box-shadow:0 7px 18px rgba(227,6,19,.22); font-size:16px; font-weight:900; letter-spacing:.3px; text-decoration:none; }
+    .activity { display:block; margin-top:14px; color:#555; font-size:14px; font-weight:800; text-align:center; text-decoration:none; }
+  </style>
+</head>
+<body>
+  <header class="top"><div class="top-inner"><a class="back" href="index.html" aria-label="Volver al menú principal">‹</a><h1>Día de la Afiliación STR</h1></div></header>
+  <main>
+    <article class="card">
+      <img class="poster" src="Card-dia-afiliacion.jpg" alt="Cartel oficial del Día de la Afiliación STR: 24 de octubre en La Colina Events Tarragona">
+      <div class="actions"><a class="signup" href="https://www.soporteusuarios.com/STR/diaafiliacion/" target="_blank" rel="noopener noreferrer">APÚNTATE AQUÍ</a></div>
+    </article>
+    <a class="activity" href="actividad-sindical.html">Volver a Actividad sindical</a>
+  </main>
+</body>
+</html>
