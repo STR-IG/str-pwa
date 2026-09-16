@@ -41,3 +41,10 @@ test('el carrusel avanza cada 15 segundos, vuelve al inicio y reinicia tras inte
   assert.match(html, /heroCarousel\.addEventListener\('scroll',[\s\S]*?setActiveHeroDot\(visibleHeroIndex\(\)\);[\s\S]*?scheduleHeroAutoplay\(\)/);
   assert.match(html, /scrollTo\(\{ left:nextIndex \* heroCarousel\.clientWidth, behavior:'smooth' \}\)/);
 });
+
+test('Actualidad aparece una sola vez antes de Área pública', () => {
+  const html = read('index.html');
+  const actuality = '<h2>Actualidad STR-IG</h2>';
+  assert.equal(html.split(actuality).length - 1, 1);
+  assert.ok(html.indexOf(actuality) < html.indexOf('<h2 class="area-heading">ÁREA PÚBLICA</h2>'));
+});
