@@ -21,7 +21,7 @@
       <p class="intro">Información exclusiva para personas afiliadas a STR-IG.</p>
       <div class="communications">
         <button class="communication" type="button" data-news-id="internal-data-affiliation-2026-09" aria-label="Abrir comunicado sobre datos de afiliación">
-          <img src="comunicado-datos-afiliacion.png" alt="Comunicado sobre datos de afiliación" loading="eager">
+          <img id="communication-preview" alt="Comunicado sobre datos de afiliación" loading="eager">
           <span>Datos de afiliación</span>
         </button>
       </div>
@@ -29,7 +29,7 @@
   </main>
   <div id="viewer" class="viewer" role="dialog" aria-modal="true" aria-label="Comunicado sobre datos de afiliación" aria-hidden="true">
     <div class="viewer-bar"><button id="close-viewer" class="close" type="button" aria-label="Cerrar comunicado">×</button></div>
-    <div class="viewer-scroll"><img src="comunicado-datos-afiliacion.png" alt="Comunicado sobre datos de afiliación completo"></div>
+    <div class="viewer-scroll"><img id="communication-image" alt="Comunicado sobre datos de afiliación completo"></div>
   </div>
   <script type="module">
     import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
@@ -37,18 +37,23 @@
 
     const SUPABASE_URL='https://icneigdnuntzugisexaz.supabase.co';
     const SUPABASE_PUBLISHABLE_KEY='sb_publishable_apKjcPClIBTHS2wwN6qPsA_6Vm4tk9m';
+    const STORAGE_BUCKET='comunicados-internos';
+    const STORAGE_PATH='2026/09/comunicado-datos-afiliacion.png';
+    const SIGNED_URL_TTL_SECONDS=300;
     const supabase=createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY,{auth:{detectSessionInUrl:false,persistSession:true,autoRefreshToken:true}});
     const checking=document.getElementById('checking');
     const content=document.getElementById('private-content');
     const viewer=document.getElementById('viewer');
     const closeViewer=document.getElementById('close-viewer');
+    const preview=document.getElementById('communication-preview');
+    const communicationImage=document.getElementById('communication-image');
 
     function requirePrivateAccess(){
       window.location.replace('acceso-privado.html?next=comunicados-internos.html');
     }
 
-    const {data:{session}}=await supabase.auth.getSession();
-    if(!session){
+    const {data:{session},error:sessionError}=await supabase.auth.getSession();
+    if(sessionError||!session){
       requirePrivateAccess();
     }else{
       const [{data:{user},error:userError},{data:allowed,error:accessError}]=await Promise.all([
@@ -59,8 +64,18 @@
         await supabase.auth.signOut();
         requirePrivateAccess();
       }else{
-        checking.hidden=true;
-        content.hidden=false;
+        const {data:signedFile,error:signedUrlError}=await supabase.storage
+          .from(STORAGE_BUCKET)
+          .createSignedUrl(STORAGE_PATH,SIGNED_URL_TTL_SECONDS);
+        if(signedUrlError||!signedFile?.signedUrl){
+          console.error('No se ha podido cargar el comunicado privado',signedUrlError);
+          checking.textContent='No se ha podido cargar el comunicado. Inténtalo de nuevo en unos minutos.';
+        }else{
+          preview.src=signedFile.signedUrl;
+          communicationImage.src=signedFile.signedUrl;
+          checking.hidden=true;
+          content.hidden=false;
+        }
       }
     }
 
@@ -72,11 +87,16 @@
 
     document.querySelectorAll('[data-news-id]').forEach((button)=>{
       button.addEventListener('click',async()=>{
+        if(!communicationImage.src)return;
         viewer.classList.add('open');
         viewer.setAttribute('aria-hidden','false');
         document.body.style.overflow='hidden';
         closeViewer.focus();
-        await markNewsRead([button.dataset.newsId]);
+        if(communicationImage.complete&&communicationImage.naturalWidth>0){
+          await markNewsRead([button.dataset.newsId]);
+        }else{
+          communicationImage.addEventListener('load',()=>markNewsRead([button.dataset.newsId]),{once:true});
+        }
       });
     });
     closeViewer.addEventListener('click',closeCommunication);

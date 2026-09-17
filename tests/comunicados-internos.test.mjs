@@ -23,8 +23,28 @@ test('la página valida sesión y afiliación antes de mostrar el comunicado', (
   const html = read('comunicados-internos.html');
   assert.match(html, /supabase\.auth\.getUser\(\)/);
   assert.match(html, /is_current_user_private_access_allowed/);
-  assert.match(html, /comunicado-datos-afiliacion\.png/);
+  assert.match(html, /STORAGE_BUCKET='comunicados-internos'/);
+  assert.match(html, /STORAGE_PATH='2026\/09\/comunicado-datos-afiliacion\.png'/);
+  assert.match(html, /SIGNED_URL_TTL_SECONDS=300/);
+  assert.match(html, /createSignedUrl\(STORAGE_PATH,SIGNED_URL_TTL_SECONDS\)/);
+  assert.doesNotMatch(html, /src="comunicado-datos-afiliacion\.png"/);
   assert.match(html, /markNewsRead\(\[button\.dataset\.newsId\]\)/);
+});
+
+test('la URL firmada solo se solicita después de validar el acceso privado', () => {
+  const html = read('comunicados-internos.html');
+  const accessCheck = html.indexOf("supabase.rpc('is_current_user_private_access_allowed')");
+  const signedUrl = html.indexOf('.createSignedUrl(STORAGE_PATH,SIGNED_URL_TTL_SECONDS)');
+  assert.ok(accessCheck >= 0);
+  assert.ok(signedUrl > accessCheck);
+});
+
+test('la migración crea un bucket privado y restringe la lectura al archivo y afiliación autorizada', () => {
+  const sql = read('supabase/migrations/20260917100000_private_internal_communications.sql');
+  assert.match(sql, /'comunicados-internos'[\s\S]*false/);
+  assert.match(sql, /for select\s+to authenticated/i);
+  assert.match(sql, /name = '2026\/09\/comunicado-datos-afiliacion\.png'/);
+  assert.match(sql, /is_current_user_private_access_allowed\(\)/);
 });
 
 test('la novedad privada queda aislada de los contadores generales', () => {
