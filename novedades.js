@@ -24,6 +24,13 @@ const DEFAULT_NEWS = [{
   url: 'dia-afiliacion.html',
   active: true,
 }];
+const PRIVATE_NEWS = [{
+  id: 'internal-data-affiliation-2026-09',
+  category: 'internal-communications',
+  published_at: '2026-09-17T08:00:00Z',
+  url: 'comunicados-internos.html',
+  active: true,
+}];
 
 function applyHomeCarousels() {
   if (document.getElementById('str-home-carousel-layout')) return;
@@ -107,8 +114,9 @@ function applyPrivateAreaLayout() {
   const review = byImage('revisa-tu-nomina-card.png');
   const calculateV = byImage('calcula-tu-v.png');
   const askStr = byImage('card-preguntale-str-ig.png');
+  const internalCommunications = byImage('card-comunicados-internos.png');
   const personalArea = byImage('mi-espacio-str-ig.png');
-  if (!review || !calculateV || !askStr || !personalArea) return;
+  if (!review || !calculateV || !askStr || !internalCommunications || !personalArea) return;
 
   let statistics = byImage('card-estadisticas-nomina.png');
   if (!statistics) {
@@ -118,7 +126,7 @@ function applyPrivateAreaLayout() {
     statistics.innerHTML = '<img src="card-estadisticas-nomina.png" alt="Estadísticas de nómina, área privada">';
   }
 
-  grid.replaceChildren(review, statistics, calculateV, askStr, personalArea);
+  grid.replaceChildren(review, statistics, calculateV, askStr, internalCommunications, personalArea);
 }
 
 function applyBottomNavActivity() {
@@ -198,9 +206,11 @@ async function loadNews() {
     });
     if (!response.ok) throw new Error('NEWS_LOAD_FAILED');
     const items = await response.json();
-    return Array.isArray(items) ? items : DEFAULT_NEWS;
+    const remoteItems = Array.isArray(items) ? items : DEFAULT_NEWS;
+    const remoteIds = new Set(remoteItems.map((item) => item.id));
+    return [...remoteItems, ...PRIVATE_NEWS.filter((item) => !remoteIds.has(item.id))];
   } catch (_error) {
-    return DEFAULT_NEWS;
+    return [...DEFAULT_NEWS, ...PRIVATE_NEWS];
   }
 }
 
@@ -233,7 +243,7 @@ async function refreshNewsBadges() {
   const news = await loadNews();
   const unread = unreadNews(news);
   renderCategoryBadges(unread);
-  await setBadge(unread.length);
+  await setBadge(unread.filter((item) => item.category !== 'internal-communications').length);
   return unread;
 }
 
@@ -405,18 +415,23 @@ export async function initNews(options = {}) {
 export async function markCategoryRead(category) {
   const news = await loadNews();
   const matchingIds = news.filter((item) => item.active && item.category === category).map((item) => item.id);
-  if (!matchingIds.length) return refreshNewsBadges();
+  return markNewsRead(matchingIds);
+}
+
+export async function markNewsRead(newsIds) {
+  const idsToMark = [...new Set(Array.isArray(newsIds) ? newsIds.filter(Boolean) : [])];
+  if (!idsToMark.length) return refreshNewsBadges();
 
   const readIds = getReadIds();
-  matchingIds.forEach((id) => readIds.add(id));
+  idsToMark.forEach((id) => readIds.add(id));
   saveReadIds(readIds);
-  if (category === 'menu') {
+  if (idsToMark.some((id) => id.startsWith('menu-'))) {
     try { localStorage.setItem(MENU_LEGACY_KEY, '2026-09'); } catch (_error) {}
   }
 
   const deviceId = getDeviceId(false);
   if (deviceId) {
-    subscriptionRequest({ action: 'read', deviceId, newsIds: matchingIds }).catch(() => {});
+    subscriptionRequest({ action: 'read', deviceId, newsIds: idsToMark }).catch(() => {});
   }
   return refreshNewsBadges();
 }

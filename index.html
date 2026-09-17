@@ -56,6 +56,7 @@
     .news-notification-card { position:relative; }
     .news-notification-badge { position:absolute; top:8px; right:8px; z-index:5; min-width:28px; height:28px; padding:0 8px; border:2px solid #fff; border-radius:999px; display:none; align-items:center; justify-content:center; color:#fff; background:var(--red); box-shadow:0 3px 10px rgba(0,0,0,.24); font-size:15px; line-height:1; font-weight:900; }
     .news-notification-badge.show { display:flex; }
+    .internal-communications-card .news-notification-badge { top:auto; right:8px; bottom:8px; }
     .news-alerts { margin:0 auto 28px; padding:16px 18px; border:1px solid #f0c9cc; border-radius:18px; background:#fff; display:flex; align-items:center; justify-content:space-between; gap:16px; box-shadow:0 4px 15px rgba(0,0,0,.06); }
     .news-alerts[hidden] { display:none; }
     .news-alerts-copy strong { display:block; margin-bottom:3px; font-size:15px; }
@@ -196,6 +197,7 @@
         <a href="acceso-privado.html" class="quick-card menu-image-card"><img src="calcula-tu-v.png" alt="Calcula tu V, área privada"></a>
         <a href="acceso-privado.html" class="quick-card menu-image-card" onclick="sessionStorage.setItem('strAfterLogin','revisa-nomina.html')" aria-label="Revisa tu nómina, acceso privado para afiliados"><img src="revisa-tu-nomina-card.png" alt="Revisa tu nómina, área privada"></a>
         <a href="preguntale-str-ig.html" class="quick-card menu-image-card" aria-label="Pregúntale a STR-IG, área privada"><img src="card-preguntale-str-ig.png" alt="Pregúntale a STR-IG, área privada"></a>
+        <a href="acceso-privado.html?next=comunicados-internos.html" class="quick-card menu-image-card news-notification-card internal-communications-card" data-news-category="internal-communications" aria-label="Comunicados internos, acceso privado para afiliados"><img src="card-comunicados-internos.png" alt="Comunicados internos, área privada"><span class="news-notification-badge" data-news-badge aria-label="Novedades sin leer">0</span></a>
         <article class="quick-card menu-image-card" aria-label="Mi espacio personal, próximamente"><img src="mi-espacio-str-ig.png" alt="Mi espacio personal, área privada"></article>
       </div>
     </div>
