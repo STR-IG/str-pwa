@@ -2454,8 +2454,15 @@
     const PAYROLL_MATCH_ORDER = ['shift12', 'holidayDiets', 'vacation', 'rotation', 'meals', 'night', 'shift', 'holiday'];
     const documents = {
       timesheet: { file: null, blob: null, url: '', ocrText: '', confirmed: false, saved: false, path: '' },
-      payroll: { file: null, blob: null, url: '', ocrText: '', confirmed: false, saved: false, path: '', paymentInfo: null }
+      payroll: { file: null, blob: null, url: '', ocrText: '', confirmed: false, saved: false, path: '', paymentInfo: null, payrollEconomics: null }
     };
+    window.addEventListener('str:payroll-economics', (event) => {
+      const detail = event.detail || {};
+      if (!detail.src || detail.src !== comparisonReferenceImage.src) return;
+      documents.payroll.payrollEconomics = detail.economics && typeof detail.economics === 'object'
+        ? detail.economics
+        : null;
+    });
     const documentCopy = {
       timesheet: {
         title: 'Registro de jornada',
@@ -2794,6 +2801,7 @@
       if (timesheetValues.size) confirmedTimesheetAnalyses.set(periodKey(), timesheetValues);
       if (payrollValues.size) confirmedPayrollAnalyses.set(periodKey(), payrollValues);
       documents.payroll.paymentInfo = review.paymentInfo || null;
+      documents.payroll.payrollEconomics = review.payrollEconomics || null;
       documents.payroll.documentType = review.documentType || '';
       documents.payroll.attributionPeriod = review.attributionPeriod || null;
       documents.payroll.paymentPeriod = review.paymentPeriod || null;
@@ -2857,6 +2865,7 @@
         delete pending.supplemental;
         delete pending.overtime;
         delete pending.paymentInfo;
+        delete pending.payrollEconomics;
         delete pending.payrollSourceHash;
       }
       return pending;
@@ -3012,6 +3021,7 @@
         document.saved = false;
         document.path = '';
         if ('paymentInfo' in document) document.paymentInfo = null;
+        if ('payrollEconomics' in document) document.payrollEconomics = null;
       });
       activeKind = '';
     }
@@ -4709,6 +4719,7 @@
           paymentPeriod: documents.payroll.paymentPeriod
         } : {}),
         ...(documents.payroll.paymentInfo ? { paymentInfo: documents.payroll.paymentInfo } : {}),
+        ...(documents.payroll.payrollEconomics ? { payrollEconomics: documents.payroll.payrollEconomics } : {}),
         ...(Array.isArray(monthlyReviews.get(periodKey())?.discounts)
           ? { discounts: monthlyReviews.get(periodKey()).discounts }
           : {}),
@@ -5091,6 +5102,7 @@
       if (activeKind === 'payroll') {
         payrollSourceHash = '';
         documents.payroll.paymentInfo = null;
+        documents.payroll.payrollEconomics = null;
         try { payrollSourceHash = await sha256(file); } catch { /* Saved bytes still checked. */ }
       }
       openTimesheetCrop(file);

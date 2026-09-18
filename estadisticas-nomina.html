@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#e30613">
+  <title>Estadísticas de nómina · STR-IG</title>
+  <link rel="icon" type="image/png" href="icono-str-ig.png">
+  <link rel="apple-touch-icon" href="icono-str-ig.png">
+  <link rel="manifest" href="manifest.json">
+  <style>
+    * { box-sizing: border-box; }
+    :root {
+      --red: #e30613;
+      --red-dark: #b9000b;
+      --ink: #18181b;
+      --muted: #6e6e73;
+      --line: #e4e4e7;
+      --soft: #f5f5f7;
+      --green: #236a43;
+      --green-soft: #edf8f2;
+      --amber: #805d00;
+      --amber-soft: #fff8df;
+    }
+    body { margin: 0; min-height: 100vh; color: var(--ink); background: var(--soft); font-family: Arial, Helvetica, sans-serif; }
+    button, select { font: inherit; }
+    button { cursor: pointer; }
+    .topbar {
+      position: sticky; top: 0; z-index: 10; display: grid; grid-template-columns: 44px 1fr 44px;
+      align-items: center; min-height: 68px; padding: max(10px, env(safe-area-inset-top)) 16px 10px;
+      border-bottom: 1px solid var(--line); background: rgba(255,255,255,.96); backdrop-filter: blur(14px);
+    }
+    .back, .refresh {
+      display: grid; place-items: center; width: 42px; height: 42px; border: 0; border-radius: 50%;
+      color: var(--ink); background: #f0f0f2; text-decoration: none; font-size: 25px;
+    }
+    .refresh { font-size: 20px; }
+    .refresh:disabled { opacity: .5; cursor: wait; }
+    .topbar strong { text-align: center; font-size: 18px; }
+    #auth-check { width: min(100% - 32px, 760px); margin: 44px auto; color: var(--muted); text-align: center; }
+    main { width: min(100% - 28px, 760px); margin: 0 auto; padding: 22px 0 calc(54px + env(safe-area-inset-bottom)); }
+    .hero, .panel {
+      border: 1px solid rgba(0,0,0,.045); border-radius: 22px; background: white; box-shadow: 0 9px 28px rgba(0,0,0,.055);
+    }
+    .hero { padding: 22px 18px; }
+    .eyebrow { display: block; margin-bottom: 7px; color: var(--red-dark); font-size: 12px; font-weight: 900; letter-spacing: .055em; }
+    h1 { margin: 0; font-size: clamp(27px, 8vw, 36px); letter-spacing: -.035em; }
+    .intro { margin: 9px 0 20px; color: var(--muted); font-size: 14px; line-height: 1.5; }
+    .controls { display: grid; grid-template-columns: minmax(116px, .75fr) minmax(210px, 1.25fr); gap: 12px; align-items: end; }
+    .field-label { display: block; margin-bottom: 7px; font-size: 12px; font-weight: 800; }
+    select { width: 100%; min-height: 46px; padding: 0 13px; border: 1px solid #ceced2; border-radius: 13px; color: var(--ink); background: white; }
+    .segment { display: grid; grid-template-columns: 1fr 1fr; padding: 4px; border-radius: 14px; background: #ededf0; }
+    .segment button { min-height: 38px; border: 0; border-radius: 11px; color: #4d4d52; background: transparent; font-weight: 800; }
+    .segment button.active { color: white; background: var(--red); box-shadow: 0 4px 12px rgba(227,6,19,.22); }
+    .state { margin: 16px 0 0; padding: 14px; border-radius: 14px; color: var(--muted); background: white; text-align: center; font-size: 13px; line-height: 1.45; }
+    .state.error { color: #8b1d25; background: #fff0f1; }
+    .state.empty { padding: 26px 18px; }
+    .state a { color: var(--red-dark); font-weight: 800; }
+    .section { margin-top: 18px; }
+    .panel { padding: 18px; }
+    .section-heading { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; margin-bottom: 14px; }
+    .section-heading h2 { margin: 0; font-size: 19px; letter-spacing: -.015em; }
+    .section-heading p, .section-note { margin: 4px 0 0; color: var(--muted); font-size: 12px; line-height: 1.45; }
+    .coverage-count { color: var(--red-dark); font-size: 13px; font-weight: 900; white-space: nowrap; }
+    .month-chips { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 13px; }
+    .month-chip { padding: 7px 10px; border-radius: 999px; color: var(--green); background: var(--green-soft); font-size: 12px; font-weight: 800; }
+    .summary-grid { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 10px; }
+    .metric-card { min-width: 0; padding: 15px 13px; border: 1px solid var(--line); border-radius: 17px; background: #fbfbfc; }
+    .metric-card span { display: block; color: var(--muted); font-size: 11px; font-weight: 800; line-height: 1.3; }
+    .metric-card strong { display: block; margin-top: 7px; overflow-wrap: anywhere; font-size: clamp(18px, 5.5vw, 25px); letter-spacing: -.035em; }
+    .metric-card small { display: block; margin-top: 6px; color: var(--muted); font-size: 10px; line-height: 1.35; }
+    .metric-card.net { color: var(--green); background: var(--green-soft); border-color: #c9e7d5; }
+    .deduction-rate { margin: 12px 0 0; color: var(--muted); font-size: 12px; text-align: center; }
+    .metric-toggle { display: grid; grid-template-columns: repeat(3,1fr); gap: 6px; margin-bottom: 16px; }
+    .metric-toggle button { min-height: 38px; border: 1px solid var(--line); border-radius: 11px; color: #4d4d52; background: white; font-size: 12px; font-weight: 800; }
+    .metric-toggle button.active { color: var(--red-dark); border-color: #ecafb4; background: #fff1f2; }
+    .chart { display: grid; grid-template-columns: repeat(12, minmax(24px, 1fr)); gap: 5px; align-items: end; min-height: 205px; overflow-x: auto; padding: 8px 2px 0; }
+    .chart-column { display: grid; grid-template-rows: 164px auto; gap: 7px; min-width: 26px; align-items: end; }
+    .bar-track { position: relative; display: flex; align-items: flex-end; justify-content: center; height: 164px; border-radius: 8px 8px 5px 5px; background: #f2f2f4; }
+    .bar { width: min(75%, 26px); min-height: 5px; height: var(--bar-height); border: 0; border-radius: 7px 7px 3px 3px; background: linear-gradient(180deg, #ec4b55, var(--red)); box-shadow: 0 4px 10px rgba(227,6,19,.16); }
+    .bar.partial { background: repeating-linear-gradient(135deg, var(--red), var(--red) 5px, #f4878e 5px, #f4878e 9px); }
+    .chart-missing { align-self: end; margin-bottom: 7px; color: #a3a3a8; font-size: 16px; font-weight: 800; }
+    .chart-label { color: var(--muted); text-align: center; font-size: 9px; font-weight: 800; text-transform: uppercase; }
+    .chart-caption { margin: 13px 0 0; color: var(--muted); font-size: 11px; line-height: 1.4; text-align: center; }
+    .chart-selection { min-height: 20px; margin: 13px 0 0; color: var(--ink); font-size: 12px; font-weight: 800; text-align: center; }
+    .concept-groups { display: grid; gap: 10px; }
+    details { border: 1px solid var(--line); border-radius: 15px; background: #fbfbfc; overflow: hidden; }
+    summary { display: flex; justify-content: space-between; gap: 12px; padding: 14px; cursor: pointer; font-weight: 800; }
+    summary::marker { color: var(--red); }
+    .concept-list { display: grid; gap: 0; border-top: 1px solid var(--line); }
+    .concept-row { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 12px; align-items: center; padding: 12px 14px; }
+    .concept-row + .concept-row { border-top: 1px solid #eeeeF0; }
+    .concept-row strong { font-size: 13px; line-height: 1.35; }
+    .concept-row small { display: block; margin-top: 3px; color: var(--muted); font-size: 10px; }
+    .concept-amount { color: var(--ink); font-size: 13px; font-weight: 900; white-space: nowrap; }
+    .discount-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 10px; }
+    .discount-card { padding: 14px 12px; border-radius: 15px; color: #39393e; background: #f5f5f7; }
+    .discount-card span { display: block; color: var(--muted); font-size: 10px; font-weight: 800; }
+    .discount-card strong { display: block; margin-top: 6px; overflow-wrap: anywhere; font-size: 17px; }
+    .discount-card small { display: block; margin-top: 5px; color: var(--muted); font-size: 9px; }
+    .year-figures { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; }
+    .figure { padding: 14px; border-radius: 15px; color: #242428; background: linear-gradient(145deg,#fff5f6,#fff); border: 1px solid #f2c7ca; }
+    .figure span { display: block; color: var(--red-dark); font-size: 10px; font-weight: 900; text-transform: uppercase; }
+    .figure strong { display: block; margin-top: 5px; font-size: 18px; }
+    .month-nav { display: grid; grid-template-columns: 44px 1fr 44px; gap: 10px; align-items: center; }
+    .month-nav button { height: 44px; border: 1px solid var(--line); border-radius: 50%; color: var(--ink); background: white; font-size: 22px; }
+    .month-nav button:disabled { opacity: .35; cursor: default; }
+    .receipt-note { margin: 12px 0 0; color: var(--muted); text-align: center; font-size: 12px; }
+    .regularization-note { margin-top: 10px; padding: 11px; border-radius: 12px; color: var(--amber); background: var(--amber-soft); font-size: 12px; line-height: 1.4; }
+    [hidden] { display: none !important; }
+    @media (max-width: 560px) {
+      .controls { grid-template-columns: 1fr; }
+      .summary-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+      .summary-grid .metric-card:last-child { grid-column: 1 / -1; }
+      .discount-grid { grid-template-columns: 1fr; }
+      .discount-card { display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: center; }
+      .discount-card strong { margin-top: 0; }
+      .discount-card small { grid-column: 1 / -1; }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <a class="back" href="index.html" aria-label="Volver al menú principal">‹</a>
+    <strong>Estadísticas</strong>
+    <button id="refresh" class="refresh" type="button" aria-label="Actualizar estadísticas">↻</button>
+  </header>
+
+  <p id="auth-check">Comprobando tu acceso privado…</p>
+
+  <main id="content" hidden>
+    <section class="hero">
+      <span class="eyebrow">TU INFORMACIÓN ECONÓMICA</span>
+      <h1>Estadísticas de nómina</h1>
+      <p class="intro">Evolución y composición de las nóminas que has guardado. No se estiman los meses que faltan.</p>
+      <div class="controls">
+        <label>
+          <span class="field-label">Año</span>
+          <select id="year-select" aria-label="Seleccionar año"></select>
+        </label>
+        <div>
+          <span class="field-label">Vista</span>
+          <div class="segment" role="tablist" aria-label="Seleccionar vista">
+            <button id="view-accumulated" class="active" type="button" role="tab" aria-selected="true">Acumulado</button>
+            <button id="view-monthly" type="button" role="tab" aria-selected="false">Mensual</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <p id="loading-state" class="state" role="status">Cargando tus nóminas…</p>
+    <p id="error-state" class="state error" role="alert" hidden></p>
+    <section id="empty-state" class="state empty" hidden>
+      <strong>Todavía no hay datos económicos guardados.</strong>
+      <p>Termina de revisar una nómina para que pueda aparecer aquí.</p>
+      <a href="revisa-tu-nomina.html">Ir a Revisa tu nómina</a>
+    </section>
+
+    <div id="statistics-content" hidden>
+      <section id="accumulated-view" role="tabpanel">
+        <section class="section panel">
+          <div class="section-heading">
+            <div>
+              <h2>Información disponible</h2>
+              <p>Los cálculos incluyen únicamente las nóminas cargadas.</p>
+            </div>
+            <strong id="coverage-count" class="coverage-count"></strong>
+          </div>
+          <div id="available-months" class="month-chips"></div>
+        </section>
+
+        <section class="section panel">
+          <div class="section-heading"><div><h2>Resumen económico</h2><p id="annual-receipt-count"></p></div></div>
+          <div id="annual-summary" class="summary-grid"></div>
+          <p id="annual-deduction-rate" class="deduction-rate"></p>
+        </section>
+
+        <section class="section panel">
+          <div class="section-heading"><div><h2>Evolución mensual</h2><p>Los meses sin nómina se muestran como «Sin datos».</p></div></div>
+          <div id="chart-metric-toggle" class="metric-toggle" aria-label="Métrica de la gráfica"></div>
+          <div id="annual-chart" class="chart" role="group"></div>
+          <p id="chart-selection" class="chart-selection" aria-live="polite"></p>
+          <p id="chart-caption" class="chart-caption"></p>
+        </section>
+
+        <section class="section panel">
+          <div class="section-heading"><div><h2>Composición de lo cobrado</h2><p>Importes acumulados de los conceptos disponibles.</p></div></div>
+          <div id="annual-composition" class="concept-groups"></div>
+        </section>
+
+        <section class="section panel">
+          <div class="section-heading"><div><h2>Descuentos</h2><p>Datos guardados por el lector de Seguridad Social e IRPF.</p></div></div>
+          <div id="annual-discounts" class="discount-grid"></div>
+        </section>
+
+        <section class="section panel">
+          <div class="section-heading"><div><h2>Pluses y complementos</h2><p>Solo aparecen conceptos presentes en tus nóminas.</p></div></div>
+          <div id="annual-complements" class="concept-list"></div>
+        </section>
+
+        <section class="section panel">
+          <div class="section-heading"><div><h2 id="year-figures-title">Tu año en cifras</h2><p>Sin proyecciones ni estimaciones.</p></div></div>
+          <div id="year-figures" class="year-figures"></div>
+        </section>
+      </section>
+
+      <section id="monthly-view" role="tabpanel" hidden>
+        <section class="section panel">
+          <div class="month-nav">
+            <button id="previous-month" type="button" aria-label="Mes anterior disponible">‹</button>
+            <select id="month-select" aria-label="Seleccionar mes con nómina"></select>
+            <button id="next-month" type="button" aria-label="Mes siguiente disponible">›</button>
+          </div>
+          <p id="monthly-receipt-count" class="receipt-note"></p>
+          <p id="monthly-regularization" class="regularization-note" hidden></p>
+        </section>
+
+        <section class="section panel">
+          <div class="section-heading"><div><h2>Resumen del mes</h2><p>Se suman todos los recibos asociados al mes.</p></div></div>
+          <div id="monthly-summary" class="summary-grid"></div>
+          <p id="monthly-deduction-rate" class="deduction-rate"></p>
+        </section>
+
+        <section class="section panel">
+          <div class="section-heading"><div><h2>Conceptos económicos</h2><p>Detalle de los importes disponibles en este mes.</p></div></div>
+          <div id="monthly-concepts" class="concept-list"></div>
+        </section>
+
+        <section class="section panel">
+          <div class="section-heading"><div><h2>Pluses y complementos del mes</h2><p>Solo se muestran los conceptos que aparecen en los recibos disponibles.</p></div></div>
+          <div id="monthly-complements" class="concept-list"></div>
+        </section>
+
+        <section class="section panel">
+          <div class="section-heading"><div><h2>Descuentos del mes</h2><p>Sin reinterpretar los datos guardados.</p></div></div>
+          <div id="monthly-discounts" class="discount-grid"></div>
+        </section>
+      </section>
+    </div>
+  </main>
+
+  <script type="module" src="estadisticas-nomina.js?v=1"></script>
+</body>
+</html>

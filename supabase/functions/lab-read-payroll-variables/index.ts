@@ -291,6 +291,55 @@ function normalizeDiscountRows(items: unknown) {
   }).slice(0, 50);
 }
 
+function normalizeEconomicCode(value: unknown) {
+  const code = canonicalPayrollCode(value).slice(0, 16);
+  return /^[A-Z0-9/.-]{1,16}$/.test(code) ? code : "";
+}
+
+function normalizeEconomicLabel(value: unknown) {
+  const text = String(value ?? "").replace(/[\u0000-\u001f\u007f]/g, "").replace(/\s+/g, " ").trim().slice(0, 140);
+  if (!text) return "";
+  const personal = /@|\b(?:dni|nif|nie|naf|domicilio|emplead[oa]|n[uú]mero de (?:la )?seguridad social|iban|cuenta bancaria|correo|tel[eé]fono)\b|\b\d{8}[a-z]\b/i.test(text);
+  return personal ? "" : text;
+}
+
+function economicGroup(code: string, side: string) {
+  if (side === "deductions") return "deductions";
+  if (["0001", "0002", "0003", "0004", "0053"].includes(code)) return "fixed";
+  const catalog = payrollConceptByCode(code);
+  if (catalog?.output === "comparison" || catalog?.output === "overtime") return "variable";
+  if (catalog?.output === "supplemental") return "complement";
+  return "other";
+}
+
+function normalizePayrollEconomics(payload: unknown) {
+  const source: any = payload && typeof payload === "object" ? payload : {};
+  const rawTotals = source.totals && typeof source.totals === "object" ? source.totals : {};
+  const totals = {
+    gross: normalizeDiscountNumber(rawTotals.gross, 100_000_000),
+    deductions: normalizeDiscountNumber(rawTotals.deductions, 100_000_000),
+    net: normalizeDiscountNumber(rawTotals.net, 100_000_000),
+  };
+  const concepts = (Array.isArray(source.concepts) ? source.concepts : []).flatMap((item: any) => {
+    const code = normalizeEconomicCode(item?.code);
+    const catalog = payrollConceptByCode(code);
+    const label = normalizeEconomicLabel(item?.name || item?.label) || catalog?.label || "";
+    const side = item?.side === "deductions" ? "deductions" : item?.side === "earnings" ? "earnings" : "";
+    const amount = normalizeDiscountNumber(item?.amount, 100_000_000);
+    if ((!code && !label) || !side || amount === null) return [];
+    return [{
+      code,
+      label: label || code,
+      quantity: normalizeDiscountNumber(item?.quantity, 1_000_000),
+      unitPrice: normalizeDiscountNumber(item?.unitPrice, 1_000_000),
+      amount,
+      side,
+      group: economicGroup(code, side),
+    }];
+  }).slice(0, 80);
+  return { totals, concepts };
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   if (req.method !== "POST") return json({ error: "METHOD_NOT_ALLOWED" }, 405);
@@ -325,6 +374,7 @@ Deno.serve(async (req: Request) => {
     const readDiscounts = body?.readDiscounts === true;
     const includeSupplemental = body?.includeSupplemental === true;
     const includeOvertime = body?.includeOvertime === true;
+    const includeEconomics = body?.includeEconomics === true;
     const imageDataUrl = String(body?.imageDataUrl ?? "");
     if (!/^data:image\/(jpeg|png|webp);base64,/i.test(imageDataUrl)) {
       return json({ error: "INVALID_IMAGE" }, 400);
@@ -436,6 +486,23 @@ Para esta fila únicamente se permite leer el precio unitario: NO lo confundas c
 Si la fila aparece pero alguna cifra no es legible, devuelve null en esa cifra; nunca cero por falta de lectura. Si no aparece, devuelve overtime: []. Si hay varias filas 0029, conserva cada una en el array para señalar que necesita revisión manual, sin sumarlas ni elegir una. Si no es nómina, overtime: [].
 Las horas extras no pertenecen a concepts: no las confundas con plus festivo, nocturno ni turno 12 horas. No extraigas compensaciones especiales 9G01 ni otros conceptos nuevos. No incluyas datos personales.` : '';
 
+    const economicsPrompt = includeEconomics ? `
+Además, añade al JSON una propiedad independiente "economics" con esta estructura:
+{"totals":{"gross":null,"deductions":null,"net":null},"concepts":[{"code":"0016","name":"Plus rotatividad","quantity":null,"unitPrice":null,"amount":null,"side":"earnings"}]}.
+
+Reglas de economics:
+- Lee la misma tabla visible "Devengos y deducciones" de esta nómina; no busques ni uses el Registro de jornada.
+- En totals, gross es únicamente el TOTAL DEVENGOS visible, deductions es únicamente el TOTAL DEDUCCIONES visible y net es únicamente el LÍQUIDO TOTAL visible. Si una cifra no está visible o no es segura, usa null. No calcules un total a partir de otro.
+- En concepts incluye cada fila económica legible de la tabla, aunque no figure en el catálogo anterior. Conserva su código y nombre visible sin datos personales.
+- quantity corresponde solo a CANTIDAD/UNIDADES/HORAS, unitPrice solo a IMPORTE DIARIO/PRECIO UNITARIO y amount al importe visible de DEVENGOS o DEDUCCIONES de esa misma fila.
+- side debe ser "earnings" cuando amount está en DEVENGOS y "deductions" cuando amount está en DEDUCCIONES. No deduzcas side por el nombre del concepto.
+- No incluyas como concepts las filas de totales, bases, cotizaciones, porcentajes ni la tabla "Seguridad Social e IRPF".
+- Conserva importes negativos y hasta cuatro decimales. Usa null para cantidad o precio ausentes; omite una fila si su amount no es legible.
+- En recibos de regularización o "DIF. MESES ANTERIORES", conserva todas las filas visibles exactamente igual, sin reasignar ni estimar su período.
+- No calcules, no completes operaciones, no inventes ceros y no extrapoles conceptos ausentes.
+- No incluyas nombre, DNI/NIF/NIE, número de Seguridad Social, domicilio, cuenta bancaria, número de empleado, correo ni ningún otro identificador personal.
+- Si no se reconoce una nómina, economics debe ser {"totals":{"gross":null,"deductions":null,"net":null},"concepts":[]}.` : '';
+
     const openaiResponse = await fetch("https://api.openai.com/v1/responses", {
       method: "POST",
       headers: {
@@ -447,11 +514,11 @@ Las horas extras no pertenecen a concepts: no las confundas con plus festivo, no
         input: [{
           role: "user",
           content: [
-            { type: "input_text", text: prompt + supplementalPrompt + overtimePrompt },
+            { type: "input_text", text: prompt + supplementalPrompt + overtimePrompt + economicsPrompt },
             { type: "input_image", image_url: imageDataUrl, detail: "high" },
           ],
         }],
-        max_output_tokens: includeSupplemental ? 2200 : includeOvertime ? 1400 : 700,
+        max_output_tokens: includeEconomics ? 5000 : includeSupplemental ? 2200 : includeOvertime ? 1400 : 700,
       }),
     });
 
@@ -473,17 +540,22 @@ Las horas extras no pertenecen a concepts: no las confundas con plus festivo, no
         value: normalizeValue(item?.value),
       }))
       .filter((item: any) => item.name && item.value);
+    const economicsResult = includeEconomics
+      ? { economics: normalizePayrollEconomics(parsed.economics) }
+      : {};
 
     if (includeOvertime) {
       const regular = concepts.filter((item: any) => !/\b(?:0001|0002|0003|0004|0053|0029|7001|7016|7017)\b|horas?\s*extra|salario\s*min(?:imo)?\s*garantizado|plus\s*convenio|comp(?:l(?:emento)?)?\s*personal|comp(?:l(?:emento)?)?\s*puesto\s*(?:de\s*)?trabajo|antiguedad|gru(?:po|p)?\s*sup|difer/.test(item.normalizedName));
       return json({isPayroll: true, concepts: regular, overtime: normalizeOvertime(parsed.overtime),
-        ...(includeSupplemental ? {supplemental: normalizeSupplemental(parsed.supplemental)} : {})});
+        ...(includeSupplemental ? {supplemental: normalizeSupplemental(parsed.supplemental)} : {}),
+        ...economicsResult});
     }
     if (includeSupplemental) {
       const regular = concepts.filter((item: any) => !/\b(?:0001|0002|0003|0004|0053|7001|7016|7017)\b|salario\s*min(?:imo)?\s*garantizado|plus\s*convenio|comp(?:l(?:emento)?)?\s*personal|comp(?:l(?:emento)?)?\s*puesto\s*(?:de\s*)?trabajo|antiguedad|gru(?:po|p)?\s*sup|difer/.test(item.normalizedName));
-      return json({isPayroll:true, concepts:regular, supplemental:normalizeSupplemental(parsed.supplemental)});
+      return json({isPayroll:true, concepts:regular, supplemental:normalizeSupplemental(parsed.supplemental), ...economicsResult});
     }
-    return json({ isPayroll: true, concepts });
+    if (!includeEconomics) return json({ isPayroll: true, concepts });
+    return json({ isPayroll: true, concepts, ...economicsResult });
   } catch (error) {
     console.error("Unexpected lab-read-payroll-variables error", error);
     return json({ error: "UNEXPECTED_ERROR" }, 500);

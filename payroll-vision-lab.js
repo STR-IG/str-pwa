@@ -120,6 +120,12 @@
     return session;
   }
 
+  function sharePayrollEconomics(src, economics) {
+    window.dispatchEvent(new CustomEvent('str:payroll-economics', {
+      detail: { src, economics: economics && typeof economics === 'object' ? economics : null }
+    }));
+  }
+
   function allowsLockedAdminRead(screen) {
     const adminAffiliate = new URLSearchParams(window.location.search).get('adminAffiliate');
     const confirmButton = document.getElementById('confirm-comparison');
@@ -136,6 +142,7 @@
     if (!allowLocked && [...document.querySelectorAll('input[id^="comparison-"]')].some(input => input.readOnly)) return;
     running = true;
     const src = img.src;
+    sharePayrollEconomics(src, null);
     setPayrollProgress('checking', 'Leyendo la nómina con visión…', 'Buscamos las cantidades de los mismos conceptos variables del registro de jornada.');
     try {
       const [session, imageDataUrl] = await Promise.all([getSession(), imageToJpegDataUrl(img)]);
@@ -143,7 +150,7 @@
       const response = await fetch(FUNCTION_URL, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${session.access_token}`, 'apikey': SUPABASE_PUBLISHABLE_KEY, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ imageDataUrl, includeSupplemental: true, includeOvertime: true })
+        body: JSON.stringify({ imageDataUrl, includeSupplemental: true, includeOvertime: true, includeEconomics: true })
       });
       const data = await response.json().catch(() => ({}));
       const allowLockedAfterRead = allowsLockedAdminRead(screen);
@@ -151,6 +158,7 @@
       if (!response.ok) throw new Error(data?.error || `HTTP_${response.status}`);
       if (data?.isPayroll !== true) {
         clearAndApply([], allowLockedAfterRead);
+        sharePayrollEconomics(src, null);
         setPayrollProgress('warning', 'No se reconoce la nómina', 'La imagen no permite identificar con seguridad los conceptos variables de la nómina.');
         completedForSrc = src;
         return;
@@ -181,10 +189,12 @@
       const completedReading = { allowLocked: allowLockedAfterRead, readingComplete: true };
       applySupplemental(data?.supplemental || [], document, completedReading);
       applyOvertime(data?.overtime, document, completedReading);
+      sharePayrollEconomics(src, data?.economics);
       setPayrollProgress(count ? 'ready' : 'warning', count ? 'Lectura de nómina terminada' : 'No se han podido leer las cantidades de la nómina', count ? `Se han leído ${count} conceptos de la nómina. Comprueba las cifras antes de comparar.` : 'No se ha rellenado ningún valor dudoso.');
       completedForSrc = src;
     } catch (error) {
       console.error('Payroll vision read error', error);
+      if (img.src === src) sharePayrollEconomics(src, null);
       setPayrollProgress('warning', 'No se ha podido completar la lectura de la nómina', 'No se han modificado los datos. Vuelve a intentarlo cuando haya conexión.');
     } finally { running = false; }
   }
