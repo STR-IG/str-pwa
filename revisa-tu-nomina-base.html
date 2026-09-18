@@ -2164,7 +2164,7 @@
     import { closeMonth, readMonthClosure } from './payroll-month.mjs?v=1';
     import { renderSupplemental, readSupplemental } from './payroll-supplemental.mjs?v=3';
     import { renderOvertime, readOvertime } from './payroll-overtime.mjs?v=2';
-    import { extractPaymentBreakdown, relatePaymentAdjustment, formatPaymentMoney, hasValidPayrollCrop, payrollRegularizationMonth } from './payroll-payments.mjs?v=6';
+    import { extractPaymentBreakdown, relatePaymentAdjustment, formatPaymentMoney, hasValidPayrollCrop, payrollRegularizationMonth } from './payroll-payments.mjs?v=7';
     import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 
     const SUPABASE_URL = 'https://icneigdnuntzugisexaz.supabase.co';
@@ -3754,8 +3754,8 @@
         },
         'missing-payment-breakdown': {
           icon: '!',
-          title: '⚠️ Falta la parte superior de la nómina',
-          message: 'Ajusta el recorte para incluir también el bloque “Desglose pagos”.'
+          title: 'No hemos podido verificar el recorte de la nómina',
+          message: 'Comprueba que se vean completos y nítidos “Desglose pagos” y “Devengos y deducciones”. Si ya aparecen, prueba con una imagen de mayor resolución.'
         },
         'wrong-regularization-period': {
           icon: '!',
@@ -4788,8 +4788,26 @@
 
     async function checkSelectedFilePrivacy(file, scanVersion) {
       try {
-        const recognizedText = await recognizeTextLocally(file);
+        let recognizedText = await recognizeTextLocally(file);
         if (scanVersion !== privacyScanVersion || workingFile !== file) return;
+        const privacyTexts = [recognizedText];
+        if (activeKind === 'payroll' && !hasValidPayrollCrop(recognizedText)
+          && !containsLikelyPersonalData(recognizedText)
+          && detectDocumentKind(recognizedText) !== 'timesheet') {
+          // Retry locally on the entire crop, never just the payment header:
+          // identity data anywhere in the image must still block saving.
+          const sources = await createPayrollOcrSources(file);
+          if (scanVersion !== privacyScanVersion || workingFile !== file) return;
+          for (const { source, pageSegMode } of sources) {
+            const retryText = await recognizeTextLocally(source, pageSegMode);
+            if (scanVersion !== privacyScanVersion || workingFile !== file) return;
+            privacyTexts.push(retryText);
+            if (retryText.trim()) recognizedText = retryText;
+            if (containsLikelyPersonalData(privacyTexts.join('\n'))
+              || detectDocumentKind(retryText) === 'timesheet'
+              || hasValidPayrollCrop(retryText)) break;
+          }
+        }
         workingOcrText = recognizedText;
         const readableCharacters = normalizeOcrText(recognizedText).replace(/[^A-Z0-9]/g, '').length;
         const detectedKind = detectDocumentKind(recognizedText);
@@ -4804,7 +4822,7 @@
         setPrivacyScanState(
           readableCharacters < 8
             ? 'failed'
-            : (containsLikelyPersonalData(recognizedText)
+            : (containsLikelyPersonalData(privacyTexts.join('\n'))
               ? 'blocked'
               : (detectedKind && detectedKind !== activeKind
                 ? 'wrong-document'

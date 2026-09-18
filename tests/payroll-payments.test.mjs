@@ -107,3 +107,15 @@ test('el flujo existente amplía el recorte y guarda la información en el recib
   assert.match(html, /documentType: 'regularization'/);
   assert.match(html, /prepareRegularizationReceipt/);
 });
+
+test('payment header and concept table may arrive in either OCR order', () => {
+  for (const text of [
+    'DEVENGOS Y DEDUCCIONES\nDESGLOSE PAGOS: TRANSFER. 1\nLIQUIDO TOTAL 3.048,15',
+    'CODIGO CONCEPTO\nDESGLOSE: PAGOS',
+    'DEVENGOS Y DEDUCCIONES\nDESGL0SE PAG0S',
+    'DEVENGOS Y DEDUCCIONES\nL1QUID0 T0TAL 3.048,15',
+  ]) assert.equal(hasCompletePaymentBreakdown(text), true, text);
+  for (const text of ['DEVENGOS Y DEDUCCIONES\n0001 SALARIO 1500', 'DESGLOSE PAGOS 1500', '', 'REGISTRO DE JORNADA\nPLUS FESTIVO 20']) {
+    assert.equal(hasCompletePaymentBreakdown(text), false, text);
+  }
+});

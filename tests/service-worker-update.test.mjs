@@ -15,7 +15,7 @@ function setup(offline = false) {
       clients: { claim: async () => { claimed = true; } },
     },
     caches: {
-      keys: async () => ['str-ig-cache-v42', 'str-ig-cache-v43', 'str-ig-cache-v44', 'other-app-cache'],
+      keys: async () => ['str-ig-cache-v42', 'str-ig-cache-v43', 'str-ig-cache-v44', 'str-ig-cache-v45', 'other-app-cache'],
       delete: async name => { deleted.push(name); },
       open: async name => ({ put: async (request, value) => { writes.push({ name, request, value }); } }),
       match: async () => ({ version: 'cached' }),
@@ -37,7 +37,7 @@ test('new worker activates and removes only obsolete PWA caches', async () => {
   await activated;
   assert.equal(app.skipped(), true);
   assert.equal(app.claimed(), true);
-  assert.deepEqual(app.deleted, ['str-ig-cache-v42', 'str-ig-cache-v43']);
+  assert.deepEqual(app.deleted, ['str-ig-cache-v42', 'str-ig-cache-v43', 'str-ig-cache-v44']);
 });
 for (const mode of ['navigate', 'cors']) {
   test(`${mode}: online load uses current network version even with cached data`, async () => {
@@ -49,7 +49,7 @@ for (const mode of ['navigate', 'cors']) {
     });
     assert.equal((await result).version, 'current');
     assert.equal(app.requests[0].options.cache, 'no-store');
-    assert.equal(app.writes[0].name, 'str-ig-cache-v44');
+    assert.equal(app.writes[0].name, 'str-ig-cache-v45');
   });
 }
 test('offline fallback remains available', async () => {

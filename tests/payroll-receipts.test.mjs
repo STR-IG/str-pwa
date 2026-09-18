@@ -112,7 +112,8 @@ async function seedSavedReceipt(bucket, prefix) {
 
 function privacyHarness() {
   const app = documentHarness(bucketFor('owner-a'));
-  Object.assign(app, { privacyScanVersion: 1, ocrWorkerPromise: null });
+  Object.assign(app, { privacyScanVersion: 1, ocrWorkerPromise: null,
+    createPayrollOcrSources: async file => [{ source: file, pageSegMode: '11' }, { source: file, pageSegMode: '6' }] });
   for (const key of ['privacyScan','privacyScanIcon','privacyScanTitle','privacyScanMessage']) app[key] = element();
   for (const name of ['PERSONAL_DATA_LABELS','DOCUMENT_KIND_MARKERS']) {
     const start = source.indexOf(`    const ${name} = `);
@@ -424,3 +425,92 @@ test('listing is paginated, with no two-receipt cap', async () => {
 test('inline module parses', () => { new vm.SourceTextModule(source); });
 
 export { bucketFor, documentHarness, extract, source, element };
+
+function retryPrivacyHarness() {
+  const app = privacyHarness();
+  app.activeKind = 'payroll';
+  app.workingFile = new Blob(['synthetic image'], { type: 'image/png' });
+  app.workingUrl = 'blob:synthetic';
+  app.privacyConfirmation.checked = true;
+  return app;
+}
+
+test('uncertain crop retries full-image OCR locally and accepts a recovered header', async () => {
+  const app = retryPrivacyHarness();
+  const calls = [];
+  const fullImage = { name: 'entire image at higher resolution' };
+  app.createPayrollOcrSources = async file => {
+    assert.equal(file, app.workingFile);
+    return [{ source: fullImage, pageSegMode: '11' }];
+  };
+  app.recognizeTextLocally = async (file, mode) => {
+    calls.push([file, mode]);
+    return mode === '11' ? payrollTableText : 'DEVENGOS Y DEDUCCIONES CODIGO CONCEPTO';
+  };
+  await app.checkSelectedFilePrivacy(app.workingFile, 1);
+  assert.equal(calls.length, 2);
+  assert.equal(calls[1][0], fullImage);
+  assert.equal(app.privacyScanState, 'passed');
+  assert.equal(app.confirmImageButton.disabled, false);
+  assert.equal(app.workingOcrText, payrollTableText);
+});
+
+test('a clear first reading needs no extra OCR', async () => {
+  const app = retryPrivacyHarness();
+  app.recognizeTextLocally = async () => payrollTableText;
+  app.createPayrollOcrSources = async () => { throw new Error('unexpected retry'); };
+  await app.checkSelectedFilePrivacy(app.workingFile, 1);
+  assert.equal(app.privacyScanState, 'passed');
+});
+
+test('personal data found on either reading still blocks saving', async () => {
+  for (const firstHasIdentity of [true, false]) {
+    const app = retryPrivacyHarness();
+    let calls = 0;
+    app.recognizeTextLocally = async () => {
+      calls++;
+      if (calls === 1) return `DEVENGOS Y DEDUCCIONES ${firstHasIdentity ? 'DNI 12345678Z' : ''}`;
+      return `${payrollTableText}\nDNI 12345678Z`;
+    };
+    await app.checkSelectedFilePrivacy(app.workingFile, 1);
+    assert.equal(app.privacyScanState, 'blocked');
+    assert.equal(app.confirmImageButton.disabled, true);
+    assert.equal(calls, firstHasIdentity ? 1 : 2);
+  }
+});
+
+test('unverified crop remains blocked after bounded retries with an accurate message', async () => {
+  const app = retryPrivacyHarness();
+  let calls = 0;
+  app.recognizeTextLocally = async () => { calls++; return 'DEVENGOS Y DEDUCCIONES CODIGO CONCEPTO'; };
+  await app.checkSelectedFilePrivacy(app.workingFile, 1);
+  assert.equal(calls, 3);
+  assert.equal(app.privacyScanState, 'missing-payment-breakdown');
+  assert.equal(app.confirmImageButton.disabled, true);
+  assert.match(app.privacyScanTitle.textContent, /No hemos podido verificar/);
+  assert.doesNotMatch(app.privacyScanTitle.textContent, /Falta la parte superior/);
+});
+
+test('changing image while retrying discards both stale success and stale errors', async () => {
+  for (const rejectRetry of [false, true]) {
+    const app = retryPrivacyHarness();
+    let finishRetry;
+    let signalRetry;
+    const retryStarted = new Promise(resolve => { signalRetry = resolve; });
+    app.recognizeTextLocally = async (file, mode) => {
+      if (!mode) return 'DEVENGOS Y DEDUCCIONES';
+      signalRetry();
+      return new Promise((resolve, reject) => { finishRetry = () => rejectRetry ? reject(new Error('stale OCR')) : resolve(payrollTableText); });
+    };
+    const scan = app.checkSelectedFilePrivacy(app.workingFile, 1);
+    await retryStarted;
+    app.privacyScanVersion = 2;
+    app.workingFile = new Blob(['new image']);
+    app.workingOcrText = 'new image text';
+    app.privacyScanState = 'checking';
+    finishRetry();
+    await scan;
+    assert.equal(app.privacyScanState, 'checking');
+    assert.equal(app.workingOcrText, 'new image text');
+  }
+});
