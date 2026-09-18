@@ -122,10 +122,16 @@ function legacyConcepts(review) {
 
 function mergeConfirmedConcepts(review, economicsConcepts) {
   const confirmed = legacyConcepts(review);
-  if (!economicsConcepts.length) return confirmed;
+  const absentCodes = new Set(Object.entries(review?.supplemental || {})
+    .filter(([, row]) => row?.status === 'absent')
+    .map(([rawCode, row]) => safeCode(row?.code || rawCode))
+    .filter(Boolean));
+  if (review?.overtime?.status === 'absent') absentCodes.add('0029');
+  const availableEconomics = economicsConcepts.filter((concept) => !concept.code || !absentCodes.has(concept.code));
+  if (!availableEconomics.length) return confirmed;
   const overrides = new Map(confirmed.filter((concept) => concept.code).map((concept) => [concept.code, concept]));
   const appliedOverrides = new Set();
-  const merged = economicsConcepts.flatMap((concept) => {
+  const merged = availableEconomics.flatMap((concept) => {
     const override = overrides.get(concept.code);
     if (!override) return [concept];
     if (appliedOverrides.has(concept.code)) return [];

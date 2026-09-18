@@ -110,12 +110,21 @@ test('las revisiones anteriores reutilizan líquido, complementos y descuentos y
 
 test('los importes confirmados sustituyen la lectura económica del mismo código', () => {
   const receipt = reviewToReceipt(review(2026, 7, {
+    payrollEconomics: {
+      totals: { gross: 3000, deductions: 600, net: 2400 },
+      concepts: [
+        { code: '0001', label: 'Salario mínimo garantizado', amount: 1800, side: 'earnings', group: 'fixed' },
+        { code: '0002', label: 'Plus convenio', amount: 500, side: 'earnings', group: 'fixed' }
+      ]
+    },
     supplemental: {
-      '0001': { code: '0001', status: 'present', quantity: 30, unitPrice: 60, amount: 1800.01 }
+      '0001': { code: '0001', status: 'present', quantity: 30, unitPrice: 60, amount: 1800.01 },
+      '0002': { code: '0002', status: 'absent' }
     }
   }));
   assert.equal(receipt.concepts.find((concept) => concept.code === '0001').amount, 1800.01);
   assert.equal(receipt.concepts.filter((concept) => concept.code === '0001').length, 1);
+  assert.equal(receipt.concepts.some((concept) => concept.code === '0002'), false);
 });
 
 test('añadir o eliminar una nómina recalcula desde los recibos originales sin caché estadística', () => {

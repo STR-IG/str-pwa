@@ -40,6 +40,7 @@ test('la vista incluye año, Acumulado/Mensual, una gráfica y Sin datos', () =>
   assert.match(html, /Pluses y complementos del mes/);
   assert.match(html, /meses sin nómina se muestran como «Sin datos»/);
   assert.match(html, /Los cálculos incluyen únicamente las nóminas cargadas/);
+  assert.match(read('estadisticas-nomina.js'), /Nóminas disponibles:/);
 });
 
 test('la página se actualiza al volver, al recuperar visibilidad o al pulsar actualizar', () => {

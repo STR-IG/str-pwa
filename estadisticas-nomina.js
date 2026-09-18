@@ -221,8 +221,8 @@ function renderYearFigures(statistics) {
   clear(container);
   document.getElementById('year-figures-title').textContent = `Tu ${statistics.year} en cifras`;
   addFigure(container, 'Meses cargados', `${statistics.availableMonths.length} de 12`);
-  if (statistics.metrics.gross.value !== null) addFigure(container, 'Bruto disponible', money(statistics.metrics.gross.value));
-  if (statistics.metrics.net.value !== null) addFigure(container, 'Líquido disponible', money(statistics.metrics.net.value));
+  if (statistics.metrics.gross.complete) addFigure(container, 'Bruto disponible', money(statistics.metrics.gross.value));
+  if (statistics.metrics.net.complete) addFigure(container, 'Líquido disponible', money(statistics.metrics.net.value));
   const night = conceptTotal(statistics.concepts, (concept) => concept.side === 'earnings'
     && (concept.code === '0013' || /nocturn/i.test(concept.label)));
   const holidays = conceptTotal(statistics.concepts, (concept) => concept.side === 'earnings'
@@ -232,7 +232,7 @@ function renderYearFigures(statistics) {
 }
 
 function renderAccumulated(statistics) {
-  document.getElementById('coverage-count').textContent = `${statistics.availableMonths.length} de 12 meses`;
+  document.getElementById('coverage-count').textContent = `Nóminas disponibles: ${statistics.availableMonths.length} de 12 meses`;
   const monthChips = document.getElementById('available-months');
   clear(monthChips);
   statistics.availableMonths.forEach((month) => monthChips.appendChild(element('span', 'month-chip', MONTH_NAMES[month - 1].slice(0, 3))));
@@ -325,7 +325,8 @@ async function listAll(bucket, path) {
 
 async function readReview(bucket, path) {
   const { data, error } = await bucket.download(path);
-  if (error || !data?.text) return null;
+  if (error) throw error;
+  if (!data?.text) return null;
   try { return JSON.parse(await data.text()); } catch { return null; }
 }
 
