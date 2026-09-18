@@ -48,10 +48,11 @@ function rowValue(lines, index, pattern) {
 
 export function hasCompletePaymentBreakdown(text) {
   const normalized = normalizedLine(text);
-  const start = normalized.search(/(?:DESGLOSE|DESCLOSE)\s+PAGS?\w*|TRANSFER\.?\s*\d+|CANTIDAD\s+PDTE|LIQUIDO\s+TOTAL/);
-  if (start < 0) return false;
-  const endMatch = /DEVEN\w*|DEDUC\w*|CODIGO\s+CONCEPTO/.exec(normalized.slice(start));
-  return Boolean(endMatch && endMatch.index > 0);
+  // OCR can read table columns before the payment header. Check both blocks,
+  // not their text order; tolerate common OCR glyph substitutions in headings only.
+  const paymentHeader = /\b(?:DESG[L1I][O0]SE|DESC[L1I][O0]SE)\s*:?\s*PAG[O0]?S?\b|\bTRANSFER\.?\s*\d+\b|\bCANTIDAD\s+PDTE\b|\bL[I1L][QO0]U[I1L]D[O0]\s+T[O0]TA[L1I]\b/.test(normalized);
+  const conceptsTable = /\bDEVEN\w*|\bDEDUC\w*|\bC[O0]D[I1L]G[O0]\s+C[O0]NCEPT[O0]\b/.test(normalized);
+  return paymentHeader && conceptsTable;
 }
 
 const REGULARIZATION_MONTHS = [
