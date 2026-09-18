@@ -1,4 +1,4 @@
-const CACHE_NAME = 'str-ig-cache-v43';
+const CACHE_NAME = 'str-ig-cache-v44';
 
 const SUPABASE_URL = 'https://icneigdnuntzugisexaz.supabase.co';
 const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_apKjcPClIBTHS2wwN6qPsA_6Vm4tk9m';
@@ -32,7 +32,7 @@ self.addEventListener('activate', (event) => {
       .then((cacheNames) =>
         Promise.all(
           cacheNames.map((cacheName) => {
-            if (cacheName !== CACHE_NAME) {
+            if (cacheName.startsWith('str-ig-cache-') && cacheName !== CACHE_NAME) {
               return caches.delete(cacheName);
             }
           })

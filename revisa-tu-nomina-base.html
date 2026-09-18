@@ -2393,6 +2393,7 @@
       },
       {
         key: 'unpaidNight',
+        reviewVisible: false,
         label: 'NOPAGA PNocturn teórico',
         patterns: [/NOPAGA.*NOCTUR[NM]/],
         max: 24,
@@ -2400,6 +2401,7 @@
       },
       {
         key: 'unpaidHoliday',
+        reviewVisible: false,
         label: 'NOPAGA PFestivo teórico',
         patterns: [/NOPAGA.*FESTIVO/],
         max: 24,
@@ -2500,6 +2502,7 @@
     let analysisRunVersion = 0;
     let analysisRunning = false;
     let analysisInputs = new Map();
+    let analysisInternalValues = new Map();
     let comparisonRunVersion = 0;
     let comparisonRunning = false;
     let comparisonInputs = new Map();
@@ -3978,11 +3981,18 @@
     function renderTimesheetAnalysis(extracted, confirmed = false) {
       analysisFields.textContent = '';
       analysisInputs = new Map();
+      analysisInternalValues = new Map();
       let detected = 0;
 
       TIMESHEET_VARIABLES.forEach((variable) => {
         const result = extracted?.get(variable.key);
         const value = typeof result === 'string' ? result : (result?.value || '');
+        // NOPAGA is used by payment adjustments, but is not a review field.
+        // Apply the current catalogue on every render, including saved reviews.
+        if (variable.reviewVisible === false) {
+          if (value !== '') analysisInternalValues.set(variable.key, value);
+          return;
+        }
         if (value !== '') detected += 1;
 
         const field = document.createElement('div');
@@ -4146,6 +4156,7 @@
       const confirmed = new Map();
 
       for (const variable of TIMESHEET_VARIABLES) {
+        if (variable.reviewVisible === false) continue;
         const input = analysisInputs.get(variable.key);
         const raw = input?.value.trim() || '';
         if (!raw) continue;
@@ -4195,6 +4206,8 @@
         return;
       }
 
+      // Preserve internal adjustment quantities without asking the user to edit them.
+      analysisInternalValues.forEach((value, key) => confirmed.set(key, value));
       confirmedTimesheetAnalyses.set(periodKey(), confirmed);
       saveWorkSchedule(scheduleSettings);
       renderTimesheetAnalysis(confirmed, true);
