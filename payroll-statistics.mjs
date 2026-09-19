@@ -13,6 +13,9 @@ const SOCIAL_SECURITY_KINDS = new Set([
   'common_contingencies', 'mei', 'unemployment', 'training', 'solidarity_contribution'
 ]);
 const IRPF_KINDS = new Set(['irpf', 'in_kind_irpf']);
+const COMPANY_CONTRIBUTION_KINDS = new Set([
+  'company_pension_plan', 'company_meals', 'life_insurance', 'christmas_lot'
+]);
 
 function finiteNumber(value) {
   if (value === null || value === undefined || value === '') return null;
@@ -171,6 +174,44 @@ function receiptDiscounts(review, metrics, concepts) {
   return { irpf, socialSecurity, other };
 }
 
+function normalizeCompanyDetail(row) {
+  const section = row?.section;
+  if (section !== 'company' && section !== 'contributions') return null;
+  const amount = finiteNumber(section === 'contributions' ? row?.value ?? row?.amount : row?.amount);
+  if (amount === null) return null;
+  const code = safeCode(row?.code);
+  const label = safeLabel(row?.label || row?.sourceText) || code;
+  if (!label && !code) return null;
+  return {
+    code,
+    label: label || code,
+    amount,
+    section,
+    kind: safeText(row?.kind, 48)
+  };
+}
+
+function receiptCompanyCosts(review, metrics) {
+  const rows = Array.isArray(review?.discounts) ? review.discounts : [];
+  const socialSecurity = sumDiscountRows(
+    rows,
+    (row) => row?.section === 'company_total' && row?.kind === 'total'
+  );
+  const otherContributions = sumMoney(rows
+    .filter((row) => row?.section === 'contributions' && COMPANY_CONTRIBUTION_KINDS.has(row?.kind))
+    .map((row) => finiteNumber(row?.value ?? row?.amount))
+    .filter((value) => value !== null));
+  const totalCost = metrics.gross !== null && socialSecurity !== null
+    ? (Math.round(metrics.gross * 100) + Math.round(socialSecurity * 100)) / 100
+    : null;
+  return {
+    socialSecurity,
+    totalCost,
+    otherContributions,
+    details: rows.map(normalizeCompanyDetail).filter(Boolean)
+  };
+}
+
 export function reviewToReceipt(review, fallback = {}) {
   if (!review || typeof review !== 'object') return null;
   const year = Number(review.year ?? fallback.year);
@@ -190,6 +231,7 @@ export function reviewToReceipt(review, fallback = {}) {
     net: finiteNumber(totals.net) ?? finiteNumber(review?.paymentInfo?.breakdown?.netTotal),
     deductions: finiteNumber(totals.deductions)
   };
+  const company = receiptCompanyCosts(review, metrics);
   return {
     id: safeText(review.receiptId || fallback.receiptId || review.period || `${year}-${month}`),
     year,
@@ -199,6 +241,7 @@ export function reviewToReceipt(review, fallback = {}) {
     metrics,
     concepts,
     discounts: receiptDiscounts(review, metrics, concepts),
+    company,
     source: economics.concepts || economics.totals ? 'economics' : 'legacy'
   };
 }
@@ -261,6 +304,25 @@ function aggregateConcepts(receipts) {
     .sort((a, b) => Math.abs(b.amount) - Math.abs(a.amount) || a.label.localeCompare(b.label, 'es'));
 }
 
+function aggregateCompanyDetails(receipts) {
+  const details = new Map();
+  receipts.forEach((receipt) => {
+    (receipt.company?.details || []).forEach((detail) => {
+      const key = detail.code
+        ? `${detail.section}:code:${detail.code}`
+        : `${detail.section}:label:${normalizedKey(detail.label)}`;
+      if (key.endsWith(':')) return;
+      const current = details.get(key) || { ...detail, amount: 0, receiptIds: new Set() };
+      current.amount = (Math.round(current.amount * 100) + Math.round(detail.amount * 100)) / 100;
+      current.receiptIds.add(receipt.id);
+      details.set(key, current);
+    });
+  });
+  return [...details.values()]
+    .map(({ receiptIds, ...detail }) => ({ ...detail, receipts: receiptIds.size }))
+    .sort((a, b) => Math.abs(b.amount) - Math.abs(a.amount) || a.label.localeCompare(b.label, 'es'));
+}
+
 function buildPeriod(receipts) {
   const gross = metricSummary(receipts, 'gross');
   const net = metricSummary(receipts, 'net');
@@ -268,6 +330,9 @@ function buildPeriod(receipts) {
   const irpf = valueSummary(receipts, (receipt) => receipt.discounts.irpf);
   const socialSecurity = valueSummary(receipts, (receipt) => receipt.discounts.socialSecurity);
   const otherDiscounts = valueSummary(receipts, (receipt) => receipt.discounts.other);
+  const companySocialSecurity = valueSummary(receipts, (receipt) => receipt.company?.socialSecurity);
+  const companyTotalCost = valueSummary(receipts, (receipt) => receipt.company?.totalCost);
+  const companyOtherContributions = valueSummary(receipts, (receipt) => receipt.company?.otherContributions);
   const deductionRate = gross.complete && deductions.complete && gross.value > 0
     ? Math.round((deductions.value / gross.value) * 10_000) / 100
     : null;
@@ -278,7 +343,13 @@ function buildPeriod(receipts) {
     metrics: { gross, net, deductions },
     deductionRate,
     concepts: aggregateConcepts(receipts),
-    discounts: { irpf, socialSecurity, other: otherDiscounts }
+    discounts: { irpf, socialSecurity, other: otherDiscounts },
+    company: {
+      socialSecurity: companySocialSecurity,
+      totalCost: companyTotalCost,
+      otherContributions: companyOtherContributions,
+      details: aggregateCompanyDetails(receipts)
+    }
   };
 }
 

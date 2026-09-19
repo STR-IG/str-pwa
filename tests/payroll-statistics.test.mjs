@@ -164,3 +164,28 @@ test('las cantidades fiables se acumulan y un concepto repetido no duplica el n�
   assert.equal(concepts.some((concept) => concept.code === '8888'), false);
   assert.equal(concepts.find((concept) => concept.code === '9999').label, '9999');
 });
+
+test('muestra lo que paga la empresa sin convertir datos ausentes en cero', () => {
+  const withCompanyData = reviewToReceipt(review(2026, 8, {
+    discounts: [
+      { kind: 'common_contingencies', code: '9350', label: 'Contingencias comunes', section: 'company', amount: 475.95 },
+      { kind: 'company_fogasa', code: '/361', label: 'Fondo de garantía salarial', section: 'company', amount: 4 },
+      { kind: 'company_pension_plan', code: '4001', label: 'Aportación Empresa PP', section: 'contributions', value: 13.47 },
+      { kind: 'company_meals', code: '9106', label: 'Comedor parte empresa', section: 'contributions', value: 20 },
+      { kind: 'total', code: 'SSIR', label: 'Total Cotiz. SS e IRPF (*)', section: 'company_total', amount: 661.71 }
+    ]
+  }));
+  const withoutCompanyData = reviewToReceipt(review(2026, 9, { discounts: [] }));
+  const statistics = buildYearStatistics([withCompanyData, withoutCompanyData], 2026);
+
+  assert.equal(withCompanyData.company.socialSecurity, 661.71);
+  assert.equal(withCompanyData.company.totalCost, 3661.71);
+  assert.equal(withCompanyData.company.otherContributions, 33.47);
+  assert.equal(statistics.company.socialSecurity.value, 661.71);
+  assert.equal(statistics.company.socialSecurity.complete, false);
+  assert.equal(statistics.company.totalCost.value, 3661.71);
+  assert.equal(statistics.company.details.find((detail) => detail.code === '9350').amount, 475.95);
+  assert.equal(withoutCompanyData.company.socialSecurity, null);
+  assert.equal(withoutCompanyData.company.totalCost, null);
+  assert.equal(withoutCompanyData.company.otherContributions, null);
+});

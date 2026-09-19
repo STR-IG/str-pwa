@@ -70,6 +70,9 @@
     .metric-card strong { display: block; margin-top: 7px; overflow-wrap: anywhere; font-size: clamp(18px, 5.5vw, 25px); letter-spacing: -.035em; }
     .metric-card small { display: block; margin-top: 6px; color: var(--muted); font-size: 10px; line-height: 1.35; }
     .metric-card.net { color: var(--green); background: var(--green-soft); border-color: #c9e7d5; }
+    .metric-card.company-total { color: var(--red-dark); background: #fff1f2; border-color: #f0c1c5; }
+    .company-breakdown { margin-top: 13px; }
+    .company-note { margin: 13px 0 0; padding: 11px 12px; border-radius: 12px; color: var(--muted); background: var(--soft); font-size: 11px; line-height: 1.45; }
     .deduction-rate { margin: 12px 0 0; color: var(--muted); font-size: 12px; text-align: center; }
     .metric-toggle { display: grid; grid-template-columns: repeat(3,1fr); gap: 6px; margin-bottom: 16px; }
     .metric-toggle button { min-height: 38px; border: 1px solid var(--line); border-radius: 11px; color: #4d4d52; background: white; font-size: 12px; font-weight: 800; }
@@ -202,6 +205,13 @@
         </section>
 
         <section class="section panel">
+          <div class="section-heading"><div><h2>Lo que paga la empresa</h2><p>Importes empresariales que aparecen en las nóminas guardadas.</p></div></div>
+          <div id="annual-company-summary" class="summary-grid"></div>
+          <div id="annual-company-breakdown" class="concept-list company-breakdown"></div>
+          <p class="company-note">El coste laboral mostrado suma el bruto y el total de cotizaciones de la empresa. Las demás aportaciones se enseñan aparte para evitar duplicarlas.</p>
+        </section>
+
+        <section class="section panel">
           <div class="section-heading"><div><h2>Evolución mensual</h2><p>Los meses sin nómina se muestran como «Sin datos».</p></div></div>
           <div id="chart-metric-toggle" class="metric-toggle" aria-label="Métrica de la gráfica"></div>
           <div id="annual-chart" class="chart" role="group"></div>
@@ -245,6 +255,13 @@
           <div class="section-heading"><div><h2>Resumen del mes</h2><p>Se suman todos los recibos asociados al mes.</p></div></div>
           <div id="monthly-summary" class="summary-grid"></div>
           <p id="monthly-deduction-rate" class="deduction-rate"></p>
+        </section>
+
+        <section class="section panel">
+          <div class="section-heading"><div><h2>Lo que paga la empresa</h2><p>Datos empresariales disponibles en los recibos de este mes.</p></div></div>
+          <div id="monthly-company-summary" class="summary-grid"></div>
+          <div id="monthly-company-breakdown" class="concept-list company-breakdown"></div>
+          <p class="company-note">El coste laboral mostrado suma el bruto y el total de cotizaciones de la empresa. Las demás aportaciones se enseñan aparte para evitar duplicarlas.</p>
         </section>
 
         <section class="section panel">
@@ -292,7 +309,7 @@
     </section>
   </main>
 
-  <script type="module" src="estadisticas-nomina.js?v=1"></script>
+  <script type="module" src="estadisticas-nomina.js?v=2"></script>
   <script src="estadisticas-comparaciones.js?v=1" defer></script>
 </body>
 </html>

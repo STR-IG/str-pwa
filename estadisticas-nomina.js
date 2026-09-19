@@ -6,7 +6,7 @@ import {
   buildYearStatistics,
   conceptTotal,
   reviewToReceipt
-} from './payroll-statistics.mjs?v=1';
+} from './payroll-statistics.mjs?v=2';
 
 const SUPABASE_URL = 'https://icneigdnuntzugisexaz.supabase.co';
 const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_apKjcPClIBTHS2wwN6qPsA_6Vm4tk9m';
@@ -107,6 +107,28 @@ function renderDiscounts(container, discounts) {
     );
     container.appendChild(card);
   });
+}
+
+function renderCompanyCosts(summaryContainer, detailsContainer, company) {
+  clear(summaryContainer);
+  [
+    ['Cotizaciones de la empresa', company.socialSecurity, ''],
+    ['Coste laboral mostrado', company.totalCost, 'company-total'],
+    ['Otras aportaciones', company.otherContributions, '']
+  ].forEach(([label, summary, className]) => {
+    const card = element('article', `metric-card${className ? ` ${className}` : ''}`);
+    card.append(
+      element('span', '', label),
+      element('strong', '', money(summary.value)),
+      element('small', '', availabilityText(summary))
+    );
+    summaryContainer.appendChild(card);
+  });
+  renderConceptRows(
+    detailsContainer,
+    company.details,
+    'No hay un desglose empresarial disponible en las nóminas guardadas.'
+  );
 }
 
 function conceptMeta(concept) {
@@ -239,6 +261,11 @@ function renderAccumulated(statistics) {
   document.getElementById('annual-receipt-count').textContent = `${statistics.receiptCount} recibo${statistics.receiptCount === 1 ? '' : 's'} incluido${statistics.receiptCount === 1 ? '' : 's'}.`;
   renderSummary(document.getElementById('annual-summary'), statistics);
   renderDeductionRate(document.getElementById('annual-deduction-rate'), statistics);
+  renderCompanyCosts(
+    document.getElementById('annual-company-summary'),
+    document.getElementById('annual-company-breakdown'),
+    statistics.company
+  );
   renderChartMetricToggle();
   renderChart(statistics);
   renderComposition(document.getElementById('annual-composition'), statistics.concepts);
@@ -281,6 +308,11 @@ function renderMonthly(statistics) {
     : '';
   renderSummary(document.getElementById('monthly-summary'), month);
   renderDeductionRate(document.getElementById('monthly-deduction-rate'), month);
+  renderCompanyCosts(
+    document.getElementById('monthly-company-summary'),
+    document.getElementById('monthly-company-breakdown'),
+    month.company
+  );
   renderConceptRows(
     document.getElementById('monthly-concepts'),
     month.concepts,

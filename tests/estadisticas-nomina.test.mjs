@@ -43,6 +43,18 @@ test('la vista incluye año, Acumulado/Mensual, una gráfica y Sin datos', () =>
   assert.match(read('estadisticas-nomina.js'), /Nóminas disponibles:/);
 });
 
+test('la vista económica separa las cotizaciones y el coste de la empresa', () => {
+  const html = read('estadisticas-nomina.html');
+  const source = read('estadisticas-nomina.js');
+  assert.match(html, /Lo que paga la empresa/);
+  assert.match(html, /id="annual-company-summary"/);
+  assert.match(html, /id="monthly-company-summary"/);
+  assert.match(html, /Las demás aportaciones se enseñan aparte para evitar duplicarlas/);
+  assert.match(source, /Cotizaciones de la empresa/);
+  assert.match(source, /Coste laboral mostrado/);
+  assert.match(source, /Otras aportaciones/);
+});
+
 test('la página se actualiza al volver, al recuperar visibilidad o al pulsar actualizar', () => {
   const source = read('estadisticas-nomina.js');
   assert.match(source, /addEventListener\('pageshow'/);
