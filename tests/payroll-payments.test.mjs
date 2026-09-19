@@ -112,7 +112,7 @@ test('el flujo existente amplía el recorte y guarda la información en el recib
   assert.match(html, /await previousMonthTimesheetValues\(\)/);
   assert.match(html, /missing-payment-breakdown/);
   assert.match(html, /!hasValidPayrollCrop\(recognizedText\)/);
-  assert.match(html, /detectedRegularizationMonth = activeKind === 'payroll' \? payrollRegularizationMonth\(recognizedText\) : null/);
+  assert.match(html, /detectedRegularizationMonth = activeKind === 'payroll' \? payrollRegularizationMonth\(validationText\) : null/);
   assert.match(html, /confirmRegularizationPeriod\.addEventListener/);
   assert.match(html, /documentType: 'regularization'/);
   assert.match(html, /prepareRegularizationReceipt/);

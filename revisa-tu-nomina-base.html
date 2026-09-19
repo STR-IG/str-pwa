@@ -4805,13 +4805,14 @@
             if (retryText.trim()) recognizedText = retryText;
             if (containsLikelyPersonalData(privacyTexts.join('\n'))
               || detectDocumentKind(retryText) === 'timesheet'
-              || hasValidPayrollCrop(retryText)) break;
+              || hasValidPayrollCrop(privacyTexts.join('\n'))) break;
           }
         }
+        const validationText = privacyTexts.join('\n');
         workingOcrText = recognizedText;
-        const readableCharacters = normalizeOcrText(recognizedText).replace(/[^A-Z0-9]/g, '').length;
-        const detectedKind = detectDocumentKind(recognizedText);
-        detectedRegularizationMonth = activeKind === 'payroll' ? payrollRegularizationMonth(recognizedText) : null;
+        const readableCharacters = normalizeOcrText(validationText).replace(/[^A-Z0-9]/g, '').length;
+        const detectedKind = detectDocumentKind(validationText);
+        detectedRegularizationMonth = activeKind === 'payroll' ? payrollRegularizationMonth(validationText) : null;
         confirmedRegularizationPeriod = null;
         regularizationPeriod.hidden = detectedRegularizationMonth === null;
         if (detectedRegularizationMonth !== null) {
@@ -4826,7 +4827,7 @@
               ? 'blocked'
               : (detectedKind && detectedKind !== activeKind
                 ? 'wrong-document'
-                : (activeKind === 'payroll' && !hasValidPayrollCrop(recognizedText)
+                : (activeKind === 'payroll' && !hasValidPayrollCrop(validationText)
                     ? 'missing-payment-breakdown'
                     : 'passed')))
         );

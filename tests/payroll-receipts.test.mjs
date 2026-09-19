@@ -480,6 +480,24 @@ test('a clear first reading needs no extra OCR', async () => {
   assert.equal(app.privacyScanState, 'passed');
 });
 
+test('crop validation combines structural evidence from bounded OCR readings of the same image', async () => {
+  const app = retryPrivacyHarness();
+  let calls = 0;
+  app.createPayrollOcrSources = async () => [
+    { source: { name: 'full image psm 11' }, pageSegMode: '11' },
+    { source: { name: 'full image psm 6' }, pageSegMode: '6' },
+  ];
+  app.recognizeTextLocally = async () => {
+    calls += 1;
+    if (calls === 1) return 'DEVENGOS Y DEDUCCIONES CODIGO CONCEPTO CANTIDAD IMPORTE DIARIO';
+    return 'DESGLOSE PAGOS TRANSFER. 1 2.247,01 LIQUIDO TOTAL 2.247,01';
+  };
+  await app.checkSelectedFilePrivacy(app.workingFile, 1);
+  assert.equal(calls, 2);
+  assert.equal(app.privacyScanState, 'passed');
+  assert.equal(app.confirmImageButton.disabled, false);
+});
+
 test('personal data found on either reading still blocks saving', async () => {
   for (const firstHasIdentity of [true, false]) {
     const app = retryPrivacyHarness();
