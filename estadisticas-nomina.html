@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="theme-color" content="#e30613">
-  <title>Estadísticas de nómina · STR-IG</title>
+  <title>Estadísticas · STR-IG</title>
   <link rel="icon" type="image/png" href="icono-str-ig.png">
   <link rel="apple-touch-icon" href="icono-str-ig.png">
   <link rel="manifest" href="manifest.json">
@@ -107,6 +107,22 @@
     .month-nav button:disabled { opacity: .35; cursor: default; }
     .receipt-note { margin: 12px 0 0; color: var(--muted); text-align: center; font-size: 12px; }
     .regularization-note { margin-top: 10px; padding: 11px; border-radius: 12px; color: var(--amber); background: var(--amber-soft); font-size: 12px; line-height: 1.4; }
+    .statistics-menu { display: grid; gap: 12px; margin-top: 18px; }
+    .statistics-card { width: 100%; padding: 20px; text-align: left; color: var(--ink); font: inherit; }
+    .statistics-card strong { display: block; font-size: 19px; }
+    .statistics-card span { display: block; margin-top: 7px; color: var(--muted); font-size: 13px; line-height: 1.5; }
+    .statistics-card:hover { border-color: var(--red); }
+    .statistics-return { margin-bottom: 16px; padding: 11px 15px; border: 1px solid var(--line); border-radius: 13px; background: white; color: var(--red-dark); font-weight: 800; }
+    .comparison-period { margin: 20px 0 10px; font-size: 20px; }
+    .comparison-row { padding: 16px 0; }
+    .comparison-row + .comparison-row { border-top: 1px solid var(--line); }
+    .comparison-row h3 { margin: 0 0 9px; font-size: 15px; }
+    .comparison-values { margin: 0 0 10px; color: var(--muted); font-size: 13px; line-height: 1.6; }
+    .comparison-status { display: inline-block; padding: 6px 9px; border-radius: 9px; font-size: 12px; font-weight: 800; }
+    .comparison-status.missing { color: #56565c; background: #f0f0f2; }
+    .comparison-status.match { color: var(--green); background: var(--green-soft); }
+    .comparison-status.review { color: var(--amber); background: var(--amber-soft); }
+    .comparison-legend { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
     [hidden] { display: none !important; }
     @media (max-width: 560px) {
       .controls { grid-template-columns: 1fr; }
@@ -129,9 +145,19 @@
   <p id="auth-check">Comprobando tu acceso privado…</p>
 
   <main id="content" hidden>
+    <section id="statistics-home">
+      <div class="hero"><span class="eyebrow">TU INFORMACIÓN</span><h1 tabindex="-1">Estadísticas</h1><p class="intro">Consulta tus datos económicos, el registro y las comparaciones.</p></div>
+      <nav class="statistics-menu" aria-label="Apartados de Estadísticas">
+        <button class="panel statistics-card" type="button" data-statistics-view="economic"><strong>Estadísticas económicas</strong><span>Evolución y composición de tus nóminas guardadas.</span></button>
+        <button class="panel statistics-card" type="button" data-statistics-view="register"><strong>Registro de jornada</strong><span>Espacio reservado para las estadísticas del registro. Próximamente.</span></button>
+        <button class="panel statistics-card" type="button" data-statistics-view="comparisons"><strong>Comparaciones</strong><span>Registro y nómina, por mes y año. Consulta los conceptos previstos.</span></button>
+      </nav>
+    </section>
+    <section id="statistics-economic" hidden>
+    <button class="statistics-return" type="button" data-statistics-view="home">‹ Volver a Estadísticas</button>
     <section class="hero">
       <span class="eyebrow">TU INFORMACIÓN ECONÓMICA</span>
-      <h1>Estadísticas de nómina</h1>
+      <h1 tabindex="-1">Estadísticas económicas</h1>
       <p class="intro">Evolución y composición de las nóminas que has guardado. No se estiman los meses que faltan.</p>
       <div class="controls">
         <label>
@@ -237,8 +263,36 @@
         </section>
       </section>
     </div>
+    </section>
+    <section id="statistics-register" hidden>
+      <button class="statistics-return" type="button" data-statistics-view="home">‹ Volver a Estadísticas</button>
+      <div class="hero"><h1 tabindex="-1">Registro de jornada</h1><p class="intro">Las estadísticas del registro estarán disponibles próximamente.</p><p class="section-note">Este apartado todavía no muestra datos del registro.</p></div>
+    </section>
+    <section id="statistics-comparisons" hidden>
+      <button class="statistics-return" type="button" data-statistics-view="home">‹ Volver a Estadísticas</button>
+      <div class="hero">
+        <span class="eyebrow">REGISTRO Y NÓMINA</span>
+        <h1 tabindex="-1">Comparaciones</h1>
+        <p class="intro">Compara lo registrado y lo abonado por mes. El cruce de datos todavía no está disponible.</p>
+        <div class="controls">
+          <label><span class="field-label">Año</span><select id="comparison-year"></select></label>
+          <label><span class="field-label">Mes</span><select id="comparison-month"></select></label>
+        </div>
+        <h2 id="comparison-period" class="comparison-period" aria-live="polite"></h2>
+        <p class="section-note">Sin datos suficientes no significa que no se haya trabajado o cobrado un concepto.</p>
+        <div id="comparison-rows"></div>
+        <p class="section-note">Estados previstos:</p>
+        <div class="comparison-legend" aria-label="Leyenda de estados">
+          <span class="comparison-status match">✓ Coincide</span>
+          <span class="comparison-status review">⚠️ Revisar</span>
+          <span class="comparison-status missing">— Sin datos suficientes</span>
+        </div>
+        <p class="section-note">La comparación utilizará el Registro guardado y los datos económicos ya extraídos de tus nóminas.</p>
+      </div>
+    </section>
   </main>
 
   <script type="module" src="estadisticas-nomina.js?v=1"></script>
+  <script src="estadisticas-comparaciones.js?v=1" defer></script>
 </body>
 </html>
