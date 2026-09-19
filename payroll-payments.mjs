@@ -48,11 +48,24 @@ function rowValue(lines, index, pattern) {
 
 export function hasCompletePaymentBreakdown(text) {
   const normalized = normalizedLine(text);
-  // OCR can read table columns before the payment header. Check both blocks,
-  // not their text order; tolerate common OCR glyph substitutions in headings only.
-  const paymentHeader = /\b(?:DESG[L1I][O0]SE|DESC[L1I][O0]SE)\s*:?\s*PAG[O0]?S?\b|\bTRANSFER\.?\s*\d+\b|\bCANTIDAD\s+PDTE\b|\bL[I1L][QO0]U[I1L]D[O0]\s+T[O0]TA[L1I]\b/.test(normalized);
-  const conceptsTable = /\bDEVEN\w*|\bDEDUC\w*|\bC[O0]D[I1L]G[O0]\s+C[O0]NCEPT[O0]\b/.test(normalized);
-  return paymentHeader && conceptsTable;
+  // OCR can return the two blocks in either order and may miss their amounts.
+  // Validate independent structural evidence, not a fixed position or exact heading.
+  const money = /[-−]?\d(?:[\d.\s]*\d)?[,.]\d{2}\b/;
+  const hasAmountAfter = (pattern, distance = 90) => {
+    const match = pattern.exec(normalized);
+    return Boolean(match && money.test(normalized.slice(match.index + match[0].length, match.index + match[0].length + distance)));
+  };
+  const paymentHeader = /D[E3]S[GC]L[O0][S5C][E3](?:\s+D[E3])?\s*:?\s*P[A4]G(?:[O0][S5]?|[S5])?/.test(normalized);
+  const netTotal = /(?:L[I1]QU[I1]D[O0]\s+T[O0]TAL|T[O0]TAL\s+L[I1]QU[I1]D[O0])/;
+  const paymentRows = hasAmountAfter(/TRANSFER(?:ENCIA)?\.?\s*\d*/)
+    || hasAmountAfter(/CANT[I1]DAD\s+PDT[E3]\.?/);
+  const earningsColumn = /D[E3]V[E3]N\w*/.test(normalized);
+  const deductionsColumn = /D[E3]DUC\w*/.test(normalized);
+  const conceptColumns = /C[O0]D[I1]G[O0]\s+C[O0]NC[E3]PT[O0]/.test(normalized)
+    || /CANT[I1]DAD.{0,90}(?:IMP[O0]RTE|D[E3]V[E3]NG|D[E3]DUC)/.test(normalized);
+  const paymentBlock = paymentHeader || paymentRows || netTotal.test(normalized);
+  const conceptsBlock = (earningsColumn && deductionsColumn) || conceptColumns;
+  return paymentBlock && conceptsBlock;
 }
 
 const REGULARIZATION_MONTHS = [

@@ -47,16 +47,26 @@ test('ajuste sin NOPAGA queda pendiente de identificar', () => {
   assert.deepEqual(info.adjustment.matches, []);
 });
 
-test('rechaza un recorte que empieza en devengos y acepta el bloque completo', () => {
+test('acepta un recorte completo con OCR variable y rechaza cualquiera de los dos bloques incompleto', () => {
   assert.equal(hasCompletePaymentBreakdown('DEVENGOS Y DEDUCCIONES\n0001 SALARIO'), false);
+  assert.equal(hasCompletePaymentBreakdown('DESGLOSE PAGOS\nLIQUIDO TOTAL 3.255,54'), false);
   assert.equal(hasCompletePaymentBreakdown('DESGLOSE PAGOS\nDEVENGOS Y DEDUCCIONES'), true);
-  assert.equal(hasCompletePaymentBreakdown('DESCLOSE PAGS TRANSFER.1 2.002,35 DEVEN CANTIDAD IMPORTE DIARIO DEDUCCIONES'), true);
-  assert.equal(hasCompletePaymentBreakdown('LIQUIDO TOTAL 4.578,36 IMPORTE DIARIO DEVENGOS DEDUCCIONES'), true);
+  assert.equal(hasCompletePaymentBreakdown('DESCLOSE PAGS TRANSFER.1 2.002,35 LIQUIDO TOTAL 2.002,35 DEVEN CANTIDAD IMPORTE DIARIO DEDUCCIONES'), true);
+  assert.equal(hasCompletePaymentBreakdown('LIQUIDO TOTAL 4.578,36 CODIGO CONCEPTO CANTIDAD IMPORTE DIARIO DEVENGOS DEDUCCIONES'), true);
+  assert.equal(hasCompletePaymentBreakdown(`
+    DESGLOSE DE PAGO5
+    TRANSFERENCIA 1 3.255,54
+    L1QUIDO TOTAL 3.255,54
+    DEVENG0S Y DEDUCCIONES
+    C0DIGO CONCEPTO CANTIDAD IMPORTE DIARIO DEVENGOS DEDUCCIONES
+    TOTAL DEVENGOS 4.011,22 TOTAL DEDUCCIONES 755,68
+  `), true);
   assert.equal(hasCompletePaymentBreakdown(`
     DESGLOSE PAGOS
     TRANSFER. 1 2.247,01
     LÍQUIDO TOTAL 2.247,01
     DEVENGOS Y DEDUCCIONES
+    CODIGO CONCEPTO CANTIDAD IMPORTE DIARIO DEVENGOS DEDUCCIONES
   `), true);
 });
 

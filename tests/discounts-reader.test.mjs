@@ -16,7 +16,7 @@ test('the period screen keeps Registro and Nómina and adds Descuentos after the
   assert.ok(timesheet > 0 && timesheet < payroll && payroll < discounts);
   assert.match(base, /id="open-discounts"[^>]*>Abrir Descuentos</);
   assert.match(base, /id="discounts-screen"/);
-  assert.match(wrapper, /revisa-tu-nomina-base\.html\?v=prod-28/);
+  assert.match(wrapper, /revisa-tu-nomina-base\.html\?v=prod-29/);
   assert.match(wrapper, /discounts-reader\.js\?v=prod-4/);
 });
 
@@ -191,7 +191,7 @@ test('Edge discounts mode is opt-in, variable-value and keeps original payroll p
   assert.match(edge, /No clasifiques por importes ni porcentajes/);
   assert.doesNotMatch(edge, /4,83|4,85/);
   assert.doesNotMatch(edge, /Total de cotizaciones y deducciones/);
-  assert.match(edge, /return json\(\{ isPayroll: true, concepts \}\)/);
+  assert.match(edge, /return json\(\{ isPayroll: true, conceptTableComplete, concepts \}\)/);
   assert.match(edge, /includeSupplemental/);
   assert.match(edge, /includeOvertime/);
 });

@@ -118,8 +118,43 @@ test('old administrative reviews only reread on the explicit action and reuse th
   assert.match(base,/retryPayrollAnalysisButton\.addEventListener\('click', \(\) => startPayrollComparison\(true\)\)/);
   assert.match(base,/documents\.payroll\.blob \|\| documents\.payroll\.file/);
   assert.match(vision,/confirmButton\?\.dataset\.action === 'check'/);
-  assert.match(vision,/clearAndApply\(concepts, allowLockedAfterRead\)/);
+  assert.match(vision,/const conceptTableComplete = data\?\.conceptTableComplete === true/);
+  assert.match(vision,/clearAndApply\(concepts, allowLockedAfterRead, conceptTableComplete\)/);
   assert.match(vision,/applySupplemental\(data\?\.supplemental \|\| \[\], document, completedReading\)/);
+});
+
+test('a complete concepts table confirms omitted concepts as zero; an uncertain table keeps them to check',()=>{
+  const ids={rotation:'comparison-rotation',meals:'comparison-meals',night:'comparison-night',shift:'comparison-shift',
+    holiday:'comparison-holiday',shift12:'comparison-shift12',holidayDiets:'comparison-holidayDiets',vacation:'comparison-vacation'};
+  const makeInputs=()=>Object.fromEntries(Object.values(ids).map(id=>{
+    const badge={textContent:'COMPROBAR',className:'comparison-status'};
+    const parent={querySelectorAll:()=>[badge],parentElement:null};
+    return [id,{value:'',placeholder:'',dataset:{},readOnly:false,parentElement:parent,badge,
+      dispatchEvent(){badge.textContent=this.value ? 'REVISADO' : 'COMPROBAR';}}];
+  }));
+  const run=(readingComplete)=>{
+    const inputs=makeInputs();
+    const ctx=vm.createContext({FIELD_MAP:ids,document:{getElementById:id=>inputs[id]},Event:class{},setTimeout(fn){fn();}});
+    const vision=readFileSync(new URL('../payroll-vision-lab.js',import.meta.url),'utf8');
+    vm.runInContext(vision.slice(vision.indexOf('  function norm('),vision.indexOf('  async function getSession(')),ctx);
+    ctx.clearAndApply([{name:'Plus nocturno',value:'8'}],false,readingComplete);
+    return inputs;
+  };
+  const complete=run(true);
+  assert.equal(complete[ids.night].value,'8');
+  assert.equal(complete[ids.vacation].value,'0');
+  assert.equal(complete[ids.vacation].badge.textContent,'CONFIRMADO');
+  const uncertain=run(false);
+  assert.equal(uncertain[ids.vacation].value,'');
+  assert.equal(uncertain[ids.vacation].badge.textContent,'COMPROBAR');
+});
+
+test('the payroll reader requires an explicit complete-table signal from the existing vision response',()=>{
+  const vision=readFileSync(new URL('../payroll-vision-lab.js',import.meta.url),'utf8');
+  const edge=readFileSync(new URL('../supabase/functions/lab-read-payroll-variables/index.ts',import.meta.url),'utf8');
+  assert.match(vision,/data\?\.conceptTableComplete === true/);
+  assert.match(edge,/"conceptTableComplete":true/);
+  assert.match(edge,/const conceptTableComplete = parsed\?\.conceptTableComplete === true/);
 });
 
 
@@ -281,7 +316,7 @@ test('edge validation whitelists codes and rejects ambiguity; API retains auth a
   assert.equal(ctx.normalizeSupplemental([{code:'7001'},{code:'7001'}])[0].ambiguous,true);
   assert.equal(ctx.normalizeSupplemental([{code:'0002'},{code:'0002'}])[0].ambiguous,true);
   assert.match(code,/admin.auth.getUser\(token\)/);assert.match(code,/private_access_allowlist/);
-  assert.match(code,/includeSupplemental === true/);assert.match(code,/return json\(\{ isPayroll: true, concepts \}\)/);
+  assert.match(code,/includeSupplemental === true/);assert.match(code,/return json\(\{ isPayroll: true, conceptTableComplete, concepts \}\)/);
   assert.match(code,/code:'0001', label:'Salario mín\. garantizado'/);assert.match(code,/unitPrice de IMPORTE DIARIO/);
 });
 

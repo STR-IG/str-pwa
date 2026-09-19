@@ -39,16 +39,24 @@
     return '';
   }
 
-  function markAsRead(input) {
-    if (!input?.value?.trim()) return;
+  function markStatus(input, label, ok = false) {
     let node = input.parentElement;
     for (let depth = 0; node && depth < 6; depth += 1, node = node.parentElement) {
       const badge = [...node.querySelectorAll('span, div')].find((el) => {
         const text = el.textContent.trim().toUpperCase();
-        return text === 'REVISADO' || text === 'DETECTADO' || text === 'COMPROBAR';
+        return text === 'REVISADO' || text === 'DETECTADO' || text === 'COMPROBAR'
+          || text === 'POR COMPARAR' || text === 'LEÍDO' || text === 'CONFIRMADO';
       });
-      if (badge) { badge.textContent = 'LEÍDO'; return; }
+      if (badge) {
+        badge.textContent = label;
+        badge.className = `comparison-status${ok ? ' ok' : ''}`;
+        return;
+      }
     }
+  }
+
+  function markAsRead(input) {
+    if (input?.value?.trim()) markStatus(input, 'LEÍDO', true);
   }
 
   function setPayrollProgress(kind, title, message) {
@@ -81,20 +89,24 @@
     return canvas.toDataURL('image/jpeg', 0.92);
   }
 
-  function clearAndApply(concepts, allowLocked = false) {
+  function clearAndApply(concepts, allowLocked = false, readingComplete = false) {
     Object.values(FIELD_MAP).forEach((id) => {
       const input = document.getElementById(id);
       if (!input || (input.readOnly && !allowLocked)) return;
       input.value = '';
       input.placeholder = 'No leído automáticamente';
       delete input.dataset.labAutoRead;
+      delete input.dataset.readerEngine;
+      delete input.dataset.readerResolution;
       input.dispatchEvent(new Event('input', { bubbles: true }));
+      markStatus(input, 'COMPROBAR');
     });
     let count = 0;
     const seen = new Set();
     for (const item of concepts || []) {
       const key = conceptKey(item?.name);
       if (!key || seen.has(key)) continue;
+      seen.add(key);
       const input = document.getElementById(FIELD_MAP[key]);
       const value = String(item?.value || '').trim();
       if (!input || (input.readOnly && !allowLocked) || !value) continue;
@@ -105,8 +117,23 @@
       markAsRead(input);
       setTimeout(() => markAsRead(input), 0);
       setTimeout(() => markAsRead(input), 150);
-      seen.add(key);
       count += 1;
+    }
+    if (readingComplete) {
+      Object.entries(FIELD_MAP).forEach(([key, id]) => {
+        if (seen.has(key)) return;
+        const input = document.getElementById(id);
+        if (!input || (input.readOnly && !allowLocked)) return;
+        input.value = '0';
+        input.dataset.labAutoRead = 'vision';
+        input.dataset.readerEngine = 'str';
+        input.dataset.readerResolution = 'absent';
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+        markStatus(input, 'CONFIRMADO', true);
+        setTimeout(() => markStatus(input, 'CONFIRMADO', true), 0);
+        setTimeout(() => markStatus(input, 'CONFIRMADO', true), 150);
+        count += 1;
+      });
     }
     const counter = document.getElementById('comparison-detected-count');
     if (counter) counter.textContent = `${count} cantidades leídas automáticamente de la nómina`;
@@ -181,12 +208,13 @@
           if (fields) concepts = fallback.mergeGeminiFields(concepts, fields, requestedKeys, localValues, conceptKey);
         }
       } catch {}
-      const count = clearAndApply(concepts, allowLockedAfterRead);
+      const conceptTableComplete = data?.conceptTableComplete === true;
+      const count = clearAndApply(concepts, allowLockedAfterRead, conceptTableComplete);
       const [{ applySupplemental }, { applyOvertime }] = await Promise.all([
         import('./payroll-supplemental.mjs?v=9'), import('./payroll-overtime.mjs?v=5')
       ]);
       if (img.src !== src || screen.hidden || screen.dataset.manualEdit === 'true') return;
-      const completedReading = { allowLocked: allowLockedAfterRead, readingComplete: true };
+      const completedReading = { allowLocked: allowLockedAfterRead, readingComplete: conceptTableComplete };
       applySupplemental(data?.supplemental || [], document, completedReading);
       applyOvertime(data?.overtime, document, completedReading);
       sharePayrollEconomics(src, data?.economics);

@@ -455,7 +455,7 @@ Reglas estrictas:
       .map((item) => `- ${item.code} · ${item.label}${item.codeAliases?.length ? ` (alias OCR de código: ${item.codeAliases.join(', ')})` : ''}.`)
       .join('\n');
 
-    const prompt = `Analiza esta imagen de una nómina. Queremos cruzarla con el "RESUMEN DE VARIABLES DEL MES" del registro de jornada.\n\nDevuelve SOLO JSON válido, sin markdown, con esta forma exacta:\n{"isPayroll":true,"concepts":[{"name":"texto del concepto en nómina","value":"cantidad/unidades"}]}\n\nReglas:\n- Extrae únicamente la CANTIDAD, UNIDADES u HORAS asociadas a cada concepto variable; NO extraigas el importe en euros ni el precio unitario.\n- Lee cada concepto por su nombre real en la nómina, no por posición fija.\n- Conceptos a buscar: Plus rotatividad, 0036 Comidas Can Guasch (también Comidas C. Guasch o PRF COMIDAS C. GUASCH EX.), Plus nocturno, Plus de turno, Plus festivo, Plus de turno 12 horas, Dietas festivos y Pluses vacaciones.\n- Para 0036 Comidas Can Guasch devuelve como value únicamente la cifra visible en su columna CANTIDAD. Por ejemplo, en "0036 | Comidas Can Guasch | 2 | 1,7800 | 3,56", value es "2". No uses IMPORTE DIARIO ni DEVENGOS y no calcules la cantidad dividiendo importes.\n- Distingue "Plus de turno" de "Plus de turno 12 horas".\n- Distingue "Plus festivo" de "Dietas festivos".\n- Si un concepto no aparece en la nómina, NO lo inventes y NO lo incluyas.\n- Conserva decimales con coma cuando existan.\n- Si una fila muestra varias cifras, identifica cuál corresponde a cantidad/unidades/horas y evita importes monetarios.\n- Si no puedes reconocer que la imagen corresponde a una nómina o tabla de conceptos salariales, devuelve {"isPayroll":false,"concepts":[]}.\n- Si una cantidad no es legible con seguridad, omite esa fila.`;
+    const prompt = `Analiza esta imagen de una nómina. Queremos cruzarla con el "RESUMEN DE VARIABLES DEL MES" del registro de jornada.\n\nDevuelve SOLO JSON válido, sin markdown, con esta forma exacta:\n{"isPayroll":true,"conceptTableComplete":true,"concepts":[{"name":"texto del concepto en nómina","value":"cantidad/unidades"}]}\n\nReglas:\n- Extrae únicamente la CANTIDAD, UNIDADES u HORAS asociadas a cada concepto variable; NO extraigas el importe en euros ni el precio unitario.\n- Lee cada concepto por su nombre real en la nómina, no por posición fija.\n- Conceptos a buscar: Plus rotatividad, 0036 Comidas Can Guasch (también Comidas C. Guasch o PRF COMIDAS C. GUASCH EX.), Plus nocturno, Plus de turno, Plus festivo, Plus de turno 12 horas, Dietas festivos y Pluses vacaciones.\n- Para 0036 Comidas Can Guasch devuelve como value únicamente la cifra visible en su columna CANTIDAD. Por ejemplo, en "0036 | Comidas Can Guasch | 2 | 1,7800 | 3,56", value es "2". No uses IMPORTE DIARIO ni DEVENGOS y no calcules la cantidad dividiendo importes.\n- Distingue "Plus de turno" de "Plus de turno 12 horas".\n- Distingue "Plus festivo" de "Dietas festivos".\n- conceptTableComplete solo puede ser true cuando la tabla completa "DEVENGOS Y DEDUCCIONES" es visible desde sus encabezados de columnas hasta su final o totales, está suficientemente nítida y permite asegurar que no hay filas fuera de la imagen. No depende de que aparezca ningún concepto concreto.\n- Usa conceptTableComplete false si la tabla está cortada por arriba, por abajo o por un lateral, está borrosa, falta su final o existe cualquier duda que pueda ocultar una fila. Aunque sea false, devuelve las filas que sí puedas leer con seguridad.\n- Si un concepto no aparece en una tabla completa, NO lo inventes y NO lo incluyas.\n- Conserva decimales con coma cuando existan.\n- Si una fila muestra varias cifras, identifica cuál corresponde a cantidad/unidades/horas y evita importes monetarios.\n- Si no puedes reconocer que la imagen corresponde a una nómina o tabla de conceptos salariales, devuelve {"isPayroll":false,"conceptTableComplete":false,"concepts":[]}.\n- Si una cantidad no es legible con seguridad, omite esa fila y usa conceptTableComplete false.`;
 
     const supplementalPrompt = includeSupplemental ? `
 Además, añade al JSON una propiedad independiente "supplemental": [{"code":"0001","quantity":null,"unitPrice":null,"amount":null},{"code":"7001","quantity":null,"amount":null}]. Los ejemplos solo ilustran la estructura: sustituye los null únicamente por cifras realmente visibles.
@@ -540,22 +540,23 @@ Reglas de economics:
         value: normalizeValue(item?.value),
       }))
       .filter((item: any) => item.name && item.value);
+    const conceptTableComplete = parsed?.conceptTableComplete === true;
     const economicsResult = includeEconomics
       ? { economics: normalizePayrollEconomics(parsed.economics) }
       : {};
 
     if (includeOvertime) {
       const regular = concepts.filter((item: any) => !/\b(?:0001|0002|0003|0004|0053|0029|7001|7016|7017)\b|horas?\s*extra|salario\s*min(?:imo)?\s*garantizado|plus\s*convenio|comp(?:l(?:emento)?)?\s*personal|comp(?:l(?:emento)?)?\s*puesto\s*(?:de\s*)?trabajo|antiguedad|gru(?:po|p)?\s*sup|difer/.test(item.normalizedName));
-      return json({isPayroll: true, concepts: regular, overtime: normalizeOvertime(parsed.overtime),
+      return json({isPayroll: true, conceptTableComplete, concepts: regular, overtime: normalizeOvertime(parsed.overtime),
         ...(includeSupplemental ? {supplemental: normalizeSupplemental(parsed.supplemental)} : {}),
         ...economicsResult});
     }
     if (includeSupplemental) {
       const regular = concepts.filter((item: any) => !/\b(?:0001|0002|0003|0004|0053|7001|7016|7017)\b|salario\s*min(?:imo)?\s*garantizado|plus\s*convenio|comp(?:l(?:emento)?)?\s*personal|comp(?:l(?:emento)?)?\s*puesto\s*(?:de\s*)?trabajo|antiguedad|gru(?:po|p)?\s*sup|difer/.test(item.normalizedName));
-      return json({isPayroll:true, concepts:regular, supplemental:normalizeSupplemental(parsed.supplemental), ...economicsResult});
+      return json({isPayroll:true, conceptTableComplete, concepts:regular, supplemental:normalizeSupplemental(parsed.supplemental), ...economicsResult});
     }
-    if (!includeEconomics) return json({ isPayroll: true, concepts });
-    return json({ isPayroll: true, concepts, ...economicsResult });
+    if (!includeEconomics) return json({ isPayroll: true, conceptTableComplete, concepts });
+    return json({ isPayroll: true, conceptTableComplete, concepts, ...economicsResult });
   } catch (error) {
     console.error("Unexpected lab-read-payroll-variables error", error);
     return json({ error: "UNEXPECTED_ERROR" }, 500);

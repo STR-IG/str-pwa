@@ -171,7 +171,7 @@ test('IA normalizer accepts only one exact 0029 row, preserves unknowns and reje
   assert.equal(ctx.normalizeOvertime([{code:'0029'},{code:'0029'}]).ambiguous,true);
   assert.equal(ctx.normalizeOvertime([{code:'9G01',quantity:2,unitPrice:100}]),null);
   assert.match(code,/includeOvertime === true/);assert.match(code,/admin.auth.getUser\(token\)/);
-  assert.match(code,/private_access_allowlist/);assert.match(code,/return json\(\{ isPayroll: true, concepts \}\)/);
+  assert.match(code,/private_access_allowlist/);assert.match(code,/return json\(\{ isPayroll: true, conceptTableComplete, concepts \}\)/);
 });
 
 test('overtime cannot leak into regular festive/night/12-hour comparisons',()=>{

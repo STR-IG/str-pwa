@@ -182,6 +182,23 @@ test('privacy scan enables saving a clean table only after consent; blocked, wro
   assert.equal(app.confirmImageButton.disabled, true);
 });
 
+test('privacy accepts a complete 3.255,54 payroll crop despite tolerant OCR headings', async () => {
+  const app = privacyHarness();
+  app.activeKind = 'payroll';
+  app.workingFile = new Blob(['synthetic image'], {type:'image/png'});
+  app.workingUrl = 'blob:synthetic-3255';
+  app.recognizeTextLocally = async () => `
+    DESGLOSE DE PAGO5
+    TRANSFERENCIA 1 3.255,54
+    L1QUIDO TOTAL 3.255,54
+    DEVENG0S Y DEDUCCIONES
+    C0DIGO CONCEPTO CANTIDAD IMPORTE DIARIO DEVENGOS DEDUCCIONES
+    0001 SALARIO MINIMO GARANTIZADO 30 50,0000 1.500,00
+    TOTAL DEVENGOS 4.011,22 TOTAL DEDUCCIONES 755,68`;
+  await app.checkSelectedFilePrivacy(app.workingFile, 1);
+  assert.equal(app.privacyScanState, 'passed');
+});
+
 test('saved image view offers another receipt, hides replacement controls, and never overwrites (legacy and new)', async () => {
   for (const id of ['', newReceiptId()]) {
     const bucket = bucketFor('owner-a');
