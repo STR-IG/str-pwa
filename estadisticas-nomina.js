@@ -109,26 +109,58 @@ function renderDiscounts(container, discounts) {
   });
 }
 
-function renderCompanyCosts(summaryContainer, detailsContainer, company) {
-  clear(summaryContainer);
-  [
-    ['Cotizaciones de la empresa', company.socialSecurity, ''],
-    ['Coste laboral mostrado', company.totalCost, 'company-total'],
-    ['Otras aportaciones', company.otherContributions, '']
-  ].forEach(([label, summary, className]) => {
-    const card = element('article', `metric-card${className ? ` ${className}` : ''}`);
-    card.append(
-      element('span', '', label),
-      element('strong', '', money(summary.value)),
-      element('small', '', availabilityText(summary))
-    );
-    summaryContainer.appendChild(card);
-  });
-  renderConceptRows(
-    detailsContainer,
-    company.details,
-    'No hay un desglose empresarial disponible en las nóminas guardadas.'
+function renderSalaryGlance(container, glance) {
+  clear(container);
+  if (!glance?.receiptCount || glance.totalCost === null || glance.totalCost <= 0) {
+    container.appendChild(element('p', 'salary-glance-empty', '— Sin datos suficientes para comparar líquido, deducciones y aportaciones empresariales en las mismas nóminas.'));
+    return;
+  }
+  const categories = [
+    ['Lo que recibes tú', glance.net, 'var(--green)'],
+    ['Lo que aportas tú', glance.workerContributions, '#e4a229'],
+    ['Lo que aporta la empresa', glance.companyContributions, 'var(--red)']
+  ].map(([label, value, color]) => ({
+    label,
+    value,
+    color,
+    percent: value / glance.totalCost * 100
+  }));
+  const layout = element('div', 'salary-glance-layout');
+  const donut = element('div', 'salary-donut');
+  const netAngle = categories[0].percent * 3.6;
+  const workerAngle = netAngle + categories[1].percent * 3.6;
+  donut.style.setProperty('--net-angle', `${netAngle}deg`);
+  donut.style.setProperty('--worker-angle', `${workerAngle}deg`);
+  donut.setAttribute('role', 'img');
+  donut.setAttribute('aria-label', categories.map((item) => `${item.label}: ${money(item.value)}, ${item.percent.toLocaleString('es-ES', { maximumFractionDigits: 1 })} %`).join('. '));
+  const center = element('div', 'salary-donut-center');
+  center.append(
+    element('span', '', 'Coste total'),
+    element('strong', '', money(glance.totalCost)),
+    element('small', '', `${glance.receiptCount} nómina${glance.receiptCount === 1 ? '' : 's'} utilizada${glance.receiptCount === 1 ? '' : 's'}`)
   );
+  donut.appendChild(center);
+  const legend = element('div', 'salary-glance-legend');
+  categories.forEach((item) => {
+    const row = element('div', 'salary-glance-item');
+    const dot = element('i', 'salary-glance-dot');
+    dot.style.background = item.color;
+    row.append(
+      dot,
+      element('span', '', item.label),
+      element('strong', '', money(item.value)),
+      element('small', '', `${item.percent.toLocaleString('es-ES', { maximumFractionDigits: 1 })} % del coste total`)
+    );
+    legend.appendChild(row);
+  });
+  layout.append(donut, legend);
+  const breakdown = element('details', 'salary-breakdown');
+  const breakdownTitle = element('summary', '', 'Ver desglose');
+  const breakdownRows = element('div', 'concept-list');
+  renderConceptRows(breakdownRows, glance.details, 'No hay un desglose empresarial disponible en estas nóminas.');
+  breakdown.append(breakdownTitle, breakdownRows);
+  const note = element('p', 'salary-glance-note', `Comparación realizada con ${glance.receiptCount} de ${glance.totalReceipts} nómina${glance.totalReceipts === 1 ? '' : 's'}: solo se incluyen las que tienen disponibles las tres partes.`);
+  container.append(layout, breakdown, note);
 }
 
 function conceptMeta(concept) {
@@ -261,11 +293,6 @@ function renderAccumulated(statistics) {
   document.getElementById('annual-receipt-count').textContent = `${statistics.receiptCount} recibo${statistics.receiptCount === 1 ? '' : 's'} incluido${statistics.receiptCount === 1 ? '' : 's'}.`;
   renderSummary(document.getElementById('annual-summary'), statistics);
   renderDeductionRate(document.getElementById('annual-deduction-rate'), statistics);
-  renderCompanyCosts(
-    document.getElementById('annual-company-summary'),
-    document.getElementById('annual-company-breakdown'),
-    statistics.company
-  );
   renderChartMetricToggle();
   renderChart(statistics);
   renderComposition(document.getElementById('annual-composition'), statistics.concepts);
@@ -276,6 +303,7 @@ function renderAccumulated(statistics) {
     'Sin pluses o complementos con importe disponible.'
   );
   renderYearFigures(statistics);
+  renderSalaryGlance(document.getElementById('annual-salary-glance'), statistics.salaryGlance);
 }
 
 function renderMonthOptions(statistics) {
@@ -308,11 +336,6 @@ function renderMonthly(statistics) {
     : '';
   renderSummary(document.getElementById('monthly-summary'), month);
   renderDeductionRate(document.getElementById('monthly-deduction-rate'), month);
-  renderCompanyCosts(
-    document.getElementById('monthly-company-summary'),
-    document.getElementById('monthly-company-breakdown'),
-    month.company
-  );
   renderConceptRows(
     document.getElementById('monthly-concepts'),
     month.concepts,
@@ -324,6 +347,7 @@ function renderMonthly(statistics) {
     'Este mes no conserva pluses o complementos con importe disponible.'
   );
   renderDiscounts(document.getElementById('monthly-discounts'), month.discounts);
+  renderSalaryGlance(document.getElementById('monthly-salary-glance'), month.salaryGlance);
 }
 
 function renderCurrentYear() {

@@ -70,9 +70,23 @@
     .metric-card strong { display: block; margin-top: 7px; overflow-wrap: anywhere; font-size: clamp(18px, 5.5vw, 25px); letter-spacing: -.035em; }
     .metric-card small { display: block; margin-top: 6px; color: var(--muted); font-size: 10px; line-height: 1.35; }
     .metric-card.net { color: var(--green); background: var(--green-soft); border-color: #c9e7d5; }
-    .metric-card.company-total { color: var(--red-dark); background: #fff1f2; border-color: #f0c1c5; }
-    .company-breakdown { margin-top: 13px; }
-    .company-note { margin: 13px 0 0; padding: 11px 12px; border-radius: 12px; color: var(--muted); background: var(--soft); font-size: 11px; line-height: 1.45; }
+    .salary-glance-layout { display: grid; grid-template-columns: minmax(220px,.9fr) minmax(250px,1.1fr); gap: 22px; align-items: center; }
+    .salary-donut { position: relative; width: min(100%,280px); aspect-ratio: 1; margin: 0 auto; border-radius: 50%; background: conic-gradient(var(--green) 0 var(--net-angle), #e4a229 var(--net-angle) var(--worker-angle), var(--red) var(--worker-angle) 100%); }
+    .salary-donut::after { content: ''; position: absolute; inset: 24%; border-radius: 50%; background: white; box-shadow: 0 0 0 1px rgba(0,0,0,.035); }
+    .salary-donut-center { position: absolute; z-index: 1; inset: 27%; display: flex; flex-direction: column; justify-content: center; text-align: center; }
+    .salary-donut-center span { color: var(--muted); font-size: 11px; font-weight: 800; }
+    .salary-donut-center strong { margin-top: 4px; font-size: clamp(17px,4vw,23px); letter-spacing: -.035em; }
+    .salary-donut-center small { margin-top: 5px; color: var(--muted); font-size: 9px; line-height: 1.3; }
+    .salary-glance-legend { display: grid; gap: 9px; }
+    .salary-glance-item { display: grid; grid-template-columns: 11px minmax(0,1fr) auto; gap: 9px; align-items: center; padding: 12px; border: 1px solid var(--line); border-radius: 14px; background: #fbfbfc; }
+    .salary-glance-dot { width: 11px; height: 11px; border-radius: 50%; }
+    .salary-glance-item span { color: var(--muted); font-size: 11px; font-weight: 800; }
+    .salary-glance-item strong { font-size: 13px; white-space: nowrap; }
+    .salary-glance-item small { grid-column: 2 / -1; color: var(--muted); font-size: 10px; }
+    .salary-glance-empty { margin: 0; padding: 24px 15px; border-radius: 14px; color: var(--muted); background: var(--soft); text-align: center; font-size: 12px; line-height: 1.5; }
+    .salary-breakdown { margin-top: 16px; }
+    .salary-breakdown summary { color: var(--red-dark); }
+    .salary-glance-note { margin: 13px 0 0; color: var(--muted); font-size: 11px; line-height: 1.45; }
     .deduction-rate { margin: 12px 0 0; color: var(--muted); font-size: 12px; text-align: center; }
     .metric-toggle { display: grid; grid-template-columns: repeat(3,1fr); gap: 6px; margin-bottom: 16px; }
     .metric-toggle button { min-height: 38px; border: 1px solid var(--line); border-radius: 11px; color: #4d4d52; background: white; font-size: 12px; font-weight: 800; }
@@ -132,6 +146,8 @@
       .summary-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
       .summary-grid .metric-card:last-child { grid-column: 1 / -1; }
       .discount-grid { grid-template-columns: 1fr; }
+      .salary-glance-layout { grid-template-columns: 1fr; }
+      .salary-donut { width: min(82vw,260px); }
       .discount-card { display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: center; }
       .discount-card strong { margin-top: 0; }
       .discount-card small { grid-column: 1 / -1; }
@@ -205,13 +221,6 @@
         </section>
 
         <section class="section panel">
-          <div class="section-heading"><div><h2>Lo que paga la empresa</h2><p>Importes empresariales que aparecen en las nóminas guardadas.</p></div></div>
-          <div id="annual-company-summary" class="summary-grid"></div>
-          <div id="annual-company-breakdown" class="concept-list company-breakdown"></div>
-          <p class="company-note">El coste laboral mostrado suma el bruto y el total de cotizaciones de la empresa. Las demás aportaciones se enseñan aparte para evitar duplicarlas.</p>
-        </section>
-
-        <section class="section panel">
           <div class="section-heading"><div><h2>Evolución mensual</h2><p>Los meses sin nómina se muestran como «Sin datos».</p></div></div>
           <div id="chart-metric-toggle" class="metric-toggle" aria-label="Métrica de la gráfica"></div>
           <div id="annual-chart" class="chart" role="group"></div>
@@ -238,6 +247,11 @@
           <div class="section-heading"><div><h2 id="year-figures-title">Tu año en cifras</h2><p>Sin proyecciones ni estimaciones.</p></div></div>
           <div id="year-figures" class="year-figures"></div>
         </section>
+
+        <section class="section panel">
+          <div class="section-heading"><div><h2>Tu salario de un vistazo</h2><p>Así se reparte el coste total de tu trabajo.</p></div></div>
+          <div id="annual-salary-glance"></div>
+        </section>
       </section>
 
       <section id="monthly-view" role="tabpanel" hidden>
@@ -258,13 +272,6 @@
         </section>
 
         <section class="section panel">
-          <div class="section-heading"><div><h2>Lo que paga la empresa</h2><p>Datos empresariales disponibles en los recibos de este mes.</p></div></div>
-          <div id="monthly-company-summary" class="summary-grid"></div>
-          <div id="monthly-company-breakdown" class="concept-list company-breakdown"></div>
-          <p class="company-note">El coste laboral mostrado suma el bruto y el total de cotizaciones de la empresa. Las demás aportaciones se enseñan aparte para evitar duplicarlas.</p>
-        </section>
-
-        <section class="section panel">
           <div class="section-heading"><div><h2>Conceptos económicos</h2><p>Detalle de los importes disponibles en este mes.</p></div></div>
           <div id="monthly-concepts" class="concept-list"></div>
         </section>
@@ -277,6 +284,11 @@
         <section class="section panel">
           <div class="section-heading"><div><h2>Descuentos del mes</h2><p>Sin reinterpretar los datos guardados.</p></div></div>
           <div id="monthly-discounts" class="discount-grid"></div>
+        </section>
+
+        <section class="section panel">
+          <div class="section-heading"><div><h2>Tu salario de un vistazo</h2><p>Así se reparte el coste total de tu trabajo.</p></div></div>
+          <div id="monthly-salary-glance"></div>
         </section>
       </section>
     </div>
@@ -309,7 +321,7 @@
     </section>
   </main>
 
-  <script type="module" src="estadisticas-nomina.js?v=2"></script>
+  <script type="module" src="estadisticas-nomina.js?v=3"></script>
   <script src="estadisticas-comparaciones.js?v=1" defer></script>
 </body>
 </html>

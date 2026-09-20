@@ -323,6 +323,44 @@ function aggregateCompanyDetails(receipts) {
     .sort((a, b) => Math.abs(b.amount) - Math.abs(a.amount) || a.label.localeCompare(b.label, 'es'));
 }
 
+function buildSalaryGlance(receipts) {
+  const comparableReceipts = receipts.filter((receipt) =>
+    finiteNumber(receipt?.metrics?.net) !== null
+    && finiteNumber(receipt?.metrics?.deductions) !== null
+    && finiteNumber(receipt?.company?.socialSecurity) !== null
+  );
+  if (!comparableReceipts.length) {
+    return {
+      receiptCount: 0,
+      totalReceipts: receipts.length,
+      net: null,
+      workerContributions: null,
+      companyContributions: null,
+      totalCost: null,
+      details: []
+    };
+  }
+  const net = sumMoney(comparableReceipts.map((receipt) => finiteNumber(receipt.metrics.net)));
+  const workerContributions = sumMoney(comparableReceipts.map((receipt) => finiteNumber(receipt.metrics.deductions)));
+  const companyContributions = sumMoney(comparableReceipts.map((receipt) => {
+    const socialSecurity = finiteNumber(receipt.company.socialSecurity);
+    const other = finiteNumber(receipt.company.otherContributions) ?? 0;
+    return (Math.round(socialSecurity * 100) + Math.round(other * 100)) / 100;
+  }));
+  const totalCost = (Math.round(net * 100)
+    + Math.round(workerContributions * 100)
+    + Math.round(companyContributions * 100)) / 100;
+  return {
+    receiptCount: comparableReceipts.length,
+    totalReceipts: receipts.length,
+    net,
+    workerContributions,
+    companyContributions,
+    totalCost,
+    details: aggregateCompanyDetails(comparableReceipts)
+  };
+}
+
 function buildPeriod(receipts) {
   const gross = metricSummary(receipts, 'gross');
   const net = metricSummary(receipts, 'net');
@@ -344,6 +382,7 @@ function buildPeriod(receipts) {
     deductionRate,
     concepts: aggregateConcepts(receipts),
     discounts: { irpf, socialSecurity, other: otherDiscounts },
+    salaryGlance: buildSalaryGlance(receipts),
     company: {
       socialSecurity: companySocialSecurity,
       totalCost: companyTotalCost,

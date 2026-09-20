@@ -43,16 +43,19 @@ test('la vista incluye año, Acumulado/Mensual, una gráfica y Sin datos', () =>
   assert.match(read('estadisticas-nomina.js'), /Nóminas disponibles:/);
 });
 
-test('la vista económica separa las cotizaciones y el coste de la empresa', () => {
+test('la vista económica mueve el coste empresarial al salario de un vistazo final', () => {
   const html = read('estadisticas-nomina.html');
   const source = read('estadisticas-nomina.js');
-  assert.match(html, /Lo que paga la empresa/);
-  assert.match(html, /id="annual-company-summary"/);
-  assert.match(html, /id="monthly-company-summary"/);
-  assert.match(html, /Las demás aportaciones se enseñan aparte para evitar duplicarlas/);
-  assert.match(source, /Cotizaciones de la empresa/);
-  assert.match(source, /Coste laboral mostrado/);
-  assert.match(source, /Otras aportaciones/);
+  assert.doesNotMatch(html, /Lo que paga la empresa/);
+  assert.doesNotMatch(html, /id="(?:annual|monthly)-company-summary"/);
+  assert.match(html, /Tu salario de un vistazo/);
+  assert.match(html, /Así se reparte el coste total de tu trabajo/);
+  assert.match(html, /id="annual-salary-glance"/);
+  assert.match(html, /id="monthly-salary-glance"/);
+  assert.match(source, /Lo que recibes tú/);
+  assert.match(source, /Lo que aportas tú/);
+  assert.match(source, /Lo que aporta la empresa/);
+  assert.match(source, /Ver desglose/);
 });
 
 test('la página se actualiza al volver, al recuperar visibilidad o al pulsar actualizar', () => {

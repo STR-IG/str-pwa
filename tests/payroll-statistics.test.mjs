@@ -189,3 +189,25 @@ test('muestra lo que paga la empresa sin convertir datos ausentes en cero', () =
   assert.equal(withoutCompanyData.company.totalCost, null);
   assert.equal(withoutCompanyData.company.otherContributions, null);
 });
+
+test('el donut usa solo nóminas con líquido, deducciones y aportación empresarial comparables', () => {
+  const withCompanyData = reviewToReceipt(review(2026, 8, {
+    discounts: [
+      { kind: 'common_contingencies', code: '9350', label: 'Contingencias comunes', section: 'company', amount: 475.95 },
+      { kind: 'company_ims', code: '/353', label: 'Empresa IMS', section: 'company', amount: 110 },
+      { kind: 'company_pension_plan', code: '4001', label: 'Aportación Empresa PP', section: 'contributions', value: 13.47 },
+      { kind: 'total', code: 'SSIR', label: 'Total Cotiz. SS e IRPF (*)', section: 'company_total', amount: 661.71 }
+    ]
+  }));
+  const withoutCompanyData = reviewToReceipt(review(2026, 9, { discounts: [] }));
+  const statistics = buildYearStatistics([withCompanyData, withoutCompanyData], 2026);
+
+  assert.equal(statistics.salaryGlance.receiptCount, 1);
+  assert.equal(statistics.salaryGlance.totalReceipts, 2);
+  assert.equal(statistics.salaryGlance.net, 2400);
+  assert.equal(statistics.salaryGlance.workerContributions, 600);
+  assert.equal(statistics.salaryGlance.companyContributions, 675.18);
+  assert.equal(statistics.salaryGlance.totalCost, 3675.18);
+  assert.equal(statistics.salaryGlance.details.find((detail) => detail.code === '9350').amount, 475.95);
+  assert.equal(statistics.months[8].salaryGlance.receiptCount, 0);
+});
