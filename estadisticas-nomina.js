@@ -1,3 +1,4 @@
+import { buildEconomicValue } from './salary-overview.mjs?v=2';
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 import { monthReceipts } from './payroll-receipts.mjs?v=1';
 import {
@@ -163,6 +164,68 @@ function renderSalaryGlance(container, glance) {
   container.append(layout, breakdown, note);
 }
 
+function renderEconomicValue(container, period) {
+  clear(container);
+  const value = buildEconomicValue(period);
+  const equation = element('div', 'value-equation');
+  const amountCard = (label, amount, className = '') => {
+    const card = element('article', `value-amount ${className}`.trim());
+    card.append(element('span', '', label), element('strong', '', money(amount)));
+    return card;
+  };
+  equation.append(amountCard('Salario bruto', value.gross), element('span', 'value-sign', '+'),
+    amountCard('Aportaciones empresa', value.company), element('span', 'value-sign', '='),
+    amountCard('TOTAL REPRESENTADO', value.totalRepresented, 'total'));
+  container.append(equation);
+  if (!value.slices.length) {
+    container.append(element('p', 'value-warning', value.reason));
+  } else {
+    const colors = ['#4bb889', '#d44756', '#e2a235'];
+    const labels = ['Lo que recibes tú', 'Impuestos y cotizaciones', 'Otras deducciones'];
+    const descriptions = ['Salario líquido realmente recibido', 'IRPF, Seguridad Social del trabajador y aportaciones empresariales', 'Cantidades no identificadas como impuestos o cotizaciones públicas'];
+    let cursor = 0;
+    const gradient = value.slices.map((slice, index) => {
+      const start = cursor;
+      cursor += slice.percent;
+      return `${colors[index]} ${start}% ${cursor}%`;
+    });
+    const layout = element('div', 'value-layout');
+    const donut = element('div', 'value-donut');
+    donut.style.setProperty('--value-gradient', `conic-gradient(${gradient.join(',')})`);
+    donut.setAttribute('role', 'img');
+    donut.setAttribute('aria-label', value.slices.map((slice, index) => `${labels[index]}: ${money(slice.amount)}, ${slice.percent.toLocaleString('es-ES', { maximumFractionDigits: 1 })} %`).join('. '));
+    const center = element('div', 'value-donut-center');
+    center.append(element('span', '', 'Total representado'), element('strong', '', money(value.totalRepresented)));
+    donut.append(center);
+    const legend = element('div');
+    value.slices.forEach((slice, index) => {
+      const row = element('div', 'value-legend-row');
+      const dot = element('i', 'value-dot');
+      dot.style.setProperty('--dot', colors[index]);
+      const copy = element('div');
+      copy.append(element('strong', '', labels[index]), element('small', '', descriptions[index]));
+      const number = element('div', 'value-legend-number');
+      number.append(element('strong', '', `${slice.percent.toLocaleString('es-ES', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} %`), element('small', '', money(slice.amount)));
+      row.append(dot, copy, number);
+      legend.append(row);
+    });
+    layout.append(donut, legend);
+    container.append(layout);
+    if (value.twoPart) container.append(element('p', 'value-message', `De cada 100 € representados, ${value.slices[0].percent.toLocaleString('es-ES', { maximumFractionDigits: 1 })} € llegan a tu cuenta y ${value.slices[1].percent.toLocaleString('es-ES', { maximumFractionDigits: 1 })} € se destinan a impuestos y cotizaciones.`));
+    else container.append(element('p', 'value-warning', 'Hay otras deducciones que no se han clasificado como impuestos o cotizaciones. Se muestran por separado para que el cálculo cuadre.'));
+  }
+  const cards = element('div', 'value-tax-cards');
+  const payroll = element('article', 'value-tax-card');
+  payroll.append(element('h3', '', 'DESDE TU NÓMINA'), element('strong', '', money(value.fromPayroll)),
+    element('p', '', `IRPF: ${money(value.irpf)}`), element('p', '', `Seguridad Social: ${money(value.workerSocialSecurity)}`));
+  const company = element('article', 'value-tax-card');
+  company.append(element('h3', '', 'APORTACIÓN ADICIONAL DE LA EMPRESA'), element('strong', '', money(value.company)),
+    element('p', '', 'Cotizaciones empresariales identificadas en tus nóminas.'));
+  cards.append(payroll, company);
+  container.append(cards);
+  if (!value.complete) container.append(element('p', 'section-note', `${value.available} de ${value.total} nóminas contienen todos los datos necesarios; los importes mostrados usan únicamente ese conjunto comparable.`));
+}
+
 function conceptMeta(concept) {
   const parts = [];
   if (concept.code) parts.push(`Código ${concept.code}`);
@@ -303,7 +366,7 @@ function renderAccumulated(statistics) {
     'Sin pluses o complementos con importe disponible.'
   );
   renderYearFigures(statistics);
-  renderSalaryGlance(document.getElementById('annual-salary-glance'), statistics.salaryGlance);
+  renderEconomicValue(document.getElementById('annual-economic-value'), statistics);
 }
 
 function renderMonthOptions(statistics) {
@@ -347,7 +410,7 @@ function renderMonthly(statistics) {
     'Este mes no conserva pluses o complementos con importe disponible.'
   );
   renderDiscounts(document.getElementById('monthly-discounts'), month.discounts);
-  renderSalaryGlance(document.getElementById('monthly-salary-glance'), month.salaryGlance);
+  renderEconomicValue(document.getElementById('monthly-economic-value'), month);
 }
 
 function renderCurrentYear() {

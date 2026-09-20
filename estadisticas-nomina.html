@@ -88,6 +88,31 @@
     .salary-breakdown summary { color: var(--red-dark); }
     .salary-glance-note { margin: 13px 0 0; color: var(--muted); font-size: 11px; line-height: 1.45; }
     .deduction-rate { margin: 12px 0 0; color: var(--muted); font-size: 12px; text-align: center; }
+    .economic-value-title { text-transform: uppercase; letter-spacing: .04em; }
+    .value-equation { display: grid; grid-template-columns: 1fr auto 1fr auto 1.15fr; gap: 9px; align-items: center; margin: 18px 0; }
+    .value-amount { padding: 14px 12px; border-radius: 15px; background: var(--soft); text-align: center; }
+    .value-amount span, .value-amount small { display: block; color: var(--muted); font-size: 11px; }
+    .value-amount strong { display: block; margin: 7px 0; font-size: clamp(18px,4vw,25px); }
+    .value-amount.total { color: var(--red-dark); background: #fff1f2; }
+    .value-sign { color: var(--muted); font-size: 22px; font-weight: 900; }
+    .value-layout { display: grid; grid-template-columns: 220px minmax(0,1fr); gap: 24px; align-items: center; }
+    .value-donut { width: 220px; height: 220px; margin: auto; border-radius: 50%; display: grid; place-items: center; background: var(--value-gradient); }
+    .value-donut-center { width: 145px; height: 145px; border-radius: 50%; display: grid; place-content: center; gap: 5px; background: white; text-align: center; }
+    .value-donut-center span { color: var(--muted); font-size: 11px; }
+    .value-donut-center strong { font-size: 21px; }
+    .value-legend-row { display: grid; grid-template-columns: 12px 1fr auto; gap: 9px; align-items: center; padding: 12px 0; }
+    .value-legend-row + .value-legend-row { border-top: 1px solid var(--line); }
+    .value-dot { width: 12px; height: 12px; border-radius: 50%; background: var(--dot); }
+    .value-legend-row span, .value-legend-row small { display: block; }
+    .value-legend-row small { margin-top: 3px; color: var(--muted); font-size: 10px; }
+    .value-legend-number { text-align: right; white-space: nowrap; }
+    .value-message, .value-warning { margin: 16px 0 0; padding: 12px; border-radius: 12px; background: var(--green-soft); font-size: 13px; line-height: 1.5; }
+    .value-warning { color: var(--amber); background: var(--amber-soft); }
+    .value-tax-cards { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; margin-top: 16px; }
+    .value-tax-card { padding: 14px; border: 1px solid var(--line); border-radius: 15px; }
+    .value-tax-card h3 { margin: 0; font-size: 11px; letter-spacing: .04em; }
+    .value-tax-card > strong { display: block; margin: 8px 0; font-size: 21px; }
+    .value-tax-card p { margin: 4px 0 0; color: var(--muted); font-size: 11px; }
     .metric-toggle { display: grid; grid-template-columns: repeat(3,1fr); gap: 6px; margin-bottom: 16px; }
     .metric-toggle button { min-height: 38px; border: 1px solid var(--line); border-radius: 11px; color: #4d4d52; background: white; font-size: 12px; font-weight: 800; }
     .metric-toggle button.active { color: var(--red-dark); border-color: #ecafb4; background: #fff1f2; }
@@ -151,6 +176,9 @@
       .discount-card { display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: center; }
       .discount-card strong { margin-top: 0; }
       .discount-card small { grid-column: 1 / -1; }
+      .value-equation { grid-template-columns: 1fr; }
+      .value-sign { text-align: center; line-height: .7; }
+      .value-layout, .value-tax-cards { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -249,8 +277,8 @@
         </section>
 
         <section class="section panel">
-          <div class="section-heading"><div><h2>Tu salario de un vistazo</h2><p>Así se reparte el coste total de tu trabajo.</p></div></div>
-          <div id="annual-salary-glance"></div>
+          <div class="section-heading"><div><h2 class="economic-value-title">El valor económico de tu trabajo</h2><p>Tu salario y las aportaciones que realiza la empresa por tu trabajo.</p></div></div>
+          <div id="annual-economic-value"></div>
         </section>
       </section>
 
@@ -287,8 +315,8 @@
         </section>
 
         <section class="section panel">
-          <div class="section-heading"><div><h2>Tu salario de un vistazo</h2><p>Así se reparte el coste total de tu trabajo.</p></div></div>
-          <div id="monthly-salary-glance"></div>
+          <div class="section-heading"><div><h2 class="economic-value-title">El valor económico de tu trabajo</h2><p>Tu salario y las aportaciones que realiza la empresa por tu trabajo.</p></div></div>
+          <div id="monthly-economic-value"></div>
         </section>
       </section>
     </div>
