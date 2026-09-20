@@ -3,6 +3,27 @@
   const refresh = document.getElementById('refresh');
   refresh.hidden = true;
   let lastCard = null;
+
+  // Integra la card visual de Estadísticas económicas manteniendo intacta
+  // la navegación y la funcionalidad existente.
+  const economicCard = document.querySelector('[data-statistics-view="economic"]');
+  if (economicCard) {
+    economicCard.innerHTML = '';
+    economicCard.style.padding = '0';
+    economicCard.style.overflow = 'hidden';
+    economicCard.style.border = '0';
+    economicCard.style.background = 'transparent';
+    economicCard.setAttribute('aria-label', 'Estadísticas económicas');
+    const image = document.createElement('img');
+    image.src = 'card-estadisticas-economicas.png';
+    image.alt = 'Estadísticas económicas. Evolución y composición de tus nóminas guardadas.';
+    image.style.display = 'block';
+    image.style.width = '100%';
+    image.style.height = 'auto';
+    image.style.borderRadius = '22px';
+    economicCard.append(image);
+  }
+
   document.querySelectorAll('[data-statistics-view]').forEach(button => {
     button.addEventListener('click', () => {
       const selected = button.dataset.statisticsView;
