@@ -99,7 +99,7 @@ Deno.serve(async (req: Request) => {
     const prompt = `Analiza exclusivamente la tabla titulada "RESUMEN DE VARIABLES DEL MES" de esta imagen de registro de jornada.
 
 Devuelve SOLO JSON válido, sin markdown, con esta forma exacta:
-{"isMonthlySummary":true,"concepts":[{"name":"texto exacto del concepto","value":"cantidad"}]}
+{"isMonthlySummary":true,"summaryComplete":true,"concepts":[{"name":"texto exacto del concepto","value":"cantidad"}]}
 
 Reglas:
 - Lee cada fila real por el NOMBRE DEL CONCEPTO, nunca por su posición ni por un número fijo de filas.
@@ -114,7 +114,8 @@ Reglas:
 - Pueden aparecer, entre otros: Plus Festivo, Plus rotatividad, Plus de turno, Comidas Can Guasch, Plus Nocturno, Plus de turno 12 horas, Dietas Festivos, Pluses Vacaciones y conceptos NOPAGA.
 - Ignora completamente la tabla SALDOS y TOTAL HORAS PERIODO.
 - Si no ves claramente el encabezado o la tabla de resumen mensual, devuelve {"isMonthlySummary":false,"concepts":[]}.
-- No deduzcas cifras borrosas: si una cantidad no es legible con seguridad, omite esa fila.`;
+- summaryComplete solo es true si has podido recorrer la tabla completa y reconocer TODOS los nombres de sus filas. Si hay filas cortadas o nombres ilegibles, devuelve summaryComplete:false.
+- No deduzcas cifras borrosas: si reconoces el nombre pero su cantidad no es legible, conserva esa fila con value:"". No la omitas ni la confundas con un concepto ausente.`;
 
     const openaiResponse = await fetch("https://api.openai.com/v1/responses", {
       method: "POST",
@@ -152,9 +153,9 @@ Reglas:
         normalizedName: normalizeConcept(item?.name),
         value: normalizeValue(item?.value),
       }))
-      .filter((item: any) => item.name && item.value && !isTheoreticalPc(item.name));
+      .filter((item: any) => item.name && !isTheoreticalPc(item.name));
 
-    return json({ isMonthlySummary: true, concepts });
+    return json({ isMonthlySummary: true, summaryComplete: parsed.summaryComplete === true && concepts.length > 0, concepts });
   } catch (error) {
     console.error("Unexpected lab-read-timesheet-summary error", error);
     return json({ error: "UNEXPECTED_ERROR" }, 500);

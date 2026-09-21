@@ -219,10 +219,10 @@ test('visión distingue vacaciones ausentes en noviembre y leídas en diciembre'
     extractVision('norm'), extractVision('isTheoreticalPc'), extractVision('conceptKey'), extractVision('markState'), extractVision('clearAndApply')
   ].join('\n'), visionContext);
 
-  visionContext.clearAndApply([]);
-  assert.equal(input.value,'');
+  visionContext.clearAndApply([], true);
+  assert.equal(input.value,'0');
   assert.equal(badge.textContent,'NO APARECE ESTE MES');
-  assert.equal(input.card.hidden,true);
+  assert.equal(input.card.hidden,false);
 
   input.value=''; badge.textContent='COMPROBAR';
   visionContext.clearAndApply([{name:'Pluses vacaciones',value:'3'}]);

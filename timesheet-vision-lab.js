@@ -87,7 +87,7 @@
     return canvas.toDataURL('image/jpeg', 0.92);
   }
 
-  function clearAndApply(concepts) {
+  function clearAndApply(concepts, summaryComplete = false) {
     const previousValues = new Map();
     Object.entries(FIELD_MAP).forEach(([key, id]) => {
       const input = document.getElementById(id);
@@ -107,7 +107,8 @@
       if (!key || seen.has(key)) continue;
       const id = FIELD_MAP[key];
       const input = document.getElementById(id);
-      const value = String(item?.value ?? '').trim();
+      const remoteValue = String(item?.value ?? '').trim();
+      const value = remoteValue || previousValues.get(key) || '';
       if (!input) continue;
       const card = input.closest?.('.analysis-field');
       if (card) card.hidden = false;
@@ -117,8 +118,8 @@
         continue;
       }
       input.value = value;
-      input.dataset.labAutoRead = item?.engine === 'gemini' ? 'gemini' : 'vision';
-      input.dataset.readerEngine = item?.engine === 'gemini' ? 'gemini' : 'str';
+      input.dataset.labAutoRead = remoteValue ? (item?.engine === 'gemini' ? 'gemini' : 'vision') : 'ocr';
+      input.dataset.readerEngine = remoteValue && item?.engine === 'gemini' ? 'gemini' : 'str';
       input.dispatchEvent(new Event('input', { bubbles: true }));
       markState(input, 'LEÍDO', true);
       setTimeout(() => markState(input, 'LEÍDO', true), 0);
@@ -138,12 +139,15 @@
         return;
       }
       input.value = '';
-      input.placeholder = 'No aplica';
+      if (!summaryComplete) {
+        markState(input, 'COMPROBAR', false);
+        return;
+      }
+      input.value = '0';
+      input.placeholder = '';
       input.dataset.labAutoRead = 'absent';
       input.dispatchEvent(new Event('input', { bubbles: true }));
       markState(input, 'NO APARECE ESTE MES', true);
-      const card = input.closest?.('.analysis-field');
-      if (card) card.hidden = true;
     });
     const counter = document.getElementById('analysis-detected-count');
     if (counter) counter.textContent = `${count} cantidades leídas automáticamente`;
@@ -196,7 +200,7 @@
           if (fields) concepts = fallback.mergeGeminiFields(concepts, fields, requestedKeys, localValues, conceptKey);
         }
       } catch {}
-      const count = clearAndApply(concepts);
+      const count = clearAndApply(concepts, data?.summaryComplete === true);
       setProgress(count ? 'ready' : 'warning', count ? 'Lectura visual terminada' : 'No se han podido leer las cantidades', count ? `Se han leído ${count} conceptos del resumen mensual. Comprueba las cifras antes de confirmar.` : 'No se ha rellenado ningún valor dudoso.');
       completedForSrc = src;
     } catch (error) {
