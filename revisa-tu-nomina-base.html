@@ -1688,18 +1688,38 @@
         </button>
       </section>
 
-      <section class="work-mode-section" aria-labelledby="work-mode-title">
+      <div id="documents-section" class="documents-section">
+        <div class="documents-heading">
+          <h2>Documentos</h2>
+          <span id="document-count" class="document-count">0 de 2 guardados</span>
+        </div>
+
+        <article id="timesheet-card" class="document-card">
+          <div class="document-card-top">
+            <span class="document-icon" aria-hidden="true">🗓️</span>
+            <div class="document-info">
+              <div class="document-line">
+                <h3 id="timesheet-card-title" class="document-title">Registro de jornada</h3>
+                <span id="timesheet-status" class="status-pill">Pendiente</span>
+              </div>
+              <p class="document-help">Resumen de variables del mes.</p>
+            </div>
+          </div>
+          <button id="open-timesheet" class="card-button" type="button">Añadir imagen</button>
+        </article>
+
+      <section id="payroll-type-section" class="work-mode-section" hidden aria-labelledby="work-mode-title">
         <div class="work-mode-heading">
-          <h2 id="work-mode-title">¿Qué jornada tuviste?</h2>
+          <h2 id="work-mode-title">2. Elige el tipo de esta nómina</h2>
           <span id="work-mode-selection-summary">Elige una opción</span>
         </div>
 
-        <div class="work-mode-grid" role="group" aria-label="Tipo de jornada del periodo">
+        <div class="work-mode-grid" role="group" aria-label="Tipo de la nómina que vas a añadir">
           <button id="work-mode-full" class="work-mode-card" type="button" aria-pressed="false">
             <span class="work-mode-icon" aria-hidden="true">100%</span>
             <span class="work-mode-copy">
-              <strong>Jornada completa · 100 %</strong>
-              <small>Sin reducción de jornada durante este mes.</small>
+              <strong>Nómina normal · 100 %</strong>
+              <small>Para el período trabajado a jornada completa.</small>
             </span>
             <span id="work-mode-full-status" class="work-mode-status">Elegir</span>
           </button>
@@ -1707,14 +1727,14 @@
           <button id="work-mode-reduced" class="work-mode-card" type="button" aria-pressed="false">
             <span class="work-mode-icon" aria-hidden="true">↘%</span>
             <span class="work-mode-copy">
-              <strong>Jornada reducida</strong>
-              <small>Con porcentaje reducido todo el mes o solo durante unos días.</small>
+              <strong>Nómina con jornada reducida</strong>
+              <small>Indica el porcentaje y los días de reducción de esta nómina.</small>
             </span>
             <span id="work-mode-reduced-status" class="work-mode-status">Elegir</span>
           </button>
         </div>
 
-        <p class="work-mode-note">Esta elección adapta los cálculos. Puedes cambiarla sin borrar las imágenes guardadas.</p>
+        <p class="work-mode-note">Elige el tipo de cada nómina por separado. El registro de jornada es el mismo para todo el mes.</p>
 
         <section id="reduction-setup" class="schedule-panel work-mode-config" aria-labelledby="schedule-title" hidden>
           <input id="schedule-type" type="hidden" value="">
@@ -1790,26 +1810,6 @@
         </section>
       </section>
 
-      <div id="documents-section" class="documents-section" hidden>
-        <div class="documents-heading">
-          <h2>Documentos</h2>
-          <span id="document-count" class="document-count">0 de 2 guardados</span>
-        </div>
-
-        <article id="timesheet-card" class="document-card">
-          <div class="document-card-top">
-            <span class="document-icon" aria-hidden="true">🗓️</span>
-            <div class="document-info">
-              <div class="document-line">
-                <h3 id="timesheet-card-title" class="document-title">Registro de jornada</h3>
-                <span id="timesheet-status" class="status-pill">Pendiente</span>
-              </div>
-              <p class="document-help">Resumen de variables del mes.</p>
-            </div>
-          </div>
-          <button id="open-timesheet" class="card-button" type="button">Añadir imagen</button>
-        </article>
-
         <article id="payroll-card" class="document-card locked">
           <div class="document-card-top">
             <span class="document-icon" aria-hidden="true">🧾</span>
@@ -1854,14 +1854,14 @@
         </section>
 
         <section id="completion-panel" class="completion-panel" hidden>
-          <strong>✓ Los dos documentos están guardados</strong>
+          <strong>✓ Registro y nómina guardados</strong>
           <p>Confirma las cantidades de este recibo. Si tienes varias nóminas, las sumaremos al cerrar la comparación del mes.</p>
-          <button id="start-analysis" class="primary" type="button">Analizar y comparar</button>
+          <button id="start-analysis" class="primary" type="button">Leer y guardar cantidades</button>
           <p id="analysis-ready-status" class="final-status" role="status" hidden></p>
           <button id="add-period-payroll" class="secondary" type="button" hidden>Añadir otra nómina de este mes</button>
           <div id="month-controls-period" hidden>
-            <p>¿Ya están todas? Compararemos la suma de las nóminas con el registro mensual, sin duplicar la jornada.</p>
-            <button id="close-month-period" class="primary" type="button">Ya he añadido todas las nóminas de este mes</button>
+            <p>3. Cuando hayas añadido todas las nóminas, compara su suma con el registro mensual.</p>
+            <button id="close-month-period" class="primary" type="button">Comparar nóminas con el registro</button>
             <button id="view-month-period" class="secondary" type="button">Ver resultado mensual guardado</button>
           </div>
           <div id="month-result-period" class="comparison-result" role="status" hidden></div>
@@ -2051,7 +2051,7 @@
           <button id="add-monthly-payroll" class="secondary" type="button" hidden>Añadir otra nómina de este mes</button>
           <div id="month-controls-comparison" hidden>
             <p>Añade los recibos que falten o confirma que ya están todos para comparar el mes completo.</p>
-            <button id="close-month-comparison" class="primary" type="button">Ya he añadido todas las nóminas de este mes</button>
+            <button id="close-month-comparison" class="primary" type="button">Comparar nóminas con el registro</button>
             <button id="view-month-comparison" class="secondary" type="button">Ver resultado mensual guardado</button>
           </div>
           <div id="month-result-comparison" class="comparison-result" role="status" hidden></div>
@@ -2676,7 +2676,7 @@
       workModeFullStatus.textContent = isFull ? 'Seleccionada' : 'Elegir';
       workModeReducedStatus.textContent = isReduced ? 'Seleccionada' : 'Elegir';
       reductionSetup.hidden = !isReduced;
-      documentsSection.hidden = !isFull && !isReduced;
+      documentsSection.hidden = false;
 
       if (isFull) {
         workModeSelectionSummary.textContent = 'Completa · 100 %';
@@ -2726,7 +2726,7 @@
       analysisConfirmed.hidden = true;
       confirmAnalysisButton.dataset.action = 'confirm';
       confirmAnalysisButton.textContent = 'Confirmar datos';
-      confirmedTimesheetAnalyses.delete(periodKey());
+      // Changing a receipt schedule does not change the monthly register quantities.
       updateScheduleUI();
       if (scheduleType.value === 'full' || scheduleType.value === 'reduced') {
         saveWorkSchedule(currentScheduleSettings());
@@ -3175,7 +3175,7 @@
       target.appendChild(message);
       if (!result) {
         title.textContent = 'Comparación mensual pendiente';
-        message.textContent = 'No hay un cierre vigente, o los recibos han cambiado. Añade y confirma las nóminas que falten y pulsa «Ya he añadido todas las nóminas de este mes».';
+        message.textContent = 'No hay un cierre vigente, o los recibos han cambiado. Añade y confirma las nóminas que falten y pulsa «Comparar nóminas con el registro».';
       } else {
         const incidents = monthlyIncidentCount(result);
         target.classList.toggle('issue', incidents > 0);
@@ -3375,6 +3375,9 @@
       const openTimesheet = document.getElementById('open-timesheet');
       const openPayroll = document.getElementById('open-payroll');
       const timesheetComplete = documents.timesheet.confirmed;
+      const typeSelected = ['full', 'reduced'].includes(currentScheduleSettings().type);
+      document.getElementById('payroll-type-section').hidden = !timesheetComplete;
+      document.getElementById('work-mode-full').disabled = document.getElementById('work-mode-reduced').disabled = isCurrentReviewComplete();
       const payrollComplete = documents.payroll.confirmed;
       if (isAdminMode) {
         document.getElementById('admin-replace-timesheet').disabled = !timesheetComplete || loadingDocuments;
@@ -3383,7 +3386,7 @@
         document.getElementById('admin-delete-payroll').disabled = !payrollComplete || loadingDocuments;
       }
 
-      document.getElementById('timesheet-card-title').textContent = `Registro de jornada · ${label}`;
+      document.getElementById('timesheet-card-title').textContent = `1. Registro de jornada · ${label}`;
       document.getElementById('payroll-card-title').textContent = `Nómina · ${label}`;
 
       if (loadingDocuments) {
@@ -3412,7 +3415,7 @@
 
       payrollCard.classList.toggle('complete', payrollComplete);
       payrollCard.classList.toggle('locked', !timesheetComplete);
-      openPayroll.disabled = !timesheetComplete;
+      openPayroll.disabled = !timesheetComplete || (!payrollComplete && !typeSelected);
 
       if (payrollComplete) {
         document.getElementById('payroll-status').textContent = 'Guardada';
@@ -3421,7 +3424,7 @@
       } else if (timesheetComplete) {
         document.getElementById('payroll-status').textContent = 'Pendiente';
         document.getElementById('payroll-help').textContent = 'Primera página: devengos y deducciones.';
-        openPayroll.textContent = 'Añadir imagen';
+        openPayroll.textContent = typeSelected ? 'Añadir esta nómina' : 'Elige arriba el tipo de nómina';
       } else {
         document.getElementById('payroll-status').textContent = 'Bloqueada';
         document.getElementById('payroll-help').textContent = 'Completa primero el registro de jornada.';
@@ -3449,7 +3452,7 @@
         ? `Ver revisión de ${label}`
         : (confirmedTimesheetAnalyses.has(periodKey())
           ? `Continuar revisión de ${label}`
-          : `Analizar y comparar ${label}`);
+          : `Leer y guardar cantidades ${label}`);
       const readyStatus = document.getElementById('analysis-ready-status');
       readyStatus.textContent = savedReview?.status === 'complete'
         ? '✓ Cantidades de este recibo guardadas. Añade otra nómina o consulta/cierra la comparación mensual.'
@@ -4779,6 +4782,10 @@
     function startMonthlyReview() {
       if (savingReview || savingDocument || loadingDocuments) return;
       const savedReview = monthlyReviews.get(periodKey());
+      if (!computeScheduleFactor(currentScheduleSettings())) {
+        showPeriodMessage('Elige el tipo de esta nómina y completa el porcentaje y las fechas de reducción, si corresponde.', true);
+        return;
+      }
       if (savedReview?.status === 'complete') {
         startPayrollComparison();
         return;
@@ -5335,7 +5342,7 @@
       const sourceTimesheet = { ...documents.timesheet };
       const sourceReview = monthlyReviews.get(periodKey());
       const sourceValues = new Map(confirmedTimesheetAnalyses.get(periodKey()) || plainObjectToMap(sourceReview.timesheet));
-      const sourceSchedule = { ...currentScheduleSettings() };
+      const sourceSchedule = { type: '', percentage: '', duration: 'whole', start: '', end: '', salarySource: 'full', salaryAmount: '' };
       const nextReceiptId = newReceiptId();
       const nextPath = `${monthFolder()}/${nextReceiptId}/timesheet`;
       const addButtons = [addMonthlyPayroll, addPeriodPayroll, addDocumentPayroll];
@@ -5388,8 +5395,8 @@
       loadWorkSchedule();
       addMonthlyPayroll.hidden = true;
       showPeriodScreen();
-      showPeriodMessage('Registro de jornada conservado. Añade solo la nueva nómina; la anterior sigue guardada en Mi historial.');
-      openDocument('payroll');
+      showPeriodMessage('Registro de jornada conservado. Elige si la nueva nómina es normal o con jornada reducida y añádela.');
+      document.getElementById('payroll-type-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
     addMonthlyPayroll.addEventListener('click', startAnotherPayroll);
     addPeriodPayroll.addEventListener('click', startAnotherPayroll);

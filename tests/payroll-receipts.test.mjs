@@ -235,7 +235,11 @@ test('saved image view offers another receipt, hides replacement controls, and n
     assert.notEqual(app.activeReceiptId, id);
     assert.equal(app.month.value, '7'); assert.equal(app.year.value, '2026');
     assert.equal(app.addPeriodPayroll.hidden, true);
-    assert.equal(app.activeKind, 'payroll', 'opens the new payroll, not the timesheet');
+    assert.equal(app.activeKind, '', 'asks for the new payroll type before uploading');
+    assert.equal(app.document.getElementById('open-payroll').disabled, true);
+    app.currentScheduleSettings = () => ({type:'full'});
+    app.updatePeriodCards();
+    app.openDocument('payroll');
     assert.equal(app.documents.timesheet.confirmed, true);
     assert.equal(app.documents.payroll.confirmed, false);
     assert.equal(await bucket.objects.get(app.storagePath('timesheet')).text(), 'saved timesheet');
@@ -259,7 +263,7 @@ test('saved image view offers another receipt, hides replacement controls, and n
     await app.addPeriodPayroll.click();
     assert.equal(app.isCurrentReviewComplete(), false);
     assert.equal(bucket.objects.size, savedCount + 1, 'only copies the saved timesheet for the new receipt');
-    assert.equal(app.activeKind, 'payroll');
+    assert.equal(app.activeKind, '');
   }
 });
 
@@ -281,7 +285,7 @@ test('new receipt keeps privacy gate; loading or saving cannot start another rec
   }
 });
 
-test('another payroll reuses saved bytes and schedule, survives reload, and still rejects duplicate payrolls', async () => {
+test('another payroll reuses the register but requires its own schedule and still rejects duplicates', async () => {
   const bucket = bucketFor('owner-a');
   await seedSavedReceipt(bucket, 'owner-a/2026/08');
   const app = documentHarness(bucket);
@@ -294,8 +298,10 @@ test('another payroll reuses saved bytes and schedule, survives reload, and stil
   const original = new Map(bucket.objects);
   await app.addMonthlyPayroll.click();
   const receiptId = app.activeReceiptId;
-  assert.equal(app.activeKind, 'payroll');
-  assert.deepEqual(JSON.parse(JSON.stringify(app.workSchedules.get(app.periodKey()))), schedule);
+  assert.equal(app.activeKind, '');
+  assert.equal(app.workSchedules.get(app.periodKey()).type, '');
+  app.currentScheduleSettings = () => ({type:'full'});
+  app.openDocument('payroll');
   assert.equal(app.confirmedTimesheetAnalyses.get(app.periodKey()).get('night'), '10');
   assert.equal(app.monthlyReviews.has(app.periodKey()), false);
   assert.equal(app.confirmedPayrollAnalyses.has(app.periodKey()), false);
@@ -312,7 +318,7 @@ test('another payroll reuses saved bytes and schedule, survives reload, and stil
   await reopened.loadStoredDocuments();
   assert.equal(reopened.activeReceiptId, receiptId);
   assert.equal(reopened.documents.timesheet.confirmed, true);
-  assert.equal(reopened.document.getElementById('open-payroll').disabled, false);
+  assert.equal(reopened.document.getElementById('open-payroll').disabled, true);
   assert.equal(reopened.document.getElementById('document-count').textContent, '1 de 2 guardados');
   for (const [path, blob] of original) assert.equal(await bucket.objects.get(path).text(), await blob.text());
 });
@@ -337,7 +343,7 @@ test('failed preparation preserves the original receipt, unlocks the UI, and can
     bucket.failUploads = false; bucket.failDownloads = false;
     await app.addPeriodPayroll.click();
     assert.notEqual(app.activeReceiptId, '');
-    assert.equal(app.activeKind, 'payroll');
+    assert.equal(app.activeKind, '');
     assert.equal(bucket.objects.size, original.size + 1);
   }
 });
@@ -358,7 +364,7 @@ test('double-click creates only one receipt and keeps the original active until 
   await app.startAnotherPayroll();
   release(); await adding;
   assert.equal(bucket.objects.size, 4);
-  assert.equal(app.activeKind, 'payroll');
+  assert.equal(app.activeKind, '');
   assert.equal(app.savingDocument, false);
   assert.equal(app.addPeriodPayroll.disabled, false);
 });
@@ -548,4 +554,35 @@ test('changing image while retrying discards both stale success and stale errors
     assert.equal(app.privacyScanState, 'checking');
     assert.equal(app.workingOcrText, 'new image text');
   }
+});
+
+test('upload flow starts with the register and then requires a payroll type', () => {
+  const app = documentHarness(bucketFor('owner-a'));
+  app.updatePeriodCards();
+  assert.equal(app.document.getElementById('open-timesheet').disabled, false);
+  assert.equal(app.document.getElementById('payroll-type-section').hidden, true);
+  assert.equal(app.document.getElementById('open-payroll').disabled, true);
+  app.documents.timesheet.confirmed = true;
+  app.updatePeriodCards();
+  assert.equal(app.document.getElementById('payroll-type-section').hidden, false);
+  assert.equal(app.document.getElementById('open-payroll').disabled, true);
+  for (const type of ['full', 'reduced']) {
+    app.currentScheduleSettings = () => ({ type, percentage: type === 'reduced' ? 80 : 100 });
+    app.updatePeriodCards();
+    assert.equal(app.document.getElementById('open-payroll').disabled, false);
+  }
+});
+
+test('choosing the second payroll schedule preserves confirmed monthly register quantities', () => {
+  const app = documentHarness(bucketFor('owner-a'));
+  const values = new Map([['meals', '1'], ['holiday', '24']]);
+  app.confirmedTimesheetAnalyses.set(app.periodKey(), values);
+  app.analysisConfirmed = element(); app.confirmAnalysisButton = element();
+  app.scheduleType = {value:'reduced'};
+  app.currentScheduleSettings = () => ({type:'reduced', percentage:80});
+  app.updateScheduleUI = () => {};
+  vm.runInContext(extract('markScheduleDirty'), app);
+  app.markScheduleDirty();
+  assert.equal(app.confirmedTimesheetAnalyses.get(app.periodKey()), values);
+  assert.equal(app.workSchedules.get(app.periodKey()).type, 'reduced');
 });
