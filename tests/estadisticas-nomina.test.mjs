@@ -46,12 +46,13 @@ test('la vista incluye año, Acumulado/Mensual, una gráfica y Sin datos', () =>
 test('la vista económica representa salario, líquido e impuestos sin conservar el bloque anterior', () => {
   const html = read('estadisticas-nomina.html');
   const source = read('estadisticas-nomina.js');
-  assert.match(html, /El valor económico de tu trabajo/i);
+  assert.match(source, /El coste de tu trabajo/);
+  assert.match(source, /¿Dónde va tu salario bruto/);
   assert.match(html, /id="annual-economic-value"/);
   assert.match(html, /id="monthly-economic-value"/);
   assert.doesNotMatch(html, /Lo que paga la empresa/);
   assert.match(source, /De cada 100 €/);
-  assert.match(source, /Otras deducciones/);
+  assert.match(source, /buildEconomicDonuts/);
 });
 
 test('la página se actualiza al volver, al recuperar visibilidad o al pulsar actualizar', () => {

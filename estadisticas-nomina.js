@@ -1,4 +1,4 @@
-import { buildEconomicValue } from './salary-overview.mjs?v=2';
+import { buildEconomicDonuts } from './salary-overview.mjs?v=3';
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 import { monthReceipts } from './payroll-receipts.mjs?v=1';
 import {
@@ -166,64 +166,57 @@ function renderSalaryGlance(container, glance) {
 
 function renderEconomicValue(container, period) {
   clear(container);
-  const value = buildEconomicValue(period);
-  const equation = element('div', 'value-equation');
-  const amountCard = (label, amount, className = '') => {
-    const card = element('article', `value-amount ${className}`.trim());
-    card.append(element('span', '', label), element('strong', '', money(amount)));
-    return card;
-  };
-  equation.append(amountCard('Salario bruto', value.gross), element('span', 'value-sign', '+'),
-    amountCard('Aportaciones empresa', value.company), element('span', 'value-sign', '='),
-    amountCard('TOTAL REPRESENTADO', value.totalRepresented, 'total'));
-  container.append(equation);
-  if (!value.slices.length) {
-    container.append(element('p', 'value-warning', value.reason));
-  } else {
-    const colors = ['#4bb889', '#d44756', '#e2a235'];
-    const labels = ['Lo que recibes tú', 'Impuestos y cotizaciones', 'Otras deducciones'];
-    const descriptions = ['Salario líquido realmente recibido', 'IRPF, Seguridad Social del trabajador y aportaciones empresariales', 'Cantidades no identificadas como impuestos o cotizaciones públicas'];
-    let cursor = 0;
-    const gradient = value.slices.map((slice, index) => {
-      const start = cursor;
-      cursor += slice.percent;
-      return `${colors[index]} ${start}% ${cursor}%`;
-    });
-    const layout = element('div', 'value-layout');
+  const value = buildEconomicDonuts(period);
+  const percent = number => number.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const grid = element('div', 'economic-donuts');
+  function chart(title, centerLabel, total, slices, valid, note) {
+    const card = element('article', 'economic-donut-card');
+    card.append(element('h3', '', title));
     const donut = element('div', 'value-donut');
-    donut.style.setProperty('--value-gradient', `conic-gradient(${gradient.join(',')})`);
+    let cursor = 0;
+    const gradient = slices.filter(slice => slice.amount > 0).map(slice => {
+      const start = cursor;
+      cursor += slice.amount / total * 100;
+      return slice.color + ' ' + start + '% ' + cursor + '%';
+    });
+    donut.style.setProperty('--value-gradient', valid ? 'conic-gradient(' + gradient.join(',') + ')' : '#e5e7eb');
     donut.setAttribute('role', 'img');
-    donut.setAttribute('aria-label', value.slices.map((slice, index) => `${labels[index]}: ${money(slice.amount)}, ${slice.percent.toLocaleString('es-ES', { maximumFractionDigits: 1 })} %`).join('. '));
+    donut.setAttribute('aria-label', title + '. ' + centerLabel + ': ' + money(total) + (valid ? '. Porcentajes en la leyenda inferior.' : '. Sin reparto fiable.'));
     const center = element('div', 'value-donut-center');
-    center.append(element('span', '', 'Total representado'), element('strong', '', money(value.totalRepresented)));
+    center.append(element('span', '', centerLabel), element('strong', '', money(total)));
     donut.append(center);
+    card.append(donut);
     const legend = element('div');
-    value.slices.forEach((slice, index) => {
+    slices.forEach(slice => {
       const row = element('div', 'value-legend-row');
       const dot = element('i', 'value-dot');
-      dot.style.setProperty('--dot', colors[index]);
+      dot.style.setProperty('--dot', slice.color);
       const copy = element('div');
-      copy.append(element('strong', '', labels[index]), element('small', '', descriptions[index]));
+      copy.append(element('strong', '', slice.label));
+      if (slice.available !== undefined && slice.available < value.salary.available) copy.append(element('small', '', slice.available + ' de ' + value.salary.available + ' recibos con dato'));
       const number = element('div', 'value-legend-number');
-      number.append(element('strong', '', `${slice.percent.toLocaleString('es-ES', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} %`), element('small', '', money(slice.amount)));
+      number.append(element('strong', '', money(slice.amount)), element('small', '', total > 0 && slice.amount !== null ? percent(slice.amount / total * 100) + ' %' : 'Sin datos'));
       row.append(dot, copy, number);
       legend.append(row);
     });
-    layout.append(donut, legend);
-    container.append(layout);
-    if (value.twoPart) container.append(element('p', 'value-message', `De cada 100 € representados, ${value.slices[0].percent.toLocaleString('es-ES', { maximumFractionDigits: 1 })} € llegan a tu cuenta y ${value.slices[1].percent.toLocaleString('es-ES', { maximumFractionDigits: 1 })} € se destinan a impuestos y cotizaciones.`));
-    else container.append(element('p', 'value-warning', 'Hay otras deducciones que no se han clasificado como impuestos o cotizaciones. Se muestran por separado para que el cálculo cuadre.'));
+    card.append(legend, element('p', 'section-note', note));
+    if (!valid) card.append(element('p', 'value-warning', 'Sin datos suficientes o importes incompatibles para dibujar un reparto fiable. No se ajustan los importes.'));
+    grid.append(card);
   }
-  const cards = element('div', 'value-tax-cards');
-  const payroll = element('article', 'value-tax-card');
-  payroll.append(element('h3', '', 'DESDE TU NÓMINA'), element('strong', '', money(value.fromPayroll)),
-    element('p', '', `IRPF: ${money(value.irpf)}`), element('p', '', `Seguridad Social: ${money(value.workerSocialSecurity)}`));
-  const company = element('article', 'value-tax-card');
-  company.append(element('h3', '', 'APORTACIÓN ADICIONAL DE LA EMPRESA'), element('strong', '', money(value.company)),
-    element('p', '', 'Cotizaciones empresariales identificadas en tus nóminas.'));
-  cards.append(payroll, company);
-  container.append(cards);
-  if (!value.complete) container.append(element('p', 'section-note', `${value.available} de ${value.total} nóminas contienen todos los datos necesarios; los importes mostrados usan únicamente ese conjunto comparable.`));
+  chart('El coste de tu trabajo', 'Coste total', value.cost.total, [
+    { label: 'Salario bruto', amount: value.cost.gross, color: 'var(--green)' },
+    { label: 'Aportación de la empresa', amount: value.cost.company, color: 'var(--red)' }
+  ], value.cost.valid, value.cost.withCompany + ' de ' + value.total + ' recibos con aportación empresarial. El cálculo utiliza únicamente los ' + value.cost.available + ' recibos con bruto y aportación empresarial disponibles.');
+  const slices = [...value.salary.slices];
+  if (value.salary.remainder > 0) slices.push({ label: 'Importe sin desglosar / diferencia pendiente', amount: value.salary.remainder, color: '#d1d5db' });
+  chart('¿Dónde va tu salario bruto?', 'Tu bruto', value.salary.total, slices, value.salary.valid,
+    value.salary.available + ' de ' + value.total + ' recibos con bruto. Los importes sin identificar no se atribuyen a otros descuentos.');
+  container.append(grid);
+  if (value.mismatchCount) container.append(element('p', 'value-warning', 'Bruto − Deducciones no coincide con Líquido en ' + value.mismatchCount + ' recibos. Diferencia acumulada: ' + money(value.mismatch) + '. Revisa los datos guardados.'));
+  container.append(element('p', 'value-message', value.cost.valid && value.perHundred !== null
+    ? 'De cada 100 € que cuesta tu trabajo, ' + percent(value.perHundred) + ' € llegan a tu cuenta.'
+    : 'De cada 100 € que cuesta tu trabajo: sin datos suficientes para calcular cuánto llega a tu cuenta.'));
+  container.append(element('p', 'section-note', 'La comparación utiliza el líquido y el coste del mismo conjunto de ' + value.cost.available + ' recibos con bruto y aportación empresarial.'));
 }
 
 function conceptMeta(concept) {
