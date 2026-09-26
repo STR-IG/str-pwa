@@ -48,6 +48,11 @@ function rowValue(lines, index, pattern) {
 
 export function hasCompletePaymentBreakdown(text) {
   const normalized = normalizedLine(text);
+  // Historical headings can be letter-spaced by OCR. Match only the full
+  // known headings; do not remove spaces from amounts or privacy detection.
+  const heading = value => new RegExp('\\b' + value.split('').join('\\s*') + '\\b').test(normalized);
+  if ((heading('DESGLOSEPAGOS') || heading('DESGLOSEDEPAGOS'))
+    && heading('DEVENGOSYDEDUCCIONES')) return true;
   // OCR can return the two blocks in either order and may miss their amounts.
   // Validate independent structural evidence, not a fixed position or exact heading.
   const money = /[-−]?\d(?:[\d.\s]*\d)?[,.]\d{2}\b/;

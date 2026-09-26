@@ -16,20 +16,25 @@ export async function collectMonth(bucket, folder, keys) {
   if (!receipts.length) fail('No hay nóminas guardadas en este mes.');
   const totals = Object.fromEntries(keys.map(key => [key, 0]));
   let register;
+  const registerOwner = receipts.find(receipt => receipt.files.some(file => file.id && file.name === 'timesheet'));
+  if (!registerOwner) fail('Falta el Registro de jornada mensual. Añádelo antes de cerrar el mes.');
+  const registerResult = await bucket.download(`${registerOwner.folder}/timesheet`);
+  if (registerResult.error || !registerResult.data) fail('No se han podido leer todos los documentos, incluido el Registro de jornada mensual. Comprueba la conexión y vuelve a intentarlo.');
+  const registerHash = await sha256(registerResult.data);
   const signatures = [];
   const payrollHashes = new Set();
   const sourceHashes = new Set();
   for (const [index, receipt] of receipts.entries()) {
     const label = `Nómina ${index + 1}`;
     const has = name => receipt.files.some(file => file.id && file.name === name);
-    if (!['timesheet', 'payroll', 'review'].every(has)) fail(`${label}: falta guardar algún documento o confirmar sus cantidades. Completa ese recibo antes de cerrar el mes.`);
-    const blobs = await Promise.all(['timesheet', 'payroll', 'review'].map(async name => {
+    if (!['payroll', 'review'].every(has)) fail(`${label}: falta guardar algún documento o confirmar sus cantidades. Completa ese recibo antes de cerrar el mes.`);
+    const blobs = await Promise.all(['payroll', 'review'].map(async name => {
       const { data, error } = await bucket.download(`${receipt.folder}/${name}`);
       if (error || !data) fail('No se han podido leer todos los recibos. Comprueba la conexión y vuelve a intentarlo.');
       return data;
     }));
     let review;
-    try { review = JSON.parse(await blobs[2].text()); } catch { fail(`${label}: la revisión no se ha podido leer. Vuelve a revisar ese recibo.`); }
+    try { review = JSON.parse(await blobs[1].text()); } catch { fail(`${label}: la revisión no se ha podido leer. Vuelve a revisar ese recibo.`); }
     const expectedPeriod = `${year}-${month}${receipt.id ? `/${receipt.id}` : ''}`;
     if (review?.status !== 'complete' || review.period !== expectedPeriod || (review.userId && review.userId !== userId)) fail(`${label}: la revisión está pendiente o no corresponde a este mes.`);
     const values = {};
@@ -47,10 +52,10 @@ export async function collectMonth(bucket, folder, keys) {
     if (!register) register = reference;
     if (keys.some(key => round(register[key]) !== round(reference[key]))) fail('Los registros de jornada confirmados no coinciden. Todas las nóminas deben contrastarse con el mismo registro mensual; revisa sus cantidades antes de cerrar.');
     const hashes = await Promise.all(blobs.map(sha256));
-    if (payrollHashes.has(hashes[1]) || (review.payrollSourceHash && sourceHashes.has(review.payrollSourceHash))) fail('Hay una nómina duplicada entre los recibos del mes. Revisa los documentos antes de cerrar.');
-    payrollHashes.add(hashes[1]);
+    if (payrollHashes.has(hashes[0]) || (review.payrollSourceHash && sourceHashes.has(review.payrollSourceHash))) fail('Hay una nómina duplicada entre los recibos del mes. Revisa los documentos antes de cerrar.');
+    payrollHashes.add(hashes[0]);
     if (review.payrollSourceHash) sourceHashes.add(review.payrollSourceHash);
-    signatures.push({ id: receipt.id, hashes });
+    signatures.push({ id: receipt.id, registerHash, hashes });
     for (const key of keys) totals[key] = round(totals[key] + values[key]);
   }
   return { fingerprint: await sha256(new Blob([JSON.stringify(signatures)])), receiptCount: receipts.length,

@@ -55,13 +55,13 @@ function harness(bucket) {
     newReceiptId, receiptCreatedAt, monthReceipts, assertUniquePayroll, sha256,
     currentUserId: 'owner-a', STORAGE_BUCKET: 'payroll-documents', storageBucket: bucket, supabase: { storage: { from: () => bucket } },
     isAdminMode: false, adminReplacementKind: '', adminContext: null, adminAffiliateEmail: '',
-    month: { value: '7' }, year: { value: '2026' }, activeReceiptId: null, receiptCreated: null, payrollSourceHash: '',
+    month: { value: '7' }, year: { value: '2026' }, activeReceiptId: null, activeReceiptNumber: 1, monthlyComparisonFolder: '', preparingMonthComparison: false, currentMonthReceiptCount: 0, receiptCreated: null, payrollSourceHash: '',
     storageLoadVersion: 0, historyLoadVersion: 0, loadingDocuments: false, historyEntries: [], savingReview: false, savingDocument: false,
     confirmedTimesheetAnalyses: new Map(), confirmedPayrollAnalyses: new Map(), monthlyReviews: new Map(), workSchedules: new Map(),
     documents: { timesheet: {}, payroll: {} }, comparisonInputs: new Map(), PAYROLL_VARIABLES: [],
     activeKind: '', workingFile: null, workingUrl: '', workingSaved: false, workingOcrText: '',
     clearAllDocuments() { this; }, loadWorkSchedule() {}, updatePeriodCards() {}, showPeriodMessage() {},
-    showPeriodScreen() {}, openDocument() {}, ensureYearOption() {}, renderPrivateHistory() {},
+    showPeriodScreen() {}, showDiscountsScreen() {}, openDocument() {}, ensureYearOption() {}, renderPrivateHistory() {},
     prepareAdminReplacement() {}, deleteAdminTimesheet() {}, deleteAdminPayroll() {},
     currentScheduleSettings: () => ({}), buildMonthlyComparisons: () => ({}),
     applyComparisonCardResult() {}, renderComparisonResult() {}, renderPayrollComparison() {}, renderPaymentInformation() {}, setComparisonProgress() {},
@@ -75,7 +75,7 @@ function harness(bucket) {
     document: { getElementById(id) { if (!nodes.has(id)) nodes.set(id, element()); return nodes.get(id); } }
   });
   for (const key of ['addMonthlyPayroll','addPeriodPayroll','addDocumentPayroll','historyCount','historyLoading','historyError','historyList','historyEmpty','refreshHistoryButton','comparisonError','confirmComparisonButton','comparisonSaved','comparisonResult','comparisonDetectedCount']) ctx[key] = element();
-  for (const name of ['monthFolder','periodFolder','periodKey','storagePath','mapToPlainObject','plainObjectToMap','uploadMonthlyReview','hydrateMonthlyReview','downloadMonthlyReview','loadStoredDocuments','listAllStorageItems','loadPrivateHistory','openHistoryPeriod','confirmMonthlyComparison','isCurrentReviewComplete','clearAllDocuments','revokeWorkingUrlIfTemporary','saveWorkSchedule','startAnotherPayroll']) vm.runInContext(extract(name), ctx);
+  for (const name of ['monthFolder','periodFolder','periodKey','storagePath','mapToPlainObject','plainObjectToMap','uploadMonthlyReview','hydrateMonthlyReview','downloadMonthlyReview','loadStoredDocuments','listAllStorageItems','loadPrivateHistory','openHistoryPeriod','confirmMonthlyComparison','isCurrentReviewComplete','clearAllDocuments','revokeWorkingUrlIfTemporary','saveWorkSchedule','resetReviewDocument','openNextPayrollDiscounts','startAnotherPayroll','continueMonthComparison']) vm.runInContext(extract(name), ctx);
   return ctx;
 }
 
@@ -242,7 +242,8 @@ test('saved image view offers another receipt, hides replacement controls, and n
     app.openDocument('payroll');
     assert.equal(app.documents.timesheet.confirmed, true);
     assert.equal(app.documents.payroll.confirmed, false);
-    assert.equal(await bucket.objects.get(app.storagePath('timesheet')).text(), 'saved timesheet');
+    assert.equal(bucket.objects.has(app.storagePath('timesheet')), false, 'the new receipt does not duplicate the monthly register');
+    assert.equal(await bucket.objects.get(`${prefix}/timesheet`).text(), 'saved timesheet');
     assert.equal(app.document.getElementById('open-payroll').disabled, false);
     assert.equal(app.document.getElementById('document-count').textContent, '1 de 2 guardados');
     assert.equal(app.document.getElementById('payroll-timesheet-note').hidden, false);
@@ -255,15 +256,13 @@ test('saved image view offers another receipt, hides replacement controls, and n
     await app.confirmImage();
     app.confirmComparisonButton.dataset.action = 'check';
     await app.confirmMonthlyComparison();
-    assert.equal(app.addPeriodPayroll.hidden, false);
+    assert.equal(app.addPeriodPayroll.hidden, true, 'a completed second payroll cannot open a third payroll');
     for (const [path, blob] of original) assert.equal(await bucket.objects.get(path).text(), await blob.text());
     await app.loadPrivateHistory();
     assert.equal(app.historyEntries.length, 2);
     const savedCount = bucket.objects.size;
     await app.addPeriodPayroll.click();
-    assert.equal(app.isCurrentReviewComplete(), false);
-    assert.equal(bucket.objects.size, savedCount + 1, 'only copies the saved timesheet for the new receipt');
-    assert.equal(app.activeKind, '');
+    assert.equal(bucket.objects.size, savedCount, 'the hidden action cannot create a third payroll');
   }
 });
 
@@ -303,11 +302,12 @@ test('another payroll reuses the register but requires its own schedule and stil
   app.currentScheduleSettings = () => ({type:'full'});
   app.openDocument('payroll');
   assert.equal(app.confirmedTimesheetAnalyses.get(app.periodKey()).get('night'), '10');
-  assert.equal(app.monthlyReviews.has(app.periodKey()), false);
+  assert.equal(app.monthlyReviews.get(app.periodKey())?.status, 'pending');
   assert.equal(app.confirmedPayrollAnalyses.has(app.periodKey()), false);
   assert.equal(bucket.objects.has(app.storagePath('payroll')), false);
   assert.equal(bucket.uploads.at(-1).options.upsert, false);
-  assert.equal(await bucket.objects.get(app.storagePath('timesheet')).text(), 'saved timesheet');
+  assert.equal(bucket.objects.has(app.storagePath('timesheet')), false, 'no second register is stored');
+  assert.equal(await bucket.objects.get('owner-a/2026/08/timesheet').text(), 'saved timesheet');
   app.workingFile = new Blob(['saved payroll'], {type:'image/png'});
   app.workingUrl = URL.createObjectURL(app.workingFile);
   app.privacyScanState = 'passed'; app.privacyConfirmation.checked = true;
@@ -369,18 +369,23 @@ test('double-click creates only one receipt and keeps the original active until 
   assert.equal(app.addPeriodPayroll.disabled, false);
 });
 
-test('August: three separate receipts, add-another action, reopening and legacy compatibility', async () => {
+test('August: two separate receipts, no third payroll, reopening and legacy compatibility', async () => {
   const bucket = bucketFor('owner-a');
   const app = harness(bucket);
   await app.loadStoredDocuments();
   const paths = [];
-  for (let i = 0; i < 3; i++) {
+  let sharedTimesheetPath = '';
+  for (let i = 0; i < 2; i++) {
     const payroll = new Blob([`Fictitious payroll ${i}`]);
     const path = app.storagePath('payroll');
     await assertUniquePayroll(bucket, app.monthFolder(), payroll, path);
     await bucket.upload(path, payroll, { upsert: false });
-    if (i === 0) await bucket.upload(app.storagePath('timesheet'), new Blob(['Fictitious timesheet']), { upsert: false });
-    assert.equal(await bucket.objects.get(app.storagePath('timesheet')).text(), 'Fictitious timesheet');
+    if (i === 0) {
+      sharedTimesheetPath = app.storagePath('timesheet');
+      await bucket.upload(sharedTimesheetPath, new Blob(['Fictitious timesheet']), { upsert: false });
+    }
+    assert.equal(await bucket.objects.get(sharedTimesheetPath).text(), 'Fictitious timesheet');
+    if (i > 0) assert.equal(bucket.objects.has(app.storagePath('timesheet')), false, 'all later payrolls share the first register');
     app.confirmComparisonButton.dataset.action = 'check';
     await app.confirmMonthlyComparison();
     assert.equal(app.addMonthlyPayroll.hidden, false);
@@ -391,12 +396,15 @@ test('August: three separate receipts, add-another action, reopening and legacy 
     assert.equal(review.year, 2026); assert.equal(review.month, 8);
     assert.ok(review.receiptId && review.createdAt && review.updatedAt);
     paths.push({ path, reviewPath, saved, id: app.activeReceiptId });
-    if (i < 2) await app.startAnotherPayroll();
+    if (i === 0) await app.startAnotherPayroll();
   }
-  assert.equal(new Set(paths.map(p => p.id)).size, 3);
+  assert.equal(new Set(paths.map(p => p.id)).size, 2);
+  const twoReceiptSize = bucket.objects.size;
+  await app.startAnotherPayroll();
+  assert.equal(bucket.objects.size, twoReceiptSize, 'the flow rejects a third payroll even if invoked programmatically');
   for (const p of paths) assert.equal(await bucket.objects.get(p.reviewPath).text(), p.saved);
   await app.loadPrivateHistory();
-  assert.equal(app.historyEntries.length, 3);
+  assert.equal(app.historyEntries.length, 2);
   for (const entry of app.historyEntries) {
     await app.openHistoryPeriod(entry.year, entry.month, entry.receiptId);
     assert.equal(app.activeReceiptId, entry.receiptId);
@@ -405,7 +413,7 @@ test('August: three separate receipts, add-another action, reopening and legacy 
   await bucket.upload('owner-a/2026/08/payroll', new Blob(['Legacy payroll']), { upsert: false });
   await bucket.upload('owner-a/2026/08/review', new Blob([JSON.stringify({period:'2026-08',status:'complete',timesheet:{},payroll:{}})]), { upsert: false });
   await app.loadPrivateHistory();
-  assert.equal(app.historyEntries.length, 4);
+  assert.equal(app.historyEntries.length, 3);
   await app.openHistoryPeriod(2026,8,'');
   assert.equal(app.storagePath('payroll'), 'owner-a/2026/08/payroll');
   assert.equal(app.monthlyReviews.get(app.periodKey()).status, 'complete');
@@ -475,7 +483,7 @@ test('uncertain crop retries full-image OCR locally and accepts a recovered head
   assert.equal(calls[1][0], fullImage);
   assert.equal(app.privacyScanState, 'passed');
   assert.equal(app.confirmImageButton.disabled, false);
-  assert.equal(app.workingOcrText, payrollTableText);
+  assert.ok(app.workingOcrText.includes(payrollTableText));
 });
 
 test('a clear first reading needs no extra OCR', async () => {
@@ -585,4 +593,155 @@ test('choosing the second payroll schedule preserves confirmed monthly register 
   app.markScheduleDirty();
   assert.equal(app.confirmedTimesheetAnalyses.get(app.periodKey()), values);
   assert.equal(app.workSchedules.get(app.periodKey()).type, 'reduced');
+});
+
+test('August 2022 historical headings: spaced letters, accents and either block order', async () => {
+  for (const text of [
+    'D E S G L O S E  P A G O S\nD E V E N G O S  Y  D E D U C C I O N E S',
+    'devéngos y deducciónes\ndes gl ose pa gos',
+    'DESGLOSE\nPAGOS\nDEVENGOS Y DEDUCCIONES'
+  ]) {
+    const app = retryPrivacyHarness();
+    app.recognizeTextLocally = async () => text;
+    await app.checkSelectedFilePrivacy(app.workingFile, 1);
+    assert.equal(app.privacyScanState, 'passed');
+    app.recognizeTextLocally = async () => `${text}\nDNI 12345678Z`;
+    await app.checkSelectedFilePrivacy(app.workingFile, 1);
+    assert.equal(app.privacyScanState, 'blocked');
+  }
+  for (const text of ['D E S G L O S E P A G O S', 'D E V E N G O S Y D E D U C C I O N E S', 'Una imagen cualquiera']) {
+    assert.equal(hasValidPayrollCrop(text), false);
+  }
+});
+
+test('comparison skips the already confirmed shared register for the second receipt', () => {
+  const app = documentHarness(bucketFor('owner-a'));
+  app.computeScheduleFactor = () => 1;
+  app.startPayrollComparison = () => { app.payrollOpened = true; };
+  app.startTimesheetAnalysis = () => { throw new Error('must not repeat register'); };
+  app.confirmedTimesheetAnalyses.set(app.periodKey(), new Map([['night','17']]));
+  vm.runInContext(extract('startMonthlyReview'), app);
+  app.startMonthlyReview();
+  assert.equal(app.payrollOpened, true);
+});
+
+test('both add buttons open payroll 2 immediately after discounts, without reviewing payroll 1', async () => {
+  for (const type of ['full','reduced']) {
+    const bucket = bucketFor('owner-a');
+    await seedSavedReceipt(bucket, 'owner-a/2026/08');
+    const firstPath = 'owner-a/2026/08/review';
+    const first = {period:'2026-08',status:'pending',schedule:{type:'full'},discounts:[{kind:'irpf',amount:100}]};
+    bucket.objects.set(firstPath,new Blob([JSON.stringify(first)]));
+    const app = documentHarness(bucket);
+    await app.loadStoredDocuments();
+    assert.equal(app.currentMonthReceiptCount, 1);
+    assert.equal(app.monthlyReviews.get(app.periodKey())?.discounts?.length, 1);
+    assert.equal(app.documents.timesheet.confirmed, true);
+    assert.equal(app.documents.payroll.confirmed, true);
+    app.startMonthlyReview = () => { throw new Error('must not open comparison while adding'); };
+    await app.document.getElementById(`add-${type === 'full' ? 'full' : 'reduced'}-payroll`).click();
+    assert.equal(app.activeKind,'payroll');
+    assert.equal(app.documentScreen.hidden,false);
+    assert.equal(app.documents.payroll.confirmed,false);
+    assert.equal(app.documents.timesheet.confirmed,true);
+    assert.equal(app.workSchedules.get(app.periodKey()).type,type);
+    assert.deepEqual(JSON.parse(await bucket.objects.get(firstPath).text()),first);
+    assert.equal([...bucket.objects.keys()].filter(path=>path.endsWith('/timesheet')).length,1);
+    const draft=JSON.parse(await bucket.objects.get(`${app.periodFolder()}/review`).text());
+    assert.equal(draft.discounts,undefined);
+    assert.equal(draft.timesheetPath,'owner-a/2026/08/timesheet');
+    assert.equal(app.monthlyReviews.get(app.periodKey()).receiptId, app.activeReceiptId);
+    assert.equal(app.document.getElementById('discounts-card-title').textContent, 'Descuentos · Nómina 2');
+  }
+});
+
+test('November 2022 renders the three actions only after payroll 1 quantities are saved', () => {
+  const app = documentHarness(bucketFor('owner-a'));
+  app.month.value = '10';
+  app.year.value = '2022';
+  app.documents.timesheet.confirmed = true;
+  app.documents.payroll.confirmed = true;
+  app.currentScheduleSettings = () => ({type:'full'});
+  app.currentMonthReceiptCount = 1;
+  app.monthlyReviews.set(app.periodKey(), {status:'pending', schedule:{type:'full'}, discounts:[{kind:'irpf',amount:100}]});
+  app.updatePeriodCards();
+  assert.equal(app.document.getElementById('completion-panel').hidden, false, 'Leer y guardar cantidades remains available');
+  assert.equal(app.document.getElementById('payroll-next-actions').hidden, true, 'the decision is not shown before saving quantities');
+  app.monthlyReviews.set(app.periodKey(), {status:'complete', schedule:{type:'full'}, discounts:[{kind:'irpf',amount:100}], payroll:{night:'0'}});
+  app.updatePeriodCards();
+  assert.equal(app.document.getElementById('completion-panel').hidden, true);
+  assert.equal(app.document.getElementById('payroll-next-actions').hidden, false);
+  app.currentMonthReceiptCount = 2;
+  app.updatePeriodCards();
+  assert.equal(app.document.getElementById('payroll-next-actions').hidden, true, 'the decision is never shown after payroll 2');
+});
+
+test('Añadir otro descuento opens the next payroll without discounts and preserves discounts 1', async () => {
+  const bucket = bucketFor('owner-a');
+  const secondId = newReceiptId();
+  const folder = 'owner-a/2026/08';
+  const discounts1 = [{section:'irpf', kind:'irpf', amount:100}];
+  bucket.objects.set(`${folder}/timesheet`, new Blob(['shared register']));
+  bucket.objects.set(`${folder}/payroll`, new Blob(['payroll 1']));
+  bucket.objects.set(`${folder}/review`, new Blob([JSON.stringify({period:'2026-08',status:'complete',timesheet:{night:'10'},payroll:{night:'10'},discounts:discounts1})]));
+  bucket.objects.set(`${folder}/${secondId}/payroll`, new Blob(['payroll 2']));
+  bucket.objects.set(`${folder}/${secondId}/review`, new Blob([JSON.stringify({period:`2026-08/${secondId}`,status:'pending',timesheet:{night:'10'}})]));
+  const app = documentHarness(bucket);
+  app.activeReceiptId = '';
+  await app.loadStoredDocuments();
+  let openedFresh = false;
+  app.showDiscountsScreen = (options) => { openedFresh = options?.fresh === true; };
+  await app.openNextPayrollDiscounts();
+  assert.equal(app.activeReceiptId, secondId);
+  assert.equal(app.activeReceiptNumber, 2);
+  assert.equal(openedFresh, true);
+  assert.deepEqual(JSON.parse(await bucket.objects.get(`${folder}/review`).text()).discounts, discounts1);
+});
+
+test('Comparison reviews pending receipts in order and closes after both, reusing confirmed register',async()=>{
+  const bucket=bucketFor('owner-a');
+  const id=newReceiptId();
+  const folder='owner-a/2026/08';
+  const discounts=[{kind:'irpf',amount:100}];
+  bucket.objects.set(`${folder}/timesheet`,new Blob(['shared register']));
+  for(const [suffix,period,type] of [['','2026-08','full'],[`/${id}`,`2026-08/${id}`,'reduced']]){
+    bucket.objects.set(`${folder}${suffix}/payroll`,new Blob([`payroll ${type}`]));
+    bucket.objects.set(`${folder}${suffix}/review`,new Blob([JSON.stringify({period,status:'pending',schedule:{type},discounts})]));
+  }
+  const app=documentHarness(bucket);
+  app.renderMultiPayrollSummary=async()=>{app.summaryRendered=true;};
+  app.handleMonthClosure=async close=>{app.closed=close;};
+  await app.loadStoredDocuments();
+  assert.equal(app.activeReceiptId,id);
+  await app.document.getElementById('view-current-review').click();
+  assert.equal(app.activeReceiptId,'','first pending receipt is reviewed first');
+  assert.equal(app.openedSavedReview,true);
+  app.confirmedTimesheetAnalyses.set(app.periodKey(),new Map([['night','17']]));
+  app.confirmComparisonButton.dataset.action='check';
+  await app.confirmMonthlyComparison();
+  assert.equal(app.activeReceiptId,id,'continues with payroll 2 after saving payroll 1');
+  assert.equal(app.confirmedTimesheetAnalyses.get(app.periodKey()).get('night'),'17');
+  assert.equal(app.closed,undefined);
+  app.confirmComparisonButton.dataset.action='check';
+  await app.confirmMonthlyComparison();
+  assert.equal(app.closed,true);
+  assert.equal(app.summaryRendered,true);
+  for(const suffix of ['',`/${id}`]){
+    const review=JSON.parse(await bucket.objects.get(`${folder}${suffix}/review`).text());
+    assert.equal(review.status,'complete');
+    assert.deepEqual(review.discounts,discounts);
+    assert.equal(review.timesheet.night,'17');
+  }
+});
+
+test('reopening a pending receipt restores its schedule before comparison', async () => {
+  const bucket=bucketFor('owner-a');
+  await seedSavedReceipt(bucket,'owner-a/2026/08');
+  bucket.objects.set('owner-a/2026/08/review',new Blob([JSON.stringify({period:'2026-08',status:'pending',schedule:{type:'reduced',percentage:80},discounts:[{kind:'irpf',amount:100}]})]));
+  const app=documentHarness(bucket);
+  let restored;
+  app.loadWorkSchedule=()=>{restored=app.workSchedules.get(app.periodKey());};
+  await app.loadStoredDocuments();
+  assert.equal(restored.type,'reduced');
+  assert.equal(restored.percentage,80);
 });

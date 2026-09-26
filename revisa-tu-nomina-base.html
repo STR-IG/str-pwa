@@ -712,6 +712,33 @@
       line-height: 1.45;
     }
 
+    .payroll-next-actions {
+      display: grid;
+      gap: 10px;
+      margin-top: 17px;
+      padding: 18px;
+      border: 1px solid #a9d9bf;
+      border-radius: 18px;
+      background: var(--green-soft);
+    }
+
+    .payroll-next-actions h2 { margin: 0; color: #155c3a; font-size: 16px; }
+    .payroll-next-actions p { margin: 0 0 3px; color: #32694d; font-size: 12px; line-height: 1.45; }
+    .payroll-next-actions button { margin: 0; }
+
+    .month-payroll-summary { margin-top: 17px; }
+    .month-payroll-summary > h2 { margin: 0 0 5px; font-size: 18px; }
+    .month-payroll-summary > p { margin: 0 0 14px; color: var(--muted); font-size: 12px; }
+    .month-payroll-summary-list { display: grid; gap: 11px; }
+    .month-payroll-summary-card { padding: 14px; border: 1px solid var(--line); border-radius: 15px; background: #fbfbfc; }
+    .month-payroll-summary-card.total { border-color: #a9d9bf; background: var(--green-soft); }
+    .month-payroll-summary-card h3 { margin: 0 0 4px; font-size: 15px; }
+    .month-payroll-summary-card p { margin: 0 0 10px; color: var(--muted); font-size: 11px; }
+    .month-payroll-summary-values { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .month-payroll-summary-value { padding: 9px; border-radius: 11px; background: white; }
+    .month-payroll-summary-value span { display: block; margin-bottom: 4px; color: var(--muted); font-size: 9px; font-weight: 800; text-transform: uppercase; }
+    .month-payroll-summary-value strong { font-size: 13px; }
+
     .analysis-progress {
       display: flex;
       gap: 11px;
@@ -1630,6 +1657,7 @@
       .schedule-grid,
       .salary-results { grid-template-columns: 1fr; }
       .salary-difference { grid-column: auto; }
+      .month-payroll-summary-values { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -1829,13 +1857,14 @@
             <span class="document-icon" aria-hidden="true">📉</span>
             <div class="document-info">
               <div class="document-line">
-                <h3 class="document-title">Descuentos</h3>
-                <span id="discounts-card-status" class="status-pill">Disponible</span>
+                <h3 id="discounts-card-title" class="document-title">Descuentos</h3>
+                <span id="discounts-card-status" class="status-pill">Bloqueados</span>
               </div>
-              <p class="document-help">Lector de Seguridad Social e IRPF.</p>
+              <p id="discounts-card-help" class="document-help">Completa primero la nómina de este recibo.</p>
             </div>
           </div>
-          <button id="open-discounts" class="card-button" type="button">Abrir Descuentos</button>
+          <button id="open-discounts" class="card-button" type="button" disabled>Abrir Descuentos</button>
+          <button id="add-another-discounts" class="card-button" type="button" hidden>Añadir otro descuento</button>
         </article>
 
         <section id="admin-document-actions" class="panel" hidden>
@@ -1853,6 +1882,20 @@
           </div>
         </section>
 
+        <section id="payroll-next-actions" class="payroll-next-actions" aria-labelledby="payroll-next-actions-title" hidden>
+          <h2 id="payroll-next-actions-title">¿QUÉ QUIERES HACER AHORA?</h2>
+          <p id="payroll-next-actions-help">Las cantidades de esta nómina ya están guardadas. Elige si quieres comparar el mes o añadir una segunda nómina.</p>
+          <button id="view-current-review" class="primary" type="button">Comparación</button>
+          <button id="add-reduced-payroll" class="secondary" type="button">Añade nómina con reducción</button>
+          <button id="add-full-payroll" class="secondary" type="button">Añade nómina sin reducción</button>
+        </section>
+
+        <section id="month-payroll-summary" class="panel month-payroll-summary" aria-live="polite" hidden>
+          <h2>Resumen final del mes</h2>
+          <p id="month-payroll-summary-period"></p>
+          <div id="month-payroll-summary-list" class="month-payroll-summary-list"></div>
+        </section>
+
         <section id="completion-panel" class="completion-panel" hidden>
           <strong>✓ Registro y nómina guardados</strong>
           <p>Confirma las cantidades de este recibo. Si tienes varias nóminas, las sumaremos al cerrar la comparación del mes.</p>
@@ -1864,8 +1907,8 @@
             <button id="close-month-period" class="primary" type="button">Comparar nóminas con el registro</button>
             <button id="view-month-period" class="secondary" type="button">Ver resultado mensual guardado</button>
           </div>
-          <div id="month-result-period" class="comparison-result" role="status" hidden></div>
         </section>
+        <div id="month-result-period" class="comparison-result" role="status" hidden></div>
 
         <p class="local-note"><span aria-hidden="true">🛡️</span><span>Las imágenes se guardan en un espacio privado asociado a tu cuenta y no tienen enlaces públicos. Podrás recuperarlas al volver a elegir el mismo mes.</span></p>
       </div>
@@ -2164,7 +2207,8 @@
     import { closeMonth, readMonthClosure } from './payroll-month.mjs?v=1';
     import { renderSupplemental, readSupplemental } from './payroll-supplemental.mjs?v=3';
     import { renderOvertime, readOvertime } from './payroll-overtime.mjs?v=2';
-    import { extractPaymentBreakdown, relatePaymentAdjustment, formatPaymentMoney, hasValidPayrollCrop, payrollRegularizationMonth } from './payroll-payments.mjs?v=7';
+    import { extractPaymentBreakdown, relatePaymentAdjustment, formatPaymentMoney, hasValidPayrollCrop, payrollRegularizationMonth } from './payroll-payments.mjs?v=8';
+    import { reviewToReceipt } from './payroll-statistics.mjs?v=1';
     import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 
     const SUPABASE_URL = 'https://icneigdnuntzugisexaz.supabase.co';
@@ -2490,6 +2534,10 @@
     let historyLoadVersion = 0;
     let historyEntries = [];
     let activeReceiptId = null;
+    let monthlyComparisonFolder = '';
+    let preparingMonthComparison = false;
+    let currentMonthReceiptCount = 0;
+    let activeReceiptNumber = 1;
     let receiptCreated = null;
     let payrollSourceHash = '';
     let adminReplacementKind = '';
@@ -2497,6 +2545,9 @@
     const addMonthlyPayroll = document.getElementById('add-monthly-payroll');
     const addPeriodPayroll = document.getElementById('add-period-payroll');
     const addDocumentPayroll = document.getElementById('add-document-payroll');
+    const payrollNextActions = document.getElementById('payroll-next-actions');
+    const monthPayrollSummary = document.getElementById('month-payroll-summary');
+    const monthPayrollSummaryList = document.getElementById('month-payroll-summary-list');
     const savedDocumentNotice = document.getElementById('saved-document-notice');
     const documentUploadControls = document.getElementById('document-upload-controls');
     let analysisRunVersion = 0;
@@ -3034,13 +3085,16 @@
       clearAllDocuments();
       addMonthlyPayroll.hidden = true;
       payrollSourceHash = '';
-      if (currentUserId && activeReceiptId === null) {
+      if (currentUserId) {
         loadingDocuments = true;
         updatePeriodCards();
         try {
           const receipts = await monthReceipts(storageBucket, monthFolder());
           if (requestVersion !== storageLoadVersion) return;
-          activeReceiptId = receipts.length ? receipts[receipts.length - 1].id : newReceiptId();
+          currentMonthReceiptCount = receipts.length;
+          if (activeReceiptId === null) activeReceiptId = receipts.length ? receipts[receipts.length - 1].id : newReceiptId();
+          const receiptIndex = receipts.findIndex((receipt) => receipt.id === activeReceiptId);
+          activeReceiptNumber = receiptIndex >= 0 ? receiptIndex + 1 : Math.max(1, receipts.length + 1);
         } catch {
           showPeriodMessage('No se ha podido recuperar el historial. Vuelve a seleccionar el mes para reintentar.', true);
           loadingDocuments = true;
@@ -3083,10 +3137,20 @@
         storedFiles?.some((item) => item.id && item.name === kind)
       );
       const hasStoredReview = storedFiles?.some((item) => item.id && item.name === 'review');
-
+      let sharedTimesheetPath = '';
+      if (!storedKinds.includes('timesheet') && (storedKinds.includes('payroll') || hasStoredReview)) {
+        try {
+          const receipts = await monthReceipts(storageBucket, monthFolder());
+          const owner = receipts.find((receipt) => receipt.files.some((item) => item.id && item.name === 'timesheet'));
+          if (owner) {
+            storedKinds.unshift('timesheet');
+            sharedTimesheetPath = `${owner.folder}/timesheet`;
+          }
+        } catch {}
+      }
       const [downloads, storedReview] = await Promise.all([
         Promise.all(storedKinds.map(async (kind) => {
-        const path = `${folder}/${kind}`;
+        const path = kind === 'timesheet' && sharedTimesheetPath ? sharedTimesheetPath : `${folder}/${kind}`;
         const { data: blob, error } = await storageBucket.download(path);
         return { kind, path, blob, error };
         })),
@@ -3111,7 +3175,10 @@
         documents[kind].path = path;
       });
 
-      if (storedReview && hydrateMonthlyReview(storedReview)) loadWorkSchedule();
+      if (storedReview?.period === periodKey()) {
+        hydrateMonthlyReview(storedReview);
+        loadWorkSchedule();
+      }
 
       loadingDocuments = false;
       showPeriodMessage(
@@ -3119,6 +3186,7 @@
         downloadFailed
       );
       updatePeriodCards();
+      if (typeof renderMultiPayrollSummary === 'function') void renderMultiPayrollSummary(false);
     }
 
     async function listAllStorageItems(path) {
@@ -3199,6 +3267,97 @@
       }
       target.hidden = false;
       target.scrollIntoView({behavior:'smooth', block:'nearest'});
+    }
+
+    function receiptDiscountsTotal(review) {
+      const amounts = (Array.isArray(review?.discounts) ? review.discounts : [])
+        .filter((row) => row?.section === 'worker' || row?.section === 'irpf')
+        .map((row) => Number(row?.amount))
+        .filter(Number.isFinite);
+      return amounts.length ? Math.round(amounts.reduce((sum, amount) => sum + amount, 0) * 100) / 100 : null;
+    }
+
+    function appendPayrollSummaryValues(target, metrics) {
+      const valuesToRender = [
+        ['Devengos', metrics.gross],
+        ['Deducciones', metrics.deductions],
+        ['Líquido', metrics.net]
+      ];
+      if (Object.hasOwn(metrics, 'discounts')) valuesToRender.push(['SS e IRPF leídos', metrics.discounts]);
+      for (const [label, value] of valuesToRender) {
+        const item = document.createElement('div');
+        item.className = 'month-payroll-summary-value';
+        const caption = document.createElement('span');
+        caption.textContent = label;
+        const amount = document.createElement('strong');
+        amount.textContent = Number.isFinite(value) ? formatEuro(value) : 'No disponible';
+        item.append(caption, amount);
+        target.appendChild(item);
+      }
+    }
+
+    async function renderMultiPayrollSummary(scrollIntoView = false) {
+      monthPayrollSummary.hidden = true;
+      monthPayrollSummaryList.textContent = '';
+      if (!currentUserId) return;
+      let receipts;
+      try { receipts = await monthReceipts(storageBucket, monthFolder()); } catch { return; }
+      if (receipts.length < 2) return;
+
+      const rows = [];
+      for (const [index, receipt] of receipts.entries()) {
+        if (!receipt.files.some((file) => file.id && file.name === 'review')) continue;
+        const review = await downloadMonthlyReview(`${receipt.folder}/review`);
+        if (!review) continue;
+        const normalized = reviewToReceipt(review, {
+          year: Number(year.value), month: Number(month.value) + 1,
+          receiptId: receipt.id || `legacy:${year.value}-${Number(month.value) + 1}`
+        });
+        if (normalized) rows.push({ index, review, normalized, discounts: receiptDiscountsTotal(review) });
+      }
+      if (rows.length < 2) return;
+
+      const totals = { gross: 0, deductions: 0, net: 0, discounts: 0 };
+      const available = { gross: 0, deductions: 0, net: 0, discounts: 0 };
+      for (const { index, review, normalized, discounts } of rows) {
+        const card = document.createElement('article');
+        card.className = 'month-payroll-summary-card';
+        const title = document.createElement('h3');
+        title.textContent = `NÓMINA ${index + 1}`;
+        const result = document.createElement('p');
+        const type = review.schedule?.type === 'reduced' ? 'Con reducción' : 'Sin reducción';
+        const reviewStatus = review.status === 'complete' ? 'Revisión completada' : 'Revisión pendiente';
+        result.textContent = `Tipo: ${type} · Resultado: ${reviewStatus} · Descuentos propios: ${Array.isArray(review.discounts) && review.discounts.length ? 'guardados' : 'pendientes'}`;
+        const values = document.createElement('div');
+        values.className = 'month-payroll-summary-values';
+        appendPayrollSummaryValues(values, { ...normalized.metrics, discounts });
+        for (const key of Object.keys(totals)) {
+          const value = key === 'discounts' ? discounts : normalized.metrics[key];
+          if (Number.isFinite(value)) {
+            totals[key] = Math.round((totals[key] + value) * 100) / 100;
+            available[key] += 1;
+          }
+        }
+        card.append(title, result, values);
+        monthPayrollSummaryList.appendChild(card);
+      }
+
+      const totalCard = document.createElement('article');
+      totalCard.className = 'month-payroll-summary-card total';
+      const totalTitle = document.createElement('h3');
+      totalTitle.textContent = 'TOTAL MES';
+      const totalNote = document.createElement('p');
+      totalNote.textContent = 'Suma económica final. Las revisiones y los descuentos permanecen separados por nómina.';
+      const totalValues = document.createElement('div');
+      totalValues.className = 'month-payroll-summary-values';
+      appendPayrollSummaryValues(totalValues, Object.fromEntries(
+        Object.keys(totals).map((key) => [key, available[key] === rows.length ? totals[key] : null])
+      ));
+      totalCard.append(totalTitle, totalNote, totalValues);
+      monthPayrollSummaryList.appendChild(totalCard);
+      document.getElementById('month-payroll-summary-period').textContent = `${periodLabel()} · ${rows.length} nóminas · 1 registro de jornada compartido`;
+      monthPayrollSummary.hidden = false;
+      if (scrollIntoView) monthPayrollSummary.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 
     async function handleMonthClosure(close = false) {
@@ -3367,7 +3526,12 @@
     }
 
     function updatePeriodCards() {
-      addPeriodPayroll.hidden = loadingDocuments || !isCurrentReviewComplete();
+      const canAddSecondPayroll = currentMonthReceiptCount <= 1;
+      addPeriodPayroll.hidden = loadingDocuments || !isCurrentReviewComplete() || !canAddSecondPayroll;
+      if (!canAddSecondPayroll) {
+        addMonthlyPayroll.hidden = true;
+        addDocumentPayroll.hidden = true;
+      }
       updateMonthlyControls();
       const label = periodLabel();
       const timesheetCard = document.getElementById('timesheet-card');
@@ -3434,11 +3598,23 @@
       const completed = Number(timesheetComplete) + Number(payrollComplete);
       const savedReview = monthlyReviews.get(periodKey());
       const discountsSaved = Array.isArray(savedReview?.discounts) && savedReview.discounts.length > 0;
-      document.getElementById('discounts-card').classList.toggle('complete', discountsSaved);
-      document.getElementById('discounts-card-status').textContent = discountsSaved ? 'Guardados' : 'Disponible';
-      document.getElementById('open-discounts').textContent = isAdminMode
-        ? (discountsSaved ? 'Consultar Descuentos' : 'Añadir Descuentos')
-        : (discountsSaved ? 'Revisar descuentos' : 'Abrir Descuentos');
+      const discountsCard = document.getElementById('discounts-card');
+      const openDiscounts = document.getElementById('open-discounts');
+      const addAnotherDiscounts = document.getElementById('add-another-discounts');
+      document.getElementById('discounts-card-title').textContent = `Descuentos · Nómina ${activeReceiptNumber}`;
+      discountsCard.classList.toggle('complete', discountsSaved);
+      discountsCard.classList.toggle('locked', !payrollComplete);
+      document.getElementById('discounts-card-status').textContent = discountsSaved ? 'Guardados' : (payrollComplete ? 'Disponible' : 'Bloqueados');
+      document.getElementById('discounts-card-help').textContent = payrollComplete
+        ? 'Descuentos vinculados exclusivamente a esta nómina.'
+        : 'Completa primero la nómina de este recibo.';
+      openDiscounts.disabled = !payrollComplete;
+      openDiscounts.textContent = !payrollComplete
+        ? 'Completa primero la nómina'
+        : (isAdminMode
+          ? (discountsSaved ? 'Consultar Descuentos' : 'Añadir Descuentos')
+          : (discountsSaved ? 'Revisar descuentos' : 'Abrir Descuentos'));
+      addAnotherDiscounts.hidden = isAdminMode || !discountsSaved;
       if (isAdminMode) {
         document.getElementById('admin-replace-discounts').hidden = !discountsSaved;
         document.getElementById('admin-reprocess-discounts').hidden = !discountsSaved;
@@ -3446,7 +3622,9 @@
       }
       const incidents = monthlyIncidentCount(savedReview);
       document.getElementById('document-count').textContent = `${completed} de 2 guardados`;
-      document.getElementById('completion-panel').hidden = completed !== 2;
+      document.getElementById('completion-panel').hidden = completed !== 2 || savedReview?.status === 'complete';
+      document.getElementById('payroll-next-actions').hidden = completed !== 2
+        || savedReview?.status !== 'complete' || isAdminMode || currentMonthReceiptCount >= 2;
       startAnalysisButton.disabled = completed !== 2;
       startAnalysisButton.textContent = savedReview?.status === 'complete'
         ? `Ver revisión de ${label}`
@@ -3962,6 +4140,7 @@
       const { image, imageUrl } = await loadImageForAnalysis(blob);
       try {
         return [
+          { source: blob, pageSegMode: '11' },
           {
             source: createAnalysisCanvas(image, { left: 0, top: 0, width: 1, height: 1 }, 2100),
             pageSegMode: '11'
@@ -4776,17 +4955,77 @@
       updatePeriodCards();
       comparisonSaved.textContent = '✓ Revisión guardada en tu historial privado.';
       comparisonSaved.hidden = false;
+      if (currentMonthReceiptCount < 2) {
+        showPeriodScreen();
+        const actions = document.getElementById('payroll-next-actions');
+        actions.hidden = false;
+        actions.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return;
+      }
       comparisonResult.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      if (monthlyComparisonFolder === monthFolder()) await continueMonthComparison();
+    }
+
+    async function continueMonthComparison() {
+      if (!currentUserId || savingReview || savingDocument || loadingDocuments || preparingMonthComparison) return;
+      const folder = monthFolder();
+      preparingMonthComparison = true;
+      monthlyComparisonFolder = folder;
+      try {
+        const receipts = await monthReceipts(storageBucket, folder);
+        const rows = [];
+        for (const receipt of receipts) {
+          const review = await downloadMonthlyReview(`${receipt.folder}/review`);
+          if (!review) throw new Error('No se ha podido recuperar una nómina del mes. Vuelve a intentarlo.');
+          rows.push({ receipt, review });
+        }
+        if (folder !== monthFolder()) return;
+        const pending = rows.find(({ review }) => review.status !== 'complete');
+        if (pending) {
+          const shared = rows.find(({ review }) => Object.keys(review.timesheet || {}).length)?.review.timesheet;
+          if (activeReceiptId !== pending.receipt.id) {
+            activeReceiptId = pending.receipt.id;
+            await loadStoredDocuments();
+          }
+          if (folder !== monthFolder()) return;
+          if (!confirmedTimesheetAnalyses.get(periodKey())?.size && shared) {
+            confirmedTimesheetAnalyses.set(periodKey(), plainObjectToMap(shared));
+          }
+          if (!documents.payroll.confirmed || !pending.review.discounts?.length) {
+            monthlyComparisonFolder = '';
+            showPeriodScreen();
+            showPeriodMessage('Completa la nómina y sus descuentos antes de comparar el mes.', true);
+            return;
+          }
+          startMonthlyReview();
+          return;
+        }
+        monthlyComparisonFolder = '';
+        showPeriodScreen();
+        await renderMultiPayrollSummary();
+        await handleMonthClosure(true);
+      } catch (error) {
+        monthlyComparisonFolder = '';
+        showPeriodScreen();
+        showPeriodMessage(error?.message || 'No se ha podido preparar la comparación mensual.', true);
+      } finally {
+        preparingMonthComparison = false;
+      }
     }
 
     function startMonthlyReview() {
       if (savingReview || savingDocument || loadingDocuments) return;
       const savedReview = monthlyReviews.get(periodKey());
       if (!computeScheduleFactor(currentScheduleSettings())) {
+        showPeriodScreen();
         showPeriodMessage('Elige el tipo de esta nómina y completa el porcentaje y las fechas de reducción, si corresponde.', true);
         return;
       }
       if (savedReview?.status === 'complete') {
+        startPayrollComparison();
+        return;
+      }
+      if (confirmedTimesheetAnalyses.get(periodKey())?.size) {
         startPayrollComparison();
         return;
       }
@@ -4816,7 +5055,7 @@
           }
         }
         const validationText = privacyTexts.join('\n');
-        workingOcrText = recognizedText;
+        workingOcrText = validationText;
         const readableCharacters = normalizeOcrText(validationText).replace(/[^A-Z0-9]/g, '').length;
         const detectedKind = detectDocumentKind(validationText);
         detectedRegularizationMonth = activeKind === 'payroll' ? payrollRegularizationMonth(validationText) : null;
@@ -5023,6 +5262,7 @@
       documentScreen.hidden = true;
       discountsScreen.hidden = false;
       document.getElementById('discounts-period').textContent = periodLabel();
+      document.getElementById('discounts-screen-title').textContent = `Descuentos · Nómina ${activeReceiptNumber}`;
       topBack.setAttribute('aria-label', 'Volver al resumen de documentos');
       window.scrollTo({ top: 0, behavior: 'auto' });
       document.getElementById('discounts-screen-title').focus({ preventScroll: true });
@@ -5031,8 +5271,35 @@
       }));
     }
 
+    async function openNextPayrollDiscounts() {
+      if (!currentUserId || loadingDocuments || savingReview || savingDocument) return;
+      const selectedFolder = monthFolder();
+      let receipts;
+      try {
+        receipts = await monthReceipts(storageBucket, selectedFolder);
+      } catch {
+        showPeriodMessage('No se han podido consultar las nóminas de este mes. Vuelve a intentarlo.', true);
+        return;
+      }
+      for (const [index, receipt] of receipts.entries()) {
+        if (!receipt.files.some((file) => file.id && file.name === 'payroll')) continue;
+        const review = receipt.files.some((file) => file.id && file.name === 'review')
+          ? await downloadMonthlyReview(`${receipt.folder}/review`)
+          : null;
+        if (Array.isArray(review?.discounts) && review.discounts.length) continue;
+        activeReceiptId = receipt.id;
+        activeReceiptNumber = index + 1;
+        await loadStoredDocuments();
+        if (selectedFolder !== monthFolder() || !documents.payroll.confirmed) return;
+        showDiscountsScreen({ fresh: true });
+        return;
+      }
+      showPeriodMessage('Todas las nóminas guardadas de este mes ya tienen sus propios descuentos.');
+    }
+
     async function handlePeriodChange() {
       activeReceiptId = null;
+      activeReceiptNumber = 1;
       document.getElementById('analysis-ready-status').hidden = true;
       await loadStoredDocuments();
     }
@@ -5296,6 +5563,7 @@
     document.getElementById('open-timesheet').addEventListener('click', () => openDocument('timesheet'));
     document.getElementById('open-payroll').addEventListener('click', () => openDocument('payroll'));
     document.getElementById('open-discounts').addEventListener('click', () => showDiscountsScreen());
+    document.getElementById('add-another-discounts').addEventListener('click', openNextPayrollDiscounts);
     document.getElementById('admin-replace-discounts').addEventListener('click', () => prepareAdminDiscounts('replace'));
     document.getElementById('admin-reprocess-discounts').addEventListener('click', () => prepareAdminDiscounts('reprocess'));
     document.getElementById('admin-delete-discounts').addEventListener('click', deleteAdminDiscounts);
@@ -5310,20 +5578,38 @@
         version: previous.version || 2,
         status: previous.status || 'pending',
         period: savingKey,
+        schedule: previous.schedule || currentScheduleSettings(),
+        ...(previous.payrollEconomics || !documents.payroll.payrollEconomics ? {} : { payrollEconomics: documents.payroll.payrollEconomics }),
+        ...(previous.paymentInfo || !documents.payroll.paymentInfo ? {} : { paymentInfo: documents.payroll.paymentInfo }),
         discounts: request.rows,
         updatedAt: new Date().toISOString()
       };
       savingReview = true;
+      let continueAfterSecondPayroll = false;
       try {
         await uploadMonthlyReview(review);
         if (savingKey !== periodKey()) return;
         monthlyReviews.set(savingKey, review);
         request.onSaved?.();
+        try {
+          const receipts = await monthReceipts(storageBucket, monthFolder());
+          if (savingKey !== periodKey()) return;
+          currentMonthReceiptCount = receipts.length;
+        } catch {
+          currentMonthReceiptCount = Math.max(1, currentMonthReceiptCount);
+        }
         showPeriodScreen();
+        continueAfterSecondPayroll = currentMonthReceiptCount >= 2;
       } catch {
         request.onError?.();
       } finally {
         savingReview = false;
+      }
+      if (savingKey !== periodKey()) return;
+      if (continueAfterSecondPayroll) {
+        await continueMonthComparison();
+      } else {
+        document.getElementById('completion-panel').scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
     });
     workModeFull.addEventListener('click', () => selectWorkMode('full'));
@@ -5337,18 +5623,27 @@
     document.getElementById('cancel-payroll-edit').addEventListener('click', cancelPayrollEditing);
     confirmComparisonButton.addEventListener('click', confirmMonthlyComparison);
     async function startAnotherPayroll() {
-      if (!currentUserId || loadingDocuments || savingReview || savingDocument || !isCurrentReviewComplete()) return;
-      const sourcePath = storagePath('timesheet');
+      const selectedType = typeof arguments[0] === 'string' ? arguments[0] : '';
+      const currentReview = monthlyReviews.get(periodKey());
+      const hasOwnDiscounts = Array.isArray(currentReview?.discounts) && currentReview.discounts.length > 0;
+      const completeReview = isCurrentReviewComplete();
+      if (!currentUserId || loadingDocuments || savingReview || savingDocument || preparingMonthComparison
+        || currentMonthReceiptCount >= 2
+        || (!completeReview && (!documents.timesheet.confirmed || !documents.payroll.confirmed || !hasOwnDiscounts))) return;
+      monthlyComparisonFolder = '';
+      const sourcePath = documents.timesheet.path || storagePath('timesheet');
       const sourceTimesheet = { ...documents.timesheet };
       const sourceReview = monthlyReviews.get(periodKey());
-      const sourceValues = new Map(confirmedTimesheetAnalyses.get(periodKey()) || plainObjectToMap(sourceReview.timesheet));
-      const sourceSchedule = { type: '', percentage: '', duration: 'whole', start: '', end: '', salarySource: 'full', salaryAmount: '' };
+      const sourceValues = new Map(confirmedTimesheetAnalyses.get(periodKey()) || plainObjectToMap(sourceReview?.timesheet));
+      const sourceSchedule = { type: selectedType, percentage: '', duration: 'whole', start: '', end: '', salarySource: 'full', salaryAmount: '' };
       const nextReceiptId = newReceiptId();
-      const nextPath = `${monthFolder()}/${nextReceiptId}/timesheet`;
-      const addButtons = [addMonthlyPayroll, addPeriodPayroll, addDocumentPayroll];
+      const nextReviewPath = `${monthFolder()}/${nextReceiptId}/review`;
+      const addButtons = [addMonthlyPayroll, addPeriodPayroll, addDocumentPayroll,
+        document.getElementById('add-reduced-payroll'), document.getElementById('add-full-payroll')];
       const previousMonthDisabled = month.disabled;
       const previousYearDisabled = year.disabled;
       let reusedBlob;
+      let nextReview;
       savingDocument = true;
       loadingDocuments = true;
       month.disabled = true;
@@ -5363,8 +5658,24 @@
           if (error || !data) throw error || new Error('TIMESHEET_UNAVAILABLE');
           reusedBlob = data;
         }
-        const { error } = await storageBucket.upload(nextPath, reusedBlob, {
-          cacheControl: '0', contentType: reusedBlob.type || 'image/jpeg', upsert: false
+        nextReview = {
+          version: 2,
+          scope: 'receipt',
+          status: 'pending',
+          period: `${year.value}-${String(Number(month.value) + 1).padStart(2, '0')}/${nextReceiptId}`,
+          receiptId: nextReceiptId,
+          userId: currentUserId,
+          year: Number(year.value),
+          month: Number(month.value) + 1,
+          createdAt: receiptCreatedAt(nextReceiptId),
+          updatedAt: new Date().toISOString(),
+          schedule: sourceSchedule,
+          timesheet: mapToPlainObject(sourceValues),
+          timesheetPath: sourcePath
+        };
+        const draft = new Blob([JSON.stringify(nextReview)], { type: 'application/json' });
+        const { error } = await storageBucket.upload(nextReviewPath, draft, {
+          cacheControl: '0', contentType: 'application/json', upsert: false
         });
         if (error) throw error;
       } catch {
@@ -5374,7 +5685,10 @@
         loadingDocuments = false;
         month.disabled = previousMonthDisabled;
         year.disabled = previousYearDisabled;
-        addButtons.forEach(button => { button.disabled = false; button.textContent = 'Añadir otra nómina de este mes'; });
+        addButtons.forEach(button => { button.disabled = false; });
+        addMonthlyPayroll.textContent = addPeriodPayroll.textContent = addDocumentPayroll.textContent = 'Añadir otra nómina de este mes';
+        document.getElementById('add-reduced-payroll').textContent = 'Añade nómina con reducción';
+        document.getElementById('add-full-payroll').textContent = 'Añade nómina sin reducción';
       }
       if (!reusedBlob) {
         showPeriodScreen();
@@ -5384,23 +5698,32 @@
       // Switch receipts only after the independent copy has been saved successfully.
       clearAllDocuments();
       activeReceiptId = nextReceiptId;
+      activeReceiptNumber = 2;
+      currentMonthReceiptCount = Math.max(2, currentMonthReceiptCount + 1);
       receiptCreated = receiptCreatedAt(nextReceiptId);
       payrollSourceHash = '';
       Object.assign(documents.timesheet, {
         file: null, blob: reusedBlob, url: URL.createObjectURL(reusedBlob),
-        ocrText: sourceTimesheet.ocrText || '', confirmed: true, saved: true, path: nextPath
+        ocrText: sourceTimesheet.ocrText || '', confirmed: true, saved: true, path: sourcePath
       });
       confirmedTimesheetAnalyses.set(periodKey(), sourceValues);
+      monthlyReviews.set(periodKey(), nextReview);
       saveWorkSchedule(sourceSchedule);
       loadWorkSchedule();
       addMonthlyPayroll.hidden = true;
       showPeriodScreen();
-      showPeriodMessage('Registro de jornada conservado. Elige si la nueva nómina es normal o con jornada reducida y añádela.');
-      document.getElementById('payroll-type-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      showPeriodMessage(selectedType
+        ? `Registro de jornada conservado. La Nómina 2 se ha preparado ${selectedType === 'reduced' ? 'con reducción' : 'sin reducción'}.`
+        : 'Registro de jornada conservado. Elige si la nueva nómina es normal o con jornada reducida y añádela.');
+      if (selectedType) openDocument('payroll');
+      else document.getElementById('payroll-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
-    addMonthlyPayroll.addEventListener('click', startAnotherPayroll);
-    addPeriodPayroll.addEventListener('click', startAnotherPayroll);
-    addDocumentPayroll.addEventListener('click', startAnotherPayroll);
+    addMonthlyPayroll.addEventListener('click', () => startAnotherPayroll());
+    addPeriodPayroll.addEventListener('click', () => startAnotherPayroll());
+    addDocumentPayroll.addEventListener('click', () => startAnotherPayroll());
+    document.getElementById('view-current-review').addEventListener('click', continueMonthComparison);
+    document.getElementById('add-reduced-payroll').addEventListener('click', () => startAnotherPayroll('reduced'));
+    document.getElementById('add-full-payroll').addEventListener('click', () => startAnotherPayroll('full'));
     document.getElementById('admin-replace-timesheet').addEventListener('click', () => prepareAdminReplacement('timesheet'));
     document.getElementById('admin-replace-payroll').addEventListener('click', () => prepareAdminReplacement('payroll'));
     document.getElementById('admin-delete-timesheet').addEventListener('click', deleteAdminTimesheet);
@@ -5455,6 +5778,7 @@
 
     topBack.addEventListener('click', (event) => {
       if (savingReview || savingDocument) { event.preventDefault(); return; }
+      monthlyComparisonFolder = '';
       if (!discountsScreen.hidden) {
         event.preventDefault();
         showPeriodScreen();
@@ -5500,4 +5824,3 @@
   </script>
 </body>
 </html>
-

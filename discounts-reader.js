@@ -58,6 +58,8 @@ function setBusy(busy) {
   elements.input.disabled = busy;
   elements.privacyCheckbox.disabled = busy;
   elements.review.disabled = busy || !selectedFile || !elements.privacyCheckbox.checked;
+  elements.save.disabled = busy || !latestRows.length;
+  elements.cancel.disabled = busy;
 }
 
 function setStatus(kind, title, message) {
@@ -83,6 +85,8 @@ function revokePreview() {
 function resetReader() {
   activeRequest?.abort();
   activeRequest = null;
+  elements.save.disabled = false;
+  elements.cancel.disabled = false;
   revokePreview();
   selectedFile = null;
   latestRows = [];

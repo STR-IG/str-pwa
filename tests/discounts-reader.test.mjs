@@ -16,8 +16,43 @@ test('the period screen keeps Registro and Nómina and adds Descuentos after the
   assert.ok(timesheet > 0 && timesheet < payroll && payroll < discounts);
   assert.match(base, /id="open-discounts"[^>]*>Abrir Descuentos</);
   assert.match(base, /id="discounts-screen"/);
-  assert.match(wrapper, /revisa-tu-nomina-base\.html\?v=prod-30/);
-  assert.match(wrapper, /discounts-reader\.js\?v=prod-4/);
+  assert.match(wrapper, /revisa-tu-nomina-base\.html\?v=prod-40/);
+  assert.match(wrapper, /discounts-reader\.js\?v=prod-6/);
+});
+
+test('after saving payroll 1 quantities the flow offers the three explicit month actions', () => {
+  assert.match(base, /id="payroll-next-actions"[\s\S]*?¿QUÉ QUIERES HACER AHORA\?/);
+  assert.match(base, /id="view-current-review"[^>]*>Comparación</);
+  assert.match(base, /id="add-reduced-payroll"[^>]*>Añade nómina con reducción</);
+  assert.match(base, /id="add-full-payroll"[^>]*>Añade nómina sin reducción</);
+  assert.match(base, /savedReview\?\.status !== 'complete'[\s\S]*?currentMonthReceiptCount >= 2/);
+  assert.match(base, /startAnotherPayroll\('reduced'\)/);
+  assert.match(base, /startAnotherPayroll\('full'\)/);
+});
+
+test('the final month summary keeps both payrolls separate and only totals economics', () => {
+  assert.match(base, /id="month-payroll-summary"/);
+  assert.match(base, /`NÓMINA \$\{index \+ 1\}`/);
+  assert.match(base, /Tipo: \$\{type\} · Resultado: \$\{reviewStatus\} · Descuentos propios:/);
+  assert.match(base, /totalTitle\.textContent = 'TOTAL MES'/);
+  assert.match(base, /Las revisiones y los descuentos permanecen separados por nómina/);
+});
+
+test('each payroll has its own discounts and the month summary adds their SS and IRPF amounts', () => {
+  assert.match(base, /Descuentos · Nómina \$\{activeReceiptNumber\}/);
+  assert.match(base, /monthlyReviews\.set\(periodKey\(\), nextReview\)/);
+  assert.match(base, /function receiptDiscountsTotal\(review\)/);
+  assert.match(base, /row\?\.section === 'worker' \|\| row\?\.section === 'irpf'/);
+  assert.match(base, /\['SS e IRPF leídos', metrics\.discounts\]/);
+});
+
+test('saved discounts offer an explicit route to the next payroll without discounts', () => {
+  assert.match(base, /id="add-another-discounts"[^>]*>Añadir otro descuento</);
+  assert.match(base, /addAnotherDiscounts\.hidden = isAdminMode \|\| !discountsSaved/);
+  assert.match(base, /async function openNextPayrollDiscounts\(\)/);
+  assert.match(base, /Array\.isArray\(review\?\.discounts\) && review\.discounts\.length/);
+  assert.match(base, /activeReceiptId = receipt\.id;[\s\S]*?await loadStoredDocuments\(\);[\s\S]*?showDiscountsScreen\(\{ fresh: true \}\)/);
+  assert.match(base, /add-another-discounts'\)\.addEventListener\('click', openNextPayrollDiscounts\)/);
 });
 
 test('completed discounts can be saved through the existing monthly review and exited without saving', () => {
@@ -27,6 +62,13 @@ test('completed discounts can be saved through the existing monthly review and e
   assert.match(base, /addEventListener\('str:discounts-save'[\s\S]*?uploadMonthlyReview\(review\)/);
   assert.match(reader, /getElementById\('top-back'\)\?\.click\(\)/);
   assert.match(base, /discounts: request\.rows/);
+});
+
+test('opening discounts for payroll 2 re-enables save and cancel after payroll 1', () => {
+  assert.match(reader, /function resetReader\(\) \{[\s\S]*?elements\.save\.disabled = false;[\s\S]*?elements\.cancel\.disabled = false;/);
+  assert.match(reader, /window\.addEventListener\('str:discounts-closed', resetReader\)/);
+  assert.match(reader, /function setBusy\(busy\) \{[\s\S]*?elements\.save\.disabled = busy \|\| !latestRows\.length;[\s\S]*?elements\.cancel\.disabled = busy;/);
+  assert.match(reader, /finally \{[\s\S]*?setBusy\(false\);/);
 });
 
 test('discounts reader uses one temporary image and never calls permanent storage', () => {
