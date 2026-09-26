@@ -23,12 +23,25 @@ test('Estadísticas valida sesión y afiliación antes de leer el Storage privad
   assert.match(source, /const folder = `\$\{currentUserId\}\/\$\{year\}\/\$\{String\(month\)/);
 });
 
-test('la pantalla consume revisiones guardadas y no crea otro lector ni compara el Registro', () => {
+test('la pantalla consume revisiones guardadas sin crear otro lector documental', () => {
   const source = read('estadisticas-nomina.js');
   assert.match(source, /readReview\(bucket, `\$\{receipt\.folder\}\/review`\)/);
   assert.match(source, /reviewToReceipt/);
-  assert.doesNotMatch(source, /Tesseract|lab-read-payroll-variables|timesheet|COMPARABLE_KEYS|comparisons/);
+  assert.match(source, /reviewToTimesheet/);
+  assert.match(source, /buildTimesheetYearStatistics/);
+  assert.doesNotMatch(source, /Tesseract|lab-read-payroll-variables|COMPARABLE_KEYS/);
   assert.doesNotMatch(source, /storageBucket\.upload|\.upload\(/);
+});
+
+test('Registro de jornada deja de ser un marcador y muestra vistas anual y mensual', () => {
+  const html = read('estadisticas-nomina.html');
+  assert.match(html, /id="register-year-select"/);
+  assert.match(html, /id="register-annual-summary"/);
+  assert.match(html, /id="register-monthly-summary"/);
+  assert.match(html, /id="register-annual-chart"/);
+  assert.match(html, /Otros conceptos disponibles/);
+  assert.doesNotMatch(html, /estadísticas del registro estarán disponibles próximamente/i);
+  assert.match(html, /estadisticas-nomina\.js\?v=5/);
 });
 
 test('la vista incluye año, Acumulado/Mensual, una gráfica y Sin datos', () => {

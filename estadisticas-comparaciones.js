@@ -31,7 +31,7 @@
       views.forEach(view => {
         document.getElementById(`statistics-${view}`).hidden = view !== selected;
       });
-      refresh.hidden = selected !== 'economic';
+      refresh.hidden = selected !== 'economic' && selected !== 'register';
       const target = selected === 'home' ? lastCard : document.querySelector(`#statistics-${selected} h1`);
       target?.focus();
     });

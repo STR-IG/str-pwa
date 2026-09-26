@@ -8,6 +8,12 @@ import {
   conceptTotal,
   reviewToReceipt
 } from './payroll-statistics.mjs?v=2';
+import {
+  TIMESHEET_METRICS,
+  availableTimesheetYears,
+  buildTimesheetYearStatistics,
+  reviewToTimesheet
+} from './timesheet-statistics.mjs?v=1';
 
 const SUPABASE_URL = 'https://icneigdnuntzugisexaz.supabase.co';
 const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_apKjcPClIBTHS2wwN6qPsA_6Vm4tk9m';
@@ -36,13 +42,26 @@ const monthlyButton = document.getElementById('view-monthly');
 const monthSelect = document.getElementById('month-select');
 const previousMonthButton = document.getElementById('previous-month');
 const nextMonthButton = document.getElementById('next-month');
+const registerYearSelect = document.getElementById('register-year-select');
+const registerAccumulatedView = document.getElementById('register-accumulated-view');
+const registerMonthlyView = document.getElementById('register-monthly-view');
+const registerAccumulatedButton = document.getElementById('register-view-accumulated');
+const registerMonthlyButton = document.getElementById('register-view-monthly');
+const registerMonthSelect = document.getElementById('register-month-select');
+const registerPreviousMonthButton = document.getElementById('register-previous-month');
+const registerNextMonthButton = document.getElementById('register-next-month');
 
 let currentUserId = '';
 let receipts = [];
+let timesheets = [];
 let selectedYear = new Date().getFullYear();
 let selectedMonth = null;
 let selectedView = 'accumulated';
 let chartMetric = 'gross';
+let selectedRegisterYear = new Date().getFullYear();
+let selectedRegisterMonth = null;
+let selectedRegisterView = 'accumulated';
+let registerChartMetric = 'workedHours';
 let loadVersion = 0;
 let loading = false;
 let lastLoadedAt = 0;
@@ -66,6 +85,181 @@ function element(tag, className = '', text = '') {
   if (className) node.className = className;
   if (text !== '') node.textContent = text;
   return node;
+}
+
+function timesheetNumber(value, unit = 'quantity') {
+  if (value === null || value === undefined) return 'Sin datos';
+  const formatted = value.toLocaleString('es-ES', { maximumFractionDigits: 2 });
+  return unit === 'hours' ? `${formatted} h` : formatted;
+}
+
+function timesheetAvailability(summary, monthly = false) {
+  if (summary?.conflict) return 'Datos distintos en las revisiones del mes';
+  if (!summary || summary.value === null) return 'Sin datos confirmados';
+  if (monthly) return 'Dato confirmado en el registro mensual';
+  return summary.complete
+    ? `${summary.available} de ${summary.total} meses con dato`
+    : `Dato parcial · ${summary.available} de ${summary.total} meses`;
+}
+
+function renderTimesheetMetrics(container, period, monthly = false) {
+  clear(container);
+  TIMESHEET_METRICS.forEach(metric => {
+    const summary = period.metrics[metric.key];
+    const card = element('article', `metric-card${summary?.conflict ? ' register-conflict' : ''}`);
+    card.append(
+      element('span', '', metric.label),
+      element('strong', '', timesheetNumber(summary?.value, metric.unit)),
+      element('small', '', timesheetAvailability(summary, monthly))
+    );
+    container.appendChild(card);
+  });
+}
+
+function renderTimesheetOthers(container, metrics, monthly = false) {
+  clear(container);
+  if (!metrics.length) {
+    container.appendChild(element('p', 'section-note', 'No hay otros conceptos confirmados en los registros disponibles.'));
+    return;
+  }
+  metrics.forEach(metric => {
+    const row = element('div', 'concept-row');
+    const copy = element('div');
+    copy.append(
+      element('strong', '', metric.label),
+      element('small', '', timesheetAvailability(metric, monthly))
+    );
+    row.append(copy, element('span', 'concept-amount', timesheetNumber(metric.value)));
+    container.appendChild(row);
+  });
+}
+
+function renderRegisterCoverage(statistics) {
+  document.getElementById('register-coverage-count').textContent = `${statistics.registerCount} de 12 meses`;
+  const months = document.getElementById('register-month-status');
+  clear(months);
+  statistics.months.forEach(month => {
+    const chip = element('span', `month-chip${month.hasData ? '' : ' missing'}`, `${month.shortLabel}: ${month.hasData ? 'Registro' : 'Sin datos'}`);
+    if (month.conflict) {
+      chip.classList.add('conflict');
+      chip.textContent = `${month.shortLabel}: Revisar`;
+    }
+    months.appendChild(chip);
+  });
+  const note = document.getElementById('register-deduplication-note');
+  note.textContent = statistics.duplicateCopies
+    ? `${statistics.duplicateCopies} copia${statistics.duplicateCopies === 1 ? '' : 's'} repetida${statistics.duplicateCopies === 1 ? '' : 's'} por nóminas adicionales se ha${statistics.duplicateCopies === 1 ? '' : 'n'} excluido del total.`
+    : 'Cada mes se contabiliza una sola vez, independientemente del número de nóminas.';
+}
+
+function renderRegisterChartToggle(statistics) {
+  const container = document.getElementById('register-chart-metric-toggle');
+  clear(container);
+  TIMESHEET_METRICS.forEach(metric => {
+    const button = element('button', metric.key === registerChartMetric ? 'active' : '', metric.label);
+    button.type = 'button';
+    button.setAttribute('aria-pressed', String(metric.key === registerChartMetric));
+    button.addEventListener('click', () => {
+      registerChartMetric = metric.key;
+      renderRegisterChartToggle(statistics);
+      renderRegisterChart(statistics);
+    });
+    container.appendChild(button);
+  });
+}
+
+function renderRegisterChart(statistics) {
+  const chart = document.getElementById('register-annual-chart');
+  const selection = document.getElementById('register-chart-selection');
+  clear(chart);
+  selection.textContent = 'Selecciona una barra para consultar la cantidad.';
+  const metric = TIMESHEET_METRICS.find(item => item.key === registerChartMetric) || TIMESHEET_METRICS[0];
+  const values = statistics.months.map(month => month.metrics[metric.key].value);
+  const maximum = Math.max(0, ...values.map(value => Math.abs(value || 0)));
+  statistics.months.forEach(month => {
+    const summary = month.metrics[metric.key];
+    const column = element('div', 'chart-column');
+    const track = element('div', 'bar-track');
+    if (!month.hasData || summary.value === null) {
+      const missing = element('span', 'chart-missing', '—');
+      missing.title = `${month.label}: ${summary.conflict ? 'Revisar datos' : 'Sin datos'}`;
+      track.appendChild(missing);
+    } else {
+      const height = maximum ? Math.max(5, Math.round(Math.abs(summary.value) / maximum * 100)) : 5;
+      const bar = element('button', 'bar');
+      bar.type = 'button';
+      bar.style.setProperty('--bar-height', `${height}%`);
+      bar.title = `${month.label}: ${timesheetNumber(summary.value, metric.unit)}`;
+      bar.setAttribute('aria-label', bar.title);
+      bar.addEventListener('click', () => { selection.textContent = bar.title; });
+      track.appendChild(bar);
+    }
+    column.append(track, element('span', 'chart-label', month.shortLabel));
+    chart.appendChild(column);
+  });
+  chart.setAttribute('aria-label', `Evolución mensual de ${metric.label.toLowerCase()} en ${statistics.year}`);
+}
+
+function renderRegisterMonthOptions(statistics) {
+  const previous = selectedRegisterMonth;
+  clear(registerMonthSelect);
+  statistics.months.forEach(month => {
+    const option = document.createElement('option');
+    option.value = String(month.month);
+    option.textContent = `${month.label} ${statistics.year}${month.hasData ? '' : ' · Sin datos'}`;
+    registerMonthSelect.appendChild(option);
+  });
+  selectedRegisterMonth = Number.isInteger(previous) ? previous : (statistics.availableMonths.at(-1) || 1);
+  registerMonthSelect.value = String(selectedRegisterMonth);
+}
+
+function renderRegisterMonthly(statistics) {
+  const month = statistics.months.find(item => item.month === selectedRegisterMonth) || statistics.months[0];
+  selectedRegisterMonth = month.month;
+  registerMonthSelect.value = String(month.month);
+  registerPreviousMonthButton.disabled = month.month <= 1;
+  registerNextMonthButton.disabled = month.month >= 12;
+  const status = document.getElementById('register-month-status-note');
+  status.textContent = month.hasData
+    ? `${month.label}: 1 Registro de jornada mensual${month.duplicateCopies ? ` · ${month.duplicateCopies} copia repetida excluida` : ''}${month.conflict ? ' · Hay datos contradictorios que deben revisarse' : ''}.`
+    : `${month.label}: Sin datos. No se interpreta como cero.`;
+  renderTimesheetMetrics(document.getElementById('register-monthly-summary'), month, true);
+  renderTimesheetOthers(document.getElementById('register-monthly-others'), month.otherMetrics, true);
+}
+
+function renderRegisterView() {
+  const accumulated = selectedRegisterView === 'accumulated';
+  registerAccumulatedView.hidden = !accumulated;
+  registerMonthlyView.hidden = accumulated;
+  registerAccumulatedButton.classList.toggle('active', accumulated);
+  registerMonthlyButton.classList.toggle('active', !accumulated);
+  registerAccumulatedButton.setAttribute('aria-selected', String(accumulated));
+  registerMonthlyButton.setAttribute('aria-selected', String(!accumulated));
+}
+
+function renderRegisterYearOptions() {
+  const years = availableTimesheetYears(timesheets);
+  if (!years.includes(selectedRegisterYear)) selectedRegisterYear = years[0];
+  clear(registerYearSelect);
+  years.forEach(year => registerYearSelect.add(new Option(String(year), String(year))));
+  registerYearSelect.value = String(selectedRegisterYear);
+}
+
+function renderRegisterStatistics() {
+  const statistics = buildTimesheetYearStatistics(timesheets, selectedRegisterYear);
+  const empty = document.getElementById('register-empty-state');
+  const content = document.getElementById('register-content');
+  empty.hidden = statistics.registerCount > 0;
+  content.hidden = statistics.registerCount === 0;
+  if (!statistics.registerCount) return;
+  renderRegisterCoverage(statistics);
+  renderTimesheetMetrics(document.getElementById('register-annual-summary'), statistics);
+  renderTimesheetOthers(document.getElementById('register-annual-others'), statistics.otherMetrics);
+  renderRegisterChartToggle(statistics);
+  renderRegisterChart(statistics);
+  renderRegisterMonthOptions(statistics);
+  renderRegisterMonthly(statistics);
+  renderRegisterView();
 }
 
 function renderSummary(container, period) {
@@ -442,7 +636,7 @@ async function readReview(bucket, path) {
   try { return JSON.parse(await data.text()); } catch { return null; }
 }
 
-async function loadReceipts() {
+async function loadStoredStatistics() {
   const bucket = supabase.storage.from(STORAGE_BUCKET);
   const root = await listAll(bucket, currentUserId);
   const years = root.filter((item) => item.id == null && /^\d{4}$/.test(item.name)).map((item) => Number(item.name));
@@ -456,16 +650,29 @@ async function loadReceipts() {
   const periodResults = await Promise.all(periods.map(async ({ year, month }) => {
     const folder = `${currentUserId}/${year}/${String(month).padStart(2, '0')}`;
     const storedReceipts = await monthReceipts(bucket, folder);
-    return Promise.all(storedReceipts
-      .filter((receipt) => receipt.files.some((file) => file.id && file.name === 'payroll')
-        && receipt.files.some((file) => file.id && file.name === 'review'))
-      .map(async (receipt) => {
-        const review = await readReview(bucket, `${receipt.folder}/review`);
-        if (review?.status !== 'complete') return null;
-        return reviewToReceipt(review, { year, month, receiptId: receipt.id || `legacy:${year}-${month}` });
-      }));
+    const storedReviews = await Promise.all(storedReceipts
+      .filter(receipt => receipt.files.some(file => file.id && file.name === 'review'))
+      .map(async receipt => ({
+        receipt,
+        review: await readReview(bucket, `${receipt.folder}/review`)
+      })));
+    return {
+      receipts: storedReviews.flatMap(({ receipt, review }) => {
+        const hasPayroll = receipt.files.some(file => file.id && file.name === 'payroll');
+        if (!hasPayroll || review?.status !== 'complete') return [];
+        const normalized = reviewToReceipt(review, { year, month, receiptId: receipt.id || `legacy:${year}-${month}` });
+        return normalized ? [normalized] : [];
+      }),
+      timesheets: storedReviews.flatMap(({ receipt, review }) => {
+        const normalized = reviewToTimesheet(review, { year, month, receiptId: receipt.id || `legacy:${year}-${month}` });
+        return normalized ? [normalized] : [];
+      })
+    };
   }));
-  return periodResults.flat(2).filter(Boolean);
+  return {
+    receipts: periodResults.flatMap(period => period.receipts),
+    timesheets: periodResults.flatMap(period => period.timesheets)
+  };
 }
 
 function renderYearOptions() {
@@ -490,11 +697,14 @@ async function loadStatistics() {
   errorState.hidden = true;
   emptyState.hidden = true;
   try {
-    const loaded = await loadReceipts();
+    const loaded = await loadStoredStatistics();
     if (requestVersion !== loadVersion) return;
-    receipts = loaded;
+    receipts = loaded.receipts;
+    timesheets = loaded.timesheets;
     lastLoadedAt = Date.now();
     renderYearOptions();
+    renderRegisterYearOptions();
+    renderRegisterStatistics();
     if (!receipts.length) {
       statisticsContent.hidden = true;
       emptyState.hidden = false;
@@ -546,6 +756,32 @@ nextMonthButton.addEventListener('click', () => {
   const index = statistics.availableMonths.indexOf(selectedMonth);
   if (index >= 0 && index < statistics.availableMonths.length - 1) selectedMonth = statistics.availableMonths[index + 1];
   renderMonthly(statistics);
+});
+registerYearSelect.addEventListener('change', () => {
+  selectedRegisterYear = Number(registerYearSelect.value);
+  selectedRegisterMonth = null;
+  renderRegisterStatistics();
+});
+registerAccumulatedButton.addEventListener('click', () => {
+  selectedRegisterView = 'accumulated';
+  renderRegisterView();
+});
+registerMonthlyButton.addEventListener('click', () => {
+  selectedRegisterView = 'monthly';
+  renderRegisterMonthly(buildTimesheetYearStatistics(timesheets, selectedRegisterYear));
+  renderRegisterView();
+});
+registerMonthSelect.addEventListener('change', () => {
+  selectedRegisterMonth = Number(registerMonthSelect.value);
+  renderRegisterMonthly(buildTimesheetYearStatistics(timesheets, selectedRegisterYear));
+});
+registerPreviousMonthButton.addEventListener('click', () => {
+  selectedRegisterMonth = Math.max(1, Number(selectedRegisterMonth || 1) - 1);
+  renderRegisterMonthly(buildTimesheetYearStatistics(timesheets, selectedRegisterYear));
+});
+registerNextMonthButton.addEventListener('click', () => {
+  selectedRegisterMonth = Math.min(12, Number(selectedRegisterMonth || 1) + 1);
+  renderRegisterMonthly(buildTimesheetYearStatistics(timesheets, selectedRegisterYear));
 });
 refreshButton.addEventListener('click', loadStatistics);
 window.addEventListener('pageshow', () => {

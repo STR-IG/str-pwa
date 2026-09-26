@@ -64,12 +64,17 @@
     .coverage-count { max-width: 170px; color: var(--red-dark); font-size: 13px; font-weight: 900; text-align: right; }
     .month-chips { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 13px; }
     .month-chip { padding: 7px 10px; border-radius: 999px; color: var(--green); background: var(--green-soft); font-size: 12px; font-weight: 800; }
+    .month-chip.missing { color: #77777d; background: #eeeeef; }
+    .month-chip.conflict { color: var(--amber); background: var(--amber-soft); }
     .summary-grid { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 10px; }
     .metric-card { min-width: 0; padding: 15px 13px; border: 1px solid var(--line); border-radius: 17px; background: #fbfbfc; }
     .metric-card span { display: block; color: var(--muted); font-size: 11px; font-weight: 800; line-height: 1.3; }
     .metric-card strong { display: block; margin-top: 7px; overflow-wrap: anywhere; font-size: clamp(18px, 5.5vw, 25px); letter-spacing: -.035em; }
     .metric-card small { display: block; margin-top: 6px; color: var(--muted); font-size: 10px; line-height: 1.35; }
     .metric-card.net { color: var(--green); background: var(--green-soft); border-color: #c9e7d5; }
+    .metric-card.register-conflict { color: var(--amber); border-color: #ebd38a; background: var(--amber-soft); }
+    .register-summary { grid-template-columns: repeat(3,minmax(0,1fr)); }
+    .register-note { margin: 12px 0 0; color: var(--muted); font-size: 12px; line-height: 1.45; }
     .salary-glance-layout { display: grid; grid-template-columns: minmax(220px,.9fr) minmax(250px,1.1fr); gap: 22px; align-items: center; }
     .salary-donut { position: relative; width: min(100%,280px); aspect-ratio: 1; margin: 0 auto; border-radius: 50%; background: conic-gradient(var(--green) 0 var(--net-angle), #e4a229 var(--net-angle) var(--worker-angle), var(--red) var(--worker-angle) 100%); }
     .salary-donut::after { content: ''; position: absolute; inset: 24%; border-radius: 50%; background: white; box-shadow: 0 0 0 1px rgba(0,0,0,.035); }
@@ -201,7 +206,7 @@
       <div class="hero"><span class="eyebrow">TU INFORMACIÓN</span><h1 tabindex="-1">Estadísticas</h1><p class="intro">Consulta tus datos económicos, el registro y las comparaciones.</p></div>
       <nav class="statistics-menu" aria-label="Apartados de Estadísticas">
         <button class="panel statistics-card" type="button" data-statistics-view="economic"><strong>Estadísticas económicas</strong><span>Evolución y composición de tus nóminas guardadas.</span></button>
-        <button class="panel statistics-card" type="button" data-statistics-view="register"><strong>Registro de jornada</strong><span>Espacio reservado para las estadísticas del registro. Próximamente.</span></button>
+        <button class="panel statistics-card" type="button" data-statistics-view="register"><strong>Registro de jornada</strong><span>Resumen mensual y anual de los registros ya confirmados.</span></button>
         <button class="panel statistics-card" type="button" data-statistics-view="comparisons"><strong>Comparaciones</strong><span>Registro y nómina, por mes y año. Consulta los conceptos previstos.</span></button>
       </nav>
     </section>
@@ -324,7 +329,70 @@
     </section>
     <section id="statistics-register" hidden>
       <button class="statistics-return" type="button" data-statistics-view="home">‹ Volver a Estadísticas</button>
-      <div class="hero"><h1 tabindex="-1">Registro de jornada</h1><p class="intro">Las estadísticas del registro estarán disponibles próximamente.</p><p class="section-note">Este apartado todavía no muestra datos del registro.</p></div>
+      <section class="hero">
+        <span class="eyebrow">TU REGISTRO MENSUAL</span>
+        <h1 tabindex="-1">Registro de jornada</h1>
+        <p class="intro">Consulta las cantidades ya confirmadas. Un mes cuenta una sola vez aunque contenga varias nóminas.</p>
+        <div class="controls">
+          <label><span class="field-label">Año</span><select id="register-year-select" aria-label="Seleccionar año del registro"></select></label>
+          <div>
+            <span class="field-label">Vista</span>
+            <div class="segment" role="tablist" aria-label="Seleccionar vista del registro">
+              <button id="register-view-accumulated" class="active" type="button" role="tab" aria-selected="true">Acumulado</button>
+              <button id="register-view-monthly" type="button" role="tab" aria-selected="false">Mensual</button>
+            </div>
+          </div>
+        </div>
+      </section>
+      <section id="register-empty-state" class="state empty" hidden>
+        <strong>Todavía no hay cantidades confirmadas del Registro de jornada.</strong>
+        <p>Los meses sin cantidades guardadas se mantienen como «Sin datos».</p>
+      </section>
+      <div id="register-content" hidden>
+        <section id="register-accumulated-view" role="tabpanel">
+          <section class="section panel">
+            <div class="section-heading">
+              <div><h2>Registros disponibles</h2><p>Los doce meses permanecen visibles, también cuando no tienen información.</p></div>
+              <strong id="register-coverage-count" class="coverage-count"></strong>
+            </div>
+            <div id="register-month-status" class="month-chips"></div>
+            <p id="register-deduplication-note" class="register-note"></p>
+          </section>
+          <section class="section panel">
+            <div class="section-heading"><div><h2>Resumen anual</h2><p>Solo se suman cantidades confirmadas; «Sin datos» no equivale a cero.</p></div></div>
+            <div id="register-annual-summary" class="summary-grid register-summary"></div>
+          </section>
+          <section class="section panel">
+            <div class="section-heading"><div><h2>Evolución mensual</h2><p>Selecciona el concepto que quieres representar.</p></div></div>
+            <div id="register-chart-metric-toggle" class="metric-toggle" aria-label="Métrica del registro"></div>
+            <div id="register-annual-chart" class="chart" role="group"></div>
+            <p id="register-chart-selection" class="chart-selection" aria-live="polite"></p>
+            <p class="chart-caption">«—» significa Sin datos o un valor que necesita revisión.</p>
+          </section>
+          <section class="section panel">
+            <div class="section-heading"><div><h2>Otros conceptos disponibles</h2><p>Cantidades conservadas en los registros y no incluidas en el resumen principal.</p></div></div>
+            <div id="register-annual-others" class="concept-list"></div>
+          </section>
+        </section>
+        <section id="register-monthly-view" role="tabpanel" hidden>
+          <section class="section panel">
+            <div class="month-nav">
+              <button id="register-previous-month" type="button" aria-label="Mes anterior">‹</button>
+              <select id="register-month-select" aria-label="Seleccionar mes del registro"></select>
+              <button id="register-next-month" type="button" aria-label="Mes siguiente">›</button>
+            </div>
+            <p id="register-month-status-note" class="receipt-note"></p>
+          </section>
+          <section class="section panel">
+            <div class="section-heading"><div><h2>Resumen del mes</h2><p>Las cantidades pertenecen al único Registro de jornada mensual.</p></div></div>
+            <div id="register-monthly-summary" class="summary-grid register-summary"></div>
+          </section>
+          <section class="section panel">
+            <div class="section-heading"><div><h2>Otros conceptos del mes</h2><p>Sin estimaciones ni valores tomados de la nómina.</p></div></div>
+            <div id="register-monthly-others" class="concept-list"></div>
+          </section>
+        </section>
+      </div>
     </section>
     <section id="statistics-comparisons" hidden>
       <button class="statistics-return" type="button" data-statistics-view="home">‹ Volver a Estadísticas</button>
@@ -350,7 +418,7 @@
     </section>
   </main>
 
-  <script type="module" src="estadisticas-nomina.js?v=4"></script>
-  <script src="estadisticas-comparaciones.js?v=1" defer></script>
+  <script type="module" src="estadisticas-nomina.js?v=5"></script>
+  <script src="estadisticas-comparaciones.js?v=2" defer></script>
 </body>
 </html>
