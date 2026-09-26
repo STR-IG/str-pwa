@@ -17,7 +17,7 @@ test('the period screen keeps Registro and Nómina and adds Descuentos after the
   assert.match(base, /id="open-discounts"[^>]*>Abrir Descuentos</);
   assert.match(base, /id="discounts-screen"/);
   assert.match(wrapper, /revisa-tu-nomina-base\.html\?v=prod-40/);
-  assert.match(wrapper, /discounts-reader\.js\?v=prod-6/);
+  assert.match(wrapper, /discounts-reader\.js\?v=prod-7/);
 });
 
 test('after saving payroll 1 quantities the flow offers the three explicit month actions', () => {
