@@ -84,7 +84,7 @@ test('las estadísticas de registro usan las cantidades confirmadas guardadas', 
   const html = read('estadisticas-nomina.html');
   assert.match(source, /normalizeTimesheetReview\(review, \{ year, month \}\)/);
   assert.match(source, /window\.strTimesheetReviews = timesheetRecords/);
-  assert.match(register, /Registro de jornada/);
+  assert.match(register, /function renderRegister\(/);
   assert.match(html, /id="register-chart"/);
   assert.match(html, /review/i);
 });
