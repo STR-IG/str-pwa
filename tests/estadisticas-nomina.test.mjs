@@ -28,6 +28,8 @@ test('la pantalla consume revisiones guardadas sin crear otro lector documental'
   assert.match(source, /readReview\(bucket, `\$\{receipt\.folder\}\/review`\)/);
   assert.match(source, /reviewToReceipt/);
   assert.match(source, /reviewToTimesheet/);
+  assert.match(source, /reviewToRegisterPayrollEntry/);
+  assert.match(source, /buildRegisterPayrollStatistics/);
   assert.match(source, /buildTimesheetYearStatistics/);
   assert.doesNotMatch(source, /Tesseract|lab-read-payroll-variables|COMPARABLE_KEYS/);
   assert.doesNotMatch(source, /storageBucket\.upload|\.upload\(/);
@@ -41,7 +43,18 @@ test('Registro de jornada deja de ser un marcador y muestra vistas anual y mensu
   assert.match(html, /id="register-annual-chart"/);
   assert.match(html, /Otros conceptos disponibles/);
   assert.doesNotMatch(html, /estadísticas del registro estarán disponibles próximamente/i);
-  assert.match(html, /estadisticas-nomina\.js\?v=5/);
+  assert.match(html, /estadisticas-nomina\.js\?v=6/);
+});
+
+test('Registro permite elegir corte y concepto y muestra números de Registro frente a Nóminas', () => {
+  const html = read('estadisticas-nomina.html');
+  const source = read('estadisticas-nomina.js');
+  assert.match(html, /id="register-comparison-cutoff"/);
+  assert.match(html, /id="register-comparison-concept"/);
+  assert.match(html, /id="register-comparison-chart"/);
+  assert.match(html, /Registro frente a nóminas/);
+  assert.match(source, /Comidas Can Guasch|REGISTER_PAYROLL_METRICS/);
+  assert.match(source, /un único registro por mes/);
 });
 
 test('la vista incluye año, Acumulado/Mensual, una gráfica y Sin datos', () => {

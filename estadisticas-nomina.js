@@ -14,6 +14,11 @@ import {
   buildTimesheetYearStatistics,
   reviewToTimesheet
 } from './timesheet-statistics.mjs?v=1';
+import {
+  REGISTER_PAYROLL_METRICS,
+  buildRegisterPayrollStatistics,
+  reviewToRegisterPayrollEntry
+} from './payroll-register-statistics.mjs?v=1';
 
 const SUPABASE_URL = 'https://icneigdnuntzugisexaz.supabase.co';
 const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_apKjcPClIBTHS2wwN6qPsA_6Vm4tk9m';
@@ -50,10 +55,13 @@ const registerMonthlyButton = document.getElementById('register-view-monthly');
 const registerMonthSelect = document.getElementById('register-month-select');
 const registerPreviousMonthButton = document.getElementById('register-previous-month');
 const registerNextMonthButton = document.getElementById('register-next-month');
+const registerComparisonCutoff = document.getElementById('register-comparison-cutoff');
+const registerComparisonConcept = document.getElementById('register-comparison-concept');
 
 let currentUserId = '';
 let receipts = [];
 let timesheets = [];
+let registerPayrollEntries = [];
 let selectedYear = new Date().getFullYear();
 let selectedMonth = null;
 let selectedView = 'accumulated';
@@ -62,6 +70,8 @@ let selectedRegisterYear = new Date().getFullYear();
 let selectedRegisterMonth = null;
 let selectedRegisterView = 'accumulated';
 let registerChartMetric = 'workedHours';
+let registerComparisonMetric = 'meals';
+let registerComparisonCutoffValue = 'auto';
 let loadVersion = 0;
 let loading = false;
 let lastLoadedAt = 0;
@@ -200,6 +210,123 @@ function renderRegisterChart(statistics) {
   chart.setAttribute('aria-label', `Evolución mensual de ${metric.label.toLowerCase()} en ${statistics.year}`);
 }
 
+function comparisonCutoffMonth(year) {
+  if (registerComparisonCutoffValue !== 'auto') return Number(registerComparisonCutoffValue);
+  const now = new Date();
+  if (year === now.getFullYear()) return now.getMonth() + 1;
+  if (year < now.getFullYear()) return 12;
+  const available = registerPayrollEntries.filter(entry => entry.year === year).map(entry => entry.month);
+  return available.length ? Math.max(...available) : 12;
+}
+
+function renderRegisterComparisonOptions(year) {
+  const previousCutoff = registerComparisonCutoffValue;
+  clear(registerComparisonCutoff);
+  const now = new Date();
+  const automaticLabel = year === now.getFullYear()
+    ? `Hasta hoy · ${MONTH_NAMES[now.getMonth()].toLowerCase()}`
+    : year < now.getFullYear() ? 'Cierre anual · diciembre' : 'Hasta la última nómina';
+  registerComparisonCutoff.add(new Option(automaticLabel, 'auto'));
+  MONTH_NAMES.forEach((label, index) => registerComparisonCutoff.add(new Option(`Hasta ${label.toLowerCase()}`, String(index + 1))));
+  registerComparisonCutoffValue = previousCutoff === 'auto' || (Number(previousCutoff) >= 1 && Number(previousCutoff) <= 12)
+    ? previousCutoff : 'auto';
+  registerComparisonCutoff.value = registerComparisonCutoffValue;
+
+  const previousMetric = registerComparisonMetric;
+  clear(registerComparisonConcept);
+  REGISTER_PAYROLL_METRICS.forEach(metric => registerComparisonConcept.add(new Option(metric.label, metric.key)));
+  registerComparisonMetric = REGISTER_PAYROLL_METRICS.some(metric => metric.key === previousMetric) ? previousMetric : 'meals';
+  registerComparisonConcept.value = registerComparisonMetric;
+}
+
+function comparisonStatus(status) {
+  if (status === 'match') return ['match', '✓ Coincide'];
+  if (status === 'review') return ['review', '⚠ Revisar'];
+  return ['missing', '— Sin datos suficientes'];
+}
+
+function renderRegisterComparisonRows(statistics) {
+  const container = document.getElementById('register-comparison-rows');
+  clear(container);
+  const header = element('div', 'cross-row header');
+  ['Concepto', 'Registro', 'Nóminas', 'Diferencia', 'Estado'].forEach(label => header.appendChild(element('span', '', label)));
+  container.appendChild(header);
+  REGISTER_PAYROLL_METRICS.forEach(metric => {
+    const result = statistics.metrics[metric.key];
+    const [statusClass, statusText] = comparisonStatus(result.status);
+    const row = element('div', 'cross-row');
+    row.append(
+      element('strong', '', metric.label),
+      element('span', 'cross-number', timesheetNumber(result.register.value, metric.unit)),
+      element('span', 'cross-number', timesheetNumber(result.payroll.value, metric.unit)),
+      element('span', 'cross-number', timesheetNumber(result.difference, metric.unit)),
+      element('span', `comparison-status ${statusClass}`, statusText)
+    );
+    container.appendChild(row);
+  });
+}
+
+function renderRegisterComparisonChart(statistics) {
+  const chart = document.getElementById('register-comparison-chart');
+  const title = document.getElementById('register-comparison-chart-title');
+  const note = document.getElementById('register-comparison-chart-note');
+  clear(chart);
+  const metric = REGISTER_PAYROLL_METRICS.find(item => item.key === registerComparisonMetric) || REGISTER_PAYROLL_METRICS[0];
+  const total = statistics.metrics[metric.key];
+  const months = statistics.months.filter(month => month.month <= statistics.cutoffMonth);
+  const values = months.flatMap(month => [month.metrics[metric.key].register.value, month.metrics[metric.key].payroll.value]);
+  const maximum = Math.max(0, ...values.map(value => Math.abs(value || 0)));
+  title.textContent = `Evolución · ${metric.label}`;
+  months.forEach(month => {
+    const result = month.metrics[metric.key];
+    const column = element('div', 'cross-chart-column');
+    const track = element('div', 'cross-chart-track');
+    [['register', result.register.value], ['payroll', result.payroll.value]].forEach(([kind, value]) => {
+      const wrap = element('div', 'cross-bar-wrap');
+      if (value === null) {
+        wrap.appendChild(element('span', 'chart-missing', '—'));
+      } else {
+        const number = element('span', 'cross-bar-number', timesheetNumber(value, metric.unit));
+        const bar = element('span', `cross-bar${kind === 'register' ? ' register' : ''}`);
+        bar.style.setProperty('--bar-height', `${maximum ? Math.max(3, Math.round(Math.abs(value) / maximum * 100)) : 3}%`);
+        wrap.append(number, bar);
+      }
+      track.appendChild(wrap);
+    });
+    column.append(track, element('span', 'chart-label', month.shortLabel));
+    chart.appendChild(column);
+  });
+  const [statusClass, statusText] = comparisonStatus(total.status);
+  note.replaceChildren(
+    document.createTextNode(`Acumulado: Registro ${timesheetNumber(total.register.value, metric.unit)} · Nóminas ${timesheetNumber(total.payroll.value, metric.unit)} · Diferencia ${timesheetNumber(total.difference, metric.unit)} · `),
+    element('span', `comparison-status ${statusClass}`, statusText)
+  );
+  chart.setAttribute('aria-label', `Comparación mensual de ${metric.label.toLowerCase()} entre registro y nóminas en ${statistics.year}`);
+}
+
+function renderRegisterPayrollComparison() {
+  const cutoff = comparisonCutoffMonth(selectedRegisterYear);
+  const statistics = buildRegisterPayrollStatistics(registerPayrollEntries, selectedRegisterYear, cutoff);
+  const metric = REGISTER_PAYROLL_METRICS.find(item => item.key === registerComparisonMetric) || REGISTER_PAYROLL_METRICS[0];
+  const selected = statistics.metrics[metric.key];
+  document.getElementById('register-comparison-note').textContent = statistics.receiptCount
+    ? `${statistics.coveredMonths} mes${statistics.coveredMonths === 1 ? '' : 'es'} con datos · ${statistics.receiptCount} nómina${statistics.receiptCount === 1 ? '' : 's'} sumada${statistics.receiptCount === 1 ? '' : 's'} · un único registro por mes. Corte: ${MONTH_NAMES[cutoff - 1]} de ${selectedRegisterYear}.`
+    : `No hay nóminas confirmadas hasta ${MONTH_NAMES[cutoff - 1].toLowerCase()} de ${selectedRegisterYear}.`;
+  const summary = document.getElementById('register-comparison-summary');
+  clear(summary);
+  [
+    ['Registro', selected.register.value],
+    ['Nóminas', selected.payroll.value],
+    ['Diferencia', selected.difference]
+  ].forEach(([label, value]) => {
+    const card = element('article', 'metric-card');
+    card.append(element('span', '', `${label} · ${metric.label}`), element('strong', '', timesheetNumber(value, metric.unit)));
+    summary.appendChild(card);
+  });
+  renderRegisterComparisonRows(statistics);
+  renderRegisterComparisonChart(statistics);
+}
+
 function renderRegisterMonthOptions(statistics) {
   const previous = selectedRegisterMonth;
   clear(registerMonthSelect);
@@ -257,6 +384,8 @@ function renderRegisterStatistics() {
   renderTimesheetOthers(document.getElementById('register-annual-others'), statistics.otherMetrics);
   renderRegisterChartToggle(statistics);
   renderRegisterChart(statistics);
+  renderRegisterComparisonOptions(selectedRegisterYear);
+  renderRegisterPayrollComparison();
   renderRegisterMonthOptions(statistics);
   renderRegisterMonthly(statistics);
   renderRegisterView();
@@ -666,12 +795,17 @@ async function loadStoredStatistics() {
       timesheets: storedReviews.flatMap(({ receipt, review }) => {
         const normalized = reviewToTimesheet(review, { year, month, receiptId: receipt.id || `legacy:${year}-${month}` });
         return normalized ? [normalized] : [];
+      }),
+      registerPayrollEntries: storedReviews.flatMap(({ receipt, review }) => {
+        const normalized = reviewToRegisterPayrollEntry(review, { year, month, receiptId: receipt.id || `legacy:${year}-${month}` });
+        return normalized ? [normalized] : [];
       })
     };
   }));
   return {
     receipts: periodResults.flatMap(period => period.receipts),
-    timesheets: periodResults.flatMap(period => period.timesheets)
+    timesheets: periodResults.flatMap(period => period.timesheets),
+    registerPayrollEntries: periodResults.flatMap(period => period.registerPayrollEntries)
   };
 }
 
@@ -701,6 +835,7 @@ async function loadStatistics() {
     if (requestVersion !== loadVersion) return;
     receipts = loaded.receipts;
     timesheets = loaded.timesheets;
+    registerPayrollEntries = loaded.registerPayrollEntries;
     lastLoadedAt = Date.now();
     renderYearOptions();
     renderRegisterYearOptions();
@@ -782,6 +917,14 @@ registerPreviousMonthButton.addEventListener('click', () => {
 registerNextMonthButton.addEventListener('click', () => {
   selectedRegisterMonth = Math.min(12, Number(selectedRegisterMonth || 1) + 1);
   renderRegisterMonthly(buildTimesheetYearStatistics(timesheets, selectedRegisterYear));
+});
+registerComparisonCutoff.addEventListener('change', () => {
+  registerComparisonCutoffValue = registerComparisonCutoff.value;
+  renderRegisterPayrollComparison();
+});
+registerComparisonConcept.addEventListener('change', () => {
+  registerComparisonMetric = registerComparisonConcept.value;
+  renderRegisterPayrollComparison();
 });
 refreshButton.addEventListener('click', loadStatistics);
 window.addEventListener('pageshow', () => {

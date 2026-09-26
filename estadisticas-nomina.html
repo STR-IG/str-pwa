@@ -135,6 +135,24 @@
     .chart-label { color: var(--muted); text-align: center; font-size: 9px; font-weight: 800; text-transform: uppercase; }
     .chart-caption { margin: 13px 0 0; color: var(--muted); font-size: 11px; line-height: 1.4; text-align: center; }
     .chart-selection { min-height: 20px; margin: 13px 0 0; color: var(--ink); font-size: 12px; font-weight: 800; text-align: center; }
+    .cross-controls { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; margin-bottom: 16px; }
+    .cross-summary { margin: 14px 0; }
+    .cross-table { display: grid; border: 1px solid var(--line); border-radius: 15px; overflow: hidden; }
+    .cross-row { display: grid; grid-template-columns: minmax(0,1.4fr) repeat(3,minmax(72px,.75fr)) auto; gap: 9px; align-items: center; padding: 12px; font-size: 12px; }
+    .cross-row + .cross-row { border-top: 1px solid var(--line); }
+    .cross-row.header { color: var(--muted); background: var(--soft); font-size: 10px; font-weight: 900; text-transform: uppercase; }
+    .cross-row strong { font-size: 12px; }
+    .cross-number { text-align: right; font-weight: 800; white-space: nowrap; }
+    .cross-chart { display: grid; grid-template-columns: repeat(12,minmax(50px,1fr)); gap: 7px; min-height: 230px; overflow-x: auto; padding: 8px 2px 0; }
+    .cross-chart-column { display: grid; grid-template-rows: 190px auto; gap: 7px; min-width: 50px; align-items: end; }
+    .cross-chart-track { display: flex; align-items: flex-end; justify-content: center; gap: 4px; height: 190px; padding: 5px 3px 0; border-radius: 9px 9px 5px 5px; background: #f2f2f4; }
+    .cross-bar-wrap { display: flex; flex: 1; height: 100%; min-width: 20px; flex-direction: column; justify-content: flex-end; align-items: center; }
+    .cross-bar-number { margin-bottom: 4px; color: var(--ink); font-size: 9px; font-weight: 900; white-space: nowrap; }
+    .cross-bar { width: min(100%,23px); min-height: 4px; height: var(--bar-height); border-radius: 6px 6px 2px 2px; background: var(--red); }
+    .cross-bar.register { background: var(--green); }
+    .cross-legend { display: flex; justify-content: center; gap: 18px; margin-top: 12px; color: var(--muted); font-size: 11px; font-weight: 800; }
+    .cross-legend span::before { content: ''; display: inline-block; width: 10px; height: 10px; margin-right: 5px; border-radius: 3px; vertical-align: -1px; background: var(--red); }
+    .cross-legend .register::before { background: var(--green); }
     .concept-groups { display: grid; gap: 10px; }
     details { border: 1px solid var(--line); border-radius: 15px; background: #fbfbfc; overflow: hidden; }
     summary { display: flex; justify-content: space-between; gap: 12px; padding: 14px; cursor: pointer; font-weight: 800; }
@@ -189,6 +207,10 @@
       .value-equation { grid-template-columns: 1fr; }
       .value-sign { text-align: center; line-height: .7; }
       .value-layout, .value-tax-cards { grid-template-columns: 1fr; }
+      .cross-controls { grid-template-columns: 1fr; }
+      .cross-row { grid-template-columns: minmax(105px,1.2fr) repeat(3,minmax(58px,.7fr)); gap: 6px; padding: 10px 8px; }
+      .cross-row > :last-child { grid-column: 1 / -1; justify-self: start; }
+      .cross-row.header > :last-child { display: none; }
     }
   </style>
 </head>
@@ -363,6 +385,20 @@
             <div id="register-annual-summary" class="summary-grid register-summary"></div>
           </section>
           <section class="section panel">
+            <div class="section-heading"><div><h2>Registro frente a nóminas</h2><p>Compara el único registro mensual con la suma de todas las nóminas del mismo mes.</p></div></div>
+            <div class="cross-controls">
+              <label><span class="field-label">Comparar hasta</span><select id="register-comparison-cutoff" aria-label="Elegir fecha final de la comparación"></select></label>
+              <label><span class="field-label">Concepto del gráfico</span><select id="register-comparison-concept" aria-label="Elegir concepto para el gráfico"></select></label>
+            </div>
+            <p id="register-comparison-note" class="register-note"></p>
+            <div id="register-comparison-summary" class="summary-grid cross-summary"></div>
+            <div id="register-comparison-rows" class="cross-table"></div>
+            <div class="section-heading" style="margin-top:20px"><div><h2 id="register-comparison-chart-title">Evolución del concepto</h2><p>Los números aparecen sobre cada barra para facilitar la comprobación y la captura.</p></div></div>
+            <div id="register-comparison-chart" class="cross-chart" role="group"></div>
+            <div class="cross-legend"><span class="register">Registro</span><span>Nóminas</span></div>
+            <p id="register-comparison-chart-note" class="chart-selection" aria-live="polite"></p>
+          </section>
+          <section class="section panel">
             <div class="section-heading"><div><h2>Evolución mensual</h2><p>Selecciona el concepto que quieres representar.</p></div></div>
             <div id="register-chart-metric-toggle" class="metric-toggle" aria-label="Métrica del registro"></div>
             <div id="register-annual-chart" class="chart" role="group"></div>
@@ -418,7 +454,7 @@
     </section>
   </main>
 
-  <script type="module" src="estadisticas-nomina.js?v=5"></script>
+  <script type="module" src="estadisticas-nomina.js?v=6"></script>
   <script src="estadisticas-comparaciones.js?v=2" defer></script>
 </body>
 </html>
