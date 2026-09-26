@@ -185,6 +185,30 @@
       .value-sign { text-align: center; line-height: .7; }
       .value-layout, .value-tax-cards { grid-template-columns: 1fr; }
     }
+      .register-summary-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(145px,1fr)); gap:10px; }
+    .register-summary-card { min-width:0; padding:15px 13px; border:1px solid var(--line); border-radius:16px; background:#fbfbfc; }
+    .register-summary-card span { display:block; color:var(--muted); font-size:12px; font-weight:800; line-height:1.35; }
+    .register-summary-card strong { display:block; margin-top:7px; font-size:23px; letter-spacing:-.03em; overflow-wrap:anywhere; }
+    .register-summary-card small { display:block; margin-top:6px; color:var(--muted); font-size:11px; line-height:1.35; }
+    .register-chart { display:grid; grid-template-columns:repeat(12,minmax(38px,1fr)); gap:7px; min-width:510px; padding:12px 2px 0; }
+    .register-chart-wrap { overflow-x:auto; }
+    .register-chart-column { display:grid; grid-template-rows:20px 130px 24px; gap:5px; align-items:end; text-align:center; }
+    .register-chart-value { color:var(--muted); font-size:10px; white-space:nowrap; }
+    .register-chart-track { display:flex; align-items:flex-end; justify-content:center; height:130px; border-radius:9px; background:#f2f2f4; }
+    .register-chart-bar { width:70%; min-height:3px; border-radius:8px 8px 4px 4px; background:linear-gradient(180deg,#f04a53,var(--red)); }
+    .register-chart-label { color:var(--muted); font-size:11px; text-transform:capitalize; }
+    .register-month-list { display:grid; gap:8px; }
+    .register-month-row { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:12px; align-items:center; padding:11px 12px; border:1px solid var(--line); border-radius:12px; background:#fff; }
+    .register-month-row strong { font-size:13px; text-transform:capitalize; }
+    .register-month-row span { color:var(--muted); font-size:13px; font-weight:800; text-align:right; }
+    .register-month-row.conflict { border-color:#efcf83; background:#fffaf0; }
+    .register-data-note { margin:14px 3px 0; }
+    .state.warning { color:#684900; background:#fff8df; }
+    @media (max-width:520px) {
+      .register-summary-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+      .register-summary-card { padding:13px 11px; }
+      .register-summary-card strong { font-size:20px; }
+    }
   </style>
 </head>
 <body>
@@ -201,7 +225,7 @@
       <div class="hero"><span class="eyebrow">TU INFORMACIÓN</span><h1 tabindex="-1">Estadísticas</h1><p class="intro">Consulta tus datos económicos, el registro y las comparaciones.</p></div>
       <nav class="statistics-menu" aria-label="Apartados de Estadísticas">
         <button class="panel statistics-card" type="button" data-statistics-view="economic"><strong>Estadísticas económicas</strong><span>Evolución y composición de tus nóminas guardadas.</span></button>
-        <button class="panel statistics-card" type="button" data-statistics-view="register"><strong>Registro de jornada</strong><span>Espacio reservado para las estadísticas del registro. Próximamente.</span></button>
+        <button class="panel statistics-card" type="button" data-statistics-view="register"><strong>Registro de jornada</strong><span>Consulta las cantidades confirmadas en tus registros guardados al revisar la nómina.</span></button>
         <button class="panel statistics-card" type="button" data-statistics-view="comparisons"><strong>Comparaciones</strong><span>Registro y nómina, por mes y año. Consulta los conceptos previstos.</span></button>
       </nav>
     </section>
@@ -324,7 +348,38 @@
     </section>
     <section id="statistics-register" hidden>
       <button class="statistics-return" type="button" data-statistics-view="home">‹ Volver a Estadísticas</button>
-      <div class="hero"><h1 tabindex="-1">Registro de jornada</h1><p class="intro">Las estadísticas del registro estarán disponibles próximamente.</p><p class="section-note">Este apartado todavía no muestra datos del registro.</p></div>
+      <div class="hero">
+        <span class="eyebrow">TUS REGISTROS GUARDADOS</span>
+        <h1 tabindex="-1">Registro de jornada</h1>
+        <p class="intro">Resumen de las cantidades confirmadas en el registro de jornada de tus revisiones de nómina.</p>
+        <div class="controls">
+          <label><span class="field-label">Año</span><select id="register-year" aria-label="Seleccionar año del registro"></select></label>
+          <label><span class="field-label">Concepto</span><select id="register-metric" aria-label="Seleccionar concepto del registro"></select></label>
+        </div>
+      </div>
+      <p id="register-empty-state" class="state empty" hidden>
+        <strong>Todavía no hay registros de jornada confirmados.</strong>
+        <span>Completa la revisión de una nómina y confirma sus cantidades para verlas aquí.</span>
+        <a href="revisa-tu-nomina.html">Ir a Revisa tu nómina</a>
+      </p>
+      <p id="register-conflict-state" class="state warning" role="status" hidden></p>
+      <div id="register-content" hidden>
+        <section class="section panel">
+          <div class="section-heading">
+            <div><h2 id="register-summary-title">Resumen anual</h2><p id="register-summary-note"></p></div>
+          </div>
+          <div id="register-summary" class="register-summary-grid"></div>
+        </section>
+        <section class="section panel">
+          <div class="section-heading"><div><h2 id="register-chart-title">Evolución mensual</h2><p>Se muestran las cantidades guardadas para el concepto seleccionado.</p></div></div>
+          <div id="register-chart" class="register-chart" role="img"></div>
+        </section>
+        <section class="section panel">
+          <div class="section-heading"><div><h2>Detalle mensual</h2><p id="register-detail-note"></p></div></div>
+          <div id="register-month-list" class="register-month-list"></div>
+        </section>
+        <p class="section-note register-data-note">Cada mes se cuenta una sola vez, aunque tenga varias nóminas. Los conceptos se muestran por separado porque pueden usar unidades distintas. Los meses con registros contradictorios quedan fuera de los acumulados.</p>
+      </div>
     </section>
     <section id="statistics-comparisons" hidden>
       <button class="statistics-return" type="button" data-statistics-view="home">‹ Volver a Estadísticas</button>
@@ -350,7 +405,7 @@
     </section>
   </main>
 
-  <script type="module" src="estadisticas-nomina.js?v=4"></script>
-  <script src="estadisticas-comparaciones.js?v=1" defer></script>
+  <script type="module" src="estadisticas-nomina.js?v=5"></script>
+  <script src="estadisticas-comparaciones.js?v=2" defer></script>
 </body>
 </html>

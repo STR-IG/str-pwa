@@ -8,6 +8,7 @@ import {
   conceptTotal,
   reviewToReceipt
 } from './payroll-statistics.mjs?v=2';
+import { TIMESHEET_METRICS, normalizeTimesheetReview, availableTimesheetYears, buildTimesheetYearStatistics } from './payroll-timesheet-statistics.mjs?v=1';
 
 const SUPABASE_URL = 'https://icneigdnuntzugisexaz.supabase.co';
 const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_apKjcPClIBTHS2wwN6qPsA_6Vm4tk9m';
@@ -39,6 +40,7 @@ const nextMonthButton = document.getElementById('next-month');
 
 let currentUserId = '';
 let receipts = [];
+let timesheetRecords = [];
 let selectedYear = new Date().getFullYear();
 let selectedMonth = null;
 let selectedView = 'accumulated';
@@ -462,10 +464,17 @@ async function loadReceipts() {
       .map(async (receipt) => {
         const review = await readReview(bucket, `${receipt.folder}/review`);
         if (review?.status !== 'complete') return null;
-        return reviewToReceipt(review, { year, month, receiptId: receipt.id || `legacy:${year}-${month}` });
+        return {
+          receipt: reviewToReceipt(review, { year, month, receiptId: receipt.id || `legacy:${year}-${month}` }),
+          timesheet: normalizeTimesheetReview(review, { year, month })
+        };
       }));
   }));
-  return periodResults.flat(2).filter(Boolean);
+  const rows = periodResults.flat(2).filter(Boolean);
+  return {
+    receipts: rows.map((row) => row.receipt).filter(Boolean),
+    timesheets: rows.map((row) => row.timesheet).filter(Boolean)
+  };
 }
 
 function renderYearOptions() {
@@ -492,7 +501,13 @@ async function loadStatistics() {
   try {
     const loaded = await loadReceipts();
     if (requestVersion !== loadVersion) return;
-    receipts = loaded;
+    receipts = loaded.receipts;
+    timesheetRecords = loaded.timesheets;
+    window.strTimesheetReviews = timesheetRecords;
+    window.strTimesheetMetrics = TIMESHEET_METRICS;
+    window.strAvailableTimesheetYears = availableTimesheetYears(timesheetRecords);
+    window.strBuildTimesheetYearStatistics = (year) => buildTimesheetYearStatistics(timesheetRecords, year);
+    window.dispatchEvent(new Event('str:timesheet-statistics-loaded'));
     lastLoadedAt = Date.now();
     renderYearOptions();
     if (!receipts.length) {

@@ -27,7 +27,9 @@ test('la pantalla consume revisiones guardadas y no crea otro lector ni compara 
   const source = read('estadisticas-nomina.js');
   assert.match(source, /readReview\(bucket, `\$\{receipt\.folder\}\/review`\)/);
   assert.match(source, /reviewToReceipt/);
-  assert.doesNotMatch(source, /Tesseract|lab-read-payroll-variables|timesheet|COMPARABLE_KEYS|comparisons/);
+  assert.doesNotMatch(source, /Tesseract|lab-read-payroll-variables|COMPARABLE_KEYS|comparisons/);
+  assert.match(source, /normalizeTimesheetReview/);
+  assert.match(source, /reviewToReceipt/);
   assert.doesNotMatch(source, /storageBucket\.upload|\.upload\(/);
 });
 
@@ -74,4 +76,15 @@ test('el mismo lector amplía y conserva datos económicos sin alterar la compar
   assert.match(vision, /str:payroll-economics/);
   assert.match(base, /payrollEconomics: documents\.payroll\.payrollEconomics/);
   assert.match(base, /delete pending\.payrollEconomics/);
+});
+
+test('las estadísticas de registro usan las cantidades confirmadas guardadas', () => {
+  const source = read('estadisticas-nomina.js');
+  const register = read('estadisticas-comparaciones.js');
+  const html = read('estadisticas-nomina.html');
+  assert.match(source, /normalizeTimesheetReview\(review, \{ year, month \}\)/);
+  assert.match(source, /window\.strTimesheetReviews = timesheetRecords/);
+  assert.match(register, /function renderRegister\(/);
+  assert.match(html, /id="register-chart"/);
+  assert.match(html, /review/i);
 });
