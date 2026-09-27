@@ -95,6 +95,31 @@ Deno.serve(async (req: Request) => {
       return json(req, { saved: true });
     }
 
+    if (action === "update_contact") {
+      const targetEmail = cleanEmail(body?.email);
+      const displayName = String(body?.displayName ?? "").trim();
+      const phone = String(body?.phone ?? "").replace(/\D/g, "");
+
+      if (
+        !targetEmail || targetEmail.length > 320 || !targetEmail.includes("@") ||
+        !displayName || displayName.length > 160 ||
+        (phone.length !== 0 && phone.length !== 9)
+      ) {
+        return json(req, { error: "INVALID_CONTACT" }, 400);
+      }
+
+      const { data, error } = await admin
+        .from("private_access_allowlist")
+        .update({ display_name: displayName, phone: phone || null })
+        .eq("email", targetEmail)
+        .select("email")
+        .maybeSingle();
+
+      if (error) return json(req, { error: "CONTACT_UPDATE_FAILED" }, 500);
+      if (!data) return json(req, { error: "AFFILIATE_NOT_FOUND" }, 404);
+      return json(req, { updated: true });
+    }
+
     if (action === "list") {
       const { data, error } = await admin
         .from("private_access_allowlist")

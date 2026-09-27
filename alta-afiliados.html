@@ -51,8 +51,14 @@
     .delete-dialog{width:min(100% - 32px,430px);border:0;border-radius:22px;padding:24px;box-shadow:0 20px 60px rgba(0,0,0,.24)}
     .delete-dialog::backdrop{background:rgba(0,0,0,.55)}
     .delete-dialog h2{margin:0 0 14px;font-size:22px}.delete-dialog p{margin:0;line-height:1.5}.delete-dialog p+p{margin-top:8px}
+    .edit-dialog{width:min(100% - 32px,430px);border:0;border-radius:22px;padding:24px;box-shadow:0 20px 60px rgba(0,0,0,.24)}
+    .edit-dialog::backdrop{background:rgba(0,0,0,.55)}
+    .edit-dialog h2{margin:0 0 10px;font-size:22px}.edit-dialog p{margin:0;line-height:1.5;color:#6e6e73}
+    .edit-dialog label{display:block;margin:16px 0 7px;font-size:13px;font-weight:800}
+    .edit-dialog input{width:100%;border:1px solid #d5d5d8;border-radius:13px;padding:14px;font-size:16px}
     .dialog-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:22px}
     .dialog-actions button{margin:0}.dialog-actions .secondary{margin-top:0}.dialog-actions .danger{width:100%;border-radius:14px;padding:15px 12px}
+    .affiliate-actions{display:grid;gap:8px;min-width:128px}.affiliate-actions button{width:100%;margin:0;white-space:normal}
     @media(max-width:520px){.row{grid-template-columns:1fr}.hero h1{font-size:27px}.management-head{align-items:flex-start;flex-direction:column}.dialog-actions{grid-template-columns:1fr}}
   </style>
 </head>
@@ -124,6 +130,22 @@
       </div>
     </dialog>
 
+    <dialog id="edit-affiliate-dialog" class="edit-dialog" aria-labelledby="edit-affiliate-title">
+      <form id="edit-affiliate-form">
+        <h2 id="edit-affiliate-title">Editar datos de contacto</h2>
+        <p>El correo y el número de afiliado se mantienen. Deja el teléfono vacío si quieres eliminarlo.</p>
+        <label for="edit-affiliate-name">Nombre y apellidos</label>
+        <input id="edit-affiliate-name" maxlength="160" autocomplete="name" required>
+        <label for="edit-affiliate-phone">Teléfono móvil</label>
+        <input id="edit-affiliate-phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="600000000">
+        <p id="edit-affiliate-status" class="management-status" aria-live="polite"></p>
+        <div class="dialog-actions">
+          <button id="cancel-edit-affiliate" class="secondary" type="button">Cancelar</button>
+          <button id="save-edit-affiliate" class="primary" type="submit">Guardar cambios</button>
+        </div>
+      </form>
+    </dialog>
+
     <section id="denied" class="access denied"><h1>Acceso restringido</h1><p>Esta herramienta es exclusiva para los miembros autorizados del comité de la Sección Sindical.</p><a href="index.html">Volver al inicio</a></section>
   </main>
 
@@ -161,8 +183,16 @@
     const deleteAffiliateDialog=document.getElementById('delete-affiliate-dialog');
     const deleteAffiliateQuestion=document.getElementById('delete-affiliate-question');
     const confirmDeleteAffiliate=document.getElementById('confirm-delete-affiliate');
+    const editAffiliateDialog=document.getElementById('edit-affiliate-dialog');
+    const editAffiliateForm=document.getElementById('edit-affiliate-form');
+    const editAffiliateName=document.getElementById('edit-affiliate-name');
+    const editAffiliatePhone=document.getElementById('edit-affiliate-phone');
+    const editAffiliateStatus=document.getElementById('edit-affiliate-status');
+    const cancelEditAffiliate=document.getElementById('cancel-edit-affiliate');
+    const saveEditAffiliate=document.getElementById('save-edit-affiliate');
     let pendingEmail='';
     let affiliatePendingDeletion=null;
+    let affiliatePendingEdit=null;
 
     function showOnly(section){
       loading.style.display='none';
@@ -250,9 +280,12 @@
       for(const affiliate of affiliates){
         const row=document.createElement('tr');
         addCell(row,affiliate.display_name||affiliate.email);addCell(row,affiliate.employee_number);addCell(row,affiliate.email);addCell(row,affiliate.phone);
-        const actionCell=document.createElement('td');const button=document.createElement('button');button.type='button';button.className='danger';button.textContent='Borrar afiliado';
-        button.addEventListener('click',()=>{affiliatePendingDeletion=affiliate;deleteAffiliateQuestion.textContent=`¿Seguro que quieres borrar a ${affiliate.display_name||affiliate.email}?`;deleteAffiliateDialog.showModal()});
-        actionCell.appendChild(button);row.appendChild(actionCell);affiliateList.appendChild(row);
+        const actionCell=document.createElement('td');const actionButtons=document.createElement('div');actionButtons.className='affiliate-actions';
+        const editButton=document.createElement('button');editButton.type='button';editButton.className='secondary';editButton.textContent='Editar datos';
+        editButton.addEventListener('click',()=>{affiliatePendingEdit=affiliate;editAffiliateName.value=affiliate.display_name||'';editAffiliatePhone.value=affiliate.phone||'';editAffiliateStatus.textContent='';editAffiliateStatus.className='management-status';editAffiliateDialog.showModal();editAffiliateName.focus()});
+        const deleteButton=document.createElement('button');deleteButton.type='button';deleteButton.className='danger';deleteButton.textContent='Borrar afiliado';
+        deleteButton.addEventListener('click',()=>{affiliatePendingDeletion=affiliate;deleteAffiliateQuestion.textContent=`¿Seguro que quieres borrar a ${affiliate.display_name||affiliate.email}?`;deleteAffiliateDialog.showModal()});
+        actionButtons.append(editButton,deleteButton);actionCell.appendChild(actionButtons);row.appendChild(actionCell);affiliateList.appendChild(row);
       }
     }
     async function loadAffiliates(){
@@ -282,6 +315,23 @@
     newSignup.addEventListener('click',()=>{
       form.reset();status.className='status';status.textContent='';whatsapp.classList.remove('show');newSignup.hidden=true;saveButton.hidden=false;document.getElementById('name').focus();
     });
+    editAffiliateForm.addEventListener('submit',async(event)=>{
+      event.preventDefault();
+      if(!affiliatePendingEdit)return;
+      const displayName=editAffiliateName.value.trim();
+      const phone=normalizePhone(editAffiliatePhone.value);
+      if(!displayName||displayName.length>160){editAffiliateStatus.textContent='Introduce un nombre válido (máximo 160 caracteres).';editAffiliateStatus.className='management-status error';return}
+      if(phone&&phone.length!==9){editAffiliateStatus.textContent='El teléfono debe tener 9 cifras o quedar vacío para eliminarlo.';editAffiliateStatus.className='management-status error';return}
+      saveEditAffiliate.disabled=true;saveEditAffiliate.textContent='Guardando…';
+      try{
+        await manageAffiliates('update_contact',{email:affiliatePendingEdit.email,displayName,phone});
+        editAffiliateDialog.close();affiliatePendingEdit=null;await loadAffiliates();
+        managementStatus.textContent='Nombre y teléfono actualizados.';managementStatus.className='management-status';
+      }catch(_error){
+        editAffiliateStatus.textContent='No se ha podido confirmar el cambio. Comprueba de nuevo la ficha en la lista.';editAffiliateStatus.className='management-status error';
+      }finally{saveEditAffiliate.disabled=false;saveEditAffiliate.textContent='Guardar cambios'}
+    });
+    cancelEditAffiliate.addEventListener('click',()=>{affiliatePendingEdit=null;editAffiliateForm.reset();editAffiliateDialog.close()});
     document.getElementById('cancel-delete-affiliate').addEventListener('click',()=>{affiliatePendingDeletion=null;deleteAffiliateDialog.close()});
     confirmDeleteAffiliate.addEventListener('click',async()=>{
       if(!affiliatePendingDeletion)return;
