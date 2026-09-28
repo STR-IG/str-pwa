@@ -112,9 +112,13 @@ function timesheetAvailability(summary, monthly = false) {
     : `Dato parcial · ${summary.available} de ${summary.total} meses`;
 }
 
-function renderTimesheetMetrics(container, period, monthly = false) {
+const ANNUAL_REGISTER_METRICS = TIMESHEET_METRICS.filter(({ key }) =>
+  !['theoreticalHours', 'workedHours', 'differenceHours'].includes(key)
+);
+
+function renderTimesheetMetrics(container, period, monthly = false, metrics = TIMESHEET_METRICS) {
   clear(container);
-  TIMESHEET_METRICS.forEach(metric => {
+  metrics.forEach(metric => {
     const summary = period.metrics[metric.key];
     const card = element('article', `metric-card${summary?.conflict ? ' register-conflict' : ''}`);
     card.append(
@@ -380,7 +384,7 @@ function renderRegisterStatistics() {
   content.hidden = statistics.registerCount === 0;
   if (!statistics.registerCount) return;
   renderRegisterCoverage(statistics);
-  renderTimesheetMetrics(document.getElementById('register-annual-summary'), statistics);
+  renderTimesheetMetrics(document.getElementById('register-annual-summary'), statistics, false, ANNUAL_REGISTER_METRICS);
   renderTimesheetOthers(document.getElementById('register-annual-others'), statistics.otherMetrics);
   renderRegisterChartToggle(statistics);
   renderRegisterChart(statistics);
