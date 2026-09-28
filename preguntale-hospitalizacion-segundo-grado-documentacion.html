@@ -13,7 +13,7 @@
 </head>
 <body>
 <header class="top"><div class="top-inner"><a class="back" href="preguntale-hospitalizacion-reposo.html">‹</a><h1>Hospitalización familiar</h1></div></header>
-<main><p id="auth-check">Comprobando acceso privado…</p><section id="content" hidden><div class="panel">
+<main><p id="auth-check">Preparando consulta…</p><section id="content" hidden><div class="panel">
   <span class="step">Documentación · 2.º grado</span>
   <h2>Revisa la documentación antes de tramitar el permiso</h2>
   <p class="intro">No tienes que subir ningún documento a Pregúntale a STR. Estas preguntas solo sirven para orientarte antes de presentarlo por el canal correspondiente.</p>
@@ -32,11 +32,11 @@
   <button id="continue" class="primary" disabled>Continuar</button>
 </div></section></main>
 <script type="module">
-import{createClient}from'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+import { permitFetch, showPublicPermitPage } from './permisos-consultas.js';
 const URL='https://icneigdnuntzugisexaz.supabase.co',KEY='sb_publishable_apKjcPClIBTHS2wwN6qPsA_6Vm4tk9m',PAGE='preguntale-hospitalizacion-segundo-grado-documentacion.html';
-const supabase=createClient(URL,KEY,{auth:{detectSessionInUrl:false,persistSession:true,autoRefreshToken:true}});
-async function allowed(s){if(!s)return false;const{data,error}=await supabase.rpc('is_current_user_private_access_allowed');return!error&&data===true}
-const{data:{session}}=await supabase.auth.getSession();if(!(await allowed(session))){if(session)await supabase.auth.signOut();sessionStorage.setItem('strAfterLogin',PAGE);location.replace(`acceso-privado.html?next=${PAGE}`)}else{document.getElementById('auth-check').hidden=true;document.getElementById('content').hidden=false}
+
+
+showPublicPermitPage(false);
 const state={hospitalProof:'',relationshipRecorded:'',relationshipProof:'',healthData:'',thirdPartyData:''},relationshipProofQuestion=document.getElementById('relationship-proof-question'),warning=document.getElementById('privacy-warning'),continueButton=document.getElementById('continue');
 for(const key of Object.keys(state))state[key]=sessionStorage.getItem(`strHospitalDoc2_${key}`)||'';
 function refresh(){relationshipProofQuestion.hidden=state.relationshipRecorded==='yes';const needsRelationshipProof=state.relationshipRecorded!=='yes';const valid=state.hospitalProof&&state.relationshipRecorded&&state.healthData&&state.thirdPartyData&&(!needsRelationshipProof||state.relationshipProof);continueButton.disabled=!valid;const warnings=[];if(state.healthData==='yes'||state.healthData==='unknown')warnings.push('Revisa el justificante y elimina u oculta datos de salud que no sean necesarios para acreditar las fechas de hospitalización.');if(state.thirdPartyData==='yes'||state.thirdPartyData==='unknown')warnings.push('Oculta los datos personales de terceras personas que no sean necesarios para justificar el permiso.');if(state.hospitalProof==='no'||state.hospitalProof==='unknown')warnings.push('Se solicita justificante de las fechas de hospitalización.');if(state.relationshipRecorded!=='yes'&&(state.relationshipProof==='no'||state.relationshipProof==='unknown'))warnings.push('Si el parentesco no consta en los sistemas internos, puede ser necesario acreditarlo documentalmente.');warning.textContent=warnings.length?warnings.join(' '):'La documentación parece preparada. Pregúntale a STR no recibe ni almacena ningún documento.'}

@@ -91,41 +91,28 @@
   </header>
 
   <main>
-    <p id="auth-check">Comprobando acceso privado…</p>
+    <p id="auth-check">Preparando consulta…</p>
     <section id="content" hidden>
       <p class="intro">Selecciona la consulta que quieres realizar.</p>
       <div class="options-grid">
-        <a class="option-card" href="preguntale-str-permisos.html" aria-label="Abrir Permisos retribuidos, solo para afiliados">
-          <img src="preguntale-str-permisos.png" alt="Permisos retribuidos. Responde a unas preguntas y te orientamos según tu caso. Solo para afiliados.">
+        <a class="option-card" href="preguntale-str-permisos.html" aria-label="Abrir Permisos retribuidos, para toda la plantilla">
+          <img src="card-permisos-retribuidos.png" alt="Permisos retribuidos. Responde a unas preguntas y te orientamos según tu caso. Para toda la plantilla.">
         </a>
       </div>
     </section>
   </main>
 
   <script type="module">
-    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+    import { permitFetch, showPublicPermitPage } from './permisos-consultas.js';
 
     const URL = 'https://icneigdnuntzugisexaz.supabase.co';
     const KEY = 'sb_publishable_apKjcPClIBTHS2wwN6qPsA_6Vm4tk9m';
-    const supabase = createClient(URL, KEY, {
-      auth: { detectSessionInUrl: false, persistSession: true, autoRefreshToken: true }
-    });
 
-    async function hasPrivateAccess(session) {
-      if (!session) return false;
-      const { data, error } = await supabase.rpc('is_current_user_private_access_allowed');
-      return !error && data === true;
-    }
 
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!(await hasPrivateAccess(session))) {
-      if (session) await supabase.auth.signOut();
-      sessionStorage.setItem('strAfterLogin', 'preguntale-str-ig.html');
-      window.location.replace('acceso-privado.html');
-    } else {
-      document.getElementById('auth-check').hidden = true;
-      document.getElementById('content').hidden = false;
-    }
+
+
+
+    showPublicPermitPage(false);
   </script>
 </body>
 </html>

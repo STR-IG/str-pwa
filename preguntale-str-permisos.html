@@ -34,9 +34,9 @@
   </style>
 </head>
 <body>
-  <header class="top"><div class="top-inner"><a class="back" href="index.html" aria-label="Volver a la pantalla principal">‹</a><h1>Permisos retribuidos</h1></div></header>
+  <header class="top"><div class="top-inner"><a class="back" href="permisos-publicos.html" aria-label="Volver a Permisos retribuidos">‹</a><h1>Permisos retribuidos</h1></div></header>
   <main>
-    <p id="auth-check">Comprobando acceso privado…</p>
+    <p id="auth-check">Preparando consulta…</p>
     <section id="content" hidden>
       <p class="intro">Selecciona el permiso que quieres consultar.</p>
       <div class="grid">
@@ -59,14 +59,13 @@
     <a class="active" href="index.html"><b>⌂</b>Inicio</a><a href="index.html"><b>⚖</b>Derechos</a><a href="index.html"><b>📰</b>Actualidad</a><a href="index.html"><b>👥</b>Sindicato</a><a href="index.html"><b>♡</b>Afíliate</a><a href="index.html"><b>☎</b>Contacto</a>
   </nav>
   <script type="module">
-    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+    import { permitFetch, showPublicPermitPage } from './permisos-consultas.js';
     const URL='https://icneigdnuntzugisexaz.supabase.co';
     const KEY='sb_publishable_apKjcPClIBTHS2wwN6qPsA_6Vm4tk9m';
-    const supabase=createClient(URL,KEY,{auth:{detectSessionInUrl:false,persistSession:true,autoRefreshToken:true}});
-    async function hasPrivateAccess(session){ if(!session) return false; const {data,error}=await supabase.rpc('is_current_user_private_access_allowed'); return !error && data===true; }
-    const {data:{session}}=await supabase.auth.getSession();
-    if(!(await hasPrivateAccess(session))){ if(session) await supabase.auth.signOut(); sessionStorage.setItem('strAfterLogin','preguntale-str-permisos.html'); window.location.replace('acceso-privado.html'); }
-    else { document.getElementById('auth-check').hidden=true; document.getElementById('content').hidden=false; }
+
+
+
+    showPublicPermitPage(true);
   </script>
 </body>
 </html>

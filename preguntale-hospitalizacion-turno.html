@@ -38,7 +38,7 @@
 <body>
   <header class="top"><div class="top-inner"><a class="back" href="preguntale-hospitalizacion-jornada.html" aria-label="Volver al primer día del permiso">‹</a><h1>Hospitalización familiar</h1></div></header>
   <main>
-    <p id="auth-check">Comprobando acceso privado…</p>
+    <p id="auth-check">Preparando consulta…</p>
     <section id="content" hidden><div class="panel">
       <span class="step">Paso 4</span>
       <h2>¿Cuándo fue el ingreso y qué turno tenías?</h2>
@@ -56,13 +56,13 @@
     </div></section>
   </main>
   <script type="module">
-    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+    import { permitFetch, showPublicPermitPage } from './permisos-consultas.js';
     const URL='https://icneigdnuntzugisexaz.supabase.co';
     const KEY='sb_publishable_apKjcPClIBTHS2wwN6qPsA_6Vm4tk9m';
-    const supabase=createClient(URL,KEY,{auth:{detectSessionInUrl:false,persistSession:true,autoRefreshToken:true}});
-    async function hasPrivateAccess(session){if(!session)return false;const{data,error}=await supabase.rpc('is_current_user_private_access_allowed');return !error&&data===true;}
-    const{data:{session}}=await supabase.auth.getSession();
-    if(!(await hasPrivateAccess(session))){if(session)await supabase.auth.signOut();sessionStorage.setItem('strAfterLogin','preguntale-hospitalizacion-turno.html');window.location.replace('acceso-privado.html?next=preguntale-hospitalizacion-turno.html');}else{document.getElementById('auth-check').hidden=true;document.getElementById('content').hidden=false;}
+
+
+
+    showPublicPermitPage(false);
 
     const admissionDate=document.getElementById('admission-date');
     const admissionTime=document.getElementById('admission-time');

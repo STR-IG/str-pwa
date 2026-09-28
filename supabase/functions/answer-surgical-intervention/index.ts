@@ -1,5 +1,5 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
-import { createClient } from "npm:@supabase/supabase-js@2";
+import { servePermit } from "../_shared/permit-quota.ts";
 
 const allowedOrigins = new Set([
   "https://str-ig.github.io",
@@ -77,36 +77,14 @@ function extractOutputText(data: any) {
   return "";
 }
 
-Deno.serve(async (req: Request) => {
+servePermit(async (req: Request, subject: string) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders(req) });
   if (req.method !== "POST") return json(req, { error: "METHOD_NOT_ALLOWED" }, 405);
 
   try {
-    const authHeader = req.headers.get("Authorization") ?? "";
-    const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
-    if (!token) return json(req, { error: "UNAUTHORIZED" }, 401);
-
-    const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
-    const adminKey = secretKey();
-    const openAiKey = Deno.env.get("OPENAI_API_KEY") ?? "";
-    if (!supabaseUrl || !adminKey || !openAiKey) return json(req, { error: "SERVER_CONFIGURATION" }, 500);
-
-    const admin = createClient(supabaseUrl, adminKey, {
-      auth: { persistSession: false, autoRefreshToken: false },
-    });
-    const { data: userData, error: userError } = await admin.auth.getUser(token);
-    const user = userData.user;
-    if (userError || !user?.id || !user.email) return json(req, { error: "UNAUTHORIZED" }, 401);
-
-    const { data: accessRow, error: accessError } = await admin
-      .from("private_access_allowlist")
-      .select("email")
-      .eq("email", cleanEmail(user.email))
-      .eq("active", true)
-      .maybeSingle();
-    if (accessError) return json(req, { error: "AUTHORIZATION_CHECK_FAILED" }, 500);
-    if (!accessRow) return json(req, { error: "FORBIDDEN" }, 403);
-
+    const openAiKey = Deno.env.get("OPENAI_API_KEY") || "";
+    if (!openAiKey) return new Response(JSON.stringify({error:"SERVER_CONFIGURATION"}), {status:500});
+    const user = { id: subject };
     const body = await req.json().catch(() => ({}));
     const relationship = String(body?.relationship ?? "").trim().slice(0, 80);
     const interventionDate = String(body?.interventionDate ?? "");
@@ -123,7 +101,7 @@ Deno.serve(async (req: Request) => {
     if (!validCore || !validDays) return json(req, { error: "INVALID_QUESTIONNAIRE" }, 400);
 
     const facts = { relationship, interventionDate, interventionTime, workShift, homeRest, leaveDays, pendingLeaveDays: Math.max(0, 5 - leaveDays.length) };
-    const aiResponse = await fetch("https://api.openai.com/v1/responses", {
+    const aiResponse = await fetch("https://api.openai.com/v1/responses", {signal: AbortSignal.timeout(25000),
       method: "POST",
       headers: {
         "Authorization": `Bearer ${openAiKey}`,
