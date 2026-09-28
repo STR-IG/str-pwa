@@ -113,7 +113,7 @@ function timesheetAvailability(summary, monthly = false) {
 }
 
 const ANNUAL_REGISTER_METRICS = TIMESHEET_METRICS.filter(({ key }) =>
-  !['theoreticalHours', 'workedHours', 'differenceHours'].includes(key)
+  !['theoreticalHours', 'workedHours', 'differenceHours', 'absences'].includes(key)
 );
 
 function renderTimesheetMetrics(container, period, monthly = false, metrics = TIMESHEET_METRICS) {
