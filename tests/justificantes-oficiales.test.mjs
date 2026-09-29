@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';
-import { SOURCES, localToday, validateSearch, searchUrl, privateAccess } from '../justificantes-oficiales.mjs';
+import { SOURCES, localToday, validateSearch, officialDocumentUrl, privateAccess } from '../justificantes-oficiales.mjs';
 
 const criteria = { date: '2024-10-29', location: 'Tarragona', incident: 'rain' };
 test('card única en Área privada, imagen existente y retorno permitido tras login', () => {
@@ -24,20 +24,15 @@ test('valida fechas reales, futuras y ubicaciones vacías', () => {
   for (const location of ['', '  ', 'A', 'a'.repeat(101)]) assert.throws(() => validateSearch({ ...criteria, location }));
   assert.throws(() => validateSearch({ ...criteria, incident: 'unknown' }));
 });
-test('búsquedas codificadas por organismo, fecha y municipio; directorio municipal identificado', () => {
+test('enlaces directos oficiales sin Google ni un episodio INUNCAT fijo', () => {
   for (const source of SOURCES) {
     assert.equal(new URL(source.url).protocol, 'https:');
-    const url = new URL(searchUrl(source, { ...criteria, location: 'Móra d’Ebre & Tivissa' }));
-    assert.equal(url.origin, 'https://www.google.com');
-    assert.equal([...url.searchParams].length, 1);
-    const query = url.searchParams.get('q');
-    assert.ok(query.startsWith(`site:${source.domain} `));
-    assert.ok(query.includes('"Móra d’Ebre & Tivissa"'));
-    if (source.id !== 'municipal') {
-      assert.ok(query.includes('29/10/2024') && query.includes('2024-10-29'));
-    } else assert.ok(query.includes('ajuntament'));
+    assert.ok(!source.url.includes('google.com') && !source.url.includes('restriccions-de-mobilitat-per-inuncat'));
   }
-  assert.ok(new URL(searchUrl(SOURCES[0], { ...criteria, location: 'X" OR site:evil.test' })).searchParams.get('q').includes('"X  OR site:evil.test"'));
+  assert.ok(SOURCES[0].url.includes('peticio-certificat'));
+  assert.ok(SOURCES[1].url.endsWith('/nuevaSolicitud'));
+  assert.ok(officialDocumentUrl('https://www.meteo.cat/serveis/descarregaFitxer?file_name=climatologia/InformesEREM/2026/09/081878_2026-09-09.pdf'));
+  for (const url of ['javascript:alert(1)', 'https://evil.test/certificate.pdf', 'https://www.meteo.cat.evil.test/serveis/descarregaFitxer', 'https://www.meteo.cat/serveis/descarregaFitxer?file_name=../../secret']) assert.equal(officialDocumentUrl(url), null);
 });
 function mockClient({ session = true, user = true, allowed = true, sessionError = null, userError = null, accessError = null } = {}) {
   return {

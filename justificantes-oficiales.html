@@ -20,23 +20,26 @@
     <section id="private-content" hidden>
       <span class="eyebrow">ÁREA PRIVADA · STR-IG</span>
       <h1>Justificantes oficiales</h1>
-      <p class="intro">Localiza documentación oficial sobre alertas meteorológicas, restricciones de movilidad e incidencias por fecha y ubicación.</p>
+      <p class="intro">Encuentra el enlace al certificado meteorológico de tu municipio y fecha, o al trámite oficial para solicitarlo.</p>
       <form id="search-form" class="panel">
         <div class="fields">
           <div><label for="date">Fecha de la incidencia</label><input id="date" name="date" type="date" required></div>
-          <div><label for="location">Municipio o comarca</label><input id="location" name="location" type="text" placeholder="Ej.: Tarragona o Tarragonès" minlength="2" maxlength="100" required></div>
+          <div><label for="location">Municipio</label><input id="location" name="location" type="text" placeholder="Ej.: Sabadell" minlength="2" maxlength="100" required></div>
           <div class="wide"><label for="incident">Tipo de incidencia</label><select id="incident" name="incident"><option value="all">Todas las alertas meteorológicas</option><option value="rain">Lluvia e inundaciones</option><option value="wind">Viento</option><option value="snow">Nieve</option><option value="heat">Calor</option><option value="traffic">Restricciones de movilidad</option></select></div>
         </div>
         <p id="form-error" class="error" role="alert" hidden></p>
         <button class="primary" type="submit">Localizar documentación oficial</button>
-        <p class="hint">Prepara búsquedas en las webs oficiales. Los enlaces de búsqueda se abren en Google con la fecha y ubicación indicadas.</p>
+        <p class="hint">Consulta directa del catálogo de certificados de Meteocat para lluvia y viento en Catalunya. Para otros fenómenos o territorios, te indicamos dónde solicitar la documentación.</p>
       </form>
       <p class="notice">STR facilita el acceso a fuentes oficiales; no emite ni fabrica justificantes. Comprueba en el documento original la fecha, la zona afectada y el organismo emisor.</p>
       <section id="results" aria-labelledby="results-title">
-        <h2 id="results-title" tabindex="-1">Fuentes oficiales</h2>
-        <p id="summary" class="intro" aria-live="polite">Puedes consultar directamente estos organismos o indicar una fecha y ubicación para preparar tu búsqueda.</p>
+        <h2 id="results-title" tabindex="-1">Documento oficial</h2>
+        <p id="summary" class="intro" aria-live="polite">Indica municipio y fecha para comprobar si hay un certificado publicado.</p>
+        <div id="documents" class="sources"></div>
+        <h2 style="margin-top:28px">Dónde solicitar el certificado</h2>
         <div id="sources" class="sources"></div>
-        <p class="hint">Los enlaces oficiales abren sus portales sin aplicar filtros. Las búsquedas externas no garantizan coincidencias exactas ni cobertura completa. Si no encuentras el documento, amplía la búsqueda en el organismo o solicítalo directamente. En ayuntamientos, primero localiza la web municipal en el directorio y busca allí el aviso de la fecha indicada.</p>
+        <p class="hint">Los formularios oficiales requieren que indiques allí la fecha y municipio. Meteocat publica certificados del año actual y del anterior; algunos episodios tardan entre 3 y 5 días laborables. Un certificado meteorológico describe datos del tiempo: no acredita por sí solo una restricción de movilidad.</p>
+        <details style="margin-top:24px"><summary>Otros avisos, restricciones y fuentes oficiales</summary><p class="hint">Estos accesos complementarios no son documentos encontrados para tu consulta.</p><div id="other-sources" class="sources" style="margin-top:16px"></div></details>
       </section>
     </section>
   </main>

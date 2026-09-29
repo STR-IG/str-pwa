@@ -1,16 +1,30 @@
 # Justificantes oficiales
 
-La card existente aparece una sola vez en el bloque Área privada de la portada. Abre `acceso-privado.html?next=justificantes-oficiales.html`; el destino está incluido en la lista permitida. La pantalla nueva conserva el estilo de STR y verifica sesión, usuario y `is_current_user_private_access_allowed` antes de mostrar el contenido. También revalida al recuperar la visibilidad o volver desde la caché de navegación. Un fallo de verificación mantiene el contenido oculto y permite reintentar.
+Acceso desde el Área privada, con el control de afiliación existente. No modifica el cuestionario de Emergencia climática ni la pantalla de tráfico.
 
-El formulario prepara enlaces a Google restringidos al dominio de cada organismo, con municipio/comarca, fecha (varios formatos) y tipo de incidencia. No consulta una API de archivo ni muestra supuestos documentos encontrados. Los enlaces directos abren los portales oficiales sin filtros. La opción municipal localiza el ayuntamiento mediante Municat; la fecha se consulta después en su web. No se garantiza cobertura completa ni coincidencia exacta. No se generan PDFs, certificados ni decisiones sobre permisos laborales.
+## Consulta directa
 
-Fuentes: Interior/Protecció Civil e INUNCAT, boletines de Meteocat, Servei Català de Trànsit, sede de AEMET, DGT, sala de prensa de Generalitat y directorio municipal oficial. Los mapas actuales de tráfico están identificados como información actual, no como archivo histórico. Enlaces revisados el 29/09/2026.
+La pantalla llama a official-weather-documents con fecha, municipio y tipo de incidencia. La función verifica el JWT con Auth y la afiliación mediante is_current_user_private_access_allowed, usando el token del solicitante y sin permisos de servicio. verify_jwt=false delega la validación a esas comprobaciones explícitas; no permite consultas anónimas.
 
-No hay cambios de base de datos, funciones ni secretos. Como el resto del sitio estático, el HTML y los enlaces a fuentes públicas son descargables; el control de afiliación protege el recorrido de la interfaz, no convierte esos recursos públicos en documentos confidenciales. La consulta no se guarda en STR; al abrir Google se envían los criterios al buscador.
+El servidor lee el catálogo público de Meteocat, resuelve el nombre exacto del municipio (ignorando mayúsculas y acentos), envía el código oficial y filtra los archivos por municipio y fecha. Solo devuelve una URL PDF si su nombre figura en el listado oficial. No ejecuta scripts ni acepta URLs del cliente. Caché: municipios una hora; catálogos cinco minutos, máximo cien municipios.
 
-## Verificación y publicación
+Distingue documento encontrado, no publicado, municipio desconocido, fenómeno no cubierto y fallo del servicio. Un fallo nunca se interpreta como ausencia de documentos. El navegador cancela consultas obsoletas y descarta respuestas de criterios anteriores.
 
-- `node --test tests/justificantes-oficiales.test.mjs tests/service-worker-update.test.mjs tests/comunicados-internos.test.mjs`
-- Verificado en Edge con autenticación simulada: acceso sin sesión, afiliación denegada, fallo de red y reintento, acceso autorizado, cierre de sesión, validación, generación de enlaces y actualización al cambiar criterios. Revisión visual a 390 y 1280 px. No se ha utilizado una cuenta real de afiliado.
-- Publicar los tres archivos `justificantes-oficiales.{html,js,mjs}`, la portada, la lista de destinos y el service worker v51 juntos sobre la última versión de main. La imagen ya existe en el repositorio.
-- No se requiere despliegue de Supabase.
+## Cobertura
+
+Búsqueda automática de certificados de lluvia y viento en municipios de Catalunya, en el catálogo de Meteocat. El organismo publica el año actual y anterior y puede tardar entre 3 y 5 días laborables. No encontrar certificado no significa ausencia de incidencia. El certificado describe datos meteorológicos, no acredita por sí mismo restricciones de movilidad. STR no fabrica documentos ni usa IA para generar enlaces.
+
+Se ofrecen enlaces directos al formulario de certificados no publicados de Meteocat y a la solicitud de AEMET. Otros avisos, restricciones, tráfico actual y directorio municipal están en un bloque complementario, sin presentarse como resultados de la consulta. Se eliminan Google y el enlace fijo de INUNCAT de noviembre de 2024.
+
+Fuentes verificadas el 29/09/2026:
+- https://www.meteo.cat/serveis/descarregues
+- https://www.meteo.cat/wpweb/serveis/peticio-certificat-de-dades-meteorologiques/
+- https://sede.aemet.gob.es/AEMET/es/nuevaSolicitud
+
+## Verificación y despliegue
+
+node --test tests/justificantes-oficiales.test.mjs tests/official-weather-documents.test.mjs tests/service-worker-update.test.mjs
+
+Prueba real: Sabadell 09/09/2026 devuelve un PDF HTTP 200, application/pdf y firma PDF. Sabadell 28/09/2026 no figura en el catálogo consultado. Edge: sesión autorizada/denegada/ausente, fallo y reintento, documento encontrado y no publicado, enlaces de solicitud, móvil y escritorio. Autenticación simulada; no se ha usado una cuenta real de afiliado.
+
+Desplegar primero supabase/functions/official-weather-documents/index.ts y lookup.mjs. No requiere claves adicionales ni cambios de base de datos. Publicar después la interfaz y el service worker v52.
