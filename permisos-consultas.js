@@ -11,7 +11,7 @@ export function browserKey() {
     }
     return key;
   } catch {
-    throw new Error('Activa el almacenamiento de este navegador para consultar la IA. Las fichas siguen disponibles.');
+    throw new Error('Activa el almacenamiento de este navegador para realizar consultas. La Guía rápida sigue disponible.');
   }
 }
 
@@ -19,8 +19,8 @@ function showQuota(quota, message) {
   const el = document.getElementById('permit-quota');
   if (!el) return;
   el.textContent = message || (quota.remaining === 0
-    ? 'Has utilizado las 2 consultas de IA de este mes. Se renuevan el día 1. Puedes seguir consultando las fichas.'
-    : `Te quedan ${quota.remaining} de 2 consultas de IA este mes en este navegador. Las fichas son libres.`);
+    ? 'Has agotado tus créditos de consulta de este mes. Se renovarán el día 1 del próximo mes. Mientras tanto, puedes consultar la Guía rápida sin límite.'
+    : `Créditos de consulta disponibles este mes: ${quota.remaining} de 2.`);
 }
 
 export async function permitFetch(url, options = {}) {
@@ -32,7 +32,7 @@ export async function permitFetch(url, options = {}) {
   const data = await response.clone().json().catch(() => ({}));
   if (data.quota) showQuota(data.quota);
   if (data.error === 'MONTHLY_LIMIT_REACHED') {
-    const message = 'Has utilizado las 2 consultas de IA de este mes. Se renuevan el día 1. Las fichas siguen siendo de acceso libre.';
+    const message = 'Has agotado tus créditos de consulta de este mes. Se renovarán el día 1 del próximo mes. Mientras tanto, puedes consultar la Guía rápida sin límite.';
     showQuota(null, message);
   }
   return response;
@@ -40,7 +40,7 @@ export async function permitFetch(url, options = {}) {
 
 export function handlePermitError(error, result) {
   const messages = {
-    MONTHLY_LIMIT_REACHED: 'Has utilizado las 2 consultas de IA de este mes. Podrás volver a consultar el día 1 del próximo mes.',
+    MONTHLY_LIMIT_REACHED: 'Has agotado tus créditos de consulta de este mes. Se renovarán el día 1 del próximo mes. Mientras tanto, puedes consultar la Guía rápida sin límite.',
     QUOTA_UNAVAILABLE: 'No podemos comprobar tu saldo ahora. Inténtalo más tarde.',
     BROWSER_KEY_REQUIRED: 'No hemos podido reconocer este navegador. Recarga la página para volver a intentarlo.'
   };
@@ -48,12 +48,12 @@ export function handlePermitError(error, result) {
   if (!message) return false;
   result.className = 'result show not-compatible';
   const heading = document.createElement('strong');
-  heading.textContent = error.message === 'MONTHLY_LIMIT_REACHED' ? 'Límite mensual alcanzado' : 'Consulta no disponible';
+  heading.textContent = error.message === 'MONTHLY_LIMIT_REACHED' ? 'Créditos mensuales agotados' : 'Consulta no disponible';
   const copy = document.createElement('p');
   copy.textContent = message;
   const link = document.createElement('a');
   link.href = 'permisos.html';
-  link.textContent = 'Consultar las fichas sin límite';
+  link.textContent = 'Consultar la Guía rápida';
   result.replaceChildren(heading, copy, link);
   result.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   return true;
@@ -70,7 +70,7 @@ export function showPublicPermitPage(withQuota = false) {
   notice.setAttribute('role', 'status');
   notice.setAttribute('aria-live', 'polite');
   notice.style.cssText = 'padding:14px;border-radius:14px;background:#fff0f1;color:#8b1320;line-height:1.5;font-size:14px;margin:0 0 18px';
-  notice.textContent = 'Consultando las consultas de IA disponibles…';
+  notice.textContent = 'Consultando tus créditos disponibles…';
   (content || document.querySelector('main')).prepend(notice);
   permitFetch(API + 'permit-query-quota', { method: 'POST', signal: AbortSignal.timeout(10000) })
     .then(async response => {
@@ -78,5 +78,5 @@ export function showPublicPermitPage(withQuota = false) {
       const data = await response.json();
       showQuota(data.quota);
     })
-    .catch(() => showQuota(null, 'No se ha podido consultar el saldo de IA. Comprueba la conexión. Las fichas siguen disponibles sin límite.'));
+    .catch(() => showQuota(null, 'No se ha podido consultar tu saldo de créditos. Comprueba la conexión. La Guía rápida sigue disponible sin límite.'));
 }
