@@ -25,6 +25,8 @@ test('after saving payroll 1 quantities the flow offers the three explicit month
   assert.match(base, /id="view-current-review"[^>]*>Comparación</);
   assert.match(base, /id="add-reduced-payroll"[^>]*>Añade nómina con reducción</);
   assert.match(base, /id="add-full-payroll"[^>]*>Añade nómina sin reducción</);
+  assert.match(base, /id="add-full-payroll"[\s\S]*?id="payroll-home-link"[^>]*href="index\.html"[^>]*>← Volver al inicio<\/a>/);
+  assert.match(base, /\.payroll-home-link\s*\{[\s\S]*?background:\s*rgba\(255, 255, 255, \.78\)/);
   assert.match(base, /savedReview\?\.status !== 'complete'[\s\S]*?currentMonthReceiptCount >= 2/);
   assert.match(base, /startAnotherPayroll\('reduced'\)/);
   assert.match(base, /startAnotherPayroll\('full'\)/);

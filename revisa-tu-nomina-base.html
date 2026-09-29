@@ -725,6 +725,27 @@
     .payroll-next-actions h2 { margin: 0; color: #155c3a; font-size: 16px; }
     .payroll-next-actions p { margin: 0 0 3px; color: #32694d; font-size: 12px; line-height: 1.45; }
     .payroll-next-actions button { margin: 0; }
+    .payroll-home-link {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      min-height: 50px;
+      margin-top: 7px;
+      border: 1px solid #cfd2d4;
+      border-radius: 999px;
+      color: var(--ink);
+      background: rgba(255, 255, 255, .78);
+      font-size: 14px;
+      font-weight: 800;
+      text-decoration: none;
+    }
+
+    .payroll-home-link:hover,
+    .payroll-home-link:focus-visible {
+      border-color: #9fa3a6;
+      background: white;
+    }
 
     .month-payroll-summary { margin-top: 17px; }
     .month-payroll-summary > h2 { margin: 0 0 5px; font-size: 18px; }
@@ -1888,6 +1909,7 @@
           <button id="view-current-review" class="primary" type="button">Comparación</button>
           <button id="add-reduced-payroll" class="secondary" type="button">Añade nómina con reducción</button>
           <button id="add-full-payroll" class="secondary" type="button">Añade nómina sin reducción</button>
+          <a id="payroll-home-link" class="payroll-home-link" href="index.html">← Volver al inicio</a>
         </section>
 
         <section id="month-payroll-summary" class="panel month-payroll-summary" aria-live="polite" hidden>
