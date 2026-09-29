@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#e30613">
+  <title>Estado de las carreteras · STR-IG</title>
+  <link rel="icon" href="icono-str-ig.png">
+  <link rel="manifest" href="manifest.json">
+  <style>
+    * { box-sizing:border-box; }
+    body { margin:0; background:#f5f5f7; color:#161616; font-family:Arial,Helvetica,sans-serif; }
+    .top { padding:calc(14px + env(safe-area-inset-top)) 18px 14px; border-bottom:1px solid #e4e4e7; }
+    .top-inner { max-width:900px; margin:auto; display:flex; align-items:center; gap:14px; }
+    .back { display:grid; place-items:center; flex:0 0 44px; height:44px; border-radius:50%; background:white; color:#e30613; text-decoration:none; font-size:26px; }
+    h1 { font-size:27px; margin:0; }
+    main { max-width:900px; margin:auto; padding:24px 18px calc(32px + env(safe-area-inset-bottom)); }
+    .intro { color:#626269; line-height:1.5; margin:0 0 22px; }
+    .panel { background:white; border-radius:20px; padding:24px; box-shadow:0 5px 18px #00000012; }
+    .source { color:#b9000b; font-size:13px; font-weight:bold; margin:0 0 10px; }
+    h2 { font-size:23px; margin:0 0 12px; }
+    p { line-height:1.5; }
+    .button { display:block; background:#e30613; color:white; border-radius:999px; padding:16px 20px; text-align:center; text-decoration:none; font-weight:bold; line-height:1.4; }
+    .button:hover { background:#b9000b; }
+    a:focus-visible { outline:3px solid #b9000b; outline-offset:4px; }
+    .note { color:#626269; font-size:14px; margin:12px 0 0; }
+    .priorities { margin:24px 0; }
+    .priorities h2 { font-size:20px; }
+    .topics { list-style:none; padding:0; margin:16px 0 0; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+    .topics li { background:white; border-radius:18px; padding:18px; border:1px solid #e4e4e7; }
+    .topics li:first-child { background:#fff0f1; border-color:#f0c9cc; }
+    .topics h3 { font-size:17px; margin:0 0 8px; }
+    .topics p { color:#626269; font-size:14px; margin:0; }
+    .climate { border-top:4px solid #e30613; }
+    .climate p { color:#626269; margin:0 0 18px; }
+    @media(max-width:580px) { h1 { font-size:23px; } .panel { padding:20px; } .topics { grid-template-columns:1fr; } h2 { font-size:21px; } }
+  </style>
+</head>
+<body>
+  <header class="top"><div class="top-inner"><a class="back" href="index.html" aria-label="Volver a Inicio">‹</a><h1>Estado de las carreteras</h1></div></header>
+  <main>
+    <p class="intro">Tráfico e incidencias oficiales</p>
+    <section class="panel" aria-labelledby="official-title">
+      <p class="source">SERVEI CATALÀ DE TRÀNSIT · CIT</p>
+      <h2 id="official-title">Consulta antes de desplazarte</h2>
+      <p>Consulta las incidencias publicadas por el Servei Català de Trànsit, especialmente durante episodios meteorológicos adversos.</p>
+      <a class="button" href="https://cit.transit.gencat.cat/cit/AppJava/views/incidents.xhtml" target="_blank" rel="noopener noreferrer">Consultar incidencias oficiales</a>
+      <p class="note">Abre la web oficial en una nueva pestaña. Necesitas conexión a internet. STR no muestra datos de tráfico en tiempo real en esta pantalla.</p>
+    </section>
+    <section class="priorities" aria-labelledby="priorities-title">
+      <h2 id="priorities-title">Qué revisar en la consulta oficial</h2>
+      <ul class="topics">
+        <li><h3>🌧️ Afectaciones meteorológicas</h3><p>Revisa los avisos por lluvia, inundaciones, nieve o hielo que puedan afectar a tu trayecto.</p></li>
+        <li><h3>⛔ Carreteras cortadas</h3><p>Comprueba los cortes y las restricciones de paso antes de salir.</p></li>
+        <li><h3>🚗 Incidencias de circulación</h3><p>Consulta retenciones, accidentes y otras afectaciones de tu recorrido.</p></li>
+        <li><h3>📍 Desplazamientos en Barcelona</h3><p>En el CIT, selecciona Barcelona y revisa las carreteras de acceso y los tramos de tu itinerario.</p></li>
+      </ul>
+    </section>
+    <section class="panel climate" aria-labelledby="climate-title">
+      <h2 id="climate-title">🌧️ ¿No puedes desplazarte al trabajo?</h2>
+      <p>Consulta la ficha de STR sobre el permiso por emergencia climática.</p>
+      <a class="button" href="emergencia-climatica.html">Consultar Emergencia climática</a>
+    </section>
+  </main>
+</body>
+</html>
