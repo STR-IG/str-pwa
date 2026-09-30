@@ -24,6 +24,20 @@ const DEFAULT_NEWS = [{
   url: 'dia-afiliacion.html',
   active: true,
 }];
+// Publicaciones públicas locales: añadir un ID estable por cada nueva publicación.
+const PUBLIC_NEWS = [{
+  id: 'company-news-aranceles-2026-09',
+  category: 'company-news',
+  published_at: '2026-09-30T00:00:00Z',
+  url: 'actualidad-empresa.html',
+  active: true,
+}, {
+  id: 'documentation-explanation-2026-09-30',
+  category: 'documentation-info',
+  published_at: '2026-09-30T00:00:00Z',
+  url: 'nuestra-explicacion-documentacion.html',
+  active: true,
+}];
 const PRIVATE_NEWS = [{
   id: 'internal-data-affiliation-2026-09',
   category: 'internal-communications',
@@ -208,9 +222,9 @@ async function loadNews() {
     const items = await response.json();
     const remoteItems = Array.isArray(items) ? items : DEFAULT_NEWS;
     const remoteIds = new Set(remoteItems.map((item) => item.id));
-    return [...remoteItems, ...PRIVATE_NEWS.filter((item) => !remoteIds.has(item.id))];
+    return [...remoteItems, ...PUBLIC_NEWS.filter((item) => !remoteIds.has(item.id)), ...PRIVATE_NEWS.filter((item) => !remoteIds.has(item.id))];
   } catch (_error) {
-    return [...DEFAULT_NEWS, ...PRIVATE_NEWS];
+    return [...DEFAULT_NEWS, ...PUBLIC_NEWS, ...PRIVATE_NEWS];
   }
 }
 

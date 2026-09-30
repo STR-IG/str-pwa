@@ -24,8 +24,11 @@
     .intro p { margin-top:14px; color:var(--muted); font-size:16px; line-height:1.45; }
     .feed { display:grid; gap:16px; }
     .post { overflow:hidden; border-radius:24px; background:var(--paper); box-shadow:0 6px 22px rgba(0,0,0,.08); }
+    .post-link { display:block; color:inherit; text-decoration:none; }
     .post-media { position:relative; display:block; width:100%; background:#111; }
     .post-media img { display:block; width:100%; height:auto; }
+    .news-notification-badge { position:absolute; top:8px; right:8px; z-index:5; min-width:28px; height:28px; padding:0 8px; border:2px solid #fff; border-radius:999px; display:none; align-items:center; justify-content:center; color:#fff; background:var(--red); box-shadow:0 3px 10px rgba(0,0,0,.24); font-size:15px; line-height:1; font-weight:900; }
+    .news-notification-badge.show { display:flex; }
     .new-badge { position:absolute; top:12px; left:12px; padding:7px 11px; border:2px solid #fff; border-radius:999px; color:#fff; background:var(--red); box-shadow:0 3px 10px rgba(0,0,0,.18); font-size:11px; font-weight:900; letter-spacing:.45px; }
     .post-body { padding:18px; }
     .post-date { display:flex; align-items:center; gap:7px; margin-bottom:10px; color:var(--muted); font-size:13px; font-weight:700; }
@@ -56,7 +59,17 @@
       <a class="access" href="actualidad-sindical.html"><div class="access-copy"><strong>ACTUALIDAD</strong><p>Noticias e información laboral de interés.</p></div><span class="access-arrow" aria-hidden="true">›</span></a>
       <a class="access" href="actividad-sindical.html"><div class="access-copy"><strong>ACCIÓN SINDICAL</strong><p>En qué trabaja STR: reuniones, reclamaciones, propuestas y actuaciones sindicales.</p></div><span class="access-arrow" aria-hidden="true">›</span></a>
     </nav>
+    <article class="post" data-news-category="documentation-info">
+      <a class="post-link" href="nuestra-explicacion-documentacion.html" aria-label="¿Qué pasó con nuestra documentación?">
+        <div class="post-media">
+        <img src="nuestra-explicacion-acceso-documentacion.png" alt="Nuestra explicación de los hechos: qué ocurrió, qué sabemos, qué ha hecho STR y próximos pasos">
+        <span class="news-notification-badge" data-news-badge aria-label="Novedades sin leer">0</span>
+        </div>
+      <div class="post-body"><h3>¿Qué pasó con nuestra documentación?</h3></div>
+      </a>
+    </article>
     <a class="home" href="index.html">Volver al menú principal</a>
   </main>
+  <script type="module">import { initNews } from './novedades.js'; initNews().catch(() => {});</script>
 </body>
 </html>

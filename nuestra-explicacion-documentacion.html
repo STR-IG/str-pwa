@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#e30613">
+  <title>Nuestra explicación de los hechos · STR-IG</title>
+  <link rel="icon" type="image/png" href="icono-str-ig.png">
+  <link rel="apple-touch-icon" href="icono-str-ig.png">
+  <link rel="manifest" href="manifest.json">
+  <style>
+    * { box-sizing:border-box; margin:0; padding:0; }
+    :root { --red:#e30613; --ink:#161616; --surface:#f5f5f7; --paper:#fff; }
+    body { min-height:100vh; padding-bottom:calc(34px + env(safe-area-inset-bottom)); color:var(--ink); background:var(--surface); font-family:Arial,Helvetica,sans-serif; }
+    .top { position:sticky; top:0; z-index:10; padding:calc(12px + env(safe-area-inset-top)) 16px 12px; border-bottom:1px solid #e3e3e6; background:rgba(245,245,247,.96); backdrop-filter:blur(12px); }
+    .top-inner { display:flex; align-items:center; gap:13px; width:min(100%,900px); margin:auto; }
+    .back { display:grid; flex:0 0 42px; width:42px; height:42px; place-items:center; border-radius:50%; color:var(--red); background:var(--paper); box-shadow:0 3px 12px rgba(0,0,0,.08); font-size:27px; font-weight:800; line-height:1; text-decoration:none; }
+    h1 { font-size:clamp(23px,6vw,30px); line-height:1.05; }
+    main { display:grid; gap:18px; width:min(100%,900px); margin:auto; padding:22px 14px 0; }
+    .fact-sheet { display:block; width:100%; height:auto; border-radius:20px; background:var(--paper); box-shadow:0 5px 18px rgba(0,0,0,.07); }
+    details { padding:18px; border-radius:20px; background:var(--paper); font-size:16px; line-height:1.5; }
+    summary { min-height:44px; color:var(--red); font-weight:700; cursor:pointer; }
+    details h2 { margin-top:18px; font-size:21px; }
+    details p { margin-top:8px; }
+    .return { display:block; padding:15px 18px; border-radius:999px; color:#555; background:#e8e8eb; font-size:14px; font-weight:800; text-align:center; text-decoration:none; }
+    a:focus-visible, summary:focus-visible { outline:3px solid var(--red); outline-offset:4px; }
+    @media (min-width:700px) { main { padding-top:30px; } }
+  </style>
+</head>
+<body>
+  <header class="top"><div class="top-inner"><a class="back" href="actividad-informacion-sindical.html" aria-label="Volver a Infórmate y participa">‹</a><h1>Nuestra explicación de los hechos</h1></div></header>
+  <main>
+    <img class="fact-sheet" src="str-ig-nuestra-explicacion-hechos.png" alt="Nuestra explicación de los hechos. La transcripción completa de la ficha está disponible a continuación en Leer explicación en texto.">
+    <details>
+      <summary>Leer explicación en texto</summary>
+      <h2>¿Qué ocurrió?</h2>
+      <p>La empresa reconoce un error en los permisos de SharePoint que dejó documentación accesible a personas no autorizadas.</p>
+      <h2>¿Qué falta aclarar?</h2>
+      <p>Qué documentación se abrió o modificó, qué acciones se realizaron y durante cuánto tiempo estuvo accesible.</p>
+      <h2>¿Por qué preocupa?</h2>
+      <p>Una persona ajena a STR figura como autora de una modificación en un archivo. Hemos solicitado los registros de auditoría.</p>
+      <h2>¿Cuándo se comunicó?</h2>
+      <p>Pedimos aclarar cuándo y cómo se informó a la empresa. STR fue informada posteriormente.</p>
+      <h2>¿Qué hace STR?</h2>
+      <p>Solicitamos trazabilidad y aclaraciones para proteger la documentación y los datos de la afiliación.</p>
+      <p><strong>Seguiremos informando con información contrastada.</strong></p>
+    </details>
+    <a class="return" href="actividad-informacion-sindical.html">Volver</a>
+  </main>
+  <script type="module">import { markNewsRead } from './novedades.js'; markNewsRead(['documentation-explanation-2026-09-30']).catch(() => {});</script>
+</body>
+</html>
