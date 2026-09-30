@@ -49,7 +49,7 @@ for (const mode of ['navigate', 'cors']) {
     });
     assert.equal((await result).version, 'current');
     assert.equal(app.requests[0].options.cache, 'no-store');
-    assert.equal(app.writes[0].name, 'str-ig-cache-v52');
+    assert.equal(app.writes[0].name, 'str-ig-cache-v53');
   });
 }
 test('offline fallback remains available', async () => {

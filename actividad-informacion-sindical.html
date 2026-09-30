@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="theme-color" content="#e30613">
-  <title>Actividad sindical · STR-IG</title>
+  <title>Actividad e información sindical · STR-IG</title>
   <link rel="icon" type="image/png" href="icono-str-ig.png">
   <link rel="apple-touch-icon" href="icono-str-ig.png">
   <link rel="manifest" href="manifest.json">
@@ -36,20 +36,27 @@
     .primary { display:inline-flex; align-items:center; justify-content:center; min-height:46px; padding:0 18px; border-radius:999px; color:var(--red-dark); background:var(--red-soft); font-size:14px; font-weight:900; text-decoration:none; }
     .home { display:block; margin-top:2px; padding:15px 18px; border-radius:999px; color:#555; background:#e8e8eb; font-size:14px; font-weight:800; text-align:center; text-decoration:none; }
     @media (min-width:700px) { main { padding-top:30px; } .post-body { padding:22px 24px 24px; } }
+    .accesses { display:grid; gap:14px; }
+    .access { display:flex; align-items:center; gap:16px; padding:22px 18px; border-radius:20px; color:var(--ink); background:var(--paper); box-shadow:0 5px 18px rgba(0,0,0,.07); text-decoration:none; }
+    .access-copy { flex:1; min-width:0; }
+    .access strong { display:block; color:var(--red); font-size:18px; }
+    .access p { margin-top:8px; color:var(--muted); font-size:15px; line-height:1.5; }
+    .access-arrow { color:var(--red); font-size:28px; }
+    a:focus-visible { outline:3px solid var(--red); outline-offset:4px; }
+    .access:hover { box-shadow:0 10px 24px rgba(0,0,0,.11); }
+    @media (min-width:700px) { .accesses { grid-template-columns:repeat(3,minmax(0,1fr)); } .access { align-items:flex-start; } }
   </style>
 </head>
 <body>
-  <header class="top"><div class="top-inner"><a class="back" href="actividad-informacion-sindical.html" aria-label="Volver a actividad e información sindical">‹</a><h1>Actividad sindical</h1></div></header>
+  <header class="top"><div class="top-inner"><a class="back" href="index.html" aria-label="Volver al menú principal">‹</a><h1>Actividad e información sindical</h1></div></header>
   <main>
-    <section class="intro"><h2>Te contamos lo que estamos haciendo</h2><p>Reuniones, comunicados, propuestas y seguimiento de los temas que afectan a la plantilla.</p></section>
-    <section class="feed" aria-label="Últimas publicaciones de actividad sindical">
-      <article class="post">
-        <a class="post-media" href="dia-afiliacion.html" aria-label="Abrir Día de la Afiliación STR"><img src="Card-dia-afiliacion.jpg" alt="Cartel oficial del Día de la Afiliación STR del 24 de octubre"><span class="new-badge">NUEVO</span></a>
-        <div class="post-body"><div class="post-date"><span aria-hidden="true">📅</span><time datetime="2026-10-24">24 de octubre de 2026</time></div><span class="post-category">Día de la Afiliación</span><h3>Celebramos el Día de la Afiliación STR</h3><p>Una jornada para compartir, encontrarnos y disfrutar de las actividades organizadas por STR en La Colina Events Tarragona.</p><div class="post-actions"><a class="primary" href="dia-afiliacion.html">Ver actividad →</a></div></div>
-      </article>
-    </section>
+    <section class="intro"><h2>Infórmate y participa</h2><p>Lo que hacemos en STR y la información que afecta a tu trabajo.</p></section>
+    <nav class="accesses" aria-label="Contenidos sindicales">
+      <a class="access" href="informacion-plantilla.html"><div class="access-copy"><strong>COMUNICADOS</strong><p>Comunicaciones y avisos dirigidos a la plantilla.</p></div><span class="access-arrow" aria-hidden="true">›</span></a>
+      <a class="access" href="actualidad-sindical.html"><div class="access-copy"><strong>ACTUALIDAD</strong><p>Noticias e información laboral de interés.</p></div><span class="access-arrow" aria-hidden="true">›</span></a>
+      <a class="access" href="actividad-sindical.html"><div class="access-copy"><strong>ACCIÓN SINDICAL</strong><p>En qué trabaja STR: reuniones, reclamaciones, propuestas y actuaciones sindicales.</p></div><span class="access-arrow" aria-hidden="true">›</span></a>
+    </nav>
     <a class="home" href="index.html">Volver al menú principal</a>
   </main>
-  <script type="module">import { markCategoryRead } from './novedades.js'; markCategoryRead('activity').catch(() => {});</script>
 </body>
 </html>

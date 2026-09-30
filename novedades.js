@@ -136,7 +136,7 @@ function applyBottomNavActivity() {
     .find((item) => item.textContent.trim().toLowerCase().includes('actualidad'));
   if (!link) return;
 
-  link.href = 'actividad-sindical.html';
+  link.href = 'actividad-informacion-sindical.html';
   link.dataset.newsCategory = 'activity';
   link.setAttribute('aria-label', 'Actualidad');
   link.innerHTML = '<b>📰</b>Actualidad<span class="bottom-nav-news-badge" data-news-badge aria-label="0 novedades sin leer">0</span>';
