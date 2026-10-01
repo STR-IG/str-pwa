@@ -1,3 +1,4 @@
+import { LABOR_NEWS } from './noticias-laborales.js';
 const SUPABASE_URL = 'https://icneigdnuntzugisexaz.supabase.co';
 const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_apKjcPClIBTHS2wwN6qPsA_6Vm4tk9m';
 const VAPID_PUBLIC_KEY = 'BBTztbyStE4bSwPnFrwgub5t2EY96fogT6LQaiD4lkSa31PC3IDmXsCDbHsc2LxRA3_i2fUH-chHpz2cGkUwyHQ';
@@ -25,7 +26,13 @@ const DEFAULT_NEWS = [{
   active: true,
 }];
 // Publicaciones públicas locales: añadir un ID estable por cada nueva publicación.
-const PUBLIC_NEWS = [{
+const PUBLIC_NEWS = [...LABOR_NEWS.map((item) => ({
+  id: item.id,
+  category: 'labor-news',
+  published_at: item.date,
+  url: 'actualidad-laboral.html',
+  active: true,
+})), {
   id: 'company-news-aranceles-2026-09',
   category: 'company-news',
   published_at: '2026-09-30T00:00:00Z',

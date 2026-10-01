@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#e30613">
+  <title>Actualidad laboral · STR-IG</title>
+  <link rel="icon" type="image/png" href="icono-str-ig.png">
+  <link rel="apple-touch-icon" href="icono-str-ig.png">
+  <link rel="manifest" href="manifest.json">
+  <style>
+    * { box-sizing:border-box; margin:0; padding:0; }
+    :root { --red:#e30613; --ink:#161616; --surface:#f5f5f7; --paper:#fff; }
+    body { min-height:100vh; padding-bottom:calc(34px + env(safe-area-inset-bottom)); color:var(--ink); background:var(--surface); font-family:Arial,Helvetica,sans-serif; }
+    .top { position:sticky; top:0; z-index:10; padding:calc(12px + env(safe-area-inset-top)) 16px 12px; border-bottom:1px solid #e3e3e6; background:rgba(245,245,247,.96); backdrop-filter:blur(12px); }
+    .top-inner { display:flex; align-items:center; gap:13px; width:min(100%,900px); margin:auto; }
+    .back { display:grid; flex:0 0 42px; width:42px; height:42px; place-items:center; border-radius:50%; color:var(--red); background:var(--paper); box-shadow:0 3px 12px rgba(0,0,0,.08); font-size:27px; font-weight:800; line-height:1; text-decoration:none; }
+    h1 { font-size:clamp(23px,6vw,30px); line-height:1.05; }
+    main { display:grid; gap:18px; width:min(100%,900px); margin:auto; padding:22px 14px 0; }
+    .feed { display:grid; gap:16px; }
+    .post { overflow:hidden; border-radius:24px; background:var(--paper); box-shadow:0 6px 22px rgba(0,0,0,.08); }
+    .post-media { display:block; width:100%; }
+    .post-media img { display:block; width:100%; height:auto; }
+    a:focus-visible { outline:3px solid var(--red); outline-offset:4px; }
+    .post:focus-within { outline:3px solid var(--red); outline-offset:4px; }
+    .post-link { display:block; color:inherit; text-decoration:none; }
+    .post-copy { padding:17px; }
+    .post-copy h2 { font-size:20px; line-height:1.3; margin-bottom:8px; }
+    .post-copy time { color:#666; font-size:14px; }
+    .empty { padding:22px; border-radius:24px; background:var(--paper); color:#555; line-height:1.5; }
+    .home { display:block; margin-top:2px; padding:15px 18px; border-radius:999px; color:#555; background:#e8e8eb; font-size:14px; font-weight:800; text-align:center; text-decoration:none; }
+    @media (min-width:700px) { main { padding-top:30px; } }
+  </style>
+</head>
+<body>
+  <header class="top"><div class="top-inner"><a class="back" href="index.html" aria-label="Volver al menú principal">‹</a><h1>Actualidad laboral</h1></div></header>
+  <main>
+    <section class="feed" aria-label="Noticias laborales">
+      <p class="empty" role="status">Todavía no hay noticias laborales publicadas.</p>
+    </section>
+    <a class="home" href="index.html">Volver al menú principal</a>
+  </main>
+  <script type="module">
+    import { LABOR_NEWS } from './noticias-laborales.js';
+    import { markCategoryRead } from './novedades.js';
+    const feed = document.querySelector('.feed');
+    const dateFormat = new Intl.DateTimeFormat('es-ES', { day:'numeric', month:'long', year:'numeric', timeZone:'UTC' });
+    if (LABOR_NEWS.length) feed.replaceChildren();
+    [...LABOR_NEWS].sort((a, b) => b.date.localeCompare(a.date)).forEach((news) => {
+      const post = document.createElement('article');
+      post.className = 'post';
+      post.dataset.title = news.title;
+      post.dataset.date = news.date;
+      const link = document.createElement('a');
+      link.className = 'post-link';
+      link.href = news.url;
+      if (/^https?:\/\//.test(news.url)) {
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+      }
+      const image = document.createElement('img');
+      image.className = 'post-media';
+      image.src = news.image;
+      image.alt = news.title;
+      const copy = document.createElement('div');
+      copy.className = 'post-copy';
+      const title = document.createElement('h2');
+      title.textContent = news.title;
+      const date = document.createElement('time');
+      date.dateTime = news.date;
+      date.textContent = dateFormat.format(new Date(news.date));
+      copy.append(title, date);
+      link.append(image, copy);
+      post.append(link);
+      feed.append(post);
+    });
+    markCategoryRead('labor-news').catch(() => {});
+  </script>
+</body>
+</html>

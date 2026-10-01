@@ -63,7 +63,7 @@ test('el badge pasa de 1 a oculto después de visualizar la explicación', async
       querySelectorAll: (selector) => selector === '[data-news-category]' ? [card, homeCard] : [],
     },
   });
-  vm.runInContext(read('novedades.js').replaceAll('export ', ''), context);
+  vm.runInContext(read('novedades.js').replace(/import \{ LABOR_NEWS \} from '[^']+';/, 'const LABOR_NEWS = [];').replaceAll('export ', ''), context);
 
   await context.initNews();
   assert.equal(badge.textContent, '1');
