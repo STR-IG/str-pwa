@@ -18,10 +18,6 @@
     .back { display:grid; flex:0 0 42px; width:42px; height:42px; place-items:center; border-radius:50%; color:var(--red); background:var(--paper); box-shadow:0 3px 12px rgba(0,0,0,.08); font-size:27px; font-weight:800; line-height:1; text-decoration:none; }
     h1 { font-size:clamp(23px,6vw,30px); line-height:1.05; }
     main { display:grid; gap:18px; width:min(100%,900px); margin:auto; padding:22px 14px 0; }
-    .intro { padding:2px 2px 4px; }
-    .intro h2 { font-size:clamp(28px,7vw,38px); line-height:1.03; letter-spacing:-.7px; }
-    .intro h2::after { display:block; width:92px; height:5px; margin-top:10px; border-radius:999px; background:var(--red); content:""; }
-    .intro p { margin-top:14px; color:var(--muted); font-size:16px; line-height:1.45; }
     .feed { display:grid; gap:16px; }
     .post { overflow:hidden; border-radius:24px; background:var(--paper); box-shadow:0 6px 22px rgba(0,0,0,.08); }
     .post-link { display:block; color:inherit; text-decoration:none; }
@@ -39,27 +35,14 @@
     .primary { display:inline-flex; align-items:center; justify-content:center; min-height:46px; padding:0 18px; border-radius:999px; color:var(--red-dark); background:var(--red-soft); font-size:14px; font-weight:900; text-decoration:none; }
     .home { display:block; margin-top:2px; padding:15px 18px; border-radius:999px; color:#555; background:#e8e8eb; font-size:14px; font-weight:800; text-align:center; text-decoration:none; }
     @media (min-width:700px) { main { padding-top:30px; } .post-body { padding:22px 24px 24px; } }
-    .accesses { display:grid; gap:14px; }
-    .access { display:flex; align-items:center; gap:16px; padding:22px 18px; border-radius:20px; color:var(--ink); background:var(--paper); box-shadow:0 5px 18px rgba(0,0,0,.07); text-decoration:none; }
-    .access-copy { flex:1; min-width:0; }
-    .access strong { display:block; color:var(--red); font-size:18px; }
-    .access p { margin-top:8px; color:var(--muted); font-size:15px; line-height:1.5; }
-    .access-arrow { color:var(--red); font-size:28px; }
     a:focus-visible { outline:3px solid var(--red); outline-offset:4px; }
-    .access:hover { box-shadow:0 10px 24px rgba(0,0,0,.11); }
-    @media (min-width:700px) { .accesses { grid-template-columns:repeat(3,minmax(0,1fr)); } .access { align-items:flex-start; } }
   </style>
 </head>
 <body>
   <header class="top"><div class="top-inner"><a class="back" href="index.html" aria-label="Volver al menú principal">‹</a><h1>Actividad e información sindical</h1></div></header>
   <main>
-    <section class="intro"><h2>Infórmate y participa</h2><p>Lo que hacemos en STR y la información que afecta a tu trabajo.</p></section>
-    <nav class="accesses" aria-label="Contenidos sindicales">
-      <a class="access" href="informacion-plantilla.html"><div class="access-copy"><strong>COMUNICADOS</strong><p>Comunicaciones y avisos dirigidos a la plantilla.</p></div><span class="access-arrow" aria-hidden="true">›</span></a>
-      <a class="access" href="actualidad-sindical.html"><div class="access-copy"><strong>ACTUALIDAD</strong><p>Noticias e información laboral de interés.</p></div><span class="access-arrow" aria-hidden="true">›</span></a>
-      <a class="access" href="actividad-sindical.html"><div class="access-copy"><strong>ACCIÓN SINDICAL</strong><p>En qué trabaja STR: reuniones, reclamaciones, propuestas y actuaciones sindicales.</p></div><span class="access-arrow" aria-hidden="true">›</span></a>
-    </nav>
-    <article class="post" data-news-category="documentation-info">
+    <section class="feed" aria-label="Publicaciones sindicales">
+<article class="post" data-news-category="documentation-info" data-news-id="documentation-explanation-2026-09-30" data-published-at="2026-09-30T00:00:00Z">
       <a class="post-link" href="nuestra-explicacion-documentacion.html" aria-label="¿Qué pasó con nuestra documentación?">
         <div class="post-media">
         <img src="nuestra-explicacion-acceso-documentacion.png" alt="Nuestra explicación de los hechos: qué ocurrió, qué sabemos, qué ha hecho STR y próximos pasos">
@@ -68,8 +51,21 @@
       <div class="post-body"><h3>¿Qué pasó con nuestra documentación?</h3></div>
       </a>
     </article>
+      <article class="post" data-published-at="2026-09-16T12:00:00Z" data-news-category="activity" data-news-id="activity-dia-afiliacion-2026-10-24">
+        <a class="post-media" href="dia-afiliacion.html" aria-label="Abrir Día de la Afiliación STR"><img src="Card-dia-afiliacion.jpg" alt="Cartel oficial del Día de la Afiliación STR del 24 de octubre"><span class="news-notification-badge" data-news-badge aria-label="Novedades sin leer">0</span></a>
+        <div class="post-body"><div class="post-date"><span aria-hidden="true">📅</span><time datetime="2026-10-24">24 de octubre de 2026</time></div><h3>Celebramos el Día de la Afiliación STR</h3><p>Una jornada para compartir, encontrarnos y disfrutar de las actividades organizadas por STR en La Colina Events Tarragona.</p><div class="post-actions"><a class="primary" href="dia-afiliacion.html">Ver actividad →</a></div></div>
+      </article>
+      <article class="post" data-published-at="2026-09-08T09:42:00Z">
+      <a class="post-media" href="comunicado-comedor.html" aria-label="Abrir comunicado completo sobre el comedor"><img src="Cartel-comedor.jpg" alt="Comunicado STR sobre la reunión del comedor del 7 de septiembre de 2026"></a>
+      <div class="post-body"><div class="post-date"><span aria-hidden="true">📅</span><time datetime="2026-09-07">7 de septiembre de 2026</time></div><h3>Reunión sobre el servicio de comedor</h3><p>Nos reunimos con la empresa y Sodexo para conocer la propuesta de mejora del servicio, la encuesta que se realizará a la plantilla y trasladar nuestras aportaciones.</p><div class="post-actions"><a class="primary" href="comunicado-comedor.html">Ver comunicado →</a></div></div>
+    </article>
+    </section>
     <a class="home" href="index.html">Volver al menú principal</a>
   </main>
-  <script type="module">import { initNews } from './novedades.js'; initNews().catch(() => {});</script>
+  <script type="module">import { initNews } from './novedades.js';
+    const feed = document.querySelector('.feed');
+    // Añadir las nuevas fichas aquí con su fecha de publicación ISO.
+    [...feed.children].sort((a, b) => Date.parse(b.dataset.publishedAt) - Date.parse(a.dataset.publishedAt)).forEach(post => feed.appendChild(post));
+    initNews().catch(() => {});</script>
 </body>
 </html>

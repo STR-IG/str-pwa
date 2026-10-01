@@ -152,6 +152,7 @@ function applyBottomNavActivity() {
 
   link.href = 'actividad-informacion-sindical.html';
   link.dataset.newsCategory = 'activity';
+  link.dataset.newsCategories = 'activity documentation-info';
   link.setAttribute('aria-label', 'Actualidad');
   link.innerHTML = '<b>📰</b>Actualidad<span class="bottom-nav-news-badge" data-news-badge aria-label="0 novedades sin leer">0</span>';
 
@@ -244,7 +245,9 @@ async function setBadge(count) {
 function renderCategoryBadges(unread) {
   document.querySelectorAll('[data-news-category]').forEach((card) => {
     const category = card.dataset.newsCategory;
-    const count = unread.filter((item) => item.category === category).length;
+    const count = unread.filter((item) => card.dataset.newsId
+      ? item.id === card.dataset.newsId
+      : (card.dataset.newsCategories || category).split(' ').includes(item.category)).length;
     const badge = card.querySelector('[data-news-badge]');
     if (!badge) return;
     badge.textContent = String(count);

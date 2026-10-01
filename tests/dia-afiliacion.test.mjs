@@ -23,7 +23,7 @@ test('la ficha reutiliza el cartel completo y ofrece la inscripción externa seg
 });
 
 test('actividad sindical incluye el Día de la Afiliación y reutiliza el contador existente', () => {
-  const activity = read('actividad-sindical.html');
+  const activity = read('actividad-informacion-sindical.html');
   const home = read('index.html');
   const news = read('novedades.js');
   assert.match(activity, /href="dia-afiliacion\.html"/);
