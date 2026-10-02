@@ -26,7 +26,7 @@ Object.entries(dutyChoices).forEach(([field, values], i) => {
     button.textContent = value; button.setAttribute('aria-pressed', 'false');
     button.onclick = () => {
       state[field] = value;
-      if (field === 'obligation' && value !== 'Mesa electoral / elecciones') { document.getElementById('electoralRole').value = ''; document.getElementById('substituteOutcome').value = ''; }
+      if (field === 'obligation' && value !== 'Mesa electoral / elecciones') { document.getElementById('electoralDayStatus').value = ''; document.getElementById('electoralRole').value = ''; document.getElementById('substituteOutcome').value = ''; }
       answers.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b === button)));
       refresh();
     };
@@ -37,7 +37,7 @@ Object.entries(dutyChoices).forEach(([field, values], i) => {
 });
 const screens = [...document.querySelectorAll('.screen')];
 screens.forEach(s => { s.querySelector('h2').tabIndex = -1; });
-const inputs = ['date', 'time', 'workSchedule', 'electoralRole', 'substituteOutcome', 'details'].map(id => document.getElementById(id));
+const inputs = ['date', 'time', 'workSchedule', 'electoralDayStatus', 'electoralRole', 'substituteOutcome', 'details'].map(id => document.getElementById(id));
 const electoralFields = document.getElementById('electoral-fields');
 const substituteFields = document.getElementById('substitute-fields');
 function facts() { return { ...state, ...Object.fromEntries(inputs.map(i => [i.id, i.value])) }; }
@@ -51,7 +51,7 @@ function refresh() {
   const fields = { 1: 'obligation', 2: 'overlap', 3: 'outside', 5: 'proof' };
   screens.forEach(s => {
     const next = s.querySelector('.next'); if (!next) return;
-    next.disabled = busy || (s.dataset.step === '4' ? (!inputs.slice(0, 3).every(i => i.value.trim() && i.checkValidity()) || (election && (!document.getElementById('electoralRole').value || (document.getElementById('electoralRole').value === 'Suplente' && !document.getElementById('substituteOutcome').value)))) : !state[fields[s.dataset.step]]);
+    next.disabled = busy || (s.dataset.step === '4' ? (!inputs.slice(0, 3).every(i => i.value.trim() && i.checkValidity()) || (election && (!document.getElementById('electoralDayStatus').value || !document.getElementById('electoralRole').value || (document.getElementById('electoralRole').value === 'Suplente' && !document.getElementById('substituteOutcome').value)))) : !state[fields[s.dataset.step]]);
   });
   saveDraft();
 }
