@@ -11,7 +11,7 @@ La nueva card en `preguntale-str-permisos.html` reutiliza `card-deber-inexcusabl
 - `committee_admins.active` y panel de administración existentes para consultar la bandeja privada. No se envían correos ni notificaciones automáticas.
 - `public-duty.js` comparte opciones y validación entre navegador y servidor; está en la raíz para que GitHub Pages pueda servirlo también con Jekyll.
 
-La referencia jurídica coincide con la ficha existente y el art. 37.3.d ET: deber público y personal, tiempo indispensable, previo aviso y justificación. No se incluyen reglas electorales específicas no disponibles. Los campos libres se tratan como datos, no como instrucciones; el contenido de la IA se muestra como texto y se valida antes de completar el crédito.
+La rama general conserva el art. 37.3.d ET. La rama electoral pide condición/cargo, carácter laborable o descanso del día de votación, hora de presentación y turno anterior. Presidencia/Vocalía titular y suplentes que finalmente desempeñan el cargo reciben una respuesta determinista basada en el art. 28.1 LOREG y el art. 13.3 del RD 605/1999; el día electoral laborable da permiso retribuido de jornada completa y al día inmediatamente posterior se aplica en todo caso la reducción de cinco horas. El análisis del turno nocturno y las 12 horas aparece separado y no se atribuye a la LOREG. Las suplencias que no llegan a desempeñar el cargo y las personas que solo van a votar conservan ramas distintas. El campo libre final es opcional y solo sirve para añadir circunstancias no recogidas antes. Los campos libres se tratan como datos, no como instrucciones; el contenido de la IA se muestra como texto y se valida antes de completar el crédito.
 
 ## Preparación de producción
 
@@ -36,7 +36,7 @@ En los tres estados comprobar el botón superior de volver, «Volver al paso ant
 
 ## Verificación automatizada
 
-`node --experimental-vm-modules --test tests/public-duty.test.mjs tests/permit-functions.test.mjs tests/permit-quota.test.mjs tests/admin-panel.test.mjs tests/service-worker-update.test.mjs`
+`node --experimental-vm-modules --test tests/public-duty.test.mjs tests/electoralGuidance.test.mjs tests/permit-functions.test.mjs tests/permit-quota.test.mjs tests/admin-panel.test.mjs tests/service-worker-update.test.mjs`
 
 `tests/public-duty-browser.mjs` usa Playwright con API y autenticación simuladas para los tres estados, seis pasos, navegación hacia atrás, restauración del resultado sin otra consulta, envío, ausencia de promoción de afiliación y ancho móvil. Configurar `PLAYWRIGHT_PACKAGE` si no está instalado en el proyecto y opcionalmente `PLAYWRIGHT_CHANNEL=msedge`.
 
