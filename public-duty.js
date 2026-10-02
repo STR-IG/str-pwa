@@ -8,6 +8,7 @@ export const dutyChoices = {
 
 export const electoralRoles = ['Presidente/a titular', 'Vocal titular', 'Suplente', 'Solo voy a votar'];
 export const substituteOutcomes = ['No ocupé finalmente el cargo', 'Sí, sustituí al titular y desempeñé el cargo'];
+export const electoralDayStatuses = ['Sí, es día laborable', 'No, es día de descanso'];
 
 export function validDutyFacts(b) {
   if (!b || typeof b !== 'object') return false;
@@ -17,15 +18,15 @@ export function validDutyFacts(b) {
   if (!Number.isFinite(d.getTime()) || d.toISOString().slice(0, 10) !== b.date) return false;
   if (typeof b.time !== 'string' || !/^([01]\d|2[0-3]):[0-5]\d$/.test(b.time)) return false;
   if (b.obligation === 'Mesa electoral / elecciones') {
-    if (!electoralRoles.includes(b.electoralRole)) return false;
+    if (!electoralRoles.includes(b.electoralRole) || !electoralDayStatuses.includes(b.electoralDayStatus)) return false;
     if (b.electoralRole === 'Suplente' && !substituteOutcomes.includes(b.substituteOutcome)) return false;
-  } else if ((b.electoralRole && b.electoralRole !== '') || (b.substituteOutcome && b.substituteOutcome !== '')) return false;
+  } else if ((b.electoralRole && b.electoralRole !== '') || (b.substituteOutcome && b.substituteOutcome !== '') || (b.electoralDayStatus && b.electoralDayStatus !== '')) return false;
   return typeof b.workSchedule === 'string' && b.workSchedule.trim().length > 0 && b.workSchedule.length <= 300 &&
     typeof b.details === 'string' && b.details.length <= 1500;
 }
 
 export function dutyFacts(b) {
-  return Object.fromEntries(['obligation', 'overlap', 'outside', 'date', 'time', 'workSchedule', 'proof', 'electoralRole', 'substituteOutcome', 'details'].map(k => [k, (b[k] || '').trim()]));
+  return Object.fromEntries(['obligation', 'overlap', 'outside', 'date', 'time', 'workSchedule', 'proof', 'electoralRole', 'substituteOutcome', 'electoralDayStatus', 'details'].map(k => [k, (b[k] || '').trim()]));
 }
 
 
@@ -50,12 +51,12 @@ export function electoralGuidance(b) {
       prior = 'Existe una afectación del descanso previo. Para disponer de 12 horas hasta las ' + b.time + ', el descanso debería comenzar a las ' + String(Math.floor(cut / 60)).padStart(2, '0') + ':' + String(cut % 60).padStart(2, '0') + ' del día anterior. Este es un análisis del descanso entre actividades, no una regla electoral literal de la LOREG.';
     } else prior = 'Según el turno seleccionado (' + b.workSchedule + ') y la presentación a las ' + b.time + ', el horario indicado deja al menos 12 horas entre ambos. El análisis del descanso es separado de los derechos electorales.';
   }
-  const workday = b.overlap === 'Sí' || b.overlap === 'Parcialmente';
-  const restday = b.overlap === 'No';
+  const workday = b.electoralDayStatus === 'Sí, es día laborable';
+  const restday = b.electoralDayStatus === 'No, es día de descanso';
   const day = workday ? 'Al ser día laborable para ti, corresponde permiso retribuido de jornada completa.' : restday ? 'Al ser día de descanso, no corresponde permiso de jornada completa por ese día.' : 'Si resulta laborable para ti, corresponde permiso retribuido de jornada completa.';
   return {
     case: 'Has indicado que eres ' + b.electoralRole + ' de una mesa electoral y debes presentarte a las ' + b.time + '. Turno del día anterior: ' + b.workSchedule + '. ' + (workday ? 'La votación coincide con tu jornada laboral.' : restday ? 'Indicas que la votación coincide con un día de descanso.' : 'No queda confirmado si coincide con tu jornada laboral.'),
-    eligibility: 'Para Presidencia o Vocalía titular, la norma electoral específica prevalece sobre la regla genérica del deber inexcusable. No se aplica aquí el criterio de “solo el tiempo indispensable” al permiso electoral de jornada completa.',
+    eligibility: alternate ? 'Como suplente, al haber sustituido al titular y desempeñado el cargo, se aplican los derechos electorales correspondientes a quien ejerce la Presidencia o Vocalía. No se aplica la regla genérica de “solo el tiempo indispensable” al permiso electoral de jornada completa.' : 'Para Presidencia o Vocalía titular, la norma electoral específica prevalece sobre la regla genérica del deber inexcusable. No se aplica aquí el criterio de “solo el tiempo indispensable” al permiso electoral de jornada completa.',
     time: prior + '\n\nDía de la votación: ' + day + ' Día inmediatamente posterior: en todo caso, corresponde una reducción de cinco horas de tu jornada de trabajo, aunque la votación haya coincidido con tu día de descanso.',
     documents: 'Presenta la designación o citación oficial como miembro de la mesa y, cuando corresponda, la acreditación de haber desempeñado el cargo.',
     next: 'Comunica la designación a la empresa por el canal habitual y conserva la citación y la acreditación de asistencia. La jornada completa del día de la votación y la reducción de cinco horas del día siguiente son derechos electorales; el cálculo del descanso previo es un análisis separado.'
