@@ -25,7 +25,7 @@ export function validDutyFacts(b) {
 }
 
 export function dutyFacts(b) {
-  return Object.fromEntries(['obligation', 'overlap', 'outside', 'date', 'time', 'workSchedule', 'proof', 'electoralRole', 'substituteOutcome', 'details'].map(k => [k, b[k].trim()]));
+  return Object.fromEntries(['obligation', 'overlap', 'outside', 'date', 'time', 'workSchedule', 'proof', 'electoralRole', 'substituteOutcome', 'details'].map(k => [k, (b[k] || '').trim()]));
 }
 
 
