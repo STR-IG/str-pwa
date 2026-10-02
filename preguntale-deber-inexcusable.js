@@ -1,5 +1,5 @@
 import { permitFetch, showPublicPermitPage, handlePermitError } from './permisos-consultas.js';
-import { dutyChoices, dutySections, validDutyFacts, dutyFacts, validDutyGuidance } from './public-duty.js';
+import { dutyChoices, dutySections, shiftLabels, validDutyFacts, validDutySchedule, dutyFacts, validDutyGuidance } from './public-duty.js';
 
 const URL = 'https://icneigdnuntzugisexaz.supabase.co';
 const KEY = 'sb_publishable_apKjcPClIBTHS2wwN6qPsA_6Vm4tk9m';
@@ -26,6 +26,7 @@ Object.entries(dutyChoices).forEach(([field, values], i) => {
     button.textContent = value; button.setAttribute('aria-pressed', 'false');
     button.onclick = () => {
       state[field] = value;
+      syncScheduleFields();
       answers.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b === button)));
       refresh();
     };
@@ -36,8 +37,24 @@ Object.entries(dutyChoices).forEach(([field, values], i) => {
 });
 const screens = [...document.querySelectorAll('.screen')];
 screens.forEach(s => { s.querySelector('h2').tabIndex = -1; });
-const inputs = ['date', 'time', 'workSchedule', 'details'].map(id => document.getElementById(id));
-function facts() { return { ...state, ...Object.fromEntries(inputs.map(i => [i.id, i.value])) }; }
+const fieldIds = ['date','time','endTime','electoralRole','otherRole','previousShift','previousStart','previousEnd','followingShift','followingStart','followingEnd','electionShift','electionStart','electionEnd','nextDayShift','nextDayStart','nextDayEnd','details'];
+const inputs = fieldIds.map(id => document.getElementById(id));
+const shiftPairs = [['previousShift','previous-times'],['followingShift','following-times'],['electionShift','election-times'],['nextDayShift','nextDay-times']];
+for (const [selectId] of shiftPairs) {
+  const select = document.getElementById(selectId);
+  for (const [value, label] of Object.entries(shiftLabels)) { const option = document.createElement('option'); option.value = value; option.textContent = label; select.append(option); }
+}
+function syncScheduleFields() {
+  const election = state.obligation === 'Mesa electoral / elecciones';
+  document.getElementById('general-schedule').hidden = election;
+  document.getElementById('election-schedule').hidden = !election;
+  const clear = ids => ids.forEach(id => { document.getElementById(id).value = ''; });
+  if (election) clear(['previousShift','previousStart','previousEnd','followingShift','followingStart','followingEnd']);
+  else clear(['electoralRole','otherRole','electionShift','electionStart','electionEnd','nextDayShift','nextDayStart','nextDayEnd']);
+  document.getElementById('other-electoral-role').hidden = !election || document.getElementById('electoralRole').value !== 'Otra función electoral';
+  for (const [selectId, groupId] of shiftPairs) document.getElementById(groupId).hidden = document.getElementById(selectId).value !== 'other';
+}
+function facts() { return dutyFacts({ ...state, ...Object.fromEntries(inputs.map(i => [i.id, i.value])) }); }
 function saveDraft() {
   try { sessionStorage.setItem(DRAFT, JSON.stringify({ facts: facts(), completed, step })); } catch { /* Consultation works without a draft. */ }
 }
@@ -45,7 +62,7 @@ function refresh() {
   const fields = { 1: 'obligation', 2: 'overlap', 3: 'outside', 5: 'proof' };
   screens.forEach(s => {
     const next = s.querySelector('.next'); if (!next) return;
-    next.disabled = busy || (s.dataset.step === '4' ? !inputs.slice(0, 3).every(i => i.value.trim() && i.checkValidity()) : !state[fields[s.dataset.step]]);
+    next.disabled = busy || (s.dataset.step === '4' ? !validDutySchedule(facts()) : !state[fields[s.dataset.step]]);
   });
   saveDraft();
 }
@@ -57,7 +74,7 @@ function go(n) {
   saveDraft();
 }
 screens.forEach(s => s.querySelector('.next')?.addEventListener('click', () => go(step + 1)));
-inputs.forEach(i => i.addEventListener('input', refresh));
+inputs.forEach(i => { i.addEventListener('input', () => { syncScheduleFields(); refresh(); }); i.addEventListener('change', () => { syncScheduleFields(); refresh(); }); });
 previous.onclick = () => go(step - 1);
 document.getElementById('back').onclick = e => { if (busy || step > 1) { e.preventDefault(); if (!busy) go(step - 1); } };
 
@@ -115,6 +132,19 @@ function showGuidance() {
     const heading = document.createElement('h3'); heading.textContent = title;
     const p = document.createElement('p'); p.textContent = completed.guidance[key]; result.append(heading, p);
   }
+  const sources = document.createElement('div'); sources.className = 'sources';
+  const title = document.createElement('h3'); title.textContent = 'Fuentes jurídicas'; sources.append(title);
+  const electoral = completed.facts.obligation === 'Mesa electoral / elecciones';
+  const refs = electoral ? [
+    ['Ley Orgánica 5/1985, art. 28.1 (miembros de mesa y reducción de cinco horas)', 'https://www.boe.es/buscar/act.php?id=BOE-A-1985-11672'],
+    ['Ley Orgánica 5/1985, arts. 76.4 y 78.4 (apoderados e interventores)', 'https://www.boe.es/buscar/act.php?id=BOE-A-1985-11672'],
+    ['Real Decreto 605/1999, art. 13 (permisos laborales electorales)', 'https://www.boe.es/buscar/act.php?id=BOE-A-1999-8583']
+  ] : [
+    ['Estatuto de los Trabajadores, art. 37.3.d', 'https://www.boe.es/buscar/act.php?id=BOE-A-2015-11430'],
+    ['XXI Convenio colectivo de la industria química, art. 50.7', 'https://www.boe.es/buscar/doc.php?id=BOE-A-2025-3083']
+  ];
+  for (const [label, href] of refs) { const a = document.createElement('a'); a.href = href; a.target = '_blank'; a.rel = 'noopener'; a.textContent = label; sources.append(a); }
+  result.append(sources);
   updateSendActions();
 }
 form.noValidate = true; // Validate the full questionnaire explicitly, including previous hidden steps.
@@ -142,12 +172,12 @@ form.onsubmit = async e => {
 };
 try {
   const draft = JSON.parse(sessionStorage.getItem(DRAFT) || 'null');
-  if (draft && validDutyFacts(draft.facts)) {
-    Object.keys(state).forEach(k => { state[k] = draft.facts[k]; }); inputs.forEach(i => { i.value = draft.facts[i.id]; });
+  if (draft && draft.facts && typeof draft.facts === 'object') {
+    Object.keys(state).forEach(k => { state[k] = draft.facts[k] || ''; }); inputs.forEach(i => { i.value = draft.facts[i.id] || ''; });
     screens.forEach(s => s.querySelectorAll('.answer').forEach(b => b.setAttribute('aria-pressed', String(state[s.dataset.field] === b.textContent))));
     if (draft.completed && validDutyFacts(draft.completed.facts) && validDutyGuidance(draft.completed.guidance)) completed = draft.completed;
     step = completed ? 6 : Math.min(6, Math.max(1, Number(draft.step) || 1));
   }
 } catch { /* Invalid or unavailable draft. */ }
-showPublicPermitPage(true); go(step); refresh(); if (completed) showGuidance();
+showPublicPermitPage(true); syncScheduleFields(); go(step); refresh(); if (completed) showGuidance();
 window.addEventListener('focus', () => { if (completed) updateSendActions(); });

@@ -25,7 +25,7 @@ try {
     await context.route('https://icneigdnuntzugisexaz.supabase.co/functions/v1/**', async route => {
       const url = route.request().url(); let data;
       if (url.endsWith('answer-public-duty')) {
-        aiCalls++; const facts = route.request().postDataJSON(); assert.equal(facts.workSchedule, '08:00 a 16:00');
+        aiCalls++; const facts = route.request().postDataJSON(); assert.match(facts.workSchedule, /Turno de noche \(18:00–06:00\)/); assert.match(facts.workSchedule, /Turno de mañana \(06:00–14:13\)/); assert.equal(facts.time, '10:00');
         assert.equal(route.request().headers().authorization, undefined);
         data = { guidance: { case: 'Citación oficial', eligibility: 'Puede encajar, pendiente de comprobar.', time: 'Tiempo indispensable.', documents: 'Citación y asistencia.', next: 'Comunícalo a la empresa.' }, quota: { remaining: 1 } };
       } else if (url.endsWith('submit-permit-case')) {
@@ -39,7 +39,9 @@ try {
       await page.locator('.screen:not([hidden])').getByRole('button', { name: answer, exact: true }).click();
       await page.getByRole('button', { name: 'Continuar', exact: true }).filter({ visible: true }).click();
     }
-    await page.locator('#date').fill('2026-10-02'); await page.locator('#time').fill('10:00'); await page.locator('#workSchedule').fill('08:00 a 16:00');
+    await page.locator('#date').fill('2026-10-02'); await page.locator('#time').fill('10:00');
+    await page.locator('#previousShift').selectOption('night_18_06');
+    await page.locator('#followingShift').selectOption('morning');
     await page.locator('.screen:not([hidden]) .next').click();
     await page.getByRole('button', { name: 'Todavía no', exact: true }).click(); await page.locator('.screen:not([hidden]) .next').click();
     await page.getByRole('button', { name: 'Volver al paso anterior' }).click();
@@ -47,6 +49,7 @@ try {
     await page.locator('.screen:not([hidden]) .next').click();
     await page.getByRole('button', { name: 'Obtener orientación' }).click();
     await page.getByRole('heading', { name: '¿Puede corresponderte?' }).waitFor();
+    await page.getByRole('link', { name: 'Estatuto de los Trabajadores, art. 37.3.d' }).waitFor();
     if (mode === 'public') {
       await page.getByRole('link', { name: 'Iniciar sesión para enviar tu caso a STR' }).waitFor();
       await page.reload(); await page.getByRole('heading', { name: 'Tu caso', exact: true }).waitFor(); assert.equal(aiCalls, 1);

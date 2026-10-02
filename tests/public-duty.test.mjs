@@ -3,10 +3,10 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { stripTypeScriptTypes } from 'node:module';
 import { runInNewContext } from 'node:vm';
-import { validDutyFacts, dutyFacts, dutySections, validDutyGuidance } from '../public-duty.js';
+import { validDutyFacts, validDutySchedule, dutyFacts, dutySections, validDutyGuidance } from '../public-duty.js';
 import { permitCaseHandler } from '../supabase/functions/_shared/permit-case-core.js';
 
-const facts = { obligation: 'Citación judicial u oficial', overlap: 'Parcialmente', outside: 'No, el horario viene impuesto', date: '2026-10-02', time: '09:00', workSchedule: '22:00 del día anterior a 06:00', proof: 'Todavía no', details: '' };
+const facts = { obligation: 'Citación judicial u oficial', overlap: 'Parcialmente', outside: 'No, el horario viene impuesto', date: '2026-10-02', time: '08:00', endTime: '10:00', workSchedule: 'Turno anterior al deber: Turno de noche (18:00–06:00); Turno posterior al deber: No lo sé', proof: 'Todavía no', details: '', electoralRole: '', otherRole: '', previousShift: 'night_18_06', previousStart: '', previousEnd: '', followingShift: 'unknown', followingStart: '', followingEnd: '', electionShift: '', electionStart: '', electionEnd: '', nextDayShift: '', nextDayStart: '', nextDayEnd: '' };
 const guidance = Object.fromEntries(Object.keys(dutySections).map(k => [k, 'Orientación prudente de prueba.']));
 function loadAnswer(aiGuidance = guidance, ok = true) {
   let handler, calls = [];
@@ -19,7 +19,7 @@ function loadAnswer(aiGuidance = guidance, ok = true) {
 }
 test('public questionnaire rejects invalid dates, times, oversized text and tampered choices before AI', async () => {
   const fn = loadAnswer();
-  for (const change of [{ date: '2026-02-30' }, { time: '24:00' }, { overlap: 'inventado' }, { workSchedule: '' }, { details: 'x'.repeat(1501) }]) {
+  for (const change of [{ date: '2026-02-30' }, { time: '24:00' }, { overlap: 'inventado' }, { previousShift: 'opcion_invalida' }, { details: 'x'.repeat(1501) }]) {
     assert.equal((await fn.call({ ...facts, ...change })).status, 400);
   }
   assert.equal(fn.calls.length, 0);
@@ -29,7 +29,31 @@ test('public AI uses the existing provider, model, privacy and bounded output, w
   const response = await fn.call(facts);
   assert.equal(response.status, 200); assert.deepEqual((await response.json()).guidance, guidance);
   assert.equal(fn.calls[0].model, 'gpt-5.4-mini'); assert.equal(fn.calls[0].store, false);
-  assert.equal(fn.calls[0].max_output_tokens, 900); assert.deepEqual(JSON.parse(fn.calls[0].input), facts);
+  assert.equal(fn.calls[0].max_output_tokens, 1300); assert.deepEqual(JSON.parse(fn.calls[0].input), dutyFacts(facts));
+  assert.equal(JSON.parse(fn.calls[0].input).previousStart, '18:00'); assert.equal(JSON.parse(fn.calls[0].input).previousEnd, '06:00');
+  assert.match(JSON.parse(fn.calls[0].input).workSchedule, /Turno de noche \(18:00–06:00\)/);
+  assert.match(fn.calls[0].instructions, /BOE-A-1985-11672/); assert.match(fn.calls[0].instructions, /BOE-A-1999-8583/);
+  assert.match(fn.calls[0].instructions, /art\. 50\.7/); assert.match(fn.calls[0].instructions, /nunca transfieras por analogía la regla electoral/i);
+  assert.match(fn.calls[0].instructions, /turno 18:00–06:00 y obligación a las 08:00/i);
+});
+
+test('general night shift and electoral roles use separate legal rules', async () => {
+  assert.equal(validDutySchedule(facts), true);
+  const fn = loadAnswer(); assert.equal((await fn.call(facts)).status, 200);
+  const base = { ...facts, obligation: 'Mesa electoral / elecciones', electoralRole: 'Presidente/a de mesa electoral', workSchedule: 'Turno anterior/coincidente: Turno de noche (18:00–06:00); día posterior: Turno de noche (18:00–06:00)', previousShift: '', previousStart: '', previousEnd: '', followingShift: '', followingStart: '', followingEnd: '', electionShift: 'night_18_06', electionStart: '', electionEnd: '', nextDayShift: 'night_18_06', nextDayStart: '', nextDayEnd: '' };
+  assert.equal(validDutyFacts({ ...base, proof: 'Todavía no' }), true);
+  const malformed = { ...base, electoralRole: '', proof: 'Todavía no' };
+  assert.equal(validDutyFacts(malformed), false);
+  const interventor = { ...base, electoralRole: 'Interventor/a' };
+  assert.equal((await loadAnswer().call(interventor)).status, 200);
+  const apoderado = { ...base, electoralRole: 'Apoderado/a' };
+  assert.equal((await loadAnswer().call(apoderado)).status, 200);
+});
+
+test('custom shifts require exact hours while presets supply them automatically', () => {
+  assert.equal(validDutyFacts(facts), true);
+  assert.equal(validDutyFacts({ ...facts, previousShift: 'other', previousStart: '', previousEnd: '' }), false);
+  assert.equal(validDutyFacts({ ...facts, previousShift: 'other', previousStart: '18:00', previousEnd: '06:00' }), true);
 });
 test('AI errors and malformed guidance are failures, allowing shared quota release', async () => {
   assert.equal((await loadAnswer({}, true).call(facts)).status, 502);
