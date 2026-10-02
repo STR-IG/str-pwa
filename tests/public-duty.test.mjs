@@ -11,7 +11,7 @@ const guidance = Object.fromEntries(Object.keys(dutySections).map(k => [k, 'Orie
 function loadAnswer(aiGuidance = guidance, ok = true) {
   let handler, calls = [];
   const source = stripTypeScriptTypes(readFileSync(new URL('../supabase/functions/answer-public-duty/index.ts', import.meta.url), 'utf8')).replace(/^import .*;\r?$/gm, '');
-  runInNewContext(source, { servePermit: fn => { handler = fn; }, validDutyFacts, dutyFacts, dutySections, validDutyGuidance,
+  runInNewContext(source, { servePermit: fn => { handler = fn; }, validDutyFacts, dutyFacts, dutySections, validDutyGuidance, electoralGuidance,
     Deno: { env: { get: () => 'test-key' } }, Response, Request, AbortSignal, crypto, TextEncoder,
     fetch: async (url, options) => { calls.push(JSON.parse(options.body)); return Response.json({ output_text: JSON.stringify(aiGuidance) }, { status: ok ? 200 : 500 }); }
   });
