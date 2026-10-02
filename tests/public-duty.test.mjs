@@ -31,6 +31,22 @@ test('public AI uses the existing provider, model, privacy and bounded output, w
   assert.equal(fn.calls[0].model, 'gpt-5.4-mini'); assert.equal(fn.calls[0].store, false);
   assert.equal(fn.calls[0].max_output_tokens, 900); assert.deepEqual(JSON.parse(fn.calls[0].input), facts);
 });
+test('electoral member receives deterministic special rules before generic AI', async () => {
+  const fn = loadAnswer();
+  const electoral = { ...facts, obligation: 'Mesa electoral / elecciones', time: '08:00', workSchedule: 'Noche 12 h — 18:00 a 06:11 del día siguiente', electoralRole: 'Presidente/a titular', electoralDayStatus: 'Sí, es día laborable' };
+  const response = await fn.call(electoral);
+  const body = await response.json();
+  assert.equal(response.status, 200);
+  assert.match(body.guidance.time, /20:00 del día anterior/);
+  assert.match(body.guidance.time, /reducción de cinco horas/);
+  assert.equal(fn.calls.length, 0);
+});
+test('electoral questionnaire requires role and workday selections', async () => {
+  const fn = loadAnswer();
+  const electoral = { ...facts, obligation: 'Mesa electoral / elecciones', electoralRole: '', electoralDayStatus: '' };
+  assert.equal((await fn.call(electoral)).status, 400);
+  assert.equal(fn.calls.length, 0);
+});
 test('AI errors and malformed guidance are failures, allowing shared quota release', async () => {
   assert.equal((await loadAnswer({}, true).call(facts)).status, 502);
   assert.equal((await loadAnswer(guidance, false).call(facts)).status, 502);
