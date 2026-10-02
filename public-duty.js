@@ -20,6 +20,7 @@ export function validDutyFacts(b) {
   if (b.obligation === 'Mesa electoral / elecciones') {
     if (!electoralRoles.includes(b.electoralRole) || !electoralDayStatuses.includes(b.electoralDayStatus)) return false;
     if (b.electoralRole === 'Suplente' && !substituteOutcomes.includes(b.substituteOutcome)) return false;
+    if (b.electoralRole !== 'Suplente' && b.substituteOutcome) return false;
   } else if ((b.electoralRole && b.electoralRole !== '') || (b.substituteOutcome && b.substituteOutcome !== '') || (b.electoralDayStatus && b.electoralDayStatus !== '')) return false;
   return typeof b.workSchedule === 'string' && b.workSchedule.trim().length > 0 && b.workSchedule.length <= 300 &&
     typeof b.details === 'string' && b.details.length <= 1500;
