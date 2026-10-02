@@ -19,17 +19,17 @@
         <label for="time">Hora de inicio del deber o de la obligación electoral</label><input id="time" type="time" required>
         <label for="endTime">Hora aproximada de finalización, si se conoce y resulta relevante</label><input id="endTime" type="time">
         <div id="general-schedule" class="schedule-fields">
-          <label for="previousShift">Turno/jornada anterior al deber</label><select id="previousShift"><option value="">Selecciona</option><option>Trabajo ese turno</option><option>No trabajo / descanso</option><option>No lo sé</option></select>
+          <label for="previousShift">Turno/jornada del día anterior al deber</label><select id="previousShift"><option value="">Elige tu turno</option></select>
           <div id="previous-times" class="field-pair" hidden><div><label for="previousStart">Inicio exacto</label><input id="previousStart" type="time"></div><div><label for="previousEnd">Fin exacto</label><input id="previousEnd" type="time"></div></div>
-          <label for="followingShift">Turno/jornada posterior al deber</label><select id="followingShift"><option value="">Selecciona</option><option>Trabajo ese turno</option><option>No trabajo / descanso</option><option>No lo sé</option></select>
+          <label for="followingShift">Turno/jornada posterior al deber</label><select id="followingShift"><option value="">Elige tu turno</option></select>
           <div id="following-times" class="field-pair" hidden><div><label for="followingStart">Inicio exacto</label><input id="followingStart" type="time"></div><div><label for="followingEnd">Fin exacto</label><input id="followingEnd" type="time"></div></div>
         </div>
         <div id="election-schedule" class="schedule-fields" hidden>
           <label for="electoralRole">Función electoral</label><select id="electoralRole"><option value="">Selecciona</option><option>Presidente/a de mesa electoral</option><option>Vocal de mesa electoral</option><option>Interventor/a</option><option>Apoderado/a</option><option>Otra función electoral</option><option>Solo voy a votar</option></select>
           <div id="other-electoral-role" hidden><label for="otherRole">Indica la función electoral</label><input id="otherRole" maxlength="120"></div>
-          <label for="electionShift">Turno/jornada anterior o coincidente con la votación (incluye turnos nocturnos que cruzan medianoche)</label><select id="electionShift"><option value="">Selecciona</option><option>Trabajo ese turno</option><option>No trabajo / descanso</option><option>No lo sé</option></select>
+          <label for="electionShift">Turno/jornada del día anterior o coincidente con la votación</label><select id="electionShift"><option value="">Elige tu turno</option></select>
           <div id="election-times" class="field-pair" hidden><div><label for="electionStart">Inicio exacto del turno</label><input id="electionStart" type="time"></div><div><label for="electionEnd">Fin exacto del turno</label><input id="electionEnd" type="time"></div></div>
-          <label for="nextDayShift">Turno/jornada del día inmediatamente posterior a la votación</label><select id="nextDayShift"><option value="">Selecciona</option><option>Trabajo ese turno</option><option>No trabajo / descanso</option><option>No lo sé</option></select>
+          <label for="nextDayShift">Turno/jornada del día inmediatamente posterior a la votación</label><select id="nextDayShift"><option value="">Elige tu turno</option></select>
           <div id="nextDay-times" class="field-pair" hidden><div><label for="nextDayStart">Inicio exacto del turno</label><input id="nextDayStart" type="time"></div><div><label for="nextDayEnd">Fin exacto del turno</label><input id="nextDayEnd" type="time"></div></div>
         </div>
         <textarea id="workSchedule" hidden></textarea>

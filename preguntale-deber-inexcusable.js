@@ -1,5 +1,5 @@
 import { permitFetch, showPublicPermitPage, handlePermitError } from './permisos-consultas.js';
-import { dutyChoices, dutySections, validDutyFacts, validDutySchedule, dutyFacts, validDutyGuidance } from './public-duty.js';
+import { dutyChoices, dutySections, shiftLabels, validDutyFacts, validDutySchedule, dutyFacts, validDutyGuidance } from './public-duty.js';
 
 const URL = 'https://icneigdnuntzugisexaz.supabase.co';
 const KEY = 'sb_publishable_apKjcPClIBTHS2wwN6qPsA_6Vm4tk9m';
@@ -40,6 +40,10 @@ screens.forEach(s => { s.querySelector('h2').tabIndex = -1; });
 const fieldIds = ['date','time','endTime','electoralRole','otherRole','previousShift','previousStart','previousEnd','followingShift','followingStart','followingEnd','electionShift','electionStart','electionEnd','nextDayShift','nextDayStart','nextDayEnd','details'];
 const inputs = fieldIds.map(id => document.getElementById(id));
 const shiftPairs = [['previousShift','previous-times'],['followingShift','following-times'],['electionShift','election-times'],['nextDayShift','nextDay-times']];
+for (const [selectId] of shiftPairs) {
+  const select = document.getElementById(selectId);
+  for (const [value, label] of Object.entries(shiftLabels)) { const option = document.createElement('option'); option.value = value; option.textContent = label; select.append(option); }
+}
 function syncScheduleFields() {
   const election = state.obligation === 'Mesa electoral / elecciones';
   document.getElementById('general-schedule').hidden = election;
@@ -48,16 +52,9 @@ function syncScheduleFields() {
   if (election) clear(['previousShift','previousStart','previousEnd','followingShift','followingStart','followingEnd']);
   else clear(['electoralRole','otherRole','electionShift','electionStart','electionEnd','nextDayShift','nextDayStart','nextDayEnd']);
   document.getElementById('other-electoral-role').hidden = !election || document.getElementById('electoralRole').value !== 'Otra función electoral';
-  for (const [selectId, groupId] of shiftPairs) document.getElementById(groupId).hidden = document.getElementById(selectId).value !== 'Trabajo ese turno';
+  for (const [selectId, groupId] of shiftPairs) document.getElementById(groupId).hidden = document.getElementById(selectId).value !== 'other';
 }
-function facts() {
-  const data = { ...state, ...Object.fromEntries(inputs.map(i => [i.id, i.value])) };
-  const schedule = (prefix, label) => data[`${prefix}Shift`] === 'Trabajo ese turno' ? `${label}: ${data[`${prefix}Start`]}–${data[`${prefix}End`]}` : `${label}: ${data[`${prefix}Shift`] || 'sin indicar'}`;
-  data.workSchedule = data.obligation === 'Mesa electoral / elecciones'
-    ? `Función electoral: ${data.electoralRole || 'sin indicar'}${data.otherRole ? ` (${data.otherRole})` : ''}; ${schedule('election','Turno anterior/coincidente con votación')}; ${schedule('nextDay','Jornada del día natural posterior')}${data.endTime ? `; fin aproximado del deber: ${data.endTime}` : ''}`
-    : `${schedule('previous','Turno anterior')}; ${schedule('following','Turno posterior')}${data.endTime ? `; fin aproximado del deber: ${data.endTime}` : ''}`;
-  return data;
-}
+function facts() { return dutyFacts({ ...state, ...Object.fromEntries(inputs.map(i => [i.id, i.value])) }); }
 function saveDraft() {
   try { sessionStorage.setItem(DRAFT, JSON.stringify({ facts: facts(), completed, step })); } catch { /* Consultation works without a draft. */ }
 }
