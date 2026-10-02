@@ -28,10 +28,24 @@
           <option value="Día de descanso">Día de descanso</option>
           <option value="Otro horario">Otro horario</option>
         </select>
+        <div id="electoral-fields" hidden>
+          <label for="electoralRole">¿Qué condición tienes en la mesa electoral?</label>
+          <select id="electoralRole">
+            <option value="" selected disabled>Selecciona una opción</option>
+            <option>Presidente/a titular</option><option>Vocal titular</option><option>Suplente</option><option>Solo voy a votar</option>
+          </select>
+          <div id="substitute-fields" hidden>
+            <label for="substituteOutcome">¿Finalmente ocupaste el cargo?</label>
+            <select id="substituteOutcome">
+              <option value="" selected disabled>Selecciona una opción</option>
+              <option>No ocupé finalmente el cargo</option><option>Sí, sustituí al titular y desempeñé el cargo</option>
+            </select>
+          </div>
+        </div>
         <button type="button" class="primary next" disabled>Continuar</button>
       </div>
-      <div class="screen" data-step="6" hidden><span class="step">Paso 6 de 6</span><h2>Cuéntanos brevemente tu caso</h2>
-        <label for="details">Opcional</label><textarea id="details" maxlength="1500" rows="5" placeholder="Puedes indicar la duración prevista, los desplazamientos necesarios o aclarar la obligación."></textarea>
+      <div class="screen" data-step="6" hidden><span class="step">Paso 6 de 6</span><h2>¿Quieres añadir algún detalle?</h2>
+        <label for="details">Opcional</label><textarea id="details" maxlength="1500" rows="5" placeholder="Añade solo alguna circunstancia que no hayas podido indicar en los pasos anteriores."></textarea>
         <p class="notice">Orientación automática basada en el art. 37.3.d del Estatuto de los Trabajadores. Si faltan datos, será necesario revisar el caso.</p>
         <button id="consult" type="submit" class="primary">Obtener orientación</button>
       </div>
