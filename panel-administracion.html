@@ -63,6 +63,9 @@
         <button id="open-affiliates" class="module" type="button">
           <span><strong>Afiliados</strong><span>Buscar y consultar fichas de afiliados.</span></span><b aria-hidden="true">›</b>
         </button>
+        <button id="open-permit-cases" class="module" type="button">
+          <span><strong>Consultas de permisos</strong><span>Casos enviados por personas afiliadas.</span></span><b aria-hidden="true">›</b>
+        </button>
         <button id="test-gemini" class="module" type="button">
           <span><strong>Probar conexión Gemini</strong><span id="gemini-status" role="status">Prueba técnica interna.</span></span><b aria-hidden="true">›</b>
         </button>
@@ -70,6 +73,11 @@
       </div>
     </section>
 
+    <section id="permit-cases" class="screen" hidden>
+      <div class="screen-head"><button class="screen-back" type="button" data-back="home" aria-label="Volver al panel">‹</button><div><h1>Consultas de permisos</h1><p>Últimos 100 casos enviados</p></div></div>
+      <button id="refresh-permit-cases" class="module" type="button">Actualizar consultas</button>
+      <p id="permit-cases-status" role="status"></p><div id="permit-cases-list"></div>
+    </section>
     <section id="affiliates" class="screen" hidden>
       <div class="screen-head"><button class="screen-back" type="button" data-back="home" aria-label="Volver al panel">‹</button><div><h1>Gestión de afiliados</h1><p>Consulta y búsqueda</p></div></div>
       <div class="panel">
@@ -121,7 +129,7 @@
     const ADMIN_DOCUMENTS=SUPABASE_URL+'/functions/v1/admin-payroll-documents';
     const GEMINI_TEST=SUPABASE_URL+'/functions/v1/gemini-str';
     const supabase=createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY,{auth:{detectSessionInUrl:false,persistSession:true,autoRefreshToken:true}});
-    const screens={home:document.getElementById('home'),affiliates:document.getElementById('affiliates'),detail:document.getElementById('affiliate-detail'),denied:document.getElementById('denied')};
+    const screens={home:document.getElementById('home'),affiliates:document.getElementById('affiliates'),detail:document.getElementById('affiliate-detail'),denied:document.getElementById('denied'),'permit-cases':document.getElementById('permit-cases')};
     const loading=document.getElementById('loading');
     const search=document.getElementById('affiliate-search');
     const list=document.getElementById('affiliate-list');
@@ -230,6 +238,29 @@
     }
 
     document.getElementById('open-affiliates').addEventListener('click',()=>{show('affiliates');loadAffiliates()});
+    async function loadPermitCases(){
+      const status=document.getElementById('permit-cases-status'),list=document.getElementById('permit-cases-list');
+      status.textContent='Cargando consultas…';list.replaceChildren();
+      try{
+        const {data:{session}}=await supabase.auth.getSession();
+        if(!session)throw new Error('NO_SESSION');
+        const response=await fetch(`${SUPABASE_URL}/functions/v1/submit-permit-case`,{method:'POST',signal:AbortSignal.timeout(15000),headers:{Authorization:`Bearer ${session.access_token}`,apikey:SUPABASE_PUBLISHABLE_KEY,'Content-Type':'application/json'},body:JSON.stringify({action:'list'})});
+        const data=await response.json();if(!response.ok)throw new Error(data.error);
+        status.textContent=data.cases?.length?'':'No hay consultas enviadas.';
+        const titles={case:'Tu caso',eligibility:'¿Puede corresponderte?',time:'Tiempo',documents:'Qué debes presentar',next:'Qué hacer ahora'};
+        for(const item of data.cases||[]){
+          const article=document.createElement('article');article.className='panel';
+          addText(article,'h2',item.email);addText(article,'p',new Date(item.created_at).toLocaleString('es-ES'));
+          addText(article,'p','Orientación automática aportada por la persona. Pendiente de revisión por STR.');
+          const facts=document.createElement('dl');
+          const labels={obligation:'Obligación',overlap:'Coincidencia con jornada',outside:'Fuera de horario',date:'Fecha',time:'Hora',workSchedule:'Horario de trabajo',proof:'Justificación',details:'Detalles'};
+          for(const [key,label] of Object.entries(labels)){addText(facts,'dt',label);addText(facts,'dd',String(item.facts?.[key]||'—'))}article.append(facts);
+          for(const [key,title] of Object.entries(titles)){addText(article,'h3',title);addText(article,'p',String(item.guidance?.[key]||''))}list.append(article);
+        }
+      }catch{status.textContent='No se han podido consultar los casos. Comprueba tu acceso de administrador e inténtalo de nuevo.'}
+    }
+    document.getElementById('open-permit-cases').addEventListener('click',()=>{show('permit-cases');loadPermitCases()});
+    document.getElementById('refresh-permit-cases').addEventListener('click',loadPermitCases);
     document.getElementById('test-gemini').addEventListener('click',testGeminiConnection);
     document.querySelectorAll('[data-back]').forEach(button=>button.addEventListener('click',()=>show(button.dataset.back)));
     search.addEventListener('input',renderAffiliates);
