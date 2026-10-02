@@ -26,6 +26,7 @@ Object.entries(dutyChoices).forEach(([field, values], i) => {
     button.textContent = value; button.setAttribute('aria-pressed', 'false');
     button.onclick = () => {
       state[field] = value;
+      if (field === 'obligation' && value !== 'Mesa electoral / elecciones') { document.getElementById('electoralRole').value = ''; document.getElementById('substituteOutcome').value = ''; }
       answers.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b === button)));
       refresh();
     };
@@ -36,16 +37,21 @@ Object.entries(dutyChoices).forEach(([field, values], i) => {
 });
 const screens = [...document.querySelectorAll('.screen')];
 screens.forEach(s => { s.querySelector('h2').tabIndex = -1; });
-const inputs = ['date', 'time', 'workSchedule', 'details'].map(id => document.getElementById(id));
+const inputs = ['date', 'time', 'workSchedule', 'electoralRole', 'substituteOutcome', 'details'].map(id => document.getElementById(id));
+const electoralFields = document.getElementById('electoral-fields');
+const substituteFields = document.getElementById('substitute-fields');
 function facts() { return { ...state, ...Object.fromEntries(inputs.map(i => [i.id, i.value])) }; }
 function saveDraft() {
   try { sessionStorage.setItem(DRAFT, JSON.stringify({ facts: facts(), completed, step })); } catch { /* Consultation works without a draft. */ }
 }
 function refresh() {
+  const election = state.obligation === 'Mesa electoral / elecciones';
+  electoralFields.hidden = !election;
+  substituteFields.hidden = !(election && document.getElementById('electoralRole').value === 'Suplente');
   const fields = { 1: 'obligation', 2: 'overlap', 3: 'outside', 5: 'proof' };
   screens.forEach(s => {
     const next = s.querySelector('.next'); if (!next) return;
-    next.disabled = busy || (s.dataset.step === '4' ? !inputs.slice(0, 3).every(i => i.value.trim() && i.checkValidity()) : !state[fields[s.dataset.step]]);
+    next.disabled = busy || (s.dataset.step === '4' ? (!inputs.slice(0, 3).every(i => i.value.trim() && i.checkValidity()) || (election && (!document.getElementById('electoralRole').value || (document.getElementById('electoralRole').value === 'Suplente' && !document.getElementById('substituteOutcome').value)))) : !state[fields[s.dataset.step]]);
   });
   saveDraft();
 }
@@ -57,7 +63,7 @@ function go(n) {
   saveDraft();
 }
 screens.forEach(s => s.querySelector('.next')?.addEventListener('click', () => go(step + 1)));
-inputs.forEach(i => i.addEventListener('input', refresh));
+inputs.forEach(i => { i.addEventListener('input', refresh); i.addEventListener('change', refresh); });
 previous.onclick = () => go(step - 1);
 document.getElementById('back').onclick = e => { if (busy || step > 1) { e.preventDefault(); if (!busy) go(step - 1); } };
 
@@ -143,7 +149,7 @@ form.onsubmit = async e => {
 try {
   const draft = JSON.parse(sessionStorage.getItem(DRAFT) || 'null');
   if (draft && validDutyFacts(draft.facts)) {
-    Object.keys(state).forEach(k => { state[k] = draft.facts[k]; }); inputs.forEach(i => { i.value = draft.facts[i.id]; });
+    Object.keys(state).forEach(k => { state[k] = draft.facts[k]; }); inputs.forEach(i => { i.value = draft.facts[i.id] || ''; });
     screens.forEach(s => s.querySelectorAll('.answer').forEach(b => b.setAttribute('aria-pressed', String(state[s.dataset.field] === b.textContent))));
     if (draft.completed && validDutyFacts(draft.completed.facts) && validDutyGuidance(draft.completed.guidance)) completed = draft.completed;
     step = completed ? 6 : Math.min(6, Math.max(1, Number(draft.step) || 1));
