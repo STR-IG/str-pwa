@@ -40,7 +40,7 @@ export function electoralGuidance(b) {
     documents: 'Presenta la designación oficial y, si acudiste a la constitución, la acreditación de asistencia y de que finalmente no sustituiste al titular.',
     next: 'Comunica a la empresa la designación y el resultado de la suplencia. Si te ausentaste para presentarte a la constitución, conserva la citación y la acreditación del tiempo empleado para que se valore ese tramo.'
   };
-  const range = b.workSchedule.match(/(\\d{2}:\\d{2})\\s+a\\s+(\\d{2}:\\d{2})/);
+  const range = b.workSchedule.match(/(\d{2}:\d{2})\s+a\s+(\d{2}:\d{2})/);
   let prior = 'No has indicado un turno previo que permita calcular el intervalo.';
   if (range) {
     const end = range[2].split(':').map(Number), start = b.time.split(':').map(Number);
@@ -56,7 +56,7 @@ export function electoralGuidance(b) {
   return {
     case: 'Has indicado que eres ' + b.electoralRole + ' de una mesa electoral y debes presentarte a las ' + b.time + '. Turno del día anterior: ' + b.workSchedule + '. ' + (workday ? 'La votación coincide con tu jornada laboral.' : restday ? 'Indicas que la votación coincide con un día de descanso.' : 'No queda confirmado si coincide con tu jornada laboral.'),
     eligibility: 'Para Presidencia o Vocalía titular, la norma electoral específica prevalece sobre la regla genérica del deber inexcusable. No se aplica aquí el criterio de “solo el tiempo indispensable” al permiso electoral de jornada completa.',
-    time: prior + '\\n\\nDía de la votación: ' + day + ' Día inmediatamente posterior: en todo caso, corresponde una reducción de cinco horas de tu jornada de trabajo, aunque la votación haya coincidido con tu día de descanso.',
+    time: prior + '\n\nDía de la votación: ' + day + ' Día inmediatamente posterior: en todo caso, corresponde una reducción de cinco horas de tu jornada de trabajo, aunque la votación haya coincidido con tu día de descanso.',
     documents: 'Presenta la designación o citación oficial como miembro de la mesa y, cuando corresponda, la acreditación de haber desempeñado el cargo.',
     next: 'Comunica la designación a la empresa por el canal habitual y conserva la citación y la acreditación de asistencia. La jornada completa del día de la votación y la reducción de cinco horas del día siguiente son derechos electorales; el cálculo del descanso previo es un análisis separado.'
   };
