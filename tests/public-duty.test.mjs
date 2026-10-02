@@ -6,7 +6,7 @@ import { runInNewContext } from 'node:vm';
 import { validDutyFacts, dutyFacts, dutySections, validDutyGuidance } from '../public-duty.js';
 import { permitCaseHandler } from '../supabase/functions/_shared/permit-case-core.js';
 
-const facts = { obligation: 'Citación judicial u oficial', overlap: 'Parcialmente', outside: 'No, el horario viene impuesto', date: '2026-10-02', time: '09:00', workSchedule: '22:00 del día anterior a 06:00', proof: 'Todavía no', electoralRole: '', substituteOutcome: '', details: '' };
+const facts = { obligation: 'Citación judicial u oficial', overlap: 'Parcialmente', outside: 'No, el horario viene impuesto', date: '2026-10-02', time: '09:00', workSchedule: '22:00 del día anterior a 06:00', proof: 'Todavía no', electoralRole: '', substituteOutcome: '', electoralDayStatus: '', details: '' };
 const guidance = Object.fromEntries(Object.keys(dutySections).map(k => [k, 'Orientación prudente de prueba.']));
 function loadAnswer(aiGuidance = guidance, ok = true) {
   let handler, calls = [];
