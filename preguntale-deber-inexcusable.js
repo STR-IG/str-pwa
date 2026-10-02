@@ -47,6 +47,7 @@ function saveDraft() {
 function refresh() {
   const election = state.obligation === 'Mesa electoral / elecciones';
   electoralFields.hidden = !election;
+  document.querySelector('label[for="workSchedule"]').textContent = election ? 'Turno del día anterior a la obligación' : 'Turno de trabajo relacionado con la obligación';
   substituteFields.hidden = !(election && document.getElementById('electoralRole').value === 'Suplente');
   const fields = { 1: 'obligation', 2: 'overlap', 3: 'outside', 5: 'proof' };
   screens.forEach(s => {
@@ -63,7 +64,7 @@ function go(n) {
   saveDraft();
 }
 screens.forEach(s => s.querySelector('.next')?.addEventListener('click', () => go(step + 1)));
-inputs.forEach(i => { i.addEventListener('input', refresh); i.addEventListener('change', refresh); });
+inputs.forEach(i => { i.addEventListener('input', refresh); i.addEventListener('change', () => { if (i.id === 'electoralRole' && i.value !== 'Suplente') document.getElementById('substituteOutcome').value = ''; refresh(); }); });
 previous.onclick = () => go(step - 1);
 document.getElementById('back').onclick = e => { if (busy || step > 1) { e.preventDefault(); if (!busy) go(step - 1); } };
 
