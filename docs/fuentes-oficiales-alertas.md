@@ -31,4 +31,4 @@ El comunicado/nota oficial del episodio anunció restricciones de desplazamiento
 
 ## Paso a producción
 
-No desplegar hasta completar el alta Meteocat y confirmar por escrito el permiso/condiciones de publicación en STR-IG. Mantener atribución y fecha de actualización de CECAT/SCT conforme a la licencia. La caché por isolate es best effort; si se requiere consistencia global habrá que añadir almacenamiento compartido o un proceso periódico. La función no está desplegada y no se publicó la PWA.
+La consulta sobre modalidad, cuota y condiciones de difusión de datos Meteocat se ha enviado al contacto oficial `api.meteocat@gencat.cat`; respuesta pendiente. No desplegar esa fuente hasta completar el alta y confirmar por escrito el permiso/condiciones de publicación en STR-IG. Mantener atribución y fecha de actualización de CECAT/SCT conforme a la licencia. La caché por isolate es best effort; si se requiere consistencia global habrá que añadir almacenamiento compartido o un proceso periódico. La función no está desplegada y no se publicó la PWA.
