@@ -1,6 +1,11 @@
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.4/+esm';
+
 const API = 'https://icneigdnuntzugisexaz.supabase.co/functions/v1/';
 const KEY = 'sb_publishable_apKjcPClIBTHS2wwN6qPsA_6Vm4tk9m';
 const STORAGE_KEY = 'strPermitBrowserKeyV1';
+const supabase = createClient('https://icneigdnuntzugisexaz.supabase.co', KEY, {
+  auth: { persistSession: true, autoRefreshToken: true }
+});
 
 export function browserKey() {
   try {
@@ -18,7 +23,9 @@ export function browserKey() {
 function showQuota(quota, message) {
   const el = document.getElementById('permit-quota');
   if (!el) return;
-  el.textContent = message || (quota.remaining === 0
+  el.textContent = message || (quota.unlimited
+    ? 'Tienes consultas ilimitadas con tu cuenta de administración.'
+    : quota.remaining === 0
     ? 'Has agotado tus créditos de consulta de este mes. Se renovarán el día 1 del próximo mes. Mientras tanto, puedes consultar la Guía rápida sin límite.'
     : `Créditos de consulta disponibles este mes: ${quota.remaining} de 2.`);
 }
@@ -27,6 +34,10 @@ export async function permitFetch(url, options = {}) {
   const headers = new Headers(options.headers);
   headers.delete('Authorization');
   headers.set('apikey', KEY);
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.access_token) headers.set('Authorization', `Bearer ${session.access_token}`);
+  } catch { /* Anonymous access keeps the normal monthly quota. */ }
   headers.set('X-Permit-Device', browserKey());
   const response = await fetch(url, { ...options, headers });
   const data = await response.clone().json().catch(() => ({}));

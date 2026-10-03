@@ -6,7 +6,7 @@ export async function permitSubject(req) {
   return Array.from(new Uint8Array(digest), b => b.toString(16).padStart(2, '0')).join('');
 }
 
-export function quotaHandler(handler, rpc, statusOnly = false) {
+export function quotaHandler(handler, rpc, statusOnly = false, isUnlimitedAdmin = async () => false) {
   return async req => {
     const origin = req.headers.get('Origin') || '';
     const local = /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin);
@@ -29,6 +29,15 @@ export function quotaHandler(handler, rpc, statusOnly = false) {
       return data;
     };
     try {
+      const unlimited = await isUnlimitedAdmin(req).catch(() => false);
+      if (unlimited) {
+        const quota = { allowed: true, remaining: -1, unlimited: true };
+        if (statusOnly) return reply({ quota });
+        const response = await handler(req, subject);
+        const body = await response.json().catch(() => ({ error: 'INVALID_RESPONSE' }));
+        const success = response.ok && body?.guidance && typeof body.guidance === 'object';
+        return reply({ ...body, quota }, success ? response.status : (response.ok ? 502 : response.status));
+      }
       const quota = await call(statusOnly ? 'status' : 'reserve');
       if (statusOnly) return reply({ quota });
       if (!quota.allowed) return reply({ error: 'MONTHLY_LIMIT_REACHED', quota }, 429);
