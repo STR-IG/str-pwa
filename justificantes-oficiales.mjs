@@ -8,6 +8,51 @@ export const SOURCES = [
   { id: 'municipal', name: 'Ayuntamientos', domain: 'municat.gencat.cat', terms: '', description: 'Localiza el ayuntamiento en el directorio oficial de Catalunya y accede a su web o sede para buscar bandos y avisos de la fecha indicada.', url: 'https://municat.gencat.cat/ca/Temes/els-ens-locals-de-catalunya/consulta-de-dades/', label: 'Abrir directorio de ayuntamientos' }
 ];
 
+
+// Municipality coverage follows Idescat's official territorial list as of 1 January 2025.
+const DOGC_RESTRICTIONS = [{
+  id: 'ISP-3175-2026',
+  title: 'Resolución ISP/3175/2026 · DOGC 9747A',
+  publishedDate: '2026-09-08',
+  effectiveDate: '2026-09-09',
+  startTime: '07:00',
+  endTime: '17:00',
+  url: 'https://portaldogc.gencat.cat/utilsEADOP/PDF/9747A/2169708.pdf',
+  counties: {
+    'Alt Penedès': [
+      'Avinyonet del Penedès', 'Les Cabanyes', 'Castellet i la Gornal', 'Castellví de la Marca', 'Font-rubí', 'Gelida', 'La Granada', 'Mediona', 'Olesa de Bonesvalls', 'Olèrdola', 'Pacs del Penedès', 'El Pla del Penedès', 'Pontons', 'Puigdàlber', 'Sant Cugat Sesgarrigues', "Sant Llorenç d'Hortons", 'Sant Martí Sarroca', 'Sant Pere de Riudebitlles', 'Sant Quintí de Mediona', "Sant Sadurní d'Anoia", 'Santa Fe del Penedès', 'Santa Margarida i els Monjos', 'Subirats', 'Torrelavit', 'Torrelles de Foix', 'Vilafranca del Penedès', 'Vilobí del Penedès'
+    ],
+    'Baix Llobregat': [
+      'Abrera', 'Begues', 'Castelldefels', 'Castellví de Rosanes', 'Cervelló', 'Collbató', 'Corbera de Llobregat', 'Cornellà de Llobregat', 'Esparreguera', 'Esplugues de Llobregat', 'Gavà', 'Martorell', 'Molins de Rei', 'Olesa de Montserrat', 'Pallejà', 'La Palma de Cervelló', 'El Papiol', 'El Prat de Llobregat', 'Sant Andreu de la Barca', 'Sant Boi de Llobregat', 'Sant Climent de Llobregat', 'Sant Esteve Sesrovires', 'Sant Feliu de Llobregat', 'Sant Joan Despí', 'Sant Just Desvern', 'Sant Vicenç dels Horts', 'Santa Coloma de Cervelló', 'Torrelles de Llobregat', 'Vallirana', 'Viladecans'
+    ],
+    'Baix Penedès': [
+      'Albinyana', "L'Arboç", 'Banyeres del Penedès', 'Bellvei', 'La Bisbal del Penedès', 'Bonastre', 'Calafell', 'Cunit', 'Llorenç del Penedès', 'Masllorenç', 'El Montmell', 'Sant Jaume dels Domenys', 'Santa Oliva', 'El Vendrell'
+    ],
+    Garraf: ['Canyelles', 'Cubelles', 'Olivella', 'Sant Pere de Ribes', 'Sitges', 'Vilanova i la Geltrú'],
+    'Vallès Occidental': [
+      'Badia del Vallès', 'Barberà del Vallès', 'Castellar del Vallès', 'Castellbisbal', 'Cerdanyola del Vallès', 'Gallifa', 'Matadepera', 'Montcada i Reixac', 'Palau-solità i Plegamans', 'Polinyà', 'Rellinars', 'Ripollet', 'Rubí', 'Sabadell', 'Sant Cugat del Vallès', 'Sant Llorenç Savall', 'Sant Quirze del Vallès', 'Santa Perpètua de Mogoda', 'Sentmenat', 'Terrassa', 'Ullastrell', 'Vacarisses', 'Viladecavalls'
+    ]
+  }
+}];
+
+function normalizeMunicipality(value) {
+  return String(value || '').normalize('NFD').replace(/\p{M}/gu, '').toLowerCase()
+    .replace(/[’']/g, ' ').replace(/,/g, ' ').replace(/\s+/g, ' ').trim()
+    .replace(/^(el|la|les|l)\s+/, '').replace(/\s+(el|la|les|l)$/, '');
+}
+
+export function applicableDogcResolutions({ date, location } = {}) {
+  const municipality = normalizeMunicipality(location);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date || '') || !municipality) return [];
+  return DOGC_RESTRICTIONS.flatMap(resolution => {
+    if (date !== resolution.effectiveDate) return [];
+    const county = Object.entries(resolution.counties).find(([, names]) =>
+      names.some(name => normalizeMunicipality(name) === municipality)
+    );
+    return county ? [{ ...resolution, matchedMunicipality: String(location).trim(), matchedCounty: county[0] }] : [];
+  });
+}
+
 const INCIDENTS = { all: true, rain: true, wind: true, snow: true, heat: true, traffic: true };
 
 export function localToday(now = new Date()) {

@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';
-import { SOURCES, localToday, validateSearch, officialDocumentUrl, privateAccess } from '../justificantes-oficiales.mjs';
+import { SOURCES, localToday, validateSearch, officialDocumentUrl, privateAccess, applicableDogcResolutions } from '../justificantes-oficiales.mjs';
 
 const criteria = { date: '2024-10-29', location: 'Tarragona', incident: 'rain' };
 test('card única en Área privada, imagen existente y retorno permitido tras login', () => {
@@ -14,6 +14,19 @@ test('card única en Área privada, imagen existente y retorno permitido tras lo
   assert.match(login, /'justificantes-oficiales.html'/);
   assert.ok(existsSync(new URL('../justificantes-oficiales.png', import.meta.url)));
 });
+
+test('encuentra la resolución DOGC del 9 de septiembre por municipio y comarca', () => {
+  const [viladecans] = applicableDogcResolutions({ date: '2026-09-09', location: 'Viladecans' });
+  assert.equal(viladecans.title, 'Resolución ISP/3175/2026 · DOGC 9747A');
+  assert.equal(viladecans.matchedCounty, 'Baix Llobregat');
+  assert.equal(viladecans.startTime, '07:00');
+  assert.ok(viladecans.url.endsWith('/9747A/2169708.pdf'));
+  assert.equal(applicableDogcResolutions({ date: '2026-09-08', location: 'Viladecans' }).length, 0);
+  assert.equal(applicableDogcResolutions({ date: '2026-09-09', location: 'Parets del Vallès' }).length, 0);
+  assert.equal(applicableDogcResolutions({ date: '2026-09-09', location: 'El Prat de Llobregat' })[0].matchedCounty, 'Baix Llobregat');
+  assert.equal(applicableDogcResolutions({ date: '2026-09-09', location: 'Sabadell' })[0].matchedCounty, 'Vallès Occidental');
+});
+
 test('valida fechas reales, futuras y ubicaciones vacías', () => {
   assert.equal(localToday(new Date(2026, 0, 2, 0, 10)), '2026-01-02');
   assert.deepEqual(validateSearch({ ...criteria, location: '  La   Sénia  ' }), { ...criteria, location: 'La Sénia' });

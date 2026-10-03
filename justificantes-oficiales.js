@@ -1,4 +1,4 @@
-import { SOURCES, localToday, validateSearch, officialDocumentUrl, privateAccess } from './justificantes-oficiales.mjs';
+import { SOURCES, localToday, validateSearch, officialDocumentUrl, privateAccess, applicableDogcResolutions } from './justificantes-oficiales.mjs';
 
 const content = document.getElementById('private-content');
 const checking = document.getElementById('checking');
@@ -33,6 +33,23 @@ function externalLink(label, href, className = '') {
   link.className = className;
   link.setAttribute('aria-label', `${label} (abre una pestaña nueva)`);
   return link;
+}
+
+function renderDogcResolutions(criteria) {
+  return applicableDogcResolutions(criteria).map(resolution => {
+    const card = document.createElement('article');
+    card.className = 'source official-resolution';
+    const title = document.createElement('h3');
+    title.textContent = resolution.title;
+    const dates = document.createElement('p');
+    dates.textContent = `Medidas aplicables el 9 de septiembre de 2026, de 07:00 a 17:00.`;
+    const scope = document.createElement('p');
+    scope.textContent = `La resolución incluye ${resolution.matchedMunicipality}, en la comarca del ${resolution.matchedCounty}.`;
+    const note = document.createElement('p');
+    note.textContent = 'Documento oficial sobre restricciones y limitaciones. Revisa su contenido y las circunstancias concretas de tu desplazamiento.';
+    card.append(title, dates, scope, note, externalLink('Abrir resolución oficial del DOGC', resolution.url));
+    return card;
+  });
 }
 
 function renderSources() {
@@ -102,6 +119,8 @@ form.addEventListener('submit', async event => {
     const criteria = validateSearch({ date: date.value, location: locationInput.value, incident: incident.value });
     const [year, month, day] = criteria.date.split('-');
     const context = `${day}/${month}/${year} · ${criteria.location}`;
+    const dogcDocuments = renderDogcResolutions(criteria);
+    document.getElementById('documents').replaceChildren(...dogcDocuments);
     summary.textContent = `Consultando el catálogo oficial de Meteocat para ${context}…`;
     submit.disabled = true;
     submit.textContent = 'Consultando fuente oficial…';
@@ -146,9 +165,9 @@ form.addEventListener('submit', async event => {
         card.append(title, issuer, externalLink('Abrir certificado oficial (PDF)', url));
         return card;
       });
-      document.getElementById('documents').replaceChildren(...cards);
+      document.getElementById('documents').replaceChildren(...dogcDocuments, ...cards);
     }
-    summary.textContent = descriptions[result.status];
+    summary.textContent = descriptions[result.status] + (dogcDocuments.length ? ' También aparece la resolución del DOGC aplicable a este municipio y fecha.' : '');
     document.getElementById('results-title').focus();
   } catch (issue) {
     if (version !== searchVersion) return;
