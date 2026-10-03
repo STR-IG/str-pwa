@@ -57,7 +57,8 @@ export function parseSctRss(xml) {
       direction: description.match(/Sentit\s+([^|]+)/i)?.[1]?.trim() || null,
       cause: title.split(/[.(]/)[0]?.trim() || null,
       status: title,
-      startAt: parsePubDate(xmlField(item, 'pubDate')),
+      // RSS publication time is an update timestamp, not the incident start time.
+      startAt: null,
       endAt: null,
       updatedAt: parsePubDate(xmlField(item, 'pubDate')),
       officialUrl: 'https://cit.transit.gencat.cat/cit/AppJava/views/incidents.xhtml',
