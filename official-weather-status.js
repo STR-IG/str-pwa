@@ -1,3 +1,5 @@
+import { trafficFeedState } from './official-weather-data.mjs';
+
 const SUPABASE_URL = 'https://icneigdnuntzugisexaz.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_apKjcPClIBTHS2wwN6qPsA_6Vm4tk9m';
 const API_URL = `${SUPABASE_URL}/functions/v1/official-weather-status`;
@@ -12,7 +14,7 @@ const localTime = value => {
   const parsed = local ? new Date(Number(local[3]), Number(local[2]) - 1, Number(local[1]), Number(local[4]), Number(local[5])) : new Date(value);
   return Number.isNaN(parsed.getTime()) ? esc(value) : new Intl.DateTimeFormat('es-ES', { dateStyle: 'short', timeStyle: 'short', timeZone: 'Europe/Madrid' }).format(parsed);
 };
-const icon = severity => ({ red: '🔴', orange: '🟠', yellow: '🟡', green: '🟢' })[severity] || '🟡';
+const icon = severity => ({ red: '🔴', orange: '🟠', yellow: '🟡', green: '🟢', neutral: 'ℹ️' })[severity] || 'ℹ️';
 const officialHref = value => { try { const url = new URL(value); return url.protocol === 'https:' && url.hostname.endsWith('gencat.cat') ? url.href : null; } catch (_error) { return null; } };
 
 async function loadSnapshot(municipality = '', force = false) {
@@ -32,7 +34,7 @@ async function loadSnapshot(municipality = '', force = false) {
 }
 
 function sourceState(source, label) {
-  if (source?.status === 'ok') return `<span class="live-ok">Fuente consultada ${esc(localTime(source.updatedAt || source.checkedAt))}</span>`;
+  if (source?.status === 'ok') return `<span class="live-ok">Consulta a la fuente: ${esc(localTime(source.checkedAt))}</span>`;
   const last = source?.lastSuccessAt ? ` Último dato válido: ${esc(localTime(source.lastSuccessAt))}.` : '';
   return `<span class="live-error">⚠️ No se ha podido actualizar esta fuente (${esc(label)}).${last}</span>`;
 }
@@ -45,7 +47,7 @@ function renderWeather(root, data) {
     ? `<article class="live-priority"><strong>Protecció Civil · prioridad de seguridad</strong><h3>⚠️ Estado de planes sin verificar</h3><p>${esc(pc.error || 'No se ha podido actualizar esta fuente.')}</p><p>${sourceState(pc, 'Protecció Civil')}</p><a href="https://interior.gencat.cat/ca/arees_dactuacio/proteccio_civil/plans-proteccio-civil/plans-especials/" target="_blank" rel="noopener noreferrer">Consultar estado oficial ↗</a></article>`
     : pcAlerts.length ? pcAlerts.map(alert => {
       const bulletin = officialHref(alert.bulletinUrl);
-      return `<article class="live-priority live-${esc(alert.severity)}"><h3>${icon(alert.severity)} ALERTA OFICIAL ACTIVA · ${esc(alert.title)}</h3><p>${esc(alert.description || '')}</p><p><strong>Inicio/fase:</strong> ${esc(localTime(alert.startAt))} · <strong>Finalización:</strong> no indicada en el conjunto.</p><p><strong>Territorio e instrucciones:</strong> consulta el comunicado CECAT vinculado; el conjunto no incluye esos campos en este registro.</p>${bulletin ? `<p><a href="${esc(bulletin)}" target="_blank" rel="noopener noreferrer">Comunicado oficial CECAT ↗</a></p>` : ''}<p><a href="https://analisi.transparenciacatalunya.cat/d/wj9c-j6vf" target="_blank" rel="noopener noreferrer">Conjunto oficial de planes activos ↗</a></p><p>${sourceState(pc, 'Protecció Civil')}</p></article>`;
+      return `<article class="live-priority live-${esc(alert.severity)}"><h3>${icon(alert.severity)} ALERTA OFICIAL ACTIVA · ${esc(alert.title)}</h3><p>${esc(alert.description || '')}</p><p><strong>Último cambio de fase:</strong> ${esc(localTime(alert.phaseChangedAt))} · <strong>Finalización:</strong> no indicada en el conjunto.</p><p><strong>Territorio e instrucciones:</strong> consulta el comunicado CECAT vinculado; el conjunto no incluye esos campos en este registro.</p>${bulletin ? `<p><a href="${esc(bulletin)}" target="_blank" rel="noopener noreferrer">Comunicado oficial CECAT ↗</a></p>` : ''}<p><a href="https://analisi.transparenciacatalunya.cat/d/wj9c-j6vf" target="_blank" rel="noopener noreferrer">Conjunto oficial de planes activos ↗</a></p><p>${sourceState(pc, 'Protecció Civil')}</p></article>`;
     }).join('')
     : `<article class="live-priority"><h3>🟢 SIN PLANES ACTIVOS según el conjunto de Protección Civil</h3><p>Consulta realizada: ${esc(localTime(pc.checkedAt || data.checkedAt))}. El organismo documenta que el conjunto queda vacío cuando no hay planes activos.</p><a href="https://analisi.transparenciacatalunya.cat/d/wj9c-j6vf" target="_blank" rel="noopener noreferrer">Conjunto oficial ↗</a><p>${sourceState(pc, 'Protecció Civil')}</p></article>`;
   const alerts = meteo.alerts || [];
@@ -68,18 +70,22 @@ function renderWeather(root, data) {
 function renderRoads(root, data) {
   const traffic = data.sources?.traffic || {};
   const incidents = traffic.incidents || [];
-  const body = traffic.status !== 'ok'
+  const state = trafficFeedState(traffic);
+  const body = state === 'unavailable'
     ? `<article class="live-alert"><h3>⚠️ Estado de carreteras no confirmado</h3><p>${esc(traffic.error || 'No se ha podido actualizar esta fuente.')}</p><p>${sourceState(traffic, 'Servei Català de Trànsit')}</p></article>`
-    : incidents.length ? `${incidents.slice(0, 12).map(item => `<article class="live-road live-${esc(item.severity)}"><h3>${icon(item.severity)} ${esc(({ 'road-closure': 'Carretera cortada', 'traffic-affected': 'Circulación afectada', caution: 'Precaución' })[item.type] || 'Incidencia')} · ${esc(item.road || 'Vía no indicada')}</h3><p><strong>Punto/tramo:</strong> ${esc(item.location || item.description || 'No indicado')}${item.direction ? ` · <strong>Sentido:</strong> ${esc(item.direction)}` : ''}</p><p><strong>Estado/causa:</strong> ${esc(item.status || item.cause || item.title)}</p><p>Actualización de la incidencia: ${esc(localTime(item.updatedAt || traffic.updatedAt))}</p></article>`).join('')}${incidents.length > 12 ? `<p class="live-muted">Se muestran las 12 incidencias prioritarias de ${incidents.length}; consulta el mapa oficial para más detalle.</p>` : ''}`
-      : '<article class="live-alert"><h3>Feed del SCT sin incidencias publicadas</h3><p>Comprueba también el mapa oficial para tu trayecto.</p></article>';
-  root.innerHTML = `<div class="live-toolbar"><strong>${traffic.status === 'ok' ? `${incidents.length} incidencias publicadas` : 'Estado no confirmado'}</strong><button type="button" data-refresh>Actualizar</button></div>${body}<p class="live-updated">Consulta realizada: ${esc(localTime(data.checkedAt))}</p><a class="button button-secondary" href="https://mct.gencat.cat/" target="_blank" rel="noopener noreferrer">Abrir mapa oficial ↗</a>`;
+    : state === 'incidents' ? `${incidents.slice(0, 12).map(item => {
+      const label = ({ 'road-closure': 'Carretera cortada', 'traffic-affected': 'Circulación afectada', unclassified: 'Incidencia sin clasificar' })[item.type] || 'Incidencia sin clasificar';
+      return `<article class="live-road live-${esc(item.severity || 'neutral')}"><h3>${icon(item.severity)} ${esc(label)} · ${esc(item.road || 'Vía no indicada')}</h3><p><strong>Punto/tramo:</strong> ${esc(item.location || item.description || 'No indicado')}${item.direction ? ` · <strong>Sentido:</strong> ${esc(item.direction)}` : ''}</p><p><strong>Descripción SCT:</strong> ${esc(item.status || item.title)}</p><p>Publicado por SCT: ${esc(localTime(item.publishedAt || traffic.updatedAt))}</p></article>`;
+    }).join('')}${incidents.length > 12 ? `<p class="live-muted">Se muestran las 12 incidencias prioritarias de ${incidents.length}; consulta el mapa oficial para más detalle.</p>` : ''}`
+      : '<article class="live-alert"><h3>El RSS no publica incidencias en esta consulta</h3><p>Comprueba también el mapa oficial para tu trayecto.</p></article>';
+  root.innerHTML = `<div class="live-toolbar"><strong>${state === 'incidents' ? `${incidents.length} incidencias publicadas` : state === 'empty' ? 'Feed consultado, sin incidencias publicadas' : 'Estado no confirmado'}</strong><button type="button" data-refresh>Actualizar</button></div><p class="live-muted">La fecha del RSS es de publicación: no confirma por sí sola el inicio, la actualización más reciente ni la finalización de la incidencia. Comprueba la vigencia en el CIT.</p>${body}<p class="live-updated">Consulta realizada: ${esc(localTime(data.checkedAt))}</p><a class="button button-secondary" href="https://mct.gencat.cat/" target="_blank" rel="noopener noreferrer">Abrir mapa oficial ↗</a>`;
   root.querySelector('[data-refresh]')?.addEventListener('click', async () => { root.setAttribute('aria-busy', 'true'); renderRoads(root, await loadSnapshot('', true)); root.removeAttribute('aria-busy'); });
 }
 
 function addStyles() {
   if (document.getElementById('official-weather-styles')) return;
   const style = document.createElement('style'); style.id = 'official-weather-styles';
-  style.textContent = `.live-panel{display:grid;gap:12px;margin:0 0 24px}.live-panel article,.live-forecast{border:1px solid #e4e4e7;border-radius:16px;padding:16px;background:white}.live-priority{border-left:5px solid #e30613!important;background:#fff7f7!important}.live-panel h3{font-size:17px;margin:0 0 8px}.live-panel p{margin:8px 0;color:#444;line-height:1.5}.live-updated,.live-ok,.live-error{font-size:13px;color:#626269}.live-error{color:#9b1c1c;font-weight:bold}.live-red{border-left:5px solid #d90000!important}.live-orange{border-left:5px solid #ed7d00!important}.live-yellow{border-left:5px solid #dfb000!important}.live-toolbar{display:flex;justify-content:space-between;align-items:center}.live-toolbar button,.live-forecast button{border:0;border-radius:999px;background:#e30613;color:white;padding:12px 18px;font-weight:bold}.live-forecast form{display:flex;gap:8px;flex-wrap:wrap;align-items:end}.live-forecast label{display:block;width:100%;font-size:14px}.live-forecast input{min-width:0;flex:1;padding:12px;border:1px solid #bbb;border-radius:10px;font:inherit}.live-panel a{color:#b9000b;font-weight:bold}.live-panel[aria-busy=true]{opacity:.65;pointer-events:none}@media(max-width:580px){.live-toolbar{gap:10px}}`;
+  style.textContent = `.live-panel{display:grid;gap:12px;margin:0 0 24px}.live-panel article,.live-forecast{border:1px solid #e4e4e7;border-radius:16px;padding:16px;background:white}.live-priority{border-left:5px solid #e30613!important;background:#fff7f7!important}.live-panel h3{font-size:17px;margin:0 0 8px}.live-panel p{margin:8px 0;color:#444;line-height:1.5}.live-updated,.live-ok,.live-error{font-size:13px;color:#626269}.live-error{color:#9b1c1c;font-weight:bold}.live-red{border-left:5px solid #d90000!important}.live-orange{border-left:5px solid #ed7d00!important}.live-yellow{border-left:5px solid #dfb000!important}.live-neutral{border-left:5px solid #9ca3af!important}.live-toolbar{display:flex;justify-content:space-between;align-items:center}.live-toolbar button,.live-forecast button{border:0;border-radius:999px;background:#e30613;color:white;padding:12px 18px;font-weight:bold}.live-forecast form{display:flex;gap:8px;flex-wrap:wrap;align-items:end}.live-forecast label{display:block;width:100%;font-size:14px}.live-forecast input{min-width:0;flex:1;padding:12px;border:1px solid #bbb;border-radius:10px;font:inherit}.live-panel a{color:#b9000b;font-weight:bold}.live-panel[aria-busy=true]{opacity:.65;pointer-events:none}@media(max-width:580px){.live-toolbar{gap:10px}}`;
   document.head.append(style);
 }
 
