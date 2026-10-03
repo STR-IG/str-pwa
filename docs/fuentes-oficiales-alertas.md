@@ -17,11 +17,15 @@
 
 ## Modelo y actualización
 
-La Edge Function normaliza cada fila/aviso/incidencia con fuente, tipo, severidad, título, descripción, territorio/vía cuando exista, periodo, hora de actualización y enlace oficial. `checkedAt` es la hora de consulta de STR; `updatedAt` mantiene la hora que reporta la fuente. Una respuesta inválida o fallo no reutiliza el dato activo anterior. Se conserva solo la hora de la última respuesta válida en la memoria del isolate.
+La Edge Function normaliza cada aviso/incidencia con fuente, tipo, severidad, título, descripción, territorio/vía cuando exista, periodo y enlace oficial. `checkedAt` es la hora de consulta de STR. En SCT, `pubDate` se guarda como `publishedAt`: fecha de publicación del elemento; no confirma cuándo empezó, se actualizó por última vez ni cuándo termina la incidencia. La interfaz lo etiqueta como publicación y pide comprobar la vigencia en el CIT. Una respuesta inválida o fallo no reutiliza el dato activo anterior. Se conserva solo la hora de la última respuesta válida en la memoria del isolate.
 
-Protección Civil: un array JSON válido vacío se interpreta como “sin planes activos” porque la página oficial documenta ese significado. Si el endpoint falla, el estado es desconocido, nunca verde. El TTL del isolate es 2 min; referencias Meteocat, 24 h. No existe caché compartida entre isolates. La interfaz tiene actualización manual y limita llamadas del cliente a 2 min salvo acción explícita. No se persiste ubicación ni municipio.
+Protección Civil: un array JSON válido vacío se interpreta como “sin planes activos” porque la página oficial documenta ese significado. Si el endpoint falla, el estado es desconocido, nunca verde. La instantánea de Protección Civil, SCT y SMP usa caché común por isolate de 2 min, independiente del municipio, y agrupa peticiones simultáneas. Las previsiones horarias se cachean 10 min por código municipal oficial; los errores, 2 min; se limitan a 64 municipios por isolate. Las referencias Meteocat se cachean 24 h y las peticiones simultáneas se agrupan. No existe caché compartida entre isolates, así que sigue siendo caché best effort. Meteocat queda desactivado salvo opt-in explícito `METEOCAT_ENABLED=true`; sin ese opt-in no se lee `METEOCAT_API_KEY` ni se llama a su API. La interfaz limita llamadas del cliente a 2 min salvo actualización manual. No se persiste ubicación ni municipio.
 
 El conjunto CECAT no siempre publica campos separados de territorio, restricciones ni finalización. En esos casos la interfaz muestra que faltan en el registro y enlaza el comunicado oficial. No se extrae automáticamente texto del PDF ni se infieren instrucciones.
+
+## Muestra real del RSS del SCT
+
+Fixture reproducible copiado de `https://www.gencat.cat/transit/opendata/incidenciesRSS.xml`, consultado el 03/10/2026 a las 22:47 CEST. La respuesta tenía 150 elementos. Entre ellos: `REFORÇAMENT DE FERM. Calçada tallada (Obres)` (A-2, Jorba; publicado el 10/09), `NETEJA. Calçada restringida (Obres)` (A-2, Bruc; 22/09), `INUNDACIONS. Trànsit lent (Meteorologia)` (C-32, Esplugues; 03/10 20:32 GMT) e `INUNDACIONS. Trànsit intens (Meteorologia)` (C-35, Vidreres; 03/10 20:29 GMT). El último también contiene `TALLADA SORTIDA 87` en el campo del sentido: no significa que la carretera esté cortada. Los cuatro elementos y sus campos originales están fijados en `test/official-weather.test.mjs`.
 
 ## Prueba real: episodio 3–4 de octubre de 2026
 
