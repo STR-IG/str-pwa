@@ -6,8 +6,14 @@ let lastFetch = 0;
 let lastSnapshot;
 
 const esc = (v = '') => String(v).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
-const localTime = value => value ? new Intl.DateTimeFormat('es-ES', { dateStyle: 'short', timeStyle: 'short', timeZone: 'Europe/Madrid' }).format(new Date(value)) : 'No indicado por la fuente';
+const localTime = value => {
+  if (!value) return 'No indicado por la fuente';
+  const local = String(value).match(/^(\d{2})\/(\d{2})\/(\d{4})\s+(\d{2}):(\d{2})$/);
+  const parsed = local ? new Date(Number(local[3]), Number(local[2]) - 1, Number(local[1]), Number(local[4]), Number(local[5])) : new Date(value);
+  return Number.isNaN(parsed.getTime()) ? esc(value) : new Intl.DateTimeFormat('es-ES', { dateStyle: 'short', timeStyle: 'short', timeZone: 'Europe/Madrid' }).format(parsed);
+};
 const icon = severity => ({ red: '🔴', orange: '🟠', yellow: '🟡', green: '🟢' })[severity] || '🟡';
+const officialHref = value => { try { const url = new URL(value); return url.protocol === 'https:' && url.hostname.endsWith('gencat.cat') ? url.href : null; } catch (_error) { return null; } };
 
 async function loadSnapshot(municipality = '', force = false) {
   if (!force && lastSnapshot && Date.now() - lastFetch < REFRESH_MS) return lastSnapshot;
@@ -34,7 +40,14 @@ function sourceState(source, label) {
 function renderWeather(root, data) {
   const pc = data.sources?.civilProtection || {};
   const meteo = data.sources?.meteocat || {};
-  const pcHtml = `<article class="live-priority"><strong>Protecció Civil · prioridad de seguridad</strong><p>El estado de INUNCAT y las restricciones no se pueden confirmar automáticamente. Consulta aquí las instrucciones vigentes; este estado no significa que no haya alerta.</p><a href="${esc(pc.officialUrl || 'https://interior.gencat.cat/ca/sales_de_premsa/noticies_de_proteccio_civil/index.html')}" target="_blank" rel="noopener noreferrer">Avisos oficiales de Protecció Civil ↗</a><p>${sourceState(pc, 'Protecció Civil')}</p></article>`;
+  const pcAlerts = pc.alerts || [];
+  const pcHtml = pc.status !== 'ok'
+    ? `<article class="live-priority"><strong>Protecció Civil · prioridad de seguridad</strong><h3>⚠️ Estado de planes sin verificar</h3><p>${esc(pc.error || 'No se ha podido actualizar esta fuente.')}</p><p>${sourceState(pc, 'Protecció Civil')}</p><a href="https://interior.gencat.cat/ca/arees_dactuacio/proteccio_civil/plans-proteccio-civil/plans-especials/" target="_blank" rel="noopener noreferrer">Consultar estado oficial ↗</a></article>`
+    : pcAlerts.length ? pcAlerts.map(alert => {
+      const bulletin = officialHref(alert.bulletinUrl);
+      return `<article class="live-priority live-${esc(alert.severity)}"><h3>${icon(alert.severity)} ALERTA OFICIAL ACTIVA · ${esc(alert.title)}</h3><p>${esc(alert.description || '')}</p><p><strong>Inicio/fase:</strong> ${esc(localTime(alert.startAt))} · <strong>Finalización:</strong> no indicada en el conjunto.</p><p><strong>Territorio e instrucciones:</strong> consulta el comunicado CECAT vinculado; el conjunto no incluye esos campos en este registro.</p>${bulletin ? `<p><a href="${esc(bulletin)}" target="_blank" rel="noopener noreferrer">Comunicado oficial CECAT ↗</a></p>` : ''}<p><a href="https://analisi.transparenciacatalunya.cat/d/wj9c-j6vf" target="_blank" rel="noopener noreferrer">Conjunto oficial de planes activos ↗</a></p><p>${sourceState(pc, 'Protecció Civil')}</p></article>`;
+    }).join('')
+    : `<article class="live-priority"><h3>🟢 SIN PLANES ACTIVOS según el conjunto de Protección Civil</h3><p>Consulta realizada: ${esc(localTime(pc.checkedAt || data.checkedAt))}. El organismo documenta que el conjunto queda vacío cuando no hay planes activos.</p><a href="https://analisi.transparenciacatalunya.cat/d/wj9c-j6vf" target="_blank" rel="noopener noreferrer">Conjunto oficial ↗</a><p>${sourceState(pc, 'Protecció Civil')}</p></article>`;
   const alerts = meteo.alerts || [];
   const meteoHtml = meteo.status !== 'ok'
     ? `<article class="live-alert"><h3>⚠️ Avisos meteorológicos sin verificar</h3><p>${esc(meteo.error || 'No se ha podido actualizar esta fuente.')}</p><p>${sourceState(meteo, 'Meteocat')}</p><a href="${esc(meteo.officialUrl || 'https://www.meteo.cat/prediccio/general')}" target="_blank" rel="noopener noreferrer">Consultar Meteocat ↗</a></article>`
