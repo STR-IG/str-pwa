@@ -1,5 +1,6 @@
 import {
   normalizeHourlyForecast,
+  normalizeCivilProtectionPlans,
   normalizeSmpEpisodes,
   parseSctRss,
   SOURCE_URLS,
@@ -8,6 +9,7 @@ import {
 const CACHE_TTL_MS = 2 * 60 * 1000;
 const REFERENCE_TTL_MS = 24 * 60 * 60 * 1000;
 const SCT_RSS_URL = 'https://www.gencat.cat/transit/opendata/incidenciesRSS.xml';
+const CIVIL_PROTECTION_URL = 'https://analisi.transparenciacatalunya.cat/resource/wj9c-j6vf.json';
 const METEOCAT_API = 'https://api.meteo.cat';
 const cache = new Map<string, { expiresAt: number; value: unknown }>();
 const lastSuccessAt = new Map<string, string>();
@@ -59,6 +61,18 @@ async function requestText(url: string) {
   const result = await fetch(url, { headers: { Accept: 'application/rss+xml, application/xml, text/xml' }, signal: AbortSignal.timeout(12_000), cache: 'no-store' });
   if (!result.ok) throw new Error(`La fuente respondió HTTP ${result.status}.`);
   return await result.text();
+}
+
+async function fetchCivilProtection() {
+  const rows = await requestJson(CIVIL_PROTECTION_URL, { Accept: 'application/json' });
+  const alerts = normalizeCivilProtectionPlans(rows);
+  const checkedAt = new Date().toISOString();
+  lastSuccessAt.set('civilProtection', checkedAt);
+  return {
+    source: 'Protecció Civil de Catalunya / CECAT', status: 'ok', checkedAt,
+    updatedAt: alerts.reduce((latest, alert) => !latest || String(alert.updatedAt || '') > String(latest) ? alert.updatedAt : latest, null as string | null),
+    lastSuccessAt: checkedAt, officialUrl: CIVIL_PROTECTION_URL, alerts, incidents: [],
+  };
 }
 
 async function getReferences(apiKey: string) {
@@ -113,11 +127,12 @@ async function fetchForecast(apiKey: string, requestedName: string, municipality
 
 async function buildSnapshot(municipality: string) {
   const now = new Date().toISOString();
-  const civilProtection = {
-    source: 'Protecció Civil de Catalunya', status: 'unavailable', checkedAt: now, lastSuccessAt: null, updatedAt: null,
-    officialUrl: SOURCE_URLS.civilProtection, alerts: [], incidents: [],
-    error: 'No se ha localizado un feed estructurado oficial para activar o desactivar INUNCAT y sus restricciones. Consulta la fuente oficial; no se interpreta como ausencia de alertas.',
-  };
+
+  let civilProtection;
+  try { civilProtection = await fetchCivilProtection(); }
+  catch (error) {
+    civilProtection = sourceFailure('Protecció Civil de Catalunya / CECAT', CIVIL_PROTECTION_URL, new Date().toISOString(), error instanceof Error ? error.message : 'No se ha podido actualizar esta fuente.', lastSuccessAt.get('civilProtection') || null);
+  }
 
   let traffic;
   try {
@@ -179,7 +194,7 @@ Deno.serve(async (request: Request) => {
     return response({
       checkedAt: new Date().toISOString(), overallStatus: 'incomplete',
       sources: {
-        civilProtection: sourceFailure('Protecció Civil de Catalunya', SOURCE_URLS.civilProtection, new Date().toISOString(), 'No se ha podido actualizar esta fuente.'),
+        civilProtection: sourceFailure('Protecció Civil de Catalunya / CECAT', CIVIL_PROTECTION_URL, new Date().toISOString(), 'No se ha podido actualizar esta fuente.', lastSuccessAt.get('civilProtection') || null),
         meteocat: sourceFailure('Servei Meteorològic de Catalunya', SOURCE_URLS.meteocat, new Date().toISOString(), 'No se ha podido actualizar esta fuente.', lastSuccessAt.get('meteocat') || null),
         traffic: sourceFailure('Servei Català de Trànsit', SCT_RSS_URL, new Date().toISOString(), 'No se ha podido actualizar esta fuente.', lastSuccessAt.get('traffic') || null),
       }, forecast: { status: 'unavailable', municipality: municipality || null, hours: [], officialUrl: SOURCE_URLS.meteocat, error: 'No se ha podido actualizar esta fuente.' },
