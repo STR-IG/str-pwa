@@ -7,13 +7,21 @@ import {
 } from '../_shared/official-weather-data.mjs';
 
 const CACHE_TTL_MS = 2 * 60 * 1000;
+const FORECAST_TTL_MS = 10 * 60 * 1000;
+const MAX_FORECAST_CACHE_ENTRIES = 64;
 const REFERENCE_TTL_MS = 24 * 60 * 60 * 1000;
+const METEOCAT_ENABLED = Deno.env.get('METEOCAT_ENABLED')?.toLowerCase() === 'true';
 const SCT_RSS_URL = 'https://www.gencat.cat/transit/opendata/incidenciesRSS.xml';
 const CIVIL_PROTECTION_URL = 'https://analisi.transparenciacatalunya.cat/resource/wj9c-j6vf.json';
 const METEOCAT_API = 'https://api.meteo.cat';
-const cache = new Map<string, { expiresAt: number; value: unknown }>();
+let snapshotCache: { expiresAt: number; value: Record<string, unknown> } | null = null;
+let snapshotFlight: Promise<Record<string, unknown>> | null = null;
+const forecastCache = new Map<string, { expiresAt: number; value: unknown }>();
+const forecastFlights = new Map<string, Promise<unknown>>();
 const lastSuccessAt = new Map<string, string>();
-let references: { expiresAt: number; comarcaNames: Record<string, string>; municipalities: Array<{ code: string; name: string }> } | null = null;
+type MeteocatReferences = { expiresAt: number; comarcaNames: Record<string, string>; municipalities: Array<{ code: string; name: string }> };
+let references: MeteocatReferences | null = null;
+let referencesFlight: Promise<MeteocatReferences> | null = null;
 
 function response(data: unknown, status = 200) {
   return new Response(JSON.stringify(data), {
@@ -75,21 +83,32 @@ async function fetchCivilProtection() {
   };
 }
 
-async function getReferences(apiKey: string) {
+async function getReferences(apiKey: string): Promise<MeteocatReferences> {
   const now = Date.now();
   if (references && references.expiresAt > now) return references;
-  const headers = { 'X-Api-Key': apiKey, Accept: 'application/json' };
-  const [comarcas, municipios] = await Promise.all([
-    requestJson(`${METEOCAT_API}/referencia/v1/comarques`, headers),
-    requestJson(`${METEOCAT_API}/referencia/v1/municipis`, headers),
-  ]);
-  if (!Array.isArray(comarcas) || !Array.isArray(municipios)) throw new Error('Meteocat devolvió metadatos inesperados.');
-  references = {
-    expiresAt: now + REFERENCE_TTL_MS,
-    comarcaNames: Object.fromEntries(comarcas.filter(item => item?.codi != null && item?.nom).map(item => [String(item.codi), String(item.nom)])),
-    municipalities: municipios.filter(item => item?.codi && item?.nom).map(item => ({ code: String(item.codi), name: String(item.nom) })),
-  };
-  return references;
+  if (referencesFlight) return await referencesFlight;
+
+  const pending = (async () => {
+    const headers = { 'X-Api-Key': apiKey, Accept: 'application/json' };
+    const [comarcas, municipios] = await Promise.all([
+      requestJson(METEOCAT_API + '/referencia/v1/comarques', headers),
+      requestJson(METEOCAT_API + '/referencia/v1/municipis', headers),
+    ]);
+    if (!Array.isArray(comarcas) || !Array.isArray(municipios)) throw new Error('Meteocat devolvió metadatos inesperados.');
+    return {
+      expiresAt: Date.now() + REFERENCE_TTL_MS,
+      comarcaNames: Object.fromEntries(comarcas.filter(item => item?.codi != null && item?.nom).map(item => [String(item.codi), String(item.nom)])),
+      municipalities: municipios.filter(item => item?.codi && item?.nom).map(item => ({ code: String(item.codi), name: String(item.nom) })),
+    };
+  })();
+
+  referencesFlight = pending;
+  try {
+    references = await pending;
+    return references;
+  } finally {
+    referencesFlight = null;
+  }
 }
 
 async function fetchSmp(apiKey: string, comarcaNames: Record<string, string>) {
@@ -125,7 +144,7 @@ async function fetchForecast(apiKey: string, requestedName: string, municipality
   };
 }
 
-async function buildSnapshot(municipality: string) {
+async function buildSnapshot(): Promise<Record<string, unknown>> {
   const now = new Date().toISOString();
 
   let civilProtection;
@@ -147,31 +166,81 @@ async function buildSnapshot(municipality: string) {
     traffic = sourceFailure('Servei Català de Trànsit', SCT_RSS_URL, new Date().toISOString(), error instanceof Error ? error.message : 'No se ha podido actualizar esta fuente.', lastSuccessAt.get('traffic') || null);
   }
 
-  const apiKey = Deno.env.get('METEOCAT_API_KEY')?.trim();
   let meteocat;
-  let forecast = municipality
-    ? { status: 'unavailable', municipality, hours: [], officialUrl: SOURCE_URLS.meteocat, error: 'Meteocat no está disponible.' }
-    : { status: 'needs-municipality', municipality: null, hours: [], officialUrl: SOURCE_URLS.meteocat };
-
-  if (!apiKey) {
+  const apiKey = METEOCAT_ENABLED ? Deno.env.get('METEOCAT_API_KEY')?.trim() : undefined;
+  if (!METEOCAT_ENABLED) {
+    meteocat = sourceFailure('Servei Meteorològic de Catalunya', SOURCE_URLS.meteocat, new Date().toISOString(), 'Fuente desactivada hasta completar el alta y confirmar las condiciones de difusión.');
+  } else if (!apiKey) {
     meteocat = sourceFailure('Servei Meteorològic de Catalunya', SOURCE_URLS.meteocat, new Date().toISOString(), 'Falta configurar el secreto METEOCAT_API_KEY.');
-    if (municipality) forecast = { ...forecast, status: 'unavailable', error: 'Falta configurar el secreto METEOCAT_API_KEY.' };
   } else {
     try {
       const refs = await getReferences(apiKey);
       meteocat = await fetchSmp(apiKey, refs.comarcaNames);
       lastSuccessAt.set('meteocat', meteocat.lastSuccessAt);
-      if (municipality) {
-        try { forecast = await fetchForecast(apiKey, municipality, refs.municipalities); }
-        catch (error) { forecast = { status: 'unavailable', municipality, hours: [], officialUrl: SOURCE_URLS.meteocat, error: error instanceof Error ? error.message : 'No se ha podido actualizar esta fuente.' }; }
-      }
     } catch (error) {
       meteocat = sourceFailure('Servei Meteorològic de Catalunya', SOURCE_URLS.meteocat, new Date().toISOString(), error instanceof Error ? error.message : 'No se ha podido actualizar esta fuente.', lastSuccessAt.get('meteocat') || null);
-      if (municipality) forecast = { ...forecast, status: 'unavailable', error: meteocat.error };
     }
   }
 
-  return { checkedAt: now, overallStatus: 'incomplete', sources: { civilProtection, meteocat, traffic }, forecast };
+  return { checkedAt: now, overallStatus: 'incomplete', sources: { civilProtection, meteocat, traffic } };
+}
+
+async function buildForecast(requestedName: string) {
+  if (!METEOCAT_ENABLED) {
+    return { status: 'unavailable', municipality: requestedName || null, hours: [], officialUrl: SOURCE_URLS.meteocat, error: 'Meteocat está desactivado hasta completar el alta y confirmar las condiciones de difusión.' };
+  }
+  if (!requestedName) return { status: 'needs-municipality', municipality: null, hours: [], officialUrl: SOURCE_URLS.meteocat };
+  const apiKey = Deno.env.get('METEOCAT_API_KEY')?.trim();
+  if (!apiKey) return { status: 'unavailable', municipality: requestedName, hours: [], officialUrl: SOURCE_URLS.meteocat, error: 'Falta configurar el secreto METEOCAT_API_KEY.' };
+
+  try {
+    const refs = await getReferences(apiKey);
+    const wanted = requestedName.normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLocaleLowerCase('es');
+    const municipality = refs.municipalities.find(item => item.name.normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLocaleLowerCase('es') === wanted);
+    if (!municipality) return { status: 'invalid-territory', municipality: requestedName, hours: [], officialUrl: SOURCE_URLS.meteocat };
+
+    const now = Date.now();
+    const cached = forecastCache.get(municipality.code);
+    if (cached && cached.expiresAt > now) return cached.value;
+    const flight = forecastFlights.get(municipality.code);
+    if (flight) return await flight;
+
+    const pending = fetchForecast(apiKey, municipality.name, refs.municipalities);
+    forecastFlights.set(municipality.code, pending);
+    try {
+      const forecast = await pending;
+      {
+        const ttl = forecast.status === 'ok' ? FORECAST_TTL_MS : CACHE_TTL_MS;
+        forecastCache.set(municipality.code, { expiresAt: Date.now() + ttl, value: forecast });
+        while (forecastCache.size > MAX_FORECAST_CACHE_ENTRIES) {
+          const oldest = forecastCache.keys().next().value;
+          if (oldest === undefined) break;
+          forecastCache.delete(oldest);
+        }
+      }
+      return forecast;
+    } finally {
+      forecastFlights.delete(municipality.code);
+    }
+  } catch (error) {
+    return { status: 'unavailable', municipality: requestedName, hours: [], officialUrl: SOURCE_URLS.meteocat, error: error instanceof Error ? error.message : 'No se ha podido actualizar esta fuente.' };
+  }
+}
+
+async function getSharedSnapshot() {
+  const now = Date.now();
+  if (snapshotCache && snapshotCache.expiresAt > now) return snapshotCache.value;
+  if (snapshotFlight) return await snapshotFlight;
+
+  const pending = buildSnapshot();
+  snapshotFlight = pending;
+  try {
+    const value = await pending;
+    snapshotCache = { expiresAt: Date.now() + CACHE_TTL_MS, value };
+    return value;
+  } finally {
+    snapshotFlight = null;
+  }
 }
 
 Deno.serve(async (request: Request) => {
@@ -181,21 +250,19 @@ Deno.serve(async (request: Request) => {
   const municipality = (url.searchParams.get('municipality') || '').trim();
   if (municipality.length > 80) return response({ error: 'El nombre de municipio supera el límite.' }, 400);
 
-  const cacheKey = municipality.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('es');
-  const existing = cache.get(cacheKey);
-  const now = Date.now();
-  if (existing && existing.expiresAt > now) return response(existing.value);
   try {
-    const value = await buildSnapshot(municipality);
-    cache.set(cacheKey, { expiresAt: now + CACHE_TTL_MS, value });
-    return response(value);
+    // Traffic/protection snapshots are shared by all municipalities within the isolate.
+    // Per-municipality forecasts use canonical Meteocat municipality codes and a longer TTL.
+    const snapshot = await getSharedSnapshot();
+    const forecast = await buildForecast(municipality);
+    return response({ ...snapshot, forecast });
   } catch (_error) {
-    // Never retry upstreams or substitute expired active data after an unexpected error.
+    // Never substitute expired active data after an unexpected error.
     return response({
       checkedAt: new Date().toISOString(), overallStatus: 'incomplete',
       sources: {
         civilProtection: sourceFailure('Protecció Civil de Catalunya / CECAT', CIVIL_PROTECTION_URL, new Date().toISOString(), 'No se ha podido actualizar esta fuente.', lastSuccessAt.get('civilProtection') || null),
-        meteocat: sourceFailure('Servei Meteorològic de Catalunya', SOURCE_URLS.meteocat, new Date().toISOString(), 'No se ha podido actualizar esta fuente.', lastSuccessAt.get('meteocat') || null),
+        meteocat: sourceFailure('Servei Meteorològic de Catalunya', SOURCE_URLS.meteocat, new Date().toISOString(), 'Meteocat no se ha podido actualizar o está desactivado.', lastSuccessAt.get('meteocat') || null),
         traffic: sourceFailure('Servei Català de Trànsit', SCT_RSS_URL, new Date().toISOString(), 'No se ha podido actualizar esta fuente.', lastSuccessAt.get('traffic') || null),
       }, forecast: { status: 'unavailable', municipality: municipality || null, hours: [], officialUrl: SOURCE_URLS.meteocat, error: 'No se ha podido actualizar esta fuente.' },
     });
