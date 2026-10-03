@@ -55,6 +55,7 @@
   <header class="top"><div class="top-inner"><a class="back" href="index.html" aria-label="Volver a Inicio">‹ Volver</a><h1>Alertas meteorológicas</h1></div></header>
   <main>
     <p class="intro">Servicios oficiales y afectaciones en tiempo real</p>
+    <section class="panel" aria-labelledby="live-weather-title"><p class="source">PROTECCIÓ CIVIL · METEOCAT</p><div class="live-toolbar"><h2 id="live-weather-title">Alertas activas y previsión</h2><button type="button" data-status-refresh>Actualizar</button></div><div class="live-panel" data-weather-status role="status" aria-live="polite">Consultando fuentes oficiales…</div></section>
     <!-- Each module links to its own public screen. Add future services here. -->
     <section class="modules" aria-label="Servicios oficiales disponibles">
       <a class="module" href="estado-carreteras.html" aria-labelledby="roads-title" aria-describedby="roads-description">
@@ -64,5 +65,6 @@
     </section>
     <a class="home" href="index.html">Volver a Inicio</a>
   </main>
+  <script type="module" src="official-weather-status.js"></script>
 </body>
 </html>
