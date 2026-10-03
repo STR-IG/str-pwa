@@ -36,12 +36,16 @@
     .climate .button-secondary { margin-top:12px; border:1px solid #e30613; padding:15px 19px; background:white; color:#e30613; }
     .climate .button-secondary:hover { background:#fff0f1; }
     @media(max-width:580px) { h1 { font-size:23px; } .panel { padding:20px; } .topics { grid-template-columns:1fr; } h2 { font-size:21px; } }
+      .back { flex:0 0 auto; width:auto; padding:0 14px; border-radius:999px; font-size:16px; font-weight:bold; }
+    .sources { display:grid; gap:18px; }
+    .home { display:block; margin-top:24px; padding:16px; border-radius:999px; background:#e8e8eb; color:#555; text-align:center; font-weight:bold; text-decoration:none; }
   </style>
 </head>
 <body>
-  <header class="top"><div class="top-inner"><a class="back" href="index.html" aria-label="Volver a Inicio">‹</a><h1>Estado de las carreteras</h1></div></header>
+  <header class="top"><div class="top-inner"><a class="back" href="alertas-meteorologicas.html" aria-label="Volver a Alertas meteorológicas">‹ Volver</a><h1>Estado de las carreteras</h1></div></header>
   <main>
     <p class="intro">Tráfico e incidencias oficiales</p>
+    <div class="sources" aria-label="Fuentes oficiales del Servei Català de Trànsit">
     <section class="panel" aria-labelledby="official-title">
       <p class="source">SERVEI CATALÀ DE TRÀNSIT · CIT</p>
       <h2 id="official-title">Consulta antes de desplazarte</h2>
@@ -49,6 +53,19 @@
       <a class="button" href="https://cit.transit.gencat.cat/cit/AppJava/views/incidents.xhtml" target="_blank" rel="noopener noreferrer">Consultar incidencias oficiales</a>
       <p class="note">Abre la web oficial en una nueva pestaña. Necesitas conexión a internet. STR no muestra datos de tráfico en tiempo real en esta pantalla.</p>
     </section>
+    <section class="panel" aria-labelledby="map-title">
+      <p class="source">SERVEI CATALÀ DE TRÀNSIT · MAPA CONTINUO</p>
+      <h2 id="map-title">Estado de la red viaria en el mapa</h2>
+      <p>Localiza tu trayecto y consulta las incidencias y el estado del tráfico en el mapa oficial.</p>
+      <a class="button" href="https://mct.gencat.cat/" target="_blank" rel="noopener noreferrer">Abrir mapa oficial de tráfico ↗</a>
+    </section>
+    <section class="panel" aria-labelledby="cameras-title">
+      <p class="source">SERVEI CATALÀ DE TRÀNSIT · CÁMARAS</p>
+      <h2 id="cameras-title">Cámaras de tráfico</h2>
+      <p>Consulta las imágenes oficiales disponibles en las vías y puntos de tu recorrido.</p>
+      <a class="button" href="https://transit.gencat.cat/es/informacio-viaria/estat-transit/cameres-transit/" target="_blank" rel="noopener noreferrer">Consultar cámaras oficiales ↗</a>
+    </section>
+    </div>
     <section class="priorities" aria-labelledby="priorities-title">
       <h2 id="priorities-title">Qué revisar en la consulta oficial</h2>
       <ul class="topics">
@@ -64,6 +81,7 @@
       <a class="button" href="emergencia-climatica.html">Consultar Emergencia climática</a>
       <a class="button button-secondary" href="preguntale-emergencia-situacion.html">Consulta tu caso</a>
     </section>
+    <a class="home" href="alertas-meteorologicas.html">Volver a Alertas meteorológicas</a>
   </main>
 </body>
 </html>

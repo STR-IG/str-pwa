@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#e30613">
+  <title>Alertas meteorológicas · STR-IG</title>
+  <link rel="icon" href="icono-str-ig.png">
+  <link rel="manifest" href="manifest.json">
+  <style>
+    * { box-sizing:border-box; }
+    body { margin:0; background:#f5f5f7; color:#161616; font-family:Arial,Helvetica,sans-serif; }
+    .top { padding:calc(14px + env(safe-area-inset-top)) 18px 14px; border-bottom:1px solid #e4e4e7; }
+    .top-inner { max-width:900px; margin:auto; display:flex; align-items:center; gap:14px; }
+    .back { display:grid; place-items:center; flex:0 0 44px; height:44px; border-radius:50%; background:white; color:#e30613; text-decoration:none; font-size:26px; }
+    h1 { font-size:27px; margin:0; }
+    main { max-width:900px; margin:auto; padding:24px 18px calc(32px + env(safe-area-inset-bottom)); }
+    .intro { color:#626269; line-height:1.5; margin:0 0 22px; }
+    .panel { background:white; border-radius:20px; padding:24px; box-shadow:0 5px 18px #00000012; }
+    .source { color:#b9000b; font-size:13px; font-weight:bold; margin:0 0 10px; }
+    h2 { font-size:23px; margin:0 0 12px; }
+    p { line-height:1.5; }
+    .button { display:block; background:#e30613; color:white; border-radius:999px; padding:16px 20px; text-align:center; text-decoration:none; font-weight:bold; line-height:1.4; }
+    .button:hover { background:#b9000b; }
+    a:focus-visible { outline:3px solid #b9000b; outline-offset:4px; }
+    .note { color:#626269; font-size:14px; margin:12px 0 0; }
+    .priorities { margin:24px 0; }
+    .priorities h2 { font-size:20px; }
+    .topics { list-style:none; padding:0; margin:16px 0 0; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+    .topics li { background:white; border-radius:18px; padding:18px; border:1px solid #e4e4e7; }
+    .topics li:first-child { background:#fff0f1; border-color:#f0c9cc; }
+    .topics h3 { font-size:17px; margin:0 0 8px; }
+    .topics p { color:#626269; font-size:14px; margin:0; }
+    .climate { border-top:4px solid #e30613; }
+    .climate p { color:#626269; margin:0 0 18px; }
+    .climate .button-secondary { margin-top:12px; border:1px solid #e30613; padding:15px 19px; background:white; color:#e30613; }
+    .climate .button-secondary:hover { background:#fff0f1; }
+    @media(max-width:580px) { h1 { font-size:23px; } .panel { padding:20px; } .topics { grid-template-columns:1fr; } h2 { font-size:21px; } }
+      .back { flex:0 0 auto; width:auto; padding:0 14px; border-radius:999px; font-size:16px; font-weight:bold; }
+    .sources { display:grid; gap:18px; }
+    .home { display:block; margin-top:24px; padding:16px; border-radius:999px; background:#e8e8eb; color:#555; text-align:center; font-weight:bold; text-decoration:none; }
+  
+    .modules { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:18px; }
+    .module { display:block; overflow:hidden; background:white; color:inherit; border-radius:20px; box-shadow:0 5px 18px #00000012; text-decoration:none; transition:transform .2s ease,box-shadow .2s ease; }
+    .module:hover { transform:translateY(-3px); box-shadow:0 10px 24px #0000001c; }
+    .module img { display:block; width:100%; height:auto; }
+    .module-copy { padding:18px; }
+    .module-copy h2 { font-size:21px; }
+    .module-copy p { color:#626269; margin:0 0 16px; }
+    .module-cta { color:#b9000b; font-weight:bold; }
+    @media(max-width:580px) { .modules { grid-template-columns:1fr; } .module:hover { transform:none; } }
+  </style>
+</head>
+<body>
+  <header class="top"><div class="top-inner"><a class="back" href="index.html" aria-label="Volver a Inicio">‹ Volver</a><h1>Alertas meteorológicas</h1></div></header>
+  <main>
+    <p class="intro">Servicios oficiales y afectaciones en tiempo real</p>
+    <!-- Each module links to its own public screen. Add future services here. -->
+    <section class="modules" aria-label="Servicios oficiales disponibles">
+      <a class="module" href="estado-carreteras.html" aria-labelledby="roads-title" aria-describedby="roads-description">
+        <img src="estado-carreteras.png" alt="" loading="lazy">
+        <div class="module-copy"><h2 id="roads-title">Estado de las carreteras</h2><p id="roads-description">Consulta incidencias, cortes y afectaciones antes de desplazarte.</p><span class="module-cta">Consultar estado de las carreteras →</span></div>
+      </a>
+    </section>
+    <a class="home" href="index.html">Volver a Inicio</a>
+  </main>
+</body>
+</html>
