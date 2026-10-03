@@ -1,9 +1,32 @@
 export const SOURCE_URLS = {
-  civilProtection: 'https://interior.gencat.cat/ca/sales_de_premsa/noticies_de_proteccio_civil/index.html',
+  civilProtection: 'https://analisi.transparenciacatalunya.cat/resource/wj9c-j6vf.json',
+  civilProtectionInfo: 'https://interior.gencat.cat/ca/arees_dactuacio/proteccio_civil/plans-proteccio-civil/plans-especials/',
   meteocat: 'https://www.meteo.cat/prediccio/general',
   traffic: 'https://www.gencat.cat/transit/opendata/incidenciesRSS.xml',
   trafficMap: 'https://mct.gencat.cat/',
 };
+
+export function normalizeCivilProtectionPlans(rows) {
+  if (!Array.isArray(rows)) throw new Error('El conjunto de Protección Civil no devolvió una lista válida.');
+  return rows.filter(row => row && row.plaactivat?.toLocaleUpperCase('ca') === 'SI').map(row => {
+    const phase = String(row.plafase || '').toLocaleUpperCase('ca');
+    const severity = phase.includes('EMERG') ? 'red' : phase === 'ALERTA' ? 'orange' : 'yellow';
+    const bulletinUrl = row.comunicatpdf?.url || null;
+    return {
+      id: [row.plaacronim, phase, row.fasedatahora].filter(Boolean).join('|'),
+      source: 'Protecció Civil de Catalunya / CECAT',
+      type: 'civil-protection-plan', severity,
+      title: `${row.plaacronim || row.planom || 'Plan de emergencia'} · ${row.plafase || 'Activo'}`,
+      description: [row.descripcio, row.planom].filter(Boolean).join(' · '),
+      affectedAreas: [], roads: [],
+      // This dataset timestamp is local Catalonia time and contains no timezone.
+      startAt: row.fasedatahora || null, endAt: null, updatedAt: row.fasedatahora || null,
+      officialUrl: SOURCE_URLS.civilProtection,
+      bulletinUrl,
+      phase,
+    };
+  });
+}
 
 export function decodeXml(value = '') {
   return String(value)
