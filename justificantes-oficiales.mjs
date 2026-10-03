@@ -9,6 +9,7 @@ export const SOURCES = [
 ];
 
 
+// Municipality coverage follows Idescat's official territorial list as of 1 January 2025.
 const DOGC_RESTRICTIONS = [{
   id: 'ISP-3175-2026',
   title: 'Resolución ISP/3175/2026 · DOGC 9747A',
