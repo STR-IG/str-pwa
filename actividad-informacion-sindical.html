@@ -67,5 +67,5 @@
     // Añadir las nuevas fichas aquí con su fecha de publicación ISO.
     [...feed.children].sort((a, b) => Date.parse(b.dataset.publishedAt) - Date.parse(a.dataset.publishedAt)).forEach(post => feed.appendChild(post));
     initNews().catch(() => {});</script>
-</body>
+  <script type="module" src="./app-analytics.js"></script>\n</body>
 </html>
