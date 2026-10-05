@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es">
+<html data-analytics-area="private" lang="es">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -119,5 +119,6 @@
     viewer.addEventListener('click',(event)=>{if(event.target===viewer)closeCommunication()});
     document.addEventListener('keydown',(event)=>{if(event.key==='Escape')closeCommunication()});
   </script>
+  <script type="module" src="./app-analytics.js"></script>
 </body>
 </html>
