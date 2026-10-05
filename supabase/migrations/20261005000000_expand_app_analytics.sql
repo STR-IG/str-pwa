@@ -12,7 +12,7 @@ with check (
   and event_type in ('page_view','card_click')
   and area in ('public','private')
   and section in (
-    'index','demo-app','dia-afiliacion','permisos-publicos','permisos','preguntale-str-permisos',
+    'index','demo-app','dia-afiliacion','permisos_retribuidos','preguntale-str-permisos',
     'hospitalizacion-primer-grado','hospitalizacion-segundo-grado',
     'intervencion-familiar-sin-ingreso-primer-grado','intervencion-familiar-sin-ingreso-segundo-grado',
     'intervencion-conviviente-sin-ingreso','fallecimiento-familiar','matrimonio','visita-medica',
