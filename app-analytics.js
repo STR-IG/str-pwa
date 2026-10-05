@@ -4,10 +4,10 @@ const VISITOR_KEY = 'str_analytics_visitor_v1';
 const SESSION_KEY = 'str_analytics_session_v1';
 
 function uuid() {
-  if (crypto?.randomUUID) return crypto.randomUUID();
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
-    const r = Math.random() * 16 | 0;
-    return (c === 'x' ? r : (r & 3 | 8)).toString(16);
+  if (globalThis.crypto?.randomUUID) return globalThis.crypto.randomUUID();
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, char => {
+    const value = Math.random() * 16 | 0;
+    return (char === 'x' ? value : (value & 3 | 8)).toString(16);
   });
 }
 function getId(storage, key) {
@@ -66,9 +66,17 @@ function targetFor(anchor) {
     120
   );
 }
+function isInterestClick(anchor) {
+  if (anchor.dataset.analyticsIgnore != null) return false;
+  if (anchor.dataset.analyticsTarget) return true;
+  return anchor.matches(
+    '.quick-card, .menu-image-card, .news-card, .image-card, .option, .module, .post-media, .permit-link, [data-news-category]'
+  );
+}
+
 track('page_view');
 document.addEventListener('click', event => {
   const anchor = event.target.closest('a[href]');
-  if (!anchor) return;
+  if (!anchor || !isInterestClick(anchor)) return;
   track('card_click', targetFor(anchor));
 }, { capture: true });
