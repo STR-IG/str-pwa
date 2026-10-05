@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es">
+<html data-analytics-area="private" lang="es">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -175,5 +175,6 @@
     else if(session){await supabase.auth.signOut();showEmailStep()}
     else{const saved=sessionStorage.getItem('strPendingEmailV2');if(saved){emailInput.value=saved;showCodeStep(saved)}}
   </script>
+  <script type="module" src="./app-analytics.js"></script>
 </body>
 </html>
