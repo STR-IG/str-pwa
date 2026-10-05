@@ -29,7 +29,9 @@ function inferArea() {
 function inferSection() {
   const explicit = document.documentElement.dataset.analyticsSection;
   if (explicit) return clean(explicit, 120);
-  return clean(location.pathname.split('/').pop()?.replace(/\.html$/i, '') || 'inicio', 120);
+  const route = location.pathname.split('/').pop()?.replace(/\.html$/i, '') || 'index';
+  if (route === 'permisos-publicos' || route === 'permisos') return 'permisos_retribuidos';
+  return clean(route, 120);
 }
 export async function track(eventType, target = null) {
   const payload = {
