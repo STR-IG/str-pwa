@@ -75,6 +75,26 @@ self.addEventListener('fetch', (event) => {
   const scope = new URL(self.registration.scope);
   if (url.origin !== scope.origin || !url.pathname.startsWith(scope.pathname)) return;
   if (url.search || PRIVATE_PAGES.has(url.pathname.split('/').pop())) return;
+  // Fast return to the public home screen in the installed PWA.
+  // Refresh in the background, never caching private pages or remote data.
+  if (event.request.mode === 'navigate' && url.pathname === scope.pathname + 'index.html') {
+    event.respondWith((async () => {
+      const cache = await caches.open(CACHE_NAME);
+      const cached = await cache.match(event.request);
+      const refresh = fetch(event.request, { cache: 'no-store' }).then(async response => {
+        if (response.ok && response.type !== 'opaque') {
+          await cache.put(event.request, response.clone()).catch(() => {});
+        }
+        return response;
+      });
+      if (cached) {
+        event.waitUntil(refresh.catch(() => {}));
+        return cached;
+      }
+      return refresh;
+    })());
+    return;
+  }
   event.respondWith((async () => {
     try {
       const response = await fetch(event.request, { cache: 'no-store' });
