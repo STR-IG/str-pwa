@@ -1,4 +1,4 @@
-const CACHE_NAME = 'str-ig-cache-v59';
+const CACHE_NAME = 'str-ig-cache-v60';
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();
@@ -77,7 +77,7 @@ self.addEventListener('fetch', (event) => {
   if (url.search || PRIVATE_PAGES.has(url.pathname.split('/').pop())) return;
   // Fast return to the public home screen in the installed PWA.
   // Refresh in the background, never caching private pages or remote data.
-  if (event.request.mode === 'navigate' && url.pathname === scope.pathname + 'index.html') {
+  if (event.request.mode === 'navigate' && (url.pathname === scope.pathname + 'index.html' || url.pathname === scope.pathname)) {
     event.respondWith((async () => {
       const cache = await caches.open(CACHE_NAME);
       const cached = await cache.match(event.request);
