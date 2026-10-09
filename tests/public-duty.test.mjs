@@ -85,3 +85,30 @@ test('member cannot read inbox; committee admin can; membership errors fail clos
 test('invalid case is rejected without storage', async () => {
   const fn = inbox({ member: true }); assert.equal((await fn.call({ ...payload, guidance: {} })).status, 400); assert.equal(fn.writes.length, 0);
 });
+
+test('electoral submissions preserve role, substitute outcome and workday in storage', async () => {
+  for (const [role, outcome, day] of [
+    ['Presidente/a titular', '', 'Sí, es día laborable'],
+    ['Vocal titular', '', 'No, es día de descanso'],
+    ['Suplente', 'Sí, sustituí al titular y desempeñé el cargo', 'Sí, es día laborable'],
+    ['Suplente', 'No ocupé finalmente el cargo', 'No, es día de descanso'],
+    ['Solo voy a votar', '', 'Sí, es día laborable']
+  ]) {
+    const fn = inbox({ member: true });
+    const electoral = { ...facts, obligation: 'Mesa electoral / elecciones', electoralRole: role, substituteOutcome: outcome, electoralDayStatus: day };
+    assert.equal((await fn.call({ ...payload, facts: electoral })).status, 200);
+    assert.equal(fn.writes.length, 1);
+    assert.equal(fn.writes[0].row.facts.electoralRole, role);
+    assert.equal(fn.writes[0].row.facts.substituteOutcome, outcome);
+    assert.equal(fn.writes[0].row.facts.electoralDayStatus, day);
+  }
+});
+
+test('electoral submissions reject missing or incompatible fields without storage', async () => {
+  const electoral = { ...facts, obligation: 'Mesa electoral / elecciones', electoralRole: 'Suplente', substituteOutcome: 'Sí, sustituí al titular y desempeñé el cargo', electoralDayStatus: 'Sí, es día laborable' };
+  for (const change of [{ electoralRole: '' }, { substituteOutcome: '' }, { electoralDayStatus: '' }, { electoralRole: 'Vocal titular' }]) {
+    const fn = inbox({ member: true });
+    assert.equal((await fn.call({ ...payload, facts: { ...electoral, ...change } })).status, 400);
+    assert.equal(fn.writes.length, 0);
+  }
+});
