@@ -57,6 +57,8 @@
     h1 { font-size: 27px; line-height: 1.05; }
     main { max-width: 900px; margin: auto; padding: 22px 18px 34px; }
     .intro { color: var(--grey); font-size: 15px; line-height: 1.45; margin-bottom: 20px; }
+    .permit-section + .permit-section { margin-top: 28px; }
+    .section-title { font-size: 20px; line-height: 1.25; margin-bottom: 14px; }
     .grid {
       display: grid;
       grid-template-columns: repeat(2, minmax(0,1fr));
@@ -135,9 +137,6 @@
     }
     .bottom-nav a b { display: block; font-size: 21px; margin-bottom: 4px; }
     .bottom-nav a.active { color: var(--red); font-weight: 800; }
-    @media (min-width: 700px) {
-      .grid { grid-template-columns: repeat(3, 1fr); }
-    }
   </style>
 </head>
 <body>
@@ -149,64 +148,93 @@
   </header>
 
   <main>
-    <p class="intro">Selecciona el permiso que quieres consultar.</p>
+    <p class="intro">Selecciona el permiso que quieres consultar. Las fichas están agrupadas por temas.</p>
 
-    <div class="grid">
-        <a class="image-card" href="votaciones.html"><img src="card-votaciones.png" alt="Votaciones: permisos para votar y participar en una mesa electoral"></a>
-      <a class="image-card" href="hospitalizacion-primer-grado.html">
+    <section class="permit-section" aria-labelledby="hospitalizacion-title">
+      <h2 class="section-title" id="hospitalizacion-title">Hospitalización de familiares</h2>
+      <div class="grid">
+        <a class="image-card" href="hospitalizacion-primer-grado.html">
         <img src="boton-hospitalizacion-primer-grado.png" alt="Hospitalización familiar primer grado">
       </a>
 
-      <a class="image-card" href="hospitalizacion-segundo-grado.html">
+        <a class="image-card" href="hospitalizacion-segundo-grado.html">
         <img src="card-hospitalizacion-familiar-segundo-grado.png" alt="Hospitalización familiar segundo grado">
       </a>
+      </div>
+    </section>
 
-      <a class="image-card" href="intervencion-familiar-sin-ingreso-primer-grado.html">
+    <section class="permit-section" aria-labelledby="intervenciones-title">
+      <h2 class="section-title" id="intervenciones-title">Intervenciones sin ingreso</h2>
+      <div class="grid">
+        <a class="image-card" href="intervencion-familiar-sin-ingreso-primer-grado.html">
         <img src="intervencion-familiar-sin-ingreso-primer-grado.png" alt="Intervención familiar sin ingreso primer grado">
       </a>
 
-      <a class="image-card" href="intervencion-familiar-sin-ingreso-segundo-grado.html">
+        <a class="image-card" href="intervencion-familiar-sin-ingreso-segundo-grado.html">
         <img src="intervencion-familiar-sin-ingreso-segundo-grado.png" alt="Intervención familiar sin ingreso segundo grado">
       </a>
 
-      <a class="image-card" href="intervencion-conviviente-sin-ingreso.html">
+        <a class="image-card" href="intervencion-conviviente-sin-ingreso.html">
         <img src="card-intervencion-conviviente-sin-ingreso.png" alt="Intervención conviviente sin ingreso">
       </a>
+      </div>
+    </section>
 
-      <a class="image-card" href="fallecimiento-familiar.html">
-        <img src="card-fallecimiento-familiar.png" alt="Fallecimiento familiar">
-      </a>
-
-      <a class="image-card" href="matrimonio.html">
-        <img src="permiso-matrimonio.png" alt="Permiso por matrimonio">
-      </a>
-
-      <a class="image-card" href="visita-medica.html">
+    <section class="permit-section" aria-labelledby="salud-title">
+      <h2 class="section-title" id="salud-title">Salud personal</h2>
+      <div class="grid">
+        <a class="image-card" href="visita-medica.html">
         <img src="card-visita-medica.png" alt="Permiso retribuido por visita médica">
       </a>
 
-      <div class="permit-card">
+        <div class="permit-card">
         <div class="icon">🩺</div>
         <h2>Intervención quirúrgica</h2>
         <span class="tag">Ver permiso</span>
       </div>
+      </div>
+    </section>
 
-      <a class="image-card" href="permiso-deber-inexcusable.html">
-        <img src="card-deber-inexcusable.png" alt="Permiso por deber inexcusable">
+    <section class="permit-section" aria-labelledby="familia-title">
+      <h2 class="section-title" id="familia-title">Familia y domicilio</h2>
+      <div class="grid">
+        <a class="image-card" href="fallecimiento-familiar.html">
+        <img src="card-fallecimiento-familiar.png" alt="Fallecimiento familiar">
       </a>
 
-      <a class="image-card" href="fuerza-mayor-familiar.html">
+        <a class="image-card" href="fuerza-mayor-familiar.html">
         <img src="ficha-fuerza-mayor-familiar.png" alt="Fuerza mayor familiar">
       </a>
 
-      <a class="image-card" href="permiso-traslado-domicilio.html">
-        <img src="card-permiso-traslado-domicilio.png" alt="Permiso por traslado de domicilio">
+        <a class="image-card" href="matrimonio.html">
+        <img src="permiso-matrimonio.png" alt="Permiso por matrimonio">
       </a>
 
-      <a class="image-card" href="emergencia-climatica.html">
+        <a class="image-card" href="permiso-traslado-domicilio.html">
+        <img src="card-permiso-traslado-domicilio.png" alt="Permiso por traslado de domicilio">
+      </a>
+      </div>
+    </section>
+
+    <section class="permit-section" aria-labelledby="deberes-title">
+      <h2 class="section-title" id="deberes-title">Deberes públicos y personales</h2>
+      <div class="grid">
+        <a class="image-card" href="votaciones.html"><img src="card-votaciones.png" alt="Votaciones: permisos para votar y participar en una mesa electoral"></a>
+
+        <a class="image-card" href="permiso-deber-inexcusable.html">
+        <img src="card-deber-inexcusable.png" alt="Permiso por deber inexcusable">
+      </a>
+      </div>
+    </section>
+
+    <section class="permit-section" aria-labelledby="emergencias-title">
+      <h2 class="section-title" id="emergencias-title">Emergencias climáticas</h2>
+      <div class="grid">
+        <a class="image-card" href="emergencia-climatica.html">
         <img src="card-emergencia.climatica.png" alt="Permiso por emergencia climática">
       </a>
-    </div>
+      </div>
+    </section>
   </main>
 
   <nav class="bottom-nav">
