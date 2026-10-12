@@ -154,7 +154,7 @@ test('el reseteo de revisión elimina solo los datos derivados del documento ele
   assert.deepEqual(withoutTimesheet.paymentInfo.breakdown,complete.paymentInfo.breakdown);
   assert.equal(withoutTimesheet.paymentInfo.adjustment.status,'pending');
   assert.equal(withoutTimesheet.paymentInfo.adjustment.sourceMonth,null);
-  assert.deepEqual(withoutTimesheet.paymentInfo.adjustment.matches,[]);
+  assert.equal(withoutTimesheet.paymentInfo.adjustment.matches.length,0);
   assert.equal(withoutTimesheet.comparisons,undefined);
   assert.equal(withoutTimesheet.status,'pending');
 

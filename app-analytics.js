@@ -10,15 +10,16 @@ function uuid() {
     return (char === 'x' ? value : (value & 3 | 8)).toString(16);
   });
 }
-function getId(storage, key) {
+function getId(storageName, key) {
   try {
+    const storage = globalThis[storageName];
     let value = storage.getItem(key);
     if (!value) { value = uuid(); storage.setItem(key, value); }
     return value;
   } catch (_) { return uuid(); }
 }
-const visitorId = getId(localStorage, VISITOR_KEY);
-const sessionId = getId(sessionStorage, SESSION_KEY);
+const visitorId = getId('localStorage', VISITOR_KEY);
+const sessionId = getId('sessionStorage', SESSION_KEY);
 
 function clean(value, max) {
   return value == null ? null : String(value).trim().slice(0, max);
@@ -34,6 +35,7 @@ function inferSection() {
   return clean(route, 120);
 }
 export async function track(eventType, target = null) {
+  if (location.origin !== 'https://str-ig.github.io' || !location.pathname.startsWith('/str-pwa/')) return;
   const payload = {
     visitor_id: visitorId,
     session_id: sessionId,
@@ -41,7 +43,7 @@ export async function track(eventType, target = null) {
     area: inferArea(),
     section: inferSection(),
     target: clean(target, 120),
-    path: clean(location.pathname + location.hash, 160),
+    path: clean(location.pathname, 160),
     environment: 'production'
   };
   try {
@@ -58,13 +60,16 @@ export async function track(eventType, target = null) {
     });
   } catch (_) {}
 }
+function safeLinkTarget(href) {
+  try { return new URL(href, location.href).pathname; } catch (_) { return null; }
+}
 function targetFor(anchor) {
   return clean(
     anchor.dataset.analyticsTarget ||
     anchor.getAttribute('aria-label') ||
     anchor.querySelector('img')?.alt ||
     anchor.querySelector('h2,h3,strong')?.textContent ||
-    anchor.getAttribute('href'),
+    safeLinkTarget(anchor.getAttribute('href')),
     120
   );
 }

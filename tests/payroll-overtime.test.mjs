@@ -188,7 +188,7 @@ test('overtime cannot leak into regular festive/night/12-hour comparisons',()=>{
 
 test('full Edge handler: opt-in API, auth gating and partial IA result without live data',async()=>{
   const raw=readFileSync(new URL('../supabase/functions/lab-read-payroll-variables/index.ts',import.meta.url),'utf8');
-  const code=stripTypeScriptTypes(raw.replace(/^import .*;\n/gm,''));
+  const code=stripTypeScriptTypes(raw.replace(/^import .*;\r?\n/gm,''));
   let handler,allowed=true,requests=0;
   const model={isPayroll:true,concepts:[{name:'Plus festivo',value:'8'},{name:'0029 Horas extras festivas',value:'4'},
     {name:'0003 Complemento Personal',value:'30'}], supplemental:[
