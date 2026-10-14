@@ -10,50 +10,224 @@
   <link rel="manifest" href="manifest.json">
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    :root { --red:#e30613; --red-soft:#fff0f1; --black:#161616; --grey:#6e6e73; --light:#f5f5f7; --white:#fff; }
-    body { font-family:Arial,Helvetica,sans-serif; background:var(--light); color:var(--black); padding-bottom:calc(92px + env(safe-area-inset-bottom)); }
-    .top { position:sticky; top:0; z-index:20; background:rgba(245,245,247,.96); backdrop-filter:blur(12px); border-bottom:1px solid #e4e4e7; padding:calc(14px + env(safe-area-inset-top)) 18px 14px; }
-    .top-inner { max-width:900px; margin:auto; display:flex; align-items:center; gap:14px; }
-    .back { width:42px; height:42px; flex:0 0 42px; border-radius:50%; background:var(--white); display:grid; place-items:center; text-decoration:none; color:var(--red); font-size:26px; font-weight:700; box-shadow:0 3px 12px rgba(0,0,0,.08); }
-    h1 { font-size:27px; line-height:1.05; }
-    main { max-width:900px; margin:auto; padding:22px 18px 34px; }
-    .intro { color:var(--grey); font-size:15px; line-height:1.45; margin-bottom:20px; }
-    .grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; align-items:stretch; }
-    .image-card,.permit-card { background:var(--white); border-radius:20px; overflow:hidden; box-shadow:0 5px 18px rgba(0,0,0,.07); text-decoration:none; color:inherit; width:100%; aspect-ratio:1.5/1; min-height:0; }
-    .image-card img { width:100%; height:100%; display:block; object-fit:cover; }
-    .permit-card { padding:14px; display:flex; flex-direction:column; justify-content:space-between; }
-    .icon { width:44px; height:44px; border-radius:13px; background:var(--red); display:grid; place-items:center; font-size:21px; }
-    .permit-card h2 { font-size:clamp(15px,4vw,19px); line-height:1.08; }
-    .tag { align-self:flex-start; background:var(--red-soft); color:#b9000b; border-radius:999px; padding:7px 10px; font-size:12px; font-weight:700; }
+    :root {
+      --red: #e30613;
+      --red-soft: #fff0f1;
+      --black: #161616;
+      --grey: #6e6e73;
+      --light: #f5f5f7;
+      --white: #fff;
+    }
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      background: var(--light);
+      color: var(--black);
+      padding-bottom: calc(92px + env(safe-area-inset-bottom));
+    }
+    .top {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      background: rgba(245,245,247,.96);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid #e4e4e7;
+      padding: calc(14px + env(safe-area-inset-top)) 18px 14px;
+    }
+    .top-inner {
+      max-width: 900px;
+      margin: auto;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .back {
+      width: 42px;
+      height: 42px;
+      flex: 0 0 42px;
+      border-radius: 50%;
+      background: var(--white);
+      display: grid;
+      place-items: center;
+      text-decoration: none;
+      color: var(--red);
+      font-size: 26px;
+      font-weight: 700;
+      box-shadow: 0 3px 12px rgba(0,0,0,.08);
+    }
+    h1 { font-size: 27px; line-height: 1.05; }
+    main { max-width: 900px; margin: auto; padding: 22px 18px 34px; }
+    .intro { color: var(--grey); font-size: 15px; line-height: 1.45; margin-bottom: 20px; }
+    .permit-section + .permit-section { margin-top: 28px; }
+    .section-title { font-size: 20px; line-height: 1.25; margin-bottom: 14px; }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0,1fr));
+      gap: 14px;
+      align-items: stretch;
+    }
+    .image-card,
+    .permit-card {
+      background: var(--white);
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 5px 18px rgba(0,0,0,.07);
+      text-decoration: none;
+      color: inherit;
+      width: 100%;
+      aspect-ratio: 1.5 / 1;
+      min-height: 0;
+    }
+    .image-card img {
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: cover;
+    }
+    .permit-card {
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 13px;
+      background: var(--red);
+      display: grid;
+      place-items: center;
+      font-size: 21px;
+    }
+    .permit-card h2 {
+      font-size: clamp(15px, 4vw, 19px);
+      line-height: 1.08;
+    }
+    .tag {
+      align-self: flex-start;
+      background: var(--red-soft);
+      color: #b9000b;
+      border-radius: 999px;
+      padding: 7px 10px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .bottom-nav {
+      position: fixed;
+      left: 50%;
+      transform: translateX(-50%);
+      bottom: 0;
+      width: 100%;
+      max-width: 1100px;
+      min-height: 76px;
+      padding-bottom: env(safe-area-inset-bottom);
+      background: rgba(255,255,255,.97);
+      backdrop-filter: blur(12px);
+      border-top: 1px solid #e5e5e5;
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      z-index: 50;
+    }
+    .bottom-nav a {
+      text-decoration: none;
+      color: #666;
+      text-align: center;
+      font-size: 11px;
+      min-width: 58px;
+    }
+    .bottom-nav a b { display: block; font-size: 21px; margin-bottom: 4px; }
+    .bottom-nav a.active { color: var(--red); font-weight: 800; }
+  
     #auth-check { color:var(--grey); text-align:center; }
-    .bottom-nav { position:fixed; left:50%; transform:translateX(-50%); bottom:0; width:100%; max-width:1100px; min-height:76px; padding-bottom:env(safe-area-inset-bottom); background:rgba(255,255,255,.97); backdrop-filter:blur(12px); border-top:1px solid #e5e5e5; display:flex; justify-content:space-around; align-items:center; z-index:50; }
-    .bottom-nav a { text-decoration:none; color:#666; text-align:center; font-size:11px; min-width:58px; }
-    .bottom-nav a b { display:block; font-size:21px; margin-bottom:4px; }
-    .bottom-nav a.active { color:var(--red); font-weight:800; }
-    @media (min-width:700px) { .grid { grid-template-columns:repeat(3,1fr); } }
-  </style>
+</style>
 </head>
 <body>
   <header class="top"><div class="top-inner"><a class="back" href="permisos-publicos.html" aria-label="Volver a Permisos retribuidos">‹</a><h1>Permisos retribuidos</h1></div></header>
   <main>
     <p id="auth-check">Preparando consulta…</p>
     <section id="content" hidden>
-      <p class="intro">Selecciona el permiso que quieres consultar.</p>
+    <p class="intro">Selecciona el permiso que quieres consultar. Las fichas están agrupadas por temas.</p>
+
+    <section class="permit-section" aria-labelledby="hospitalizacion-title">
+      <h2 class="section-title" id="hospitalizacion-title">Hospitalización de familiares</h2>
       <div class="grid">
-        <a class="image-card" href="preguntale-votaciones.html"><img src="card-votaciones.png" alt="Votaciones: permisos para votar y participar en una mesa electoral"></a>
-        <a class="image-card" href="preguntale-hospitalizacion-familiar.html"><img src="boton-hospitalizacion-primer-grado.png" alt="Hospitalización familiar primer grado"></a>
-        <a id="hospitalizacion-segundo-grado" class="image-card" href="preguntale-hospitalizacion-segundo-grado-familiar.html"><img src="card-hospitalizacion-familiar-segundo-grado.png" alt="Hospitalización familiar segundo grado"></a>
-        <a class="image-card" href="preguntale-intervencion-primer-grado-familiar.html"><img src="intervencion-familiar-sin-ingreso-primer-grado.png" alt="Intervención familiar sin ingreso primer grado"></a>
-        <a class="image-card" href="preguntale-intervencion-segundo-grado-familiar.html"><img src="intervencion-familiar-sin-ingreso-segundo-grado.png" alt="Intervención quirúrgica familiar – 2.º grado"></a>
-        <a class="image-card" href="preguntale-intervencion-conviviente.html"><img src="card-intervencion-conviviente-sin-ingreso.png" alt="Intervención de conviviente sin ingreso"></a>
-        <a class="image-card" href="preguntale-fallecimiento-familiar.html"><img src="card-fallecimiento-familiar.png" alt="Fallecimiento familiar"></a>
-        <a class="image-card" href="preguntale-matrimonio-tipo.html"><img src="permiso-matrimonio.png" alt="Permiso por matrimonio"></a>
-        <a class="image-card" href="preguntale-fuerza-mayor-persona.html"><img src="ficha-fuerza-mayor-familiar.png" alt="Fuerza mayor familiar"></a>
-        <a class="image-card" href="preguntale-emergencia-situacion.html"><img src="card-emergencia.climatica.png" alt="Emergencia climática"></a>
-        <a class="image-card" href="preguntale-visita-medica.html"><img src="card-visita-medica.png" alt="Visita médica"></a>
-        <a class="image-card" href="preguntale-traslado-domicilio.html"><img src="card-permiso-traslado-domicilio.png" alt="Traslado de domicilio"></a>
-        <a class="image-card" href="preguntale-deber-inexcusable.html"><img src="card-deber-inexcusable.png" alt="Deber inexcusable"></a>
+        <a class="image-card" href="preguntale-hospitalizacion-familiar.html">
+        <img src="permiso-card-estilo-v3-01.png" alt="Hospitalización familiar primer grado">
+      </a>
+
+        <a id="hospitalizacion-segundo-grado" class="image-card" href="preguntale-hospitalizacion-segundo-grado-familiar.html">
+        <img src="permiso-card-estilo-v3-02.png" alt="Hospitalización familiar segundo grado">
+      </a>
       </div>
+    </section>
+
+    <section class="permit-section" aria-labelledby="intervenciones-title">
+      <h2 class="section-title" id="intervenciones-title">Intervenciones sin ingreso</h2>
+      <div class="grid">
+        <a class="image-card" href="preguntale-intervencion-primer-grado-familiar.html">
+        <img src="permiso-card-estilo-v3-03.png" alt="Intervención familiar sin ingreso primer grado">
+      </a>
+
+        <a class="image-card" href="preguntale-intervencion-segundo-grado-familiar.html">
+        <img src="permiso-card-estilo-v3-04.png" alt="Intervención familiar sin ingreso segundo grado">
+      </a>
+
+        <a class="image-card" href="preguntale-intervencion-conviviente.html">
+        <img src="permiso-card-estilo-v3-05.png" alt="Intervención conviviente sin ingreso">
+      </a>
+      </div>
+    </section>
+
+    <section class="permit-section" aria-labelledby="salud-title">
+      <h2 class="section-title" id="salud-title">Salud personal</h2>
+      <div class="grid">
+        <a class="image-card" href="preguntale-visita-medica.html">
+        <img src="permiso-card-estilo-v3-06.png" alt="Permiso retribuido por visita médica">
+      </a>
+      </div>
+    </section>
+
+    <section class="permit-section" aria-labelledby="familia-title">
+      <h2 class="section-title" id="familia-title">Familia y domicilio</h2>
+      <div class="grid">
+        <a class="image-card" href="preguntale-fallecimiento-familiar.html">
+        <img src="permiso-card-estilo-v3-07.png" alt="Fallecimiento familiar">
+      </a>
+
+        <a class="image-card" href="preguntale-fuerza-mayor-persona.html">
+        <img src="permiso-card-estilo-v3-08.png" alt="Fuerza mayor familiar">
+      </a>
+
+        <a class="image-card" href="preguntale-matrimonio-tipo.html">
+        <img src="permiso-card-estilo-v3-09.png" alt="Permiso por matrimonio">
+      </a>
+
+        <a class="image-card" href="preguntale-traslado-domicilio.html">
+        <img src="permiso-card-estilo-v3-10.png" alt="Permiso por traslado de domicilio">
+      </a>
+      </div>
+    </section>
+
+    <section class="permit-section" aria-labelledby="deberes-title">
+      <h2 class="section-title" id="deberes-title">Deberes públicos y personales</h2>
+      <div class="grid">
+        <a class="image-card" href="preguntale-votaciones.html"><img src="permiso-card-estilo-v3-11.png" alt="Votaciones: permisos para votar y participar en una mesa electoral"></a>
+
+        <a class="image-card" href="preguntale-deber-inexcusable.html">
+        <img src="permiso-card-estilo-v3-12.png" alt="Permiso por deber inexcusable">
+      </a>
+      </div>
+    </section>
+
+    <section class="permit-section" aria-labelledby="emergencias-title">
+      <h2 class="section-title" id="emergencias-title">Emergencias climáticas</h2>
+      <div class="grid">
+        <a class="image-card" href="preguntale-emergencia-situacion.html">
+        <img src="permiso-card-estilo-v3-13.png" alt="Permiso por emergencia climática">
+      </a>
+      </div>
+    </section>
+  
     </section>
   </main>
   <nav class="bottom-nav">
