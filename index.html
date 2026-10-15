@@ -12,7 +12,7 @@
     * { box-sizing: border-box; margin: 0; padding: 0; }
     :root { --red:#e30613; --red-dark:#b9000b; --red-soft:#fff0f1; --black:#161616; --grey:#6e6e73; --light:#f5f5f7; --white:#fff; }
     html, body { width:100%; overflow-x:hidden; }
-    body { font-family:Arial,Helvetica,sans-serif; background:var(--light); color:var(--black); padding-bottom:calc(170px + env(safe-area-inset-bottom)); }
+    body { font-family:Arial,Helvetica,sans-serif; background:var(--light); color:var(--black); padding-bottom:env(safe-area-inset-bottom); }
     button,input { font-family:inherit; }
     .hero { position:relative; min-height:520px; overflow:hidden; border-radius:0 0 30px 30px; background:#fff; }
     .hero-track { display:flex; width:100%; height:520px; overflow-x:auto; overflow-y:hidden; scroll-snap-type:x mandatory; scroll-behavior:smooth; -webkit-overflow-scrolling:touch; scrollbar-width:none; }
@@ -121,11 +121,10 @@
     .join h2 { margin-bottom:6px; }
     .join p { opacity:.94; line-height:1.45; }
     .join-button { background:white; color:var(--red); text-decoration:none; border-radius:999px; padding:14px 22px; font-weight:800; white-space:nowrap; }
-    .bottom-nav { position:fixed !important; left:0 !important; right:0 !important; bottom:0 !important; transform:none !important; width:100% !important; max-width:none !important; min-height:76px; height:calc(76px + env(safe-area-inset-bottom)); padding-bottom:env(safe-area-inset-bottom); background:#fff; border-top:1px solid #e5e5e5; display:flex; justify-content:space-around; align-items:center; z-index:9999 !important; box-shadow:0 -3px 14px rgba(0,0,0,.08); -webkit-transform:translateZ(0); transform:translateZ(0) !important; }
-    .bottom-nav a { text-decoration:none; color:#666; text-align:center; font-size:11px; min-width:58px; }
-    .bottom-nav a b { display:block; font-size:21px; margin-bottom:4px; }
-    .bottom-nav a.active { color:var(--red); font-weight:800; }
-    .committee-fab { display:none !important; position:fixed; right:18px; bottom:calc(88px + env(safe-area-inset-bottom)); z-index:9998; width:46px; height:46px; border:2px solid white; border-radius:50%; place-items:center; color:white; background:#161616; box-shadow:0 5px 16px rgba(0,0,0,.28); text-decoration:none; font-size:28px; line-height:1; }
+
+
+
+.committee-fab { display:none !important; position:fixed; right:18px; bottom:calc(88px + env(safe-area-inset-bottom)); z-index:9998; width:46px; height:46px; border:2px solid white; border-radius:50%; place-items:center; color:white; background:#161616; box-shadow:0 5px 16px rgba(0,0,0,.28); text-decoration:none; font-size:28px; line-height:1; }
     .committee-fab.show { display:grid !important; }
     .committee-fab:hover { background:var(--red); }
     .permit-detail { display:none; }
@@ -238,7 +237,7 @@
   </div>
 </div>
 <a id="committee-signup-card" href="panel-administracion.html" class="committee-fab" aria-label="Panel de administración STR-IG" title="Panel de administración">⚙</a>
-<nav class="bottom-nav"><a class="active" href="index.html"><b>⌂</b>Inicio</a><a href="#"><b>⚖</b>Derechos</a><a href="#"><b>📰</b>Actualidad</a><a href="#"><b>👥</b>Sindicato</a><a href="#"><b>♡</b>Afíliate</a><a href="#"><b>☎</b>Contacto</a></nav>
+
 <script type="module">
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 const card = document.getElementById('committee-signup-card');
