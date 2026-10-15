@@ -179,6 +179,8 @@
     .regularization-note { margin-top: 10px; padding: 11px; border-radius: 12px; color: var(--amber); background: var(--amber-soft); font-size: 12px; line-height: 1.4; }
     .statistics-menu { display: grid; gap: 12px; margin-top: 18px; }
     .statistics-card { width: 100%; padding: 20px; text-align: left; color: var(--ink); font: inherit; }
+    .statistics-image-card { padding: 8px; overflow: hidden; }
+    .statistics-image-card img { display: block; width: 100%; height: auto; border-radius: 14px; }
     .statistics-card strong { display: block; font-size: 19px; }
     .statistics-card span { display: block; margin-top: 7px; color: var(--muted); font-size: 13px; line-height: 1.5; }
     .statistics-card:hover { border-color: var(--red); }
@@ -227,7 +229,7 @@
     <section id="statistics-home">
       <div class="hero"><span class="eyebrow">TU INFORMACIÓN</span><h1 tabindex="-1">Estadísticas</h1><p class="intro">Consulta tus datos económicos, el registro y las comparaciones.</p></div>
       <nav class="statistics-menu" aria-label="Apartados de Estadísticas">
-        <button class="panel statistics-card" type="button" data-statistics-view="economic"><strong>Estadísticas económicas</strong><span>Evolución y composición de tus nóminas guardadas.</span></button>
+        <button class="panel statistics-card statistics-image-card" type="button" data-statistics-view="economic" aria-label="Estadísticas económicas"><img src="card-estadisticas-nomina.png" alt="Estadísticas económicas"></button>
         <button class="panel statistics-card" type="button" data-statistics-view="register"><strong>Registro de jornada</strong><span>Resumen mensual y anual de los registros ya confirmados.</span></button>
         <button class="panel statistics-card" type="button" data-statistics-view="comparisons"><strong>Comparaciones</strong><span>Registro y nómina, por mes y año. Consulta los conceptos previstos.</span></button>
       </nav>
