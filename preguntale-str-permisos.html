@@ -22,7 +22,7 @@
       font-family: Arial, Helvetica, sans-serif;
       background: var(--light);
       color: var(--black);
-      padding-bottom: calc(92px + env(safe-area-inset-bottom));
+      padding-bottom:env(safe-area-inset-bottom);
     }
     .top {
       position: sticky;
@@ -111,34 +111,10 @@
       font-size: 12px;
       font-weight: 700;
     }
-    .bottom-nav {
-      position: fixed;
-      left: 50%;
-      transform: translateX(-50%);
-      bottom: 0;
-      width: 100%;
-      max-width: 1100px;
-      min-height: 76px;
-      padding-bottom: env(safe-area-inset-bottom);
-      background: rgba(255,255,255,.97);
-      backdrop-filter: blur(12px);
-      border-top: 1px solid #e5e5e5;
-      display: flex;
-      justify-content: space-around;
-      align-items: center;
-      z-index: 50;
-    }
-    .bottom-nav a {
-      text-decoration: none;
-      color: #666;
-      text-align: center;
-      font-size: 11px;
-      min-width: 58px;
-    }
-    .bottom-nav a b { display: block; font-size: 21px; margin-bottom: 4px; }
-    .bottom-nav a.active { color: var(--red); font-weight: 800; }
-  
-    #auth-check { color:var(--grey); text-align:center; }
+
+
+
+#auth-check { color:var(--grey); text-align:center; }
 </style>
 </head>
 <body>
@@ -230,9 +206,7 @@
   
     </section>
   </main>
-  <nav class="bottom-nav">
-    <a class="active" href="index.html"><b>⌂</b>Inicio</a><a href="index.html"><b>⚖</b>Derechos</a><a href="index.html"><b>📰</b>Actualidad</a><a href="index.html"><b>👥</b>Sindicato</a><a href="index.html"><b>♡</b>Afíliate</a><a href="index.html"><b>☎</b>Contacto</a>
-  </nav>
+  
   <script type="module">
     import { permitFetch, showPublicPermitPage } from './permisos-consultas.js';
     const URL='https://icneigdnuntzugisexaz.supabase.co';
