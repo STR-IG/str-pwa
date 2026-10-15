@@ -9,6 +9,7 @@ test('la portada y el acceso privado enlazan la nueva Estadísticas', () => {
   const access = read('acceso-privado.html');
   assert.match(index, /href="acceso-privado\.html\?next=estadisticas-nomina\.html"/);
   assert.match(index, /card-estadisticas-nomina\.png/);
+  assert.match(read('estadisticas-nomina.html'), /src="card-estadisticas-economicas\.png"/);
   assert.match(access, /'estadisticas-nomina\.html'/);
 });
 
