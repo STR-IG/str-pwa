@@ -53,6 +53,7 @@
     .quick-card:hover { transform:translateY(-3px); box-shadow:0 10px 24px rgba(0,0,0,.11); }
     .menu-image-card { aspect-ratio:1.45/1; min-height:0; padding:0; overflow:hidden; background:#fff; box-shadow:none; -webkit-transform:translateZ(0); transform:translateZ(0); -webkit-backface-visibility:hidden; backface-visibility:hidden; }
     .menu-image-card img { width:100%; height:100%; object-fit:cover; display:block; -webkit-transform:translateZ(0); transform:translateZ(0); -webkit-backface-visibility:hidden; backface-visibility:hidden; }
+    .voting-image-card img { object-position:left center; }
     .news-notification-card { position:relative; }
     .news-notification-badge { position:absolute; top:8px; right:8px; z-index:5; min-width:28px; height:28px; padding:0 8px; border:2px solid #fff; border-radius:999px; display:none; align-items:center; justify-content:center; color:#fff; background:var(--red); box-shadow:0 3px 10px rgba(0,0,0,.24); font-size:15px; line-height:1; font-weight:900; }
     .news-notification-badge.show { display:flex; }
@@ -194,7 +195,7 @@
       <h2 class="area-heading">ÁREA PÚBLICA</h2>
       <div class="area-grid">
         <a href="permisos-publicos.html" class="quick-card menu-image-card"><img src="card-permisos-retribuidos.png" alt="Permisos retribuidos"></a>
-        <a href="votaciones.html" class="quick-card menu-image-card" aria-label="Elecciones generales del 29-N: votaciones y permisos laborales"><img src="card-votaciones.png?v=29n-2" alt="Votaciones. Elecciones generales · 29-N" loading="lazy"></a>
+        <a href="votaciones.html" class="quick-card menu-image-card voting-image-card" aria-label="Elecciones generales del 29-N: votaciones y permisos laborales"><img src="card-votaciones.png?v=29n-2" alt="Votaciones. Elecciones generales · 29-N" loading="lazy"></a>
         <a href="alertas-meteorologicas.html" class="quick-card menu-image-card" aria-label="Alertas meteorológicas"><img src="alertas-meterologicas.png" alt="Alertas meteorológicas" loading="lazy"></a>
         <a href="estado-carreteras.html" class="quick-card menu-image-card"><img src="estado-carreteras.png" alt="Estado de las carreteras. Tráfico e incidencias oficiales"></a>
         <a href="menu-comedor.html" class="quick-card menu-image-card news-notification-card" id="menu-card" data-news-category="menu"><img src="menu-comedor.png" alt="Menú comedor"><span class="news-notification-badge" data-news-badge aria-label="Novedades sin leer">0</span></a>
