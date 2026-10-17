@@ -28,6 +28,10 @@
           <img data-src="ficha-julio-1minuto.jpg" alt="Julio 2026 en un minuto" loading="lazy">
           <span>Julio 2026 · En un minuto</span>
         </button>
+        <button class="communication" type="button" data-news-id="internal-activity-summary-2026-06" data-storage-path="2026/06/resumen-actividad-junio-2026.jpg" aria-label="Abrir resumen de nuestra actividad de junio de 2026">
+          <img alt="Junio 2026 en un minuto" loading="lazy">
+          <span>Junio 2026 · Resumen de nuestra actividad</span>
+        </button>
         <button class="communication" type="button" data-news-id="internal-data-affiliation-2026-09" aria-label="Abrir comunicado sobre datos de afiliación">
           <img id="communication-preview" alt="Comunicado sobre datos de afiliación" loading="eager">
           <span>Datos de afiliación</span>
@@ -73,6 +77,10 @@
         requirePrivateAccess();
       }else{
         content.querySelectorAll('img[data-src]').forEach((image)=>{image.src=image.dataset.src;});
+        content.querySelectorAll('[data-storage-path]').forEach(async(button)=>{
+          const {data,error}=await supabase.storage.from(STORAGE_BUCKET).createSignedUrl(button.dataset.storagePath,SIGNED_URL_TTL_SECONDS);
+          if(!error&&data?.signedUrl)button.querySelector('img').src=data.signedUrl;
+        });
         content.hidden=false;
         const {data:signedFile,error:signedUrlError}=await supabase.storage
           .from(STORAGE_BUCKET)
@@ -99,6 +107,11 @@
     document.querySelectorAll('.communication').forEach((button)=>{
       button.addEventListener('click',async()=>{
         const selectedImage=button.querySelector('img');
+        if(button.dataset.storagePath){
+          const {data,error}=await supabase.storage.from(STORAGE_BUCKET).createSignedUrl(button.dataset.storagePath,SIGNED_URL_TTL_SECONDS);
+          if(error||!data?.signedUrl){checking.hidden=false;checking.textContent='No se ha podido cargar la ficha. Inténtalo de nuevo.';return;}
+          selectedImage.src=data.signedUrl;
+        }
         if(!selectedImage?.getAttribute('src'))return;
         communicationImage.src=selectedImage.src;
         communicationImage.alt=selectedImage.alt+' completo';
