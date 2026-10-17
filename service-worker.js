@@ -1,4 +1,4 @@
-const CACHE_NAME = 'str-ig-cache-v68';
+const CACHE_NAME = 'str-ig-cache-v69';
 
 const SUPABASE_URL = 'https://icneigdnuntzugisexaz.supabase.co';
 const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_apKjcPClIBTHS2wwN6qPsA_6Vm4tk9m';
@@ -190,6 +190,12 @@ async function trackPublicPermissionsNavigation(request) {
 
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
+
+  // Emergency status must never fall back to an old cached response.
+  if (new URL(event.request.url).origin === 'https://analisi.transparenciacatalunya.cat') {
+    event.respondWith(fetch(event.request, { cache:'no-store' }));
+    return;
+  }
 
   if (event.request.mode === 'navigate') {
     event.waitUntil(trackPublicPermissionsNavigation(event.request));
