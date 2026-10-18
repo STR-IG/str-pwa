@@ -4,7 +4,7 @@ import { readFileSync, existsSync } from 'node:fs';
 const read = file => readFileSync(new URL('../' + file, import.meta.url), 'utf8');
 test('la entrada sindical unificada conserva contenido, rutas y avisos', () => {
   const home = read('index.html');
-  assert.equal((home.match(/src="actividad-informacion-sindical.png"/g) || []).length, 1);
+  assert.equal((home.match(/src="actividad-informacion-sindical-v2.png"/g) || []).length, 1);
   assert.doesNotMatch(home, /src="card-(?:actividad-sindical|informacion-plantilla).png"/);
   assert.match(home, /sindical-news-card[^>]+href="actividad-informacion-sindical.html"[^>]+data-news-category="activity"/);
   const hub = read('actividad-informacion-sindical.html');
