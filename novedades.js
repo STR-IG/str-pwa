@@ -138,7 +138,7 @@ function applyPrivateAreaLayout() {
 
   const cards = Array.from(grid.children);
   const byImage = (src) => cards.find((card) => card.querySelector(`img[src="${src}"]`));
-  const review = byImage('revisa-tu-nomina-card.png');
+  const review = byImage('revisa-tu-nomina-card.webp');
   const calculateV = byImage('calcula-tu-v.png');
   const askStr = byImage('card-preguntale-str-ig.png');
   const internalCommunications = byImage('card-comunicados-internos.png');
