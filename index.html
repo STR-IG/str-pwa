@@ -53,7 +53,8 @@
     .quick-card:hover { transform:translateY(-3px); box-shadow:0 10px 24px rgba(0,0,0,.11); }
     .menu-image-card { aspect-ratio:1.45/1; min-height:0; padding:0; overflow:hidden; background:#fff; box-shadow:none; -webkit-transform:translateZ(0); transform:translateZ(0); -webkit-backface-visibility:hidden; backface-visibility:hidden; }
     .menu-image-card img { width:100%; height:100%; object-fit:cover; display:block; -webkit-transform:translateZ(0); transform:translateZ(0); -webkit-backface-visibility:hidden; backface-visibility:hidden; }
-    .voting-image-card img { object-position:left center; }
+    .voting-image-card { position:relative; }
+    .voting-image-card img { position:absolute; inset:0; width:100%; height:100%; object-fit:contain; object-position:center; }
     .news-notification-card { position:relative; }
     .news-notification-badge { position:absolute; top:8px; right:8px; z-index:5; min-width:28px; height:28px; padding:0 8px; border:2px solid #fff; border-radius:999px; display:none; align-items:center; justify-content:center; color:#fff; background:var(--red); box-shadow:0 3px 10px rgba(0,0,0,.24); font-size:15px; line-height:1; font-weight:900; }
     .news-notification-badge.show { display:flex; }
