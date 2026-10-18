@@ -53,16 +53,33 @@
     .module-copy p { color:#626269; margin:0 0 16px; }
     .module-cta { color:#b9000b; font-weight:bold; }
     @media(max-width:580px) { .modules { grid-template-columns:1fr; } .module:hover { transform:none; } }
+    .priority{margin-bottom:22px;border-top:4px solid #e30613}.actions{display:flex;flex-wrap:wrap;gap:12px;margin:16px 0}.actions .button{flex:1;min-width:180px}button.button{border:0;font:inherit;font-weight:bold;cursor:pointer}button:disabled{opacity:.6;cursor:wait}.plan{padding:16px;margin:14px 0;border:1px solid #ddd;border-left:5px solid #b9000b;border-radius:12px;overflow-wrap:anywhere}.plan h3{margin:0 0 8px}.plan a{color:#b9000b;font-weight:bold}.status{padding:12px;background:#f1f1f4;border-radius:10px;line-height:1.5}.evidence{margin-top:22px}.evidence li{margin:10px 0;line-height:1.5}.module{align-self:start}.weather-panel{grid-column:1/-1}.weather-panel iframe{max-width:560px;margin:auto;height:700px}button:focus-visible{outline:3px solid #b9000b;outline-offset:4px}
   </style>
 </head>
 <body>
   <header class="top"><div class="top-inner"><a class="back" href="index.html" aria-label="Volver a Inicio">‹ Volver</a><h1>Alertas meteorológicas</h1></div></header>
   <main>
     <p class="intro">Antes de desplazarte al trabajo, consulta los avisos en las comarcas de tu trayecto y las incidencias en las carreteras.</p>
+    <section class="panel priority" aria-labelledby="civil-title">
+      <p class="source">PROTECCIÓN CIVIL · DATOS ABIERTOS DE LA GENERALITAT</p>
+      <h2 id="civil-title">Planes y comunicados oficiales</h2>
+      <p>Revisa en el comunicado las zonas, horarios e instrucciones que afectan a tu desplazamiento.</p>
+      <p id="civil-status" class="status" role="status">Consultando la fuente oficial…</p>
+      <div id="civil-plans"></div>
+      <div class="actions"><button id="refresh-plans" class="button" type="button">Actualizar estado</button><a class="button" href="https://analisi.transparenciacatalunya.cat/Seguretat/Plans-de-protecci-civil-en-fase-de-prealerta-alert/wj9c-j6vf/about_data" target="_blank" rel="noopener noreferrer">Consultar fuente oficial ↗</a></div>
+      <p class="note">La fase de un plan no implica por sí sola una prohibición de desplazarse. Un mapa meteorológico verde tampoco confirma que hayan terminado las alertas de Protección Civil o los cortes.</p>
+      <noscript><p>Activa JavaScript para consultar los planes o abre la fuente oficial.</p></noscript>
+    </section>
+    <section class="panel priority" aria-labelledby="travel-title">
+      <p class="source">SERVEI CATALÀ DE TRÀNSIT</p><h2 id="travel-title">Comprueba las vías de tu recorrido</h2>
+      <p>Busca la carretera, el tramo y el sentido afectados. Comprueba la hora de la incidencia y si coincide con tu desplazamiento.</p>
+      <div class="actions"><a class="button" href="https://cit.transit.gencat.cat/cit/AppJava/views/incidents.xhtml" target="_blank" rel="noopener noreferrer">Ver incidencias oficiales ↗</a><a class="button" href="https://mct.gencat.cat/" target="_blank" rel="noopener noreferrer">Ver mapa de tráfico ↗</a></div>
+      <p class="note">Las incidencias se consultan en Trànsit; esta pantalla no confirma si tu ruta está abierta.</p>
+    </section>
     <section class="modules" aria-label="Servicios oficiales disponibles">
       <section class="panel weather-panel" aria-labelledby="weather-title">
         <p class="source">FUENTE OFICIAL · METEOCAT</p>
-        <h2 id="weather-title">Avisos por comarca</h2>
+        <h2 id="weather-title">Previsión meteorológica por comarca</h2>
         <p class="intro">Selecciona hoy, mañana o pasado mañana y el fenómeno meteorológico para consultar las zonas con avisos.</p>
         <iframe src="https://static-m.meteo.cat/ginys/mapaAvisos?language=ca&amp;color=2c3e50&amp;target=_blank" title="Mapa oficial de avisos meteorológicos de Cataluña de Meteocat" loading="lazy"></iframe>
         <p class="note">Mapa servido por Meteocat. Comprueba la fecha mostrada y selecciona el día de tu desplazamiento.</p>
@@ -73,8 +90,54 @@
         <div class="module-copy"><h2 id="roads-title">Estado de las carreteras</h2><p id="roads-description">Consulta incidencias, cortes y afectaciones antes de desplazarte.</p><span class="module-cta">Consultar estado de las carreteras →</span></div>
       </a>
     </section>
+    <section class="panel evidence" aria-labelledby="evidence-title">
+      <h2 id="evidence-title">Conserva las evidencias de tu desplazamiento</h2>
+      <ol><li>Guarda el comunicado oficial aplicable a tu zona y horario.</li><li>Conserva la incidencia de tu carretera o transporte con su fuente, fecha y hora, mediante captura o impresión en PDF.</li><li>Anota el origen, destino, horario y tramo afectado, y explica cómo impide tu desplazamiento. Comunica la situación a la empresa cuanto antes y conserva el mensaje.</li></ol>
+      <p class="note">Estas evidencias ayudan a documentar los hechos; no son un certificado emitido por STR ni garantizan por sí solas la justificación de una ausencia.</p>
+      <div class="actions"><a class="button" href="emergencia-climatica.html">Permiso por emergencia climática</a><a class="button" href="acceso-privado.html?next=justificantes-oficiales.html">Buscar documentación oficial</a></div>
+    </section>
     <a class="home" href="index.html">Volver a Inicio</a>
   </main>
+  <script>
+  (() => {
+    const status = document.getElementById('civil-status');
+    const list = document.getElementById('civil-plans');
+    const refresh = document.getElementById('refresh-plans');
+    function text(tag, value) { const el = document.createElement(tag); el.textContent = value; return el; }
+    async function loadPlans() {
+      refresh.disabled = true; list.replaceChildren(); status.textContent = 'Consultando la fuente oficial…';
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 15000);
+      try {
+        const response = await fetch('https://analisi.transparenciacatalunya.cat/resource/wj9c-j6vf.json', { cache:'no-store', signal:controller.signal });
+        if (!response.ok) throw new Error('Fuente no disponible');
+        const plans = await response.json();
+        if (!Array.isArray(plans) || plans.some(p => !p || typeof p.plaacronim !== 'string' || typeof p.plafase !== 'string')) throw new Error('Respuesta no válida');
+        const checked = new Intl.DateTimeFormat('es-ES', {dateStyle:'short', timeStyle:'short', timeZone:'Europe/Madrid'}).format(new Date());
+        status.textContent = (plans.length ? 'Estados publicados por Protección Civil.' : 'La fuente no devuelve planes en esta consulta. Esto no descarta incidencias locales o restricciones de circulación.') + ' Consulta realizada: ' + checked + ' (hora de Barcelona).';
+        for (const plan of plans) {
+          const item = text('article', ''); item.className = 'plan';
+          item.append(text('h3', plan.plaacronim + ' · ' + plan.plafase));
+          if (plan.plaactivat) item.append(text('p', 'Activado según la fuente: ' + plan.plaactivat));
+          if (plan.fasedatahora) item.append(text('p', 'Fecha de la fase indicada por la fuente: ' + plan.fasedatahora));
+          if (plan.descripcio) item.append(text('p', plan.descripcio));
+          try {
+            const url = new URL(plan.comunicatpdf?.url);
+            if (url.protocol === 'https:' && url.hostname === 'documents.dadesobertes.gencat.cat' && url.pathname.startsWith('/cecat/docs/') && url.pathname.toLowerCase().endsWith('.pdf')) {
+              const link = text('a', 'Abrir comunicado oficial (PDF) ↗'); link.href = url.href; link.target = '_blank'; link.rel = 'noopener noreferrer'; item.append(link);
+            }
+          } catch (_) { /* Sin documento enlazado por la fuente. */ }
+          list.append(item);
+        }
+      } catch (_) {
+        list.replaceChildren(); status.textContent = 'No se ha podido comprobar el estado de Protección Civil. No significa que no haya alertas. Consulta la fuente oficial y las incidencias de tu trayecto.';
+      } finally { clearTimeout(timer); refresh.disabled = false; }
+    }
+    refresh.addEventListener('click', loadPlans);
+    window.addEventListener('offline', () => { list.replaceChildren(); status.textContent = 'Sin conexión. Estado de alertas no verificado. Vuelve a actualizar cuando recuperes la conexión.'; });
+    loadPlans();
+  })();
+  </script>
   <script type="module" src="./app-analytics.js"></script>
 </body>
 </html>
