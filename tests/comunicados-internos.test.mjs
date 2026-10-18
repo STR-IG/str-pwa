@@ -24,9 +24,9 @@ test('la página valida sesión y afiliación antes de mostrar el comunicado', (
   assert.match(html, /supabase\.auth\.getUser\(\)/);
   assert.match(html, /is_current_user_private_access_allowed/);
   assert.match(html, /STORAGE_BUCKET='comunicados-internos'/);
-  assert.match(html, /STORAGE_PATH='2026\/09\/comunicado-datos-afiliacion\.png'/);
+  assert.match(html, /preview\.src='comunicado-datos-afiliacion\.png\?v=20261018'/);
   assert.match(html, /SIGNED_URL_TTL_SECONDS=300/);
-  assert.match(html, /createSignedUrl\(STORAGE_PATH,SIGNED_URL_TTL_SECONDS\)/);
+  assert.doesNotMatch(html, /createSignedUrl\(STORAGE_PATH,/);
   assert.doesNotMatch(html, /src="comunicado-datos-afiliacion\.png"/);
   assert.match(html, /markNewsRead\(\[button\.dataset\.newsId\]\)/);
 });
@@ -34,7 +34,7 @@ test('la página valida sesión y afiliación antes de mostrar el comunicado', (
 test('la URL firmada solo se solicita después de validar el acceso privado', () => {
   const html = read('comunicados-internos.html');
   const accessCheck = html.indexOf("supabase.rpc('is_current_user_private_access_allowed')");
-  const signedUrl = html.indexOf('.createSignedUrl(STORAGE_PATH,SIGNED_URL_TTL_SECONDS)');
+  const signedUrl = html.indexOf("preview.src='comunicado-datos-afiliacion.png");
   assert.ok(accessCheck >= 0);
   assert.ok(signedUrl > accessCheck);
 });

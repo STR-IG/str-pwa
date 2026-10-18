@@ -50,7 +50,6 @@
     const SUPABASE_URL='https://icneigdnuntzugisexaz.supabase.co';
     const SUPABASE_PUBLISHABLE_KEY='sb_publishable_apKjcPClIBTHS2wwN6qPsA_6Vm4tk9m';
     const STORAGE_BUCKET='comunicados-internos';
-    const STORAGE_PATH='2026/09/comunicado-datos-afiliacion.png';
     const SIGNED_URL_TTL_SECONDS=300;
     const supabase=createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY,{auth:{detectSessionInUrl:false,persistSession:true,autoRefreshToken:true}});
     const checking=document.getElementById('checking');
@@ -82,19 +81,9 @@
           if(!error&&data?.signedUrl)button.querySelector('img').src=data.signedUrl;
         });
         content.hidden=false;
-        const {data:signedFile,error:signedUrlError}=await supabase.storage
-          .from(STORAGE_BUCKET)
-          .createSignedUrl(STORAGE_PATH,SIGNED_URL_TTL_SECONDS);
-        if(signedUrlError||!signedFile?.signedUrl){
-          console.error('No se ha podido cargar el comunicado privado',signedUrlError);
-          preview.closest('button').hidden=true;
-          checking.textContent='No se ha podido cargar el comunicado sobre datos de afiliación. Las fichas están disponibles más abajo.';
-        }else{
-          preview.src=signedFile.signedUrl;
-          communicationImage.src=signedFile.signedUrl;
-          checking.hidden=true;
-          content.hidden=false;
-        }
+        preview.src='comunicado-datos-afiliacion.png?v=20261018';
+        communicationImage.src=preview.src;
+        checking.hidden=true;
       }
     }
 
