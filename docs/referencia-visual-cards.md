@@ -31,3 +31,7 @@ El candado dibujado comunica acceso privado; el control de acceso debe seguir im
 - Al sustituir un recurso en la app, actualizar también cualquier selector JavaScript que dependa de su nombre; actualmente `novedades.js` identifica esta card por el nombre del PNG.
 
 Esta referencia no implica modificar automáticamente las demás cards.
+
+## Medida de las flechas de la pantalla principal
+
+Referencia aprobada: círculo de `card-votaciones.png`. Diámetro exterior aproximado del 10,5 % del ancho de la imagen: 162 px sobre un lienzo de 1536 px o 51 px sobre 480 px. Escalar proporcionalmente el borde blanco y la flecha; medir sobre el ancho visible de la card para mantener el mismo tamaño en pantalla. Esta medida sustituye las recomendaciones anteriores de tamaño para flechas. Permisos retribuidos adopta esta referencia. No modifica automáticamente los candados ni el resto de imágenes.
