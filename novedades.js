@@ -141,7 +141,7 @@ function applyPrivateAreaLayout() {
   const review = byImage('revisa-tu-nomina-card.webp');
   const calculateV = byImage('calcula-tu-v-referencia.webp');
   const askStr = byImage('card-preguntale-str-ig.png');
-  const internalCommunications = byImage('card-comunicados-internos.png');
+  const internalCommunications = byImage('card-comunicados-internos-titulo-arriba.webp');
   const personalArea = byImage('mi-espacio-str-ig.png');
   if (!review || !calculateV || !askStr || !internalCommunications || !personalArea) return;
 
