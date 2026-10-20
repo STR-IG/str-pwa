@@ -9,7 +9,7 @@ await db.exec(
   "create role anon; create role authenticated; create role service_role;",
 );
 const migration = new URL(
-  "../supabase/migrations/20261020104427_anonymous_surveys.sql",
+  "../supabase/migrations/20261020105925_anonymous_surveys.sql",
   import.meta.url,
 );
 await db.exec(await readFile(migration, "utf8"));

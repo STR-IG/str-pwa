@@ -26,16 +26,18 @@ El panel solo entrega agregados. En encuestas públicas se retienen hasta el cie
 
 ## Configuración pendiente y puesta en marcha autorizada
 
-No se ha modificado ni desplegado la base de producción. Primero usar un proyecto de pruebas con el esquema administrativo existente.
+Publicación autorizada por el usuario el 20 de octubre de 2026. Se ha aplicado la migración en producción y desplegado la función `surveys` v1. El archivo local usa la versión que Supabase registró al aplicarla; no se ha modificado el historial remoto. El listado público responde 200 sin encuestas públicas y las llamadas administrativas anónimas se deniegan. La única encuesta creada es privada para administradores.
 
-1. Revisar/aplicar `supabase/migrations/20261020104427_anonymous_surveys.sql` en pruebas. Requiere roles estándar Supabase. Revisar asesores de seguridad del proyecto real, grants efectivos y exposición de esquemas antes de producción.
+El envío de códigos sigue pendiente de configurar `SURVEY_HMAC_SECRET`, `SURVEY_RESEND_API_KEY` y `SURVEY_MAIL_FROM`. La conexión MCP no expone gestión de secretos y la CLI no tiene sesión iniciada. No activar encuestas públicas hasta configurar y probar el correo. Las siguientes comprobaciones describen lo necesario para habilitar el flujo completo:
+
+1. Revisar/aplicar `supabase/migrations/20261020105925_anonymous_surveys.sql` en pruebas. Requiere roles estándar Supabase. Revisar asesores de seguridad del proyecto real, grants efectivos y exposición de esquemas antes de producción.
 2. Configurar secretos **solo en el servidor**: `SURVEY_HMAC_SECRET` (aleatorio, al menos 32 caracteres), `SURVEY_RESEND_API_KEY` y `SURVEY_MAIL_FROM` (remitente verificado en Resend). Supabase proporciona `SUPABASE_URL` y `SUPABASE_SERVICE_ROLE_KEY`. No ponerlos en HTML ni repositorio. Mantener la clave HMAC estable: cambiarla sin migración rompe la detección de duplicados y los códigos existentes.
 3. Revisar proveedor de correo, contrato/configuración de privacidad, remitente y canal efectivo de baja. Acordar conservación de contactos y huellas con STR. Borrar huellas durante una encuesta permite repetir participación. Los desafíos caducados se eliminan al solicitar código en la misma encuesta; conviene una tarea operativa de limpieza periódica para desafíos expirados y cuotas antiguas, sin eliminar participación activa. No se ha creado ninguna tarea programada.
 4. Desplegar la función `surveys` únicamente en pruebas con la sección `verify_jwt = false` de `config.toml`; la función realiza autorización propia para acciones privadas. Configurar orígenes permitidos para la URL de pruebas si difiere de localhost:8000/str-ig.github.io. Apuntar `survey-api.js` al proyecto de pruebas y a su clave publicable para validar el correo real sin tocar producción.
 5. Validar con administrador activo, usuario no administrador y visitante: prueba privada invisible y bloqueada por ID directo; código correcto/incorrecto/caducado/reutilizado; dos solicitudes concurrentes de voto; cierre concurrente; voto sin consentimiento y con consentimiento; denegación de RPC/tablas con claves públicas. No enviar correos reales a terceros durante estas pruebas.
 6. La migración no necesita modificar políticas previas. Revisar también RLS de `committee_admins` y las funciones antiguas mediante asesores del proyecto: el repositorio no contiene su definición completa. La inspección local no certifica toda la configuración remota.
 
-El servicio de correo externo y una instancia completa de Supabase no se han probado en esta implementación local. No fusionar ni desplegar a producción sin autorización expresa.
+La verificación remota confirma el listado, la denegación de RPC a roles públicos y RLS en las tablas nuevas. El asesor de seguridad solo añade avisos informativos de RLS sin políticas, intencionados para denegar todo acceso directo. El correo real y la concurrencia multiconexión siguen pendientes. La autorización del usuario permite publicar la sección; no se ha activado ninguna encuesta pública.
 
 ## Validación local reproducible
 
