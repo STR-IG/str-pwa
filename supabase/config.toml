@@ -1,4 +1,7 @@
 # Anonymous permit queries use X-Permit-Device and a server-side monthly quota.
+[functions.surveys]
+verify_jwt = false
+# Public list/OTP; administrative actions verify Auth JWT and committee_admins in handler.
 # Other functions retain their existing authentication settings.
 [functions.permit-query-quota]
 verify_jwt = false

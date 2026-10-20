@@ -1,4 +1,4 @@
-const CACHE_NAME = 'str-ig-cache-v100';
+const CACHE_NAME = 'str-ig-cache-v101';
 
 const SUPABASE_URL = 'https://icneigdnuntzugisexaz.supabase.co';
 const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_apKjcPClIBTHS2wwN6qPsA_6Vm4tk9m';
@@ -190,6 +190,13 @@ async function trackPublicPermissionsNavigation(request) {
 
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
+
+  // Survey APIs and survey pages must never return stale/private cached data.
+  const surveyUrl = new URL(event.request.url);
+  if (surveyUrl.pathname.includes('/functions/v1/surveys') || /\/encuestas(?:-admin)?\.html$/.test(surveyUrl.pathname)) {
+    event.respondWith(fetch(event.request, {cache:'no-store'}));
+    return;
+  }
 
   // Emergency status must never fall back to an old cached response.
   if (new URL(event.request.url).origin === 'https://analisi.transparenciacatalunya.cat') {
