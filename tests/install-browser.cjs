@@ -40,6 +40,18 @@ const server = http.createServer(async (req, res) => {
       await page.goto(`${origin}/str-pwa/`);
       await page.waitForFunction(() => !!navigator.serviceWorker.controller);
       await page.waitForLoadState('load');
+      await page.waitForFunction(() => document.title === 'STR-IG' && document.querySelector('#install-panel'));
+      // The installed entry point must remain the official complete app.
+      assert.equal(new URL(page.url()).pathname, '/str-pwa/');
+      assert.equal(await page.title(), 'STR-IG');
+      assert.equal(await page.locator('a[href="acceso-privado.html"]').count() > 0, true);
+      assert.equal(await page.locator('a[href="permisos-publicos.html"]').count(), 1);
+      assert.equal(await page.locator('#news-onboarding').isVisible(), standalone);
+      const registration = await page.evaluate(() => navigator.serviceWorker.getRegistration().then(r => ({
+        scope: new URL(r.scope).pathname,
+        script: new URL(r.active.scriptURL).pathname
+      })));
+      assert.deepEqual(registration, {scope:'/str-pwa/', script:'/str-pwa/service-worker.js'});
       if (!standalone) await page.locator('#install-panel').waitFor({state:'visible'});
       assert.equal(await page.locator('#install-panel').isVisible(), !standalone);
       if (!standalone) {
@@ -50,6 +62,12 @@ const server = http.createServer(async (req, res) => {
         const manifest = await page.evaluate(async () => (await fetch('./manifest.json')).json());
         assert.equal(manifest.id, '/str-pwa/');
         assert.equal(manifest.scope, './');
+        const start = new URL(manifest.start_url, page.url());
+        assert.equal(start.pathname, '/str-pwa/');
+        assert.equal(manifest.display, 'standalone');
+        assert.equal(manifest.name, 'STR-IG');
+        assert.equal(JSON.stringify(manifest).includes('str-pwa-pruebas'), false);
+        assert.equal((await page.request.get(start.href)).status(), 200);
         for (const icon of manifest.icons) {
           const size = await page.evaluate(async src => {
             const image = new Image(); image.src = src; await image.decode();
