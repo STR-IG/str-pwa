@@ -8,12 +8,20 @@
   <link rel="icon" type="image/png" href="icono-str-ig.png?v=logo-sindicato-20261016">
   <link rel="apple-touch-icon" href="icono-str-ig.png?v=logo-sindicato-20261016">
   <link rel="manifest" href="manifest.json">
+  <script src="./install.js" defer></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     :root { --red:#e30613; --red-dark:#b9000b; --red-soft:#fff0f1; --black:#161616; --grey:#6e6e73; --light:#f5f5f7; --white:#fff; }
     html, body { width:100%; overflow-x:hidden; }
     body { font-family:Arial,Helvetica,sans-serif; background:var(--light); color:var(--black); padding-bottom:env(safe-area-inset-bottom); }
     button,input { font-family:inherit; }
+    .install-panel { max-width:1100px; margin:16px auto; padding:20px; border:1px solid #f0c9cc; border-radius:18px; background:#fff; line-height:1.5; }
+    .install-panel h2 { font-size:22px; margin-bottom:8px; }
+    .install-panel ol { padding-left:24px; margin:8px 0; }
+    .install-panel a { color:var(--red-dark); overflow-wrap:anywhere; }
+    .install-panel button { margin:12px 0; padding:12px 20px; border:0; border-radius:999px; background:var(--red); color:#fff; font-size:16px; font-weight:bold; cursor:pointer; }
+    .install-panel [hidden], .install-panel[hidden] { display:none; }
+    @media (max-width:700px) { .install-panel { margin:12px 14px; } }
     .hero { position:relative; min-height:520px; overflow:hidden; border-radius:0 0 30px 30px; background:#fff; }
     .hero-track { display:flex; width:100%; height:520px; overflow-x:auto; overflow-y:hidden; scroll-snap-type:x mandatory; scroll-behavior:smooth; -webkit-overflow-scrolling:touch; scrollbar-width:none; }
     .hero-track::-webkit-scrollbar { display:none; }
@@ -167,6 +175,26 @@
   </style>
 </head>
 <body>
+<section class="install-panel" id="install-panel" aria-labelledby="install-title">
+  <h2 id="install-title">Instala STR-IG en tu móvil</h2>
+  <p>Ten STR-IG a mano desde el icono de tu pantalla de inicio. También puedes seguir usando la web.</p>
+  <div id="install-ios">
+    <ol>
+      <li>Abre esta página en <strong>Safari</strong>. Si estás en WhatsApp, Instagram, el lector de QR u otra aplicación, usa su menú y elige <strong>Abrir en Safari</strong>. Si no aparece, copia la dirección de abajo y pégala en Safari.</li>
+      <li>En Safari pulsa <strong>Compartir</strong> (el cuadrado con una flecha hacia arriba; puede estar dentro del menú de más opciones).</li>
+      <li>Elige <strong>Añadir a pantalla de inicio</strong>. Si no aparece, busca en <strong>Editar acciones</strong>.</li>
+      <li>Si aparece <strong>Abrir como app web</strong>, déjalo activado. Confirma con <strong>Añadir</strong>.</li>
+    </ol>
+    <p>Dirección para copiar en Safari: <a href="https://str-ig.github.io/str-pwa/">https://str-ig.github.io/str-pwa/</a></p>
+  </div>
+  <div id="install-other">
+    <button type="button" id="install-app" hidden>Instalar STR-IG</button>
+    <p>En Android, pulsa <strong>Instalar STR-IG</strong> cuando aparezca el botón y confirma en el navegador. Si no aparece, abre el menú <strong>⋮</strong> y elige <strong>Instalar aplicación</strong> o <strong>Añadir a pantalla de inicio</strong>.</p>
+    <p>Si has abierto el QR dentro de otra aplicación y no ves esa opción, abre esta página en <strong>Chrome</strong> desde su menú o copia la dirección: <a href="https://str-ig.github.io/str-pwa/">https://str-ig.github.io/str-pwa/</a></p>
+    <p>En ordenador, busca la opción de instalar en la barra de direcciones o en el menú del navegador.</p>
+  </div>
+  <p id="install-status" role="status"></p>
+</section>
 <header class="hero" aria-label="Destacados">
   <div class="hero-track" id="hero-carousel">
     <a class="hero-slide" href="demo-app.html" role="img" aria-label="Prueba la demo de la app STR-IG"></a>
@@ -261,7 +289,7 @@ initNews({
   pushButtonId:'enable-news-alerts',
   pushStatusId:'news-alerts-status',
   pushPanelId:'news-alerts-panel',
-  onboardingId:'news-onboarding',
+  onboardingId:(window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true) ? 'news-onboarding' : undefined,
   onboardingButtonId:'onboarding-enable-news-alerts',
   onboardingDismissId:'dismiss-news-onboarding'
 });
