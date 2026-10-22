@@ -27,3 +27,11 @@ La emulación no sustituye la instalación real en Android ni Safari/iOS. Antes 
 Con Node y Playwright instalados, ejecutar `node tests/install-browser.cjs`. Si Playwright no está en la resolución de paquetes, indicar su ruta mediante `PLAYWRIGHT_MODULE`; opcionalmente indicar Chrome/Chromium mediante `BROWSER_EXECUTABLE`. La prueba sirve el repositorio en localhost, bloquea peticiones externas (sin escrituras en APIs reales) y crea perfiles temporales y capturas en el directorio padre del repositorio.
 
 Referencias: [criterios de Chrome](https://web.dev/articles/install-criteria), [instalación en Safari según Apple](https://support.apple.com/en-lamr/guide/iphone/iphea86e5236/ios).
+
+## Revisión de la integración con la prueba validada
+
+Se ha contrastado `str-pwa-pruebas/main` (commit `c1d1d337986cf405141b4e9d983db900b5facafb`) con esta rama. `install.js` es idéntico al probado (blob `cba7908699798e67ec27eaf1815c92510d93b996`). Se incorpora la guía a la portada completa; no se copia el index ni el worker simplificado del repositorio de pruebas.
+
+La identidad oficial sigue siendo `/str-pwa/`, y `start_url: ./` resuelve a la portada oficial, con sus accesos públicos y privados. El manifest no contiene rutas a `str-pwa-pruebas`. Las pruebas comprueban estos accesos, el título STR-IG, la URL de inicio, el ámbito y script activo del worker, y que el aviso de notificaciones no tape la guía en una primera visita web. El modo instalado conserva la portada completa y oculta la guía.
+
+Repetición local sobre el repositorio completo: pasan Android, iPhone Safari, iPhone integrado y modo instalado en Chrome, con servicios externos bloqueados. Se espera explícitamente a que termine la recarga inicial al tomar control el worker para evitar comprobar un documento aún vacío. Estas comprobaciones de iPhone son simulaciones en Chromium; la prueba física comunicada corresponde al sitio de pruebas y sigue pendiente repetirla con la integración oficial antes de fusionar.
