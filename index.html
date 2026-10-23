@@ -15,13 +15,21 @@
     html, body { width:100%; overflow-x:hidden; }
     body { font-family:Arial,Helvetica,sans-serif; background:var(--light); color:var(--black); padding-bottom:env(safe-area-inset-bottom); }
     button,input { font-family:inherit; }
-    .install-panel { max-width:1100px; margin:16px auto; padding:20px; border:1px solid #f0c9cc; border-radius:18px; background:#fff; line-height:1.5; }
-    .install-panel h2 { font-size:22px; margin-bottom:8px; }
-    .install-panel ol { padding-left:24px; margin:8px 0; }
+    .install-panel { max-width:680px; margin:18px auto; padding:24px; border:1px solid #e1e1e1; border-radius:24px; background:#fff; line-height:1.5; text-align:center; box-shadow:0 8px 28px rgba(0,0,0,.06); }
+    .install-panel h2 { font-size:clamp(26px,5vw,36px); margin:10px 0 8px; }
+    .install-panel p { color:var(--grey); }
+    .install-logo { display:block; width:88px; height:88px; margin:0 auto 12px; object-fit:contain; }
+    .install-options { display:grid; gap:12px; margin:22px 0 14px; }
+    .install-panel .install-option { display:block; width:100%; min-height:72px; margin:0; padding:16px 20px; border:0; border-radius:20px; color:#fff; font-size:20px; font-weight:800; cursor:pointer; }
+    .install-option.android { background:var(--red); }
+    .install-option.iphone { background:var(--black); }
+    .install-panel .install-back { margin:14px 0 4px; padding:13px 24px; border:0; border-radius:999px; background:#eee; color:var(--black); font-size:16px; font-weight:700; cursor:pointer; }
+    .install-panel ol { padding-left:24px; margin:12px 0; text-align:left; }
+    .install-panel li { padding:4px 0; }
     .install-panel a { color:var(--red-dark); overflow-wrap:anywhere; }
-    .install-panel button { margin:12px 0; padding:12px 20px; border:0; border-radius:999px; background:var(--red); color:#fff; font-size:16px; font-weight:bold; cursor:pointer; }
     .install-panel [hidden], .install-panel[hidden] { display:none; }
-    @media (max-width:700px) { .install-panel { margin:12px 14px; } }
+    .install-status { min-height:1.5em; margin-top:8px; font-size:14px; }
+    @media (max-width:700px) { .install-panel { margin:12px 14px; padding:22px 18px; } }
     .hero { position:relative; min-height:520px; overflow:hidden; border-radius:0 0 30px 30px; background:#fff; }
     .hero-track { display:flex; width:100%; height:520px; overflow-x:auto; overflow-y:hidden; scroll-snap-type:x mandatory; scroll-behavior:smooth; -webkit-overflow-scrolling:touch; scrollbar-width:none; }
     .hero-track::-webkit-scrollbar { display:none; }
@@ -176,24 +184,34 @@
 </head>
 <body>
 <section class="install-panel" id="install-panel" aria-labelledby="install-title">
-  <h2 id="install-title">Instala STR-IG en tu móvil</h2>
-  <p>Ten STR-IG a mano desde el icono de tu pantalla de inicio. También puedes seguir usando la web.</p>
-  <div id="install-ios">
+  <img class="install-logo" src="icono-str-ig.png?v=logo-sindicato-20261016" alt="">
+  <h2 id="install-title">Instala STR-IG</h2>
+  <p>Elige tu móvil para instalar la app. También puedes seguir usando STR-IG desde esta página.</p>
+  <div id="install-choice" class="install-options">
+    <button type="button" class="install-option android" id="install-choose-android">Instalar en Android</button>
+    <button type="button" class="install-option iphone" id="install-choose-iphone">Instalar en iPhone</button>
+  </div>
+  <div id="install-ios" hidden aria-labelledby="install-ios-title">
+    <h2 id="install-ios-title">Instalar en iPhone</h2>
     <ol>
       <li>Abre esta página en <strong>Safari</strong>. Si estás en WhatsApp, Instagram, el lector de QR u otra aplicación, usa su menú y elige <strong>Abrir en Safari</strong>. Si no aparece, copia la dirección de abajo y pégala en Safari.</li>
       <li>En Safari pulsa <strong>Compartir</strong> (el cuadrado con una flecha hacia arriba; puede estar dentro del menú de más opciones).</li>
       <li>Elige <strong>Añadir a pantalla de inicio</strong>. Si no aparece, busca en <strong>Editar acciones</strong>.</li>
       <li>Si aparece <strong>Abrir como app web</strong>, déjalo activado. Confirma con <strong>Añadir</strong>.</li>
+      <li>Abre <strong>STR-IG</strong> desde el nuevo icono de tu pantalla de inicio.</li>
     </ol>
     <p>Dirección para copiar en Safari: <a href="https://str-ig.github.io/str-pwa/">https://str-ig.github.io/str-pwa/</a></p>
+    <button type="button" class="install-back" id="install-back-iphone">Volver</button>
   </div>
-  <div id="install-other">
+  <div id="install-other" hidden aria-labelledby="install-android-title">
+    <h2 id="install-android-title">Instalar en Android</h2>
     <button type="button" id="install-app" hidden>Instalar STR-IG</button>
-    <p>En Android, pulsa <strong>Instalar STR-IG</strong> cuando aparezca el botón y confirma en el navegador. Si no aparece, abre el menú <strong>⋮</strong> y elige <strong>Instalar aplicación</strong> o <strong>Añadir a pantalla de inicio</strong>.</p>
+    <p>Cuando aparezca el aviso, pulsa <strong>Instalar STR-IG</strong> y confirma en el navegador. Si no aparece, abre el menú <strong>⋮</strong> y elige <strong>Instalar aplicación</strong> o <strong>Añadir a pantalla de inicio</strong>.</p>
     <p>Si has abierto el QR dentro de otra aplicación y no ves esa opción, abre esta página en <strong>Chrome</strong> desde su menú o copia la dirección: <a href="https://str-ig.github.io/str-pwa/">https://str-ig.github.io/str-pwa/</a></p>
     <p>En ordenador, busca la opción de instalar en la barra de direcciones o en el menú del navegador.</p>
+    <button type="button" class="install-back" id="install-back-android">Volver</button>
   </div>
-  <p id="install-status" role="status"></p>
+  <p id="install-status" class="install-status" role="status" aria-live="polite"></p>
 </section>
 <header class="hero" aria-label="Destacados">
   <div class="hero-track" id="hero-carousel">
