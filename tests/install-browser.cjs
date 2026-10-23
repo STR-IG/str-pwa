@@ -55,7 +55,14 @@ const server = http.createServer(async (req, res) => {
       if (!standalone) await page.locator('#install-panel').waitFor({state:'visible'});
       assert.equal(await page.locator('#install-panel').isVisible(), !standalone);
       if (!standalone) {
-        assert.equal(await page.locator('#install-ios').isVisible(), name.startsWith('iPhone'));
+        assert.equal(await page.locator('#install-choice').isVisible(), true);
+        const isIPhone = name.startsWith('iPhone');
+        await page.locator(isIPhone ? '#install-choose-iphone' : '#install-choose-android').click();
+        assert.equal(await page.locator('#install-ios').isVisible(), isIPhone);
+        assert.equal(await page.locator('#install-other').isVisible(), !isIPhone);
+        await page.locator(isIPhone ? '#install-back-iphone' : '#install-back-android').click();
+        assert.equal(await page.locator('#install-choice').isVisible(), true);
+        await page.locator(isIPhone ? '#install-choose-iphone' : '#install-choose-android').click();
         assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
       }
       if (name === 'Android') {
