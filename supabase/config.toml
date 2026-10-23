@@ -26,3 +26,7 @@ verify_jwt = false
 verify_jwt = false
 [functions.submit-permit-case]
 verify_jwt = false
+
+# Public CECAT and SCT source status snapshot.
+[functions.official-weather-status]
+verify_jwt = false
