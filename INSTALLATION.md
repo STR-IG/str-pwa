@@ -2,6 +2,7 @@
 
 El QR sigue apuntando a https://str-ig.github.io/str-pwa/. No hay redirecciones ni servicios adicionales.
 
+- La primera pantalla ofrece dos botones grandes para elegir Android o iPhone, como en el flujo probado en la web de pruebas. Cada elección abre sus pasos y un botón «Volver» permite cambiar de guía. La portada completa sigue debajo para quien quiera continuar sin instalar.
 - Android: la portada captura `beforeinstallprompt` y ofrece «Instalar STR-IG» solo cuando el navegador entrega ese evento. El diálogo requiere pulsar el botón; escanear el QR no puede instalar automáticamente. Si el evento tarda o no está disponible, se muestran los pasos del menú del navegador y cómo salir de un navegador integrado.
 - iPhone/iPad: instrucciones de Safari → Compartir → Añadir a pantalla de inicio → Añadir, con «Abrir como app web» si aparece. Se incluye la URL para copiar en Safari. No se promete que un enlace web fuerce la apertura de Safari desde cualquier aplicación.
 - La guía se oculta en modo standalone y tras `appinstalled`. El aviso inicial de notificaciones se reserva a la app instalada para que no tape la instalación; el control de avisos sigue disponible en la web.
