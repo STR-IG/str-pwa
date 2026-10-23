@@ -1,38 +1,15 @@
-# Instalación desde el QR
+# Instalación de STR-IG desde el QR
 
-El QR sigue apuntando a https://str-ig.github.io/str-pwa/. No hay redirecciones ni servicios adicionales.
+La URL de los carteles se conserva: https://str-ig.github.io/str-pwa/.
 
-- La primera pantalla ofrece dos botones grandes para elegir Android o iPhone, como en el flujo probado en la web de pruebas. Cada elección abre sus pasos y un botón «Volver» permite cambiar de guía. La portada completa sigue debajo para quien quiera continuar sin instalar.
-- Android: la portada captura `beforeinstallprompt` y ofrece «Instalar STR-IG» solo cuando el navegador entrega ese evento. El diálogo requiere pulsar el botón; escanear el QR no puede instalar automáticamente. Si el evento tarda o no está disponible, se muestran los pasos del menú del navegador y cómo salir de un navegador integrado.
-- iPhone/iPad: instrucciones de Safari → Compartir → Añadir a pantalla de inicio → Añadir, con «Abrir como app web» si aparece. Se incluye la URL para copiar en Safari. No se promete que un enlace web fuerce la apertura de Safari desde cualquier aplicación.
-- La guía se oculta en modo standalone y tras `appinstalled`. El aviso inicial de notificaciones se reserva a la app instalada para que no tape la instalación; el control de avisos sigue disponible en la web.
+La portada de instalación ofrece Android e iPhone. Android consume beforeinstallprompt cuando está disponible, con instrucciones manuales como alternativa. iPhone abre una guía completa con imágenes, copia y alternativa manual. El enlace copiado añade ?install=iphone; al abrirlo en Safari muestra directamente el paso Compartir, con los tres puntos y las opciones señaladas.
 
-## Revisión técnica
+El manifest conserva id /str-pwa/, nombre e iconos oficiales. Su scope es ./ y start_url es ./app.html. app.html contiene la portada completa que había en producción antes de esta integración. Las visitas a index en modo standalone redirigen a esa portada conservando query y fragmento, para mantener las instalaciones existentes. El service worker conserva la política oficial de red primero y cambia solo la versión de caché.
 
-El manifest ya tenía nombre, identidad `/str-pwa/`, inicio `./`, modo standalone e iconos PNG de 192 y 512. Solo se explicita el scope `./` para conservar la ruta de GitHub Pages. Se mantienen los iconos y su identidad.
+Las imágenes evitan nombres o enlaces de la app de pruebas. Las referencias de Compartir y de confirmación son ilustraciones orientativas; su posición puede variar según iOS.
 
-El service worker se registra en `./service-worker.js`, por tanto su ámbito es `/str-pwa/`. La política existente pide primero la red con `cache: no-store` y usa caché como respaldo. La portada y el nuevo script se obtienen actualizados al volver a cargar con conexión; no hace falta cambiar el worker para esta mejora. No se modifica su política de caché ni se garantiza disponibilidad completa sin conexión.
+## Validación
 
-## Validación realizada (22 de octubre de 2026)
+El usuario confirmó en dispositivos físicos que iPhone y Android se instalan en el sitio de pruebas y que el icono abre la app completa. La integración oficial repite las comprobaciones de interfaz a 320 y 390 px: imágenes cargadas, copia y error de portapapeles, entrada por ?install=iphone sin selector, volver, prompt Android y entrada instalada. Los servicios externos se bloquean durante las pruebas; no se realizan escrituras reales.
 
-- GET público: portada, manifest, service worker y ambos iconos responden HTTP 200 con tipos adecuados.
-- Chrome local con perfil normal: worker activo/controlando la portada bajo `/str-pwa/`; `Page.getInstallabilityErrors` sin errores; tamaños reales de los dos iconos correctos.
-- Pruebas de interfaz en Chromium con identificación Android, iPhone Safari e iPhone integrado, y simulación de `navigator.standalone`: guía adecuada, sin desbordamiento horizontal a 390 px y oculta en modo instalado.
-- Evento de instalación simulado: aceptación, cancelación, error y `appinstalled`; el evento se consume una sola vez, el botón se retira y quedan instrucciones manuales.
-- Comprobación de sintaxis y `git diff --check` correctas.
-
-La emulación no sustituye la instalación real en Android ni Safari/iOS. Antes de fusionar, comprobar en dispositivos físicos: QR → Chrome Android → instalar → abrir desde el icono; QR → Safari iPhone → Compartir → Añadir → abrir desde el icono; QR en una app integrada → seguir los pasos para abrir en Safari. Verificar que la guía desaparece en la app instalada. No se ha desplegado esta rama ni modificado producción.
-
-## Repetir las pruebas
-
-Con Node y Playwright instalados, ejecutar `node tests/install-browser.cjs`. Si Playwright no está en la resolución de paquetes, indicar su ruta mediante `PLAYWRIGHT_MODULE`; opcionalmente indicar Chrome/Chromium mediante `BROWSER_EXECUTABLE`. La prueba sirve el repositorio en localhost, bloquea peticiones externas (sin escrituras en APIs reales) y crea perfiles temporales y capturas en el directorio padre del repositorio.
-
-Referencias: [criterios de Chrome](https://web.dev/articles/install-criteria), [instalación en Safari según Apple](https://support.apple.com/en-lamr/guide/iphone/iphea86e5236/ios).
-
-## Revisión de la integración con la prueba validada
-
-Se ha contrastado `str-pwa-pruebas/main` (commit `c1d1d337986cf405141b4e9d983db900b5facafb`) con esta rama. `install.js` es idéntico al probado (blob `cba7908699798e67ec27eaf1815c92510d93b996`). Se incorpora la guía a la portada completa; no se copia el index ni el worker simplificado del repositorio de pruebas.
-
-La identidad oficial sigue siendo `/str-pwa/`, y `start_url: ./` resuelve a la portada oficial, con sus accesos públicos y privados. El manifest no contiene rutas a `str-pwa-pruebas`. Las pruebas comprueban estos accesos, el título STR-IG, la URL de inicio, el ámbito y script activo del worker, y que el aviso de notificaciones no tape la guía en una primera visita web. El modo instalado conserva la portada completa y oculta la guía.
-
-Antes de incorporar la pantalla de elección, la repetición local sobre el repositorio completo pasó Android, iPhone Safari, iPhone integrado y modo instalado en Chromium, con servicios externos bloqueados. La suite se amplió para comprobar ahora los botones Android/iPhone y «Volver»; debe repetirse tras este cambio antes de fusionar. La sintaxis de JavaScript y la transición entre pantallas se han comprobado. La prueba física comunicada corresponde al sitio de pruebas; queda comprobar la integración oficial en dispositivos antes de fusionar.
+Ejecutar node tests/install-browser.cjs con Playwright instalado. PLAYWRIGHT_MODULE permite indicar el módulo y BROWSER_EXECUTABLE un Chrome/Chromium local. Las capturas se guardan en el directorio temporal. La prueba de interfaz simula los eventos de instalación y standalone; no sustituye la instalación física ni comprueba instalabilidad del navegador real. Verificar el despliegue público y repetir el QR de un cartel tras publicar.

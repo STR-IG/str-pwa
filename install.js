@@ -1,56 +1,88 @@
 (() => {
-  const panel = document.getElementById('install-panel');
-  const choice = document.getElementById('install-choice');
-  const iosGuide = document.getElementById('install-ios');
-  const androidGuide = document.getElementById('install-other');
-  const button = document.getElementById('install-app');
+  const android = document.getElementById('install-android');
+  const iphone = document.getElementById('install-iphone');
   const status = document.getElementById('install-status');
-  const standalone = window.matchMedia('(display-mode: standalone)');
   let deferredPrompt;
-  let installed = false;
-
-  function showGuide(platform) {
-    choice.hidden = Boolean(platform);
-    iosGuide.hidden = platform !== 'iphone';
-    androidGuide.hidden = platform !== 'android';
-    render();
+  let androidSelected = false;
+  const standalone = matchMedia('(display-mode: standalone)');
+  const openApp = () => location.replace('./app.html' + location.search + location.hash);
+  if (standalone.matches || navigator.standalone === true) { openApp(); return; }
+  standalone.addEventListener('change', () => { if (standalone.matches) openApp(); });
+  document.querySelectorAll('.install-url').forEach(link => { link.href = new URL('./', location.href).href; link.textContent = link.href; });
+  function guide(platform) {
+    for (const name of ['android', 'iphone']) {
+      const selected = name === platform;
+      document.getElementById(`${name}-guide`).hidden = !selected;
+      document.getElementById(`install-${name}`).setAttribute('aria-expanded', String(selected));
+    }
   }
-
-  function render() {
-    panel.hidden = installed || standalone.matches || navigator.standalone === true;
-    button.hidden = !deferredPrompt || androidGuide.hidden || panel.hidden;
-  }
-
-  document.getElementById('install-choose-iphone').addEventListener('click', () => showGuide('iphone'));
-  document.getElementById('install-choose-android').addEventListener('click', () => showGuide('android'));
-  document.getElementById('install-back-iphone').addEventListener('click', () => showGuide(null));
-  document.getElementById('install-back-android').addEventListener('click', () => showGuide(null));
-
-  window.addEventListener('beforeinstallprompt', (event) => {
+  window.addEventListener('beforeinstallprompt', event => {
     event.preventDefault();
     deferredPrompt = event;
-    render();
+    if (androidSelected) status.textContent = 'La instalación está disponible. Pulsa de nuevo Instalar en Android.';
   });
-  window.addEventListener('appinstalled', () => {
-    installed = true;
-    deferredPrompt = null;
-    render();
-  });
-  standalone.addEventListener('change', render);
-  button.addEventListener('click', async () => {
+  android.addEventListener('click', async () => {
+    androidSelected = true;
+    guide('android');
+    status.textContent = '';
     if (!deferredPrompt) return;
     const prompt = deferredPrompt;
     deferredPrompt = null;
-    button.hidden = true;
+    android.disabled = true;
     try {
       await prompt.prompt();
-      const result = await prompt.userChoice;
-      status.textContent = result.outcome === 'accepted'
-        ? 'Has aceptado la instalación. Sigue las indicaciones del navegador.'
-        : 'Puedes instalarla más tarde desde el menú del navegador.';
-    } catch (_error) {
-      status.textContent = 'Abre el menú del navegador y elige Instalar aplicación o Añadir a pantalla de inicio.';
+      const choice = await prompt.userChoice;
+      status.textContent = choice.outcome === 'accepted' ? 'Confirma la instalación y abre STR-IG desde el icono de tu móvil.' : 'Puedes volver a intentarlo desde el menú de Chrome.';
+    } catch {
+      status.textContent = 'Sigue los pasos de Chrome para instalar la app.';
+    } finally { android.disabled = false; }
+  });
+  const title = document.getElementById('screen-title');
+  const intro = document.getElementById('screen-intro');
+  const copyStatus = document.getElementById('copy-status');
+  const iphoneInstallUrl = new URL('./', location.href);
+  iphoneInstallUrl.searchParams.set('install', 'iphone');
+  document.querySelectorAll('#iphone-guide .install-url').forEach(link => {
+    link.href = iphoneInstallUrl.href;
+    link.textContent = iphoneInstallUrl.href;
+  });
+  iphone.addEventListener('click', () => {
+    androidSelected = false;
+    guide('iphone');
+    status.textContent = '';
+    document.querySelector('.actions').hidden = true;
+    intro.hidden = true;
+    copyStatus.textContent = '';
+    title.textContent = 'Instalar en iPhone';
+    document.body.classList.add('iphone-guide-open');
+    title.focus();
+    window.scrollTo(0, 0);
+  });
+  document.getElementById('copy-iphone-link').addEventListener('click', async () => {
+    const url = iphoneInstallUrl.href;
+    try {
+      await navigator.clipboard.writeText(url);
+      copyStatus.textContent = 'Enlace copiado. Abre Safari y sigue el paso 2.';
+    } catch {
+      copyStatus.textContent = 'Mantén pulsado el enlace de abajo y elige Copiar enlace. Después sigue el paso 2.';
     }
   });
-  render();
+  document.getElementById('iphone-back').addEventListener('click', () => {
+    document.getElementById('iphone-guide').hidden = true;
+    iphone.setAttribute('aria-expanded', 'false');
+    document.querySelector('.actions').hidden = false;
+    intro.hidden = false;
+    title.textContent = 'Instala STR-IG';
+    document.body.classList.remove('iphone-guide-open', 'resume-iphone');
+    iphone.focus();
+    window.scrollTo(0, 0);
+  });
+  if (new URLSearchParams(location.search).get('install') === 'iphone') {
+    iphone.click();
+    document.body.classList.add('resume-iphone');
+    title.textContent = 'Ahora pulsa Compartir';
+    document.getElementById('copy-status').textContent = 'Ya has abierto el enlace. Si estás en Safari, continúa en el paso 3: Pulsa Compartir.';
+  }
+  window.addEventListener('appinstalled', () => { deferredPrompt = null; status.textContent = 'App instalada. Ábrela desde el icono de tu pantalla de inicio.'; });
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('./service-worker.js', {updateViaCache:'none'}).then(registration => registration.update()).catch(() => {});
 })();
