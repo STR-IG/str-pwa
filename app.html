@@ -19,7 +19,6 @@
     .hero-track::-webkit-scrollbar { display:none; }
     .hero-slide { flex:0 0 100%; width:100%; height:100%; scroll-snap-align:start; scroll-snap-stop:always; background-position:center; background-size:cover; background-repeat:no-repeat; }
     .hero-slide:first-child { background-image:url("card-demo-app-nueva.webp"); cursor:pointer; }
-    .hero-slide.dia-afiliacion { background-image:url("card-carrusel-dia-afiliado.png"); background-size:contain; background-color:#fff; cursor:pointer; }
     .hero-slide.loteria-navidad { background-image:url("Loteria_STR_2026.webp"); background-size:contain; background-color:#fff; cursor:pointer; }
     .hero-dots { position:absolute; left:50%; bottom:8px; z-index:4; display:flex; gap:8px; transform:translateX(-50%); padding:7px 10px; border-radius:999px; background:#fff; box-shadow:0 2px 8px rgba(0,0,0,.12); }
     .hero-dot { width:9px; height:9px; padding:0; border:0; border-radius:50%; background:#b7b7b7; cursor:pointer; }
@@ -170,13 +169,11 @@
 <header class="hero" aria-label="Destacados">
   <div class="hero-track" id="hero-carousel">
     <a class="hero-slide" href="demo-app.html" role="img" aria-label="Prueba la demo de la app STR-IG"></a>
-    <a class="hero-slide dia-afiliacion" href="dia-afiliacion.html" role="img" aria-label="Día de la Afiliación STR, 24 de octubre"></a>
     <a class="hero-slide loteria-navidad" href="https://wa.me/34625641044?text=Hola%20Roc%C3%ADo%2C%20quiero%20comprar%20un%20d%C3%A9cimo%20de%20la%20loter%C3%ADa%20de%20Navidad%20de%20STR." target="_blank" rel="noopener noreferrer" aria-label="Lotería de Navidad STR 2026, número 30.234, 21 euros por décimo. Contactar con Rocío por WhatsApp (se abre en otra aplicación o pestaña)"></a>
   </div>
   <div class="hero-dots" aria-label="Seleccionar destacado">
     <button type="button" class="hero-dot active" aria-label="Ver destacado 1" data-slide="0"></button>
-    <button type="button" class="hero-dot" aria-label="Ver destacado 2" data-slide="1"></button>
-    <button type="button" class="hero-dot" aria-label="Ver lotería de Navidad STR" data-slide="2"></button>
+    <button type="button" class="hero-dot" aria-label="Ver lotería de Navidad STR" data-slide="1"></button>
   </div>
 </header>
 <main>
@@ -186,6 +183,28 @@
   </section>
   <section class="section" aria-label="Accesos principales">
     <div class="area-block">
+      <h2 class="area-heading">ÁREA PÚBLICA</h2>
+      <div class="area-grid">
+        <a href="permisos-publicos.html" class="quick-card menu-image-card"><img src="card-permisos-retribuidos-ajustada.webp" style="object-fit:contain" alt="Permisos retribuidos"></a>
+        <a href="encuestas.html" class="quick-card menu-image-card" aria-label="Participa en las encuestas. Tu opinión cuenta"><img src="card-participa-encuestas.webp" style="object-fit:contain" alt="Participa en las encuestas. Tu opinión cuenta" loading="lazy"></a>
+        <a href="menu-comedor.html" class="quick-card menu-image-card news-notification-card" id="menu-card" data-news-category="menu"><img src="menu-comedor.webp" alt="Menú comedor"><span class="news-notification-badge" data-news-badge aria-label="Novedades sin leer">0</span></a>
+        <a class="quick-card menu-image-card sindical-news-card news-notification-card" href="actividad-informacion-sindical.html" data-news-category="activity" data-news-categories="activity documentation-info" aria-label="ACTIVIDAD E INFORMACIÓN SINDICAL"><img src="actividad-sindical-480x295.webp" alt="ACTIVIDAD E INFORMACIÓN SINDICAL"><span class="news-notification-badge" data-news-badge aria-label="Novedades sin leer">0</span></a>
+        <a href="actualidad-laboral.html" class="quick-card menu-image-card news-notification-card" data-news-category="labor-news" aria-label="Actualidad laboral"><img src="card-actualidad-laboral.webp" alt="Actualidad laboral"><span class="news-notification-badge" data-news-badge aria-label="Novedades sin leer">0</span></a>
+        <a href="actualidad-empresa.html" class="quick-card menu-image-card news-notification-card" data-news-category="company-news" aria-label="Actualidad de tu empresa"><img src="card-actualidad-empresa.webp" alt="Actualidad de tu empresa"><span class="news-notification-badge" data-news-badge aria-label="Novedades sin leer">0</span></a>
+        <a href="estado-carreteras.html" class="quick-card menu-image-card"><img src="card-estado-carreteras-v2.webp" style="object-fit:contain" alt="Estado de las carreteras. Tráfico e incidencias oficiales"></a>
+        <a href="alertas-meteorologicas.html" class="quick-card menu-image-card" aria-label="Emergencias: alertas oficiales de Protecció Civil"><img src="card-alertas-meteorologicas.webp" style="object-fit:contain" alt="Emergencias: alertas oficiales de Protecció Civil" loading="lazy"></a>
+        <a href="conoce-tus-derechos.html" class="quick-card menu-image-card rights-image-card" aria-label="Conoce tus derechos"><img src="card-conoce-tus-derechos-propuesta-v5.webp" alt="Conoce tus derechos"></a>
+        <a href="votaciones.html" class="quick-card menu-image-card voting-image-card" aria-label="Elecciones generales del 29-N: votaciones y permisos laborales"><img src="card-votaciones.webp" alt="Votaciones. Elecciones generales · 29-N" loading="lazy"></a>
+        <article class="quick-card menu-image-card" aria-label="Nuestra sección sindical STR-IG"><img src="card-nuestra-seccion-sindical.webp" alt="Nuestra sección sindical STR-IG"></article>
+      </div>
+      <div class="area-grid" style="margin-top:14px">
+        <article class="list-item"><div class="list-icon">📅</div><div class="list-text"><strong>Calendarios</strong><span>Turnos, festivos, horarios y planificación anual.</span></div><div class="arrow">›</div></article>
+        <article class="list-item"><div class="list-icon">👥</div><div class="list-text"><strong>El sindicato</strong><span>Conoce STR, nuestro proyecto y nuestros valores.</span></div><div class="arrow">›</div></article>
+        <article class="list-item"><div class="list-icon">☎️</div><div class="list-text"><strong>Contacto</strong><span>Estamos para ayudarte. Escríbenos o llámanos.</span></div><div class="arrow">›</div></article>
+      </div>
+      <div class="section-header"><a href="actividad-informacion-sindical.html">Ver todas →</a></div>
+    </div>
+    <div class="area-block">
       <h2 class="area-heading" id="area-privada">ÁREA PRIVADA</h2>
       <div class="area-grid">
         <a href="acceso-privado.html" class="quick-card menu-image-card"><img src="calcula-tu-v-referencia.webp" alt="Calcula tu V, área privada"></a>
@@ -194,26 +213,6 @@
         <a href="acceso-privado.html?next=estadisticas-nomina.html" class="quick-card menu-image-card" aria-label="Estadísticas de nómina, acceso privado para afiliados"><img src="card-estadisticas-nomina.webp" alt="Estadísticas de nómina, área privada"></a>
         <a href="acceso-privado.html?next=justificantes-oficiales.html" class="quick-card menu-image-card" aria-label="Justificantes oficiales, acceso privado para afiliados"><img src="justificantes-oficiales.webp" alt="Justificantes oficiales, área privada" loading="lazy"></a>
       </div>
-    </div>
-    <div class="area-block">
-      <h2 class="area-heading">ÁREA PÚBLICA</h2>
-      <div class="area-grid">
-        <a href="encuestas.html" class="quick-card menu-image-card" aria-label="Participa en las encuestas. Tu opinión cuenta"><img src="card-participa-encuestas.webp" style="object-fit:contain" alt="Participa en las encuestas. Tu opinión cuenta" loading="lazy"></a>
-        <a href="permisos-publicos.html" class="quick-card menu-image-card"><img src="card-permisos-retribuidos-ajustada.webp" style="object-fit:contain" alt="Permisos retribuidos"></a>
-        <a href="menu-comedor.html" class="quick-card menu-image-card news-notification-card" id="menu-card" data-news-category="menu"><img src="menu-comedor.webp" alt="Menú comedor"><span class="news-notification-badge" data-news-badge aria-label="Novedades sin leer">0</span></a>
-        <a href="alertas-meteorologicas.html" class="quick-card menu-image-card" aria-label="Emergencias: alertas oficiales de Protecció Civil"><img src="card-alertas-meteorologicas.webp" style="object-fit:contain" alt="Emergencias: alertas oficiales de Protecció Civil" loading="lazy"></a>
-        <a href="estado-carreteras.html" class="quick-card menu-image-card"><img src="card-estado-carreteras-v2.webp" style="object-fit:contain" alt="Estado de las carreteras. Tráfico e incidencias oficiales"></a>
-        <a href="actualidad-laboral.html" class="quick-card menu-image-card news-notification-card" data-news-category="labor-news" aria-label="Actualidad laboral"><img src="card-actualidad-laboral.webp" alt="Actualidad laboral"><span class="news-notification-badge" data-news-badge aria-label="Novedades sin leer">0</span></a>
-        <a href="actualidad-empresa.html" class="quick-card menu-image-card news-notification-card" data-news-category="company-news" aria-label="Actualidad de tu empresa"><img src="card-actualidad-empresa.webp" alt="Actualidad de tu empresa"><span class="news-notification-badge" data-news-badge aria-label="Novedades sin leer">0</span></a>
-        <a class="quick-card menu-image-card sindical-news-card news-notification-card" href="actividad-informacion-sindical.html" data-news-category="activity" data-news-categories="activity documentation-info" aria-label="ACTIVIDAD E INFORMACIÓN SINDICAL"><img src="actividad-sindical-480x295.webp" alt="ACTIVIDAD E INFORMACIÓN SINDICAL"><span class="news-notification-badge" data-news-badge aria-label="Novedades sin leer">0</span></a>
-        <article class="quick-card menu-image-card" aria-label="Nuestra sección sindical STR-IG"><img src="card-nuestra-seccion-sindical.webp" alt="Nuestra sección sindical STR-IG"></article>
-        <a href="votaciones.html" class="quick-card menu-image-card voting-image-card" aria-label="Elecciones generales del 29-N: votaciones y permisos laborales"><img src="card-votaciones.webp" alt="Votaciones. Elecciones generales · 29-N" loading="lazy"></a>
-        <a href="conoce-tus-derechos.html" class="quick-card menu-image-card rights-image-card" aria-label="Conoce tus derechos"><img src="card-conoce-tus-derechos-propuesta-v5.webp" alt="Conoce tus derechos"></a>
-        <article class="list-item"><div class="list-icon">📅</div><div class="list-text"><strong>Calendarios</strong><span>Turnos, festivos, horarios y planificación anual.</span></div><div class="arrow">›</div></article>
-        <article class="list-item"><div class="list-icon">👥</div><div class="list-text"><strong>El sindicato</strong><span>Conoce STR, nuestro proyecto y nuestros valores.</span></div><div class="arrow">›</div></article>
-        <article class="list-item"><div class="list-icon">☎️</div><div class="list-text"><strong>Contacto</strong><span>Estamos para ayudarte. Escríbenos o llámanos.</span></div><div class="arrow">›</div></article>
-      </div>
-      <div class="section-header"><a href="actividad-informacion-sindical.html">Ver todas →</a></div>
     </div>
   </section>
   <section id="permisos" class="section">

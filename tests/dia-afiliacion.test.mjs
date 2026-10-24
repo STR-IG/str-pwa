@@ -4,12 +4,13 @@ import { existsSync, readFileSync } from 'node:fs';
 
 const read = name => readFileSync(new URL(`../${name}`, import.meta.url), 'utf8');
 
-test('el carrusel conserva la demo y sustituye solo la segunda diapositiva', () => {
-  const html = read('index.html');
+test('el carrusel conserva la demo y retira el Día de la Afiliación', () => {
+  const html = read('app.html');
   assert.match(html, /<a class="hero-slide" href="demo-app\.html"/);
-  assert.match(html, /<a class="hero-slide dia-afiliacion" href="dia-afiliacion\.html"/);
+  assert.doesNotMatch(html, /hero-slide dia-afiliacion|\.hero-slide\.dia-afiliacion|card-carrusel-dia-afiliado\.png/);
+  assert.equal((html.match(/class="hero-slide[^"]*"/g) || []).length, 2);
+  assert.equal((html.match(/data-slide="\d+"/g) || []).length, 2);
   assert.doesNotMatch(html, /hero-slide conoce-app/);
-  assert.match(html, /\.hero-slide\.dia-afiliacion[^}]*card-carrusel-dia-afiliado\.png[^}]*background-size:contain/);
 });
 
 test('la ficha reutiliza el cartel completo y ofrece la inscripción externa segura', () => {
@@ -24,7 +25,7 @@ test('la ficha reutiliza el cartel completo y ofrece la inscripción externa seg
 
 test('actividad sindical incluye el Día de la Afiliación y reutiliza el contador existente', () => {
   const activity = read('actividad-informacion-sindical.html');
-  const home = read('index.html');
+  const home = read('app.html');
   const news = read('novedades.js');
   assert.match(activity, /href="dia-afiliacion\.html"/);
   assert.match(activity, /src="Card-dia-afiliacion\.jpg"/);
@@ -34,7 +35,7 @@ test('actividad sindical incluye el Día de la Afiliación y reutiliza el contad
 });
 
 test('el carrusel avanza cada 15 segundos, vuelve al inicio y reinicia tras interacción', () => {
-  const html = read('index.html');
+  const html = read('app.html');
   assert.match(html, /const HERO_AUTOPLAY_DELAY = 15000/);
   assert.match(html, /const nextIndex = \(visibleHeroIndex\(\) \+ 1\) % heroDots\.length/);
   assert.match(html, /dot\.addEventListener\('click',[\s\S]*?scheduleHeroAutoplay\(\)/);
@@ -42,9 +43,13 @@ test('el carrusel avanza cada 15 segundos, vuelve al inicio y reinicia tras inte
   assert.match(html, /scrollTo\(\{ left:nextIndex \* heroCarousel\.clientWidth, behavior:'smooth' \}\)/);
 });
 
-test('Actualidad aparece una sola vez antes de Área pública', () => {
-  const html = read('index.html');
-  const actuality = '<h2>Actualidad STR-IG</h2>';
-  assert.equal(html.split(actuality).length - 1, 1);
-  assert.ok(html.indexOf(actuality) < html.indexOf('<h2 class="area-heading">ÁREA PÚBLICA</h2>'));
+test('las tarjetas de actualidad aparecen una sola vez dentro del Área pública', () => {
+  const html = read('app.html');
+  const publicArea = html.match(/<h2[^>]*>ÁREA PÚBLICA<\/h2>([\s\S]*?)(?=<div class="area-block">)/);
+  assert.ok(publicArea, 'debe existir el Área pública');
+  for (const target of ['actualidad-empresa.html', 'actualidad-laboral.html']) {
+    const link = `href="${target}"`;
+    assert.equal(html.split(link).length - 1, 1, `${target} debe aparecer una sola vez`);
+    assert.ok(publicArea[1].includes(link), `${target} debe estar dentro del Área pública`);
+  }
 });
