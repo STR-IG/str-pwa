@@ -7,9 +7,10 @@ const calculate = readFileSync(new URL('../supabase/functions/calculate-v-payrol
 
 test('Administración reutiliza la misma pantalla, lector y función de Calcula tu V', () => {
   assert.match(page, /adminPayrollApi/);
-  assert.equal((page.match(/READ_V_ENDPOINT/g) || []).length >= 3, true);
-  assert.equal((page.match(/CALCULATE_V_ENDPOINT/g) || []).length, 2);
-  assert.match(page, /callPrivateFunction\(READ_V_ENDPOINT/);
+  assert.doesNotMatch(page, /READ_V_ENDPOINT|read-v-payroll/);
+  assert.match(page, /readVImageLocally/);
+  assert.equal((page.match(/CALCULATE_V_ENDPOINT/g) || []).length, 3);
+  assert.match(page, /action: 'status'/);
   assert.match(page, /callPrivateFunction\(CALCULATE_V_ENDPOINT, calculationBody/);
   assert.doesNotMatch(page, /admin-calculate-v-payrolls|admin-read-v-payroll/);
 });

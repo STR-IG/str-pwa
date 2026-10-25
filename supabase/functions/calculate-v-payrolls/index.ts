@@ -6,6 +6,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
   "Content-Type": "application/json",
+  "Cache-Control": "no-store",
 };
 
 const includedCodes = new Set(["0010", "0013", "0080", "0017", "7013", "7017"]);
@@ -128,6 +129,18 @@ Deno.serve(async (req: Request) => {
     if (adminError) return json({ error: "AUTHORIZATION_CHECK_FAILED" }, 500);
 
     const body = await req.json().catch(() => ({}));
+    if (body?.action === "status") {
+      const period = String(body?.vMonth ?? "");
+      if (monthIndex(period) === null) return json({ error: "INVALID_MONTH" }, 400);
+      if (adminRole) return json({ canCalculate: true, used: false, unlimited: true, period });
+      const { data: usage, error: statusError } = await admin
+        .from("v_calculation_usage").select("v_month")
+        .eq("user_id", user.id).eq("environment", "production")
+        .eq("v_month", `${period}-01`).maybeSingle();
+      if (statusError) return json({ error: "USAGE_STATUS_UNAVAILABLE" }, 503);
+      return json({ canCalculate: !usage, used: Boolean(usage), unlimited: false, period });
+    }
+    if (body?.action !== undefined && body.action !== "calculate") return json({ error: "INVALID_ACTION" }, 400);
     const payrolls = Array.isArray(body?.payrolls) ? body.payrolls : [];
     if (payrolls.length !== 3) return json({ error: "INSUFFICIENT_DATA" }, 400);
 

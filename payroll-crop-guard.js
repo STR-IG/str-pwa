@@ -101,6 +101,7 @@
     sourceUrl = '';
     sourceImage = null;
     sourceFile = null;
+    preview.removeAttribute('src');
   }
 
   function closeModal(clearInput) {
@@ -110,6 +111,8 @@
     activeInput = null;
     cleanupSource();
   }
+
+  window.addEventListener('str:v-captures-cleared', () => closeModal(true));
 
   function openCrop(input, file) {
     activeInput = input;
