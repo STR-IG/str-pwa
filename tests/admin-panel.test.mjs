@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
 
 const panel = readFileSync(new URL('../panel-administracion.html', import.meta.url), 'utf8');
-const index = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
+const index = readFileSync(new URL('../app.html', import.meta.url), 'utf8');
 const login = readFileSync(new URL('../acceso-privado.html', import.meta.url), 'utf8');
 const endpoint = readFileSync(new URL('../supabase/functions/manage-affiliates/index.ts', import.meta.url), 'utf8');
 

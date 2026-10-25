@@ -12,7 +12,8 @@
     *{box-sizing:border-box}
     :root{--red:#e30613;--red-dark:#b9000b;--black:#161616;--grey:#6e6e73;--line:#dedee2;--light:#f5f5f7;--white:#fff;--green:#17623a;--green-soft:#eef8f1}
     body{min-height:100vh;margin:0;padding-bottom:48px;color:var(--black);background:var(--light);font-family:Arial,Helvetica,sans-serif}
-    button,input{font:inherit}
+    button,input,textarea{font:inherit}
+    .access-message textarea{display:block;width:100%;min-height:300px;padding:12px;border:1px solid var(--line);border-radius:12px;font-size:16px;line-height:1.5;resize:vertical}.access-actions{display:flex;flex-wrap:wrap;gap:12px;align-items:center}.access-actions button,.access-actions a{display:inline-block;padding:12px 16px;border:1px solid var(--line);border-radius:12px;font:700 15px Arial;text-decoration:none;color:var(--red-dark);background:white;cursor:pointer}.access-message dd{overflow-wrap:anywhere}.access-message [hidden]{display:none}
     .topbar{position:sticky;top:0;z-index:10;display:flex;align-items:center;gap:14px;min-height:66px;padding:10px 16px;background:var(--black);color:var(--white)}
     .back{display:grid;place-items:center;width:44px;height:44px;border-radius:50%;color:var(--white);text-decoration:none;font-size:32px}
     .topbar strong{font-size:18px}
@@ -58,11 +59,11 @@
     <p id="loading" class="loading">Comprobando acceso de Administrador…</p>
 
     <section id="home" class="screen" hidden>
-      <div class="hero"><span class="eyebrow">Acceso exclusivo Administrador</span><h1>Panel de administración STR-IG</h1><p>Consulta la información existente de los afiliados.</p></div>
+      <div class="hero"><span class="eyebrow">Acceso exclusivo Administrador</span><h1>Panel de administración STR-IG</h1><p>Gestiona los correos autorizados y envía el mensaje de acceso cuando lo decidas.</p></div>
       <div class="panel">
         <a href="encuestas-admin.html" class="module"><div><strong>Encuestas</strong><span>Crear, activar, cerrar y consultar resultados agregados</span></div><b>›</b></a>
         <button id="open-affiliates" class="module" type="button">
-          <span><strong>Afiliados</strong><span>Buscar y consultar fichas de afiliados.</span></span><b aria-hidden="true">›</b>
+          <span><strong>Usuarios del área privada</strong><span>Añadir correos y enviar el mensaje de acceso.</span></span><b aria-hidden="true">›</b>
         </button>
         <button id="open-permit-cases" class="module" type="button">
           <span><strong>Consultas de permisos</strong><span>Casos enviados por personas afiliadas.</span></span><b aria-hidden="true">›</b>
@@ -80,18 +81,25 @@
       <p id="permit-cases-status" role="status"></p><div id="permit-cases-list"></div>
     </section>
     <section id="affiliates" class="screen" hidden>
-      <div class="screen-head"><button class="screen-back" type="button" data-back="home" aria-label="Volver al panel">‹</button><div><h1>Gestión de afiliados</h1><p>Consulta y búsqueda</p></div></div>
+      <div class="screen-head"><button class="screen-back" type="button" data-back="home" aria-label="Volver al panel">‹</button><div><h1>Usuarios del área privada</h1><p>Correos autorizados · No exige afiliación</p></div></div>
       <div class="panel">
-        <label for="affiliate-search">Buscar afiliado</label>
+        <form id="add-access-email">
+          <label for="new-access-email">Añadir correo autorizado</label>
+          <input id="new-access-email" class="search" type="email" autocomplete="off" maxlength="254" required placeholder="persona@ejemplo.com">
+          <p class="privacy-note">Guardar autoriza el acceso. No envía ningún correo.</p>
+          <button id="save-access-email" class="module" type="submit">Guardar correo sin enviar</button>
+          <p id="add-access-status" role="status" aria-live="polite"></p>
+        </form>
+        <label for="affiliate-search">Buscar usuario</label>
         <input id="affiliate-search" class="search" type="search" autocomplete="off" placeholder="Nombre, email, número o teléfono">
-        <p id="affiliate-count" class="count">Cargando afiliados…</p>
+        <p id="affiliate-count" class="count">Cargando usuarios…</p>
         <div id="affiliate-list" class="affiliate-list"></div>
         <p id="affiliate-error" class="error" hidden>No se ha podido consultar el listado.</p>
       </div>
     </section>
 
     <section id="affiliate-detail" class="screen" hidden>
-      <div class="screen-head"><button class="screen-back" type="button" data-back="affiliates" aria-label="Volver al listado">‹</button><div><h1>Ficha del afiliado</h1><p>Información existente</p></div></div>
+      <div class="screen-head"><button class="screen-back" type="button" data-back="affiliates" aria-label="Volver al listado">‹</button><div><h1>Acceso del usuario</h1><p>Información existente</p></div></div>
       <article class="panel">
         <h2 id="detail-name" style="margin:0 0 14px;font-size:23px"></h2>
         <dl class="details">
@@ -101,6 +109,20 @@
           <div class="detail"><dt>Teléfono</dt><dd id="detail-phone">—</dd></div>
         </dl>
         <p class="privacy-note">Ficha de consulta. No muestra contraseñas ni crea copias de los datos del afiliado.</p>
+      </article>
+      <article class="panel access-message">
+        <h2>Correo de acceso al área privada</h2>
+        <p>Revisa el mensaje y pulsa Enviar cuando quieras comunicarle su acceso. Se enviará desde acceso@str-ig.es.</p>
+        <button id="prepare-access-message" class="module" type="button">Preparar correo de acceso</button>
+        <div id="access-message-preview" hidden>
+          <p><strong>Para:</strong> <span id="access-message-recipient"></span></p>
+          <p><strong>Asunto:</strong> <span id="access-message-subject"></span></p>
+          <label for="access-message-body">Mensaje</label>
+          <textarea id="access-message-body" readonly></textarea>
+          <p class="privacy-note">Revisa el destinatario y el contenido antes de enviarlo. Solo el botón Enviar realiza el envío.</p>
+          <div class="access-actions"><button id="send-access-message" type="button">Enviar correo de acceso</button><button id="copy-access-message" type="button">Copiar mensaje</button></div>
+        </div>
+        <p id="access-message-status" role="status" aria-live="polite"></p>
       </article>
       <article class="panel documents-admin">
         <h2>Nóminas y Registro</h2>
@@ -120,6 +142,7 @@
   </main>
 
   <script type="module">
+    import { privateAccessMessage } from './private-access-message.mjs?v=1';
     import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
     import { adminPayrollApi } from './admin-payroll-storage.mjs?v=1';
 
@@ -127,6 +150,9 @@
     const SUPABASE_URL='https://icneigdnuntzugisexaz.supabase.co';
     const SUPABASE_PUBLISHABLE_KEY='sb_publishable_apKjcPClIBTHS2wwN6qPsA_6Vm4tk9m';
     const MANAGE_AFFILIATES=SUPABASE_URL+'/functions/v1/manage-affiliates';
+    const MANAGE_ACCESS=SUPABASE_URL+'/functions/v1/manage-private-access';
+    const accessSends=new Map();
+    let sendingAccess=false;
     const ADMIN_DOCUMENTS=SUPABASE_URL+'/functions/v1/admin-payroll-documents';
     const GEMINI_TEST=SUPABASE_URL+'/functions/v1/gemini-str';
     const supabase=createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY,{auth:{detectSessionInUrl:false,persistSession:true,autoRefreshToken:true}});
@@ -209,6 +235,13 @@
 
     function openDetail(affiliate){
       currentAffiliate=affiliate;
+      document.getElementById('access-message-preview').hidden=true;
+      document.getElementById('access-message-body').value='';
+      document.getElementById('send-access-message').disabled=true;
+      document.getElementById('access-message-status').textContent='';
+      const prepare=document.getElementById('prepare-access-message');
+      prepare.disabled=affiliate.active===false||!affiliate.email;
+      if(prepare.disabled)document.getElementById('access-message-status').textContent='Este usuario no tiene un correo con acceso activo.';
       document.getElementById('detail-name').textContent=affiliate.display_name||affiliate.email;
       document.getElementById('detail-number').textContent=affiliate.employee_number||'No indicado';
       document.getElementById('detail-status').textContent=affiliate.active===false?'Acceso inactivo':'Acceso activo';
@@ -221,8 +254,8 @@
     function renderAffiliates(){
       const filtered=affiliates.filter(affiliate=>matches(affiliate,search.value));
       list.replaceChildren();
-      count.textContent=`${filtered.length} ${filtered.length===1?'afiliado':'afiliados'}${search.value.trim()?' encontrado'+(filtered.length===1?'':'s'):''}`;
-      if(!filtered.length){const empty=addText(list,'p',search.value.trim()?'No hay resultados para esta búsqueda.':'No hay afiliados para mostrar.');empty.className='empty';return}
+      count.textContent=`${filtered.length} ${filtered.length===1?'usuario':'usuarios'}${search.value.trim()?' encontrado'+(filtered.length===1?'':'s'):''}`;
+      if(!filtered.length){const empty=addText(list,'p',search.value.trim()?'No hay resultados para esta búsqueda.':'No hay usuarios para mostrar.');empty.className='empty';return}
       filtered.forEach(affiliate=>{
         const button=document.createElement('button');button.type='button';button.className='affiliate';
         const copy=document.createElement('span');addText(copy,'strong',affiliate.display_name||affiliate.email);addText(copy,'small',`${affiliate.employee_number||'Sin número'} · ${affiliate.email||'Sin email'}`);
@@ -238,6 +271,77 @@
       catch(problem){if(problem.status===403){show('denied');return}count.textContent='';error.hidden=false}
     }
 
+    async function accessRequest(action,body){
+      const {data:{session}}=await supabase.auth.getSession();
+      if(!session?.access_token)throw Error('Tu sesión ha caducado. Vuelve a entrar.');
+      const response=await fetch(MANAGE_ACCESS,{method:'POST',headers:{Authorization:'Bearer '+session.access_token,apikey:SUPABASE_PUBLISHABLE_KEY,'Content-Type':'application/json'},body:JSON.stringify({action,...body}),signal:AbortSignal.timeout(25000)});
+      const result=await response.json().catch(()=>({}));
+      if(!response.ok){const errors={INVALID_EMAIL:'Revisa la dirección de correo.',ACCESS_INACTIVE:'Este correo ya existe con acceso inactivo. No se ha reactivado.',ACCESS_NOT_ACTIVE:'El destinatario no tiene un acceso activo.',ALREADY_EXISTS:'Este correo ya existe. Actualiza el listado.',UNAUTHORIZED:'Tu sesión ha caducado. Vuelve a entrar.',FORBIDDEN:'Esta acción requiere acceso de administrador.',MAIL_NOT_CONFIGURED:'El envío de correo no está configurado.'};throw Error(errors[result.error]||'No se ha podido confirmar la operación. Puedes volver a intentarlo.');}
+      return result;
+    }
+    document.getElementById('add-access-email').addEventListener('submit',async(event)=>{
+      event.preventDefault();
+      const button=document.getElementById('save-access-email'),status=document.getElementById('add-access-status');
+      if(button.disabled)return;
+      const email=document.getElementById('new-access-email').value.trim().toLowerCase();
+      try{privateAccessMessage({email});}catch{status.textContent='Revisa la dirección de correo.';return;}
+      button.disabled=true;status.textContent='Guardando correo…';
+      try{
+        const result=await accessRequest('add',{email});
+        if(!result.saved)throw Error('No se ha confirmado el guardado.');
+        status.textContent=result.existing?'Este correo ya estaba autorizado. No se ha enviado ningún mensaje.':'Correo autorizado y guardado. No se ha enviado ningún mensaje.';
+        document.getElementById('new-access-email').value='';
+        loaded=false;await loadAffiliates();
+        const target=affiliates.find(item=>item.email.toLowerCase()===email);
+        if(target){openDetail(target);document.getElementById('prepare-access-message').click();}
+      }catch(problem){status.textContent=problem.message||'No se ha confirmado el guardado. Revisa el listado antes de repetir.';}
+      finally{button.disabled=false;}
+    });
+    document.getElementById('send-access-message').addEventListener('click',async()=>{
+      if(sendingAccess)return;
+      let message;
+      try{message=privateAccessMessage(currentAffiliate);}catch{return;}
+      const email=message.email.toLowerCase(),button=document.getElementById('send-access-message'),status=document.getElementById('access-message-status');
+      let intent=accessSends.get(email);
+      if(intent?.sent)return;
+      if(!intent){intent={requestId:crypto.randomUUID(),sent:false};accessSends.set(email,intent);}
+      sendingAccess=true;button.disabled=true;button.textContent='Enviando…';status.textContent='Enviando a '+email+'…';
+      try{
+        const result=await accessRequest('send',{email,requestId:intent.requestId});
+        if(!result.sent)throw Error('No se ha confirmado el envío.');
+        intent.sent=true;
+        if(currentAffiliate?.email.toLowerCase()===email)status.textContent='Correo enviado a '+email+'. El proveedor ha aceptado el envío.';
+      }catch(problem){if(currentAffiliate?.email.toLowerCase()===email)status.textContent=(problem.message||'No se ha podido confirmar el envío.')+' Reintentar reutiliza la misma solicitud para evitar duplicados.';}
+      finally{
+        sendingAccess=false;
+        const current=accessSends.get(currentAffiliate?.email.toLowerCase());
+        button.disabled=current?.sent===true||currentAffiliate?.active===false;
+        button.textContent=current?.sent?'Correo enviado':'Enviar correo de acceso';
+      }
+    });
+    document.getElementById('prepare-access-message').addEventListener('click',()=>{
+      const status=document.getElementById('access-message-status');
+      try{
+        const message=privateAccessMessage(currentAffiliate);
+        document.getElementById('access-message-recipient').textContent=message.email;
+        document.getElementById('access-message-subject').textContent=message.subject;
+        document.getElementById('access-message-body').value=message.body;
+        const previous=accessSends.get(message.email.toLowerCase());
+        const sendButton=document.getElementById('send-access-message');
+        sendButton.disabled=sendingAccess||previous?.sent===true;
+        sendButton.textContent=previous?.sent?'Correo enviado':'Enviar correo de acceso';
+        document.getElementById('access-message-preview').hidden=false;
+        status.textContent=previous?.sent?'Correo enviado en esta sesión.':'Correo preparado. Todavía no se ha enviado.';
+      }catch(problem){status.textContent=problem.message;}
+    });
+    document.getElementById('copy-access-message').addEventListener('click',async()=>{
+      const status=document.getElementById('access-message-status');
+      try{
+        const message=privateAccessMessage(currentAffiliate);
+        await navigator.clipboard.writeText('Asunto: '+message.subject+'\n\n'+message.body);
+        status.textContent='Mensaje copiado. Todavía no se ha enviado.';
+      }catch{status.textContent='No se ha podido copiar. Puedes seleccionar el texto del mensaje y copiarlo manualmente.';}
+    });
     document.getElementById('open-affiliates').addEventListener('click',()=>{show('affiliates');loadAffiliates()});
     async function loadPermitCases(){
       const status=document.getElementById('permit-cases-status'),list=document.getElementById('permit-cases-list');

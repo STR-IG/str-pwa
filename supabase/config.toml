@@ -26,3 +26,6 @@ verify_jwt = false
 verify_jwt = false
 [functions.submit-permit-case]
 verify_jwt = false
+
+[functions.manage-private-access]
+verify_jwt = true
