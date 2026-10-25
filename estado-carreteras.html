@@ -45,13 +45,18 @@
   <header class="top"><div class="top-inner"><a class="back" href="alertas-meteorologicas.html" aria-label="Volver a Alertas meteorológicas">‹ Volver</a><h1>Estado de las carreteras</h1></div></header>
   <main>
     <p class="intro">Tráfico e incidencias oficiales</p>
+    <section class="panel" aria-labelledby="live-road-title">
+      <p class="source">SERVEI CATALÀ DE TRÀNSIT · DATOS DEL RSS OFICIAL</p>
+      <h2 id="live-road-title">Incidencias publicadas</h2>
+      <div class="live-panel" data-road-status role="status" aria-live="polite">Consultando la fuente oficial…</div>
+    </section>
     <div class="sources" aria-label="Fuentes oficiales del Servei Català de Trànsit">
     <section class="panel" aria-labelledby="official-title">
       <p class="source">SERVEI CATALÀ DE TRÀNSIT · CIT</p>
       <h2 id="official-title">Consulta antes de desplazarte</h2>
       <p>Consulta las incidencias publicadas por el Servei Català de Trànsit, especialmente durante episodios meteorológicos adversos.</p>
       <a class="button" href="https://cit.transit.gencat.cat/cit/AppJava/views/incidents.xhtml" target="_blank" rel="noopener noreferrer">Consultar incidencias oficiales</a>
-      <p class="note">Abre la web oficial en una nueva pestaña. Necesitas conexión a internet. STR no muestra datos de tráfico en tiempo real en esta pantalla.</p>
+      <p class="note">El feed recoge incidencias publicadas. Comprueba la vigencia y el detalle de tu recorrido en el CIT.</p>
     </section>
     <section class="panel" aria-labelledby="map-title">
       <p class="source">SERVEI CATALÀ DE TRÀNSIT · MAPA CONTINUO</p>
@@ -83,6 +88,7 @@
     </section>
     <a class="home" href="alertas-meteorologicas.html">Volver a Alertas meteorológicas</a>
   </main>
+  <script type="module" src="./official-weather-status.js"></script>
   <script type="module" src="./app-analytics.js"></script>
 </body>
 </html>
