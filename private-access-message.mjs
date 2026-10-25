@@ -10,7 +10,17 @@ Hemos autorizado este correo para acceder al área privada de la app de STR y ut
 
 No es necesario estar afiliado a STR. La autorización de acceso no implica afiliación sindical.
 
-Para entrar, introduce este mismo correo en la app y recibirás un código temporal de seis dígitos.
+INSTALA LA APP SI TODAVÍA NO LA TIENES
+
+Abre este enlace desde tu móvil:
+https://str-ig.github.io/str-pwa/
+
+Elige Android o iPhone y sigue las instrucciones para añadir STR-IG a la pantalla de inicio. En Android, abre el enlace con Chrome; en iPhone, con Safari.
+
+Después, abre la app desde el icono STR-IG, entra en el área privada e introduce este mismo correo. Recibirás un código temporal de seis dígitos para acceder.
+
+Si ya tienes instalada la app, ábrela desde su icono. También puedes acceder desde este enlace:
+https://str-ig.github.io/str-pwa/app.html
 
 TU PRIVACIDAD
 
@@ -21,9 +31,6 @@ En «Revisa tu nómina», las imágenes, cifras y resultados se utilizan únicam
 En «Calcula tu V», las cifras que confirmas se envían al servidor para realizar el cálculo, sin guardarse como historial. Puedes borrar las capturas temporales, las cifras y el resultado con el botón de borrado. Se conserva un registro mínimo de uso para impedir repetir el cálculo del mismo período.
 
 Para gestionar el acceso se conserva tu correo autorizado y la información técnica necesaria para la cuenta y las sesiones.
-
-Acceder a la app de STR:
-https://str-ig.github.io/str-pwa/app.html
 
 Un saludo,
 Sección sindical STR`;
