@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="es" data-analytics-area="private">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#e30613">
+  <title>Calendarios 2027 · STR-IG</title>
+  <link rel="icon" href="icono-str-ig.png">
+  <link rel="manifest" href="manifest.json">
+  <style>
+    *{box-sizing:border-box}body{margin:0;background:#f5f5f7;color:#161616;font-family:Arial,Helvetica,sans-serif;line-height:1.5}header{padding:calc(14px + env(safe-area-inset-top)) 18px 14px;border-bottom:1px solid #ddd}nav,main{max-width:760px;margin:auto}nav{display:flex;align-items:center;gap:16px}h1{font-size:26px;margin:0}h2{font-size:22px;margin:10px 0}main{padding:24px 18px calc(40px + env(safe-area-inset-bottom))}.panel{background:white;padding:24px;border-radius:22px;margin-bottom:20px;box-shadow:0 5px 20px #0000000d}.back{color:#b9000b;text-decoration:none;font-size:28px;padding:4px 12px;background:white;border-radius:50%}.status{display:inline-block;background:#fff0f1;color:#b9000b;border-radius:30px;padding:6px 12px;font-size:13px;font-weight:bold}p{color:#555}.actions{display:flex;flex-wrap:wrap;gap:12px;margin-top:20px}.button{display:inline-flex;align-items:center;justify-content:center;min-height:46px;padding:10px 20px;border-radius:30px;background:#e30613;color:white;text-decoration:none;font-weight:bold}.secondary{background:#fff0f1;color:#b9000b}a:focus-visible{outline:3px solid #b9000b;outline-offset:4px}.home{display:block;color:#555;text-align:center;padding:12px}
+  </style>
+</head>
+<body>
+  <header><nav aria-label="Navegación"><a class="back" href="app.html#area-privada" aria-label="Volver al menú principal">‹</a><h1>Calendarios 2027</h1></nav></header>
+  <main>
+    <p id="access-status" role="status">Comprobando el acceso privado…</p>
+    <noscript>Activa JavaScript para verificar el acceso de afiliados.</noscript>
+    <div id="private-content" hidden>
+    <section class="panel" aria-labelledby="rota-title">
+      <span class="status">Propuesta base · Pendiente de calendario definitivo</span>
+      <h2 id="rota-title">Calendarios base ROTA · Parets</h2>
+      <p>Consulta la propuesta de calendarios base enviada por la empresa para 2027.</p>
+      <p>Documento PDF · 5 páginas.</p>
+      <div class="actions">
+        <a class="button" href="docs/calendarios/2027/propuesta-calendario-base-parets-rota.pdf" target="_blank" rel="noopener noreferrer">Abrir PDF ROTA <span class="sr-only">(nueva pestaña)</span></a>
+        <a class="button secondary" href="docs/calendarios/2027/propuesta-calendario-base-parets-rota.pdf" download>Descargar PDF</a>
+      </div>
+    </section>
+    <section class="panel" aria-labelledby="roadmap-title">
+      <h2 id="roadmap-title">Hoja de ruta hasta los calendarios definitivos</h2>
+      <p>Ya puedes consultar la propuesta base ROTA de la empresa. Las fases y fechas de la hoja de ruta están pendientes de incorporar.</p>
+    </section>
+    <a class="home" href="app.html#area-privada">Volver al menú principal</a>
+    </div>
+  </main>
+  <script type="module" src="./calendarios.js"></script>
+  <script type="module" src="./app-analytics.js"></script>
+</body>
+</html>
