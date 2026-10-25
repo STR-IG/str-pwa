@@ -1,15 +1,8 @@
-import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
-import { formatMoney, formatRate, normalizeDiscountsResponse } from './discounts-reader.mjs?v=2';
+import { recognizeLocally, localDiscountRows, discountTemplates, discountFields, confirmedDiscountRows } from './payroll-local-reader.mjs?v=1';
 
-const SUPABASE_URL = 'https://icneigdnuntzugisexaz.supabase.co';
-const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_apKjcPClIBTHS2wwN6qPsA_6Vm4tk9m';
-const FUNCTION_URL = `${SUPABASE_URL}/functions/v1/lab-read-payroll-variables`;
 const MAX_FILE_BYTES = 12 * 1024 * 1024;
 const ACCEPTED_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif']);
 
-const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
-  auth: { detectSessionInUrl: false, persistSession: true, autoRefreshToken: true },
-});
 
 const elements = {
   input: document.getElementById('discounts-image'),
@@ -54,6 +47,7 @@ function clearResults() {
 
 function setBusy(busy) {
   elements.select.disabled = busy;
+  if (typeof manualButton !== 'undefined') manualButton.disabled = busy;
   elements.change.disabled = busy;
   elements.input.disabled = busy;
   elements.privacyCheckbox.disabled = busy;
@@ -101,6 +95,9 @@ function resetReader() {
 }
 
 function selectFile(file) {
+  if (activeRequest) return;
+  latestRows = [];
+  elements.save.disabled = true;
   setFileError();
   clearResults();
   elements.privacyCheckbox.checked = false;
@@ -125,85 +122,22 @@ function selectFile(file) {
   updateReviewAvailability();
 }
 
-function loadImage(url) {
-  return new Promise((resolve, reject) => {
-    const image = new Image();
-    image.onload = () => resolve(image);
-    image.onerror = reject;
-    image.src = url;
-  });
-}
-
-async function prepareImageDataUrl(file) {
-  const temporaryUrl = URL.createObjectURL(file);
-  try {
-    const image = await loadImage(temporaryUrl);
-    const longest = Math.max(image.naturalWidth, image.naturalHeight);
-    if (!longest) throw new Error('IMAGE_DECODE_FAILED');
-    const scale = Math.min(1, 2200 / longest);
-    const canvas = document.createElement('canvas');
-    canvas.width = Math.max(1, Math.round(image.naturalWidth * scale));
-    canvas.height = Math.max(1, Math.round(image.naturalHeight * scale));
-    const context = canvas.getContext('2d', { alpha: false });
-    if (!context) throw new Error('CANVAS_UNAVAILABLE');
-    context.fillStyle = '#ffffff';
-    context.fillRect(0, 0, canvas.width, canvas.height);
-    context.drawImage(image, 0, 0, canvas.width, canvas.height);
-    return canvas.toDataURL('image/jpeg', 0.92);
-  } finally {
-    URL.revokeObjectURL(temporaryUrl);
-  }
-}
-
-function valueBox(label, value) {
-  const box = document.createElement('div');
+function valueBox(label, row, field) {
+  const box = document.createElement('label');
   box.className = 'discounts-value';
   const name = document.createElement('span');
   name.textContent = label;
-  const result = document.createElement('strong');
-  result.textContent = value;
-  box.append(name, result);
+  const input = document.createElement('input');
+  input.type = 'text'; input.inputMode = 'decimal';
+  input.value = row[field] == null ? '' : String(row[field]).replace('.', ',');
+  input.placeholder = 'No indicado';
+  input.addEventListener('input', () => { row[field] = input.value; });
+  box.append(name, input);
   return box;
 }
 
 function rowTitle(row) {
   return row.code ? `${row.code} · ${row.label}` : row.label;
-}
-
-function detectedValues(row) {
-  if (row.section === 'bases' || row.section === 'contributions') {
-    return [['Importe', formatMoney(row.value)]];
-  }
-  if (row.section === 'worker') {
-    return [
-      ['Base', formatMoney(row.base)],
-      ['% trabajador/a', formatRate(row.rate)],
-      ['Cuota trabajador/a', formatMoney(row.amount)],
-    ];
-  }
-  if (row.section === 'company') {
-    return [
-      ['Base', formatMoney(row.base)],
-      ['% empresa', formatRate(row.rate)],
-      ['Cuota empresa', formatMoney(row.amount)],
-    ];
-  }
-  if (row.section === 'irpf') {
-    return [
-      [row.kind === 'irpf' ? 'Base IRPF' : 'Base', formatMoney(row.base)],
-      ['Porcentaje', formatRate(row.rate)],
-      [row.kind === 'in_kind_irpf' ? 'Retención en especie' : 'Retención', formatMoney(row.amount)],
-    ];
-  }
-  if (row.section === 'worker_total') return [['Cuota trabajador/a', formatMoney(row.amount)]];
-  if (row.section === 'company_total') return [['Cuota empresa', formatMoney(row.amount)]];
-
-  const values = [];
-  if (row.value !== null) values.push(['Importe', formatMoney(row.value)]);
-  if (row.base !== null) values.push(['Base', formatMoney(row.base)]);
-  if (row.rate !== null) values.push(['Porcentaje', formatRate(row.rate)]);
-  if (row.amount !== null) values.push(['Importe detectado', formatMoney(row.amount)]);
-  return values;
 }
 
 function rowCard(row) {
@@ -218,11 +152,16 @@ function rowCard(row) {
     text.textContent = row.sourceText || 'Texto original no legible';
     article.appendChild(text);
   }
-  const detected = detectedValues(row);
+  const company = row.section === 'company' || row.section === 'company_total';
+  const labels = { value: 'Importe', base: 'Base',
+    rate: company ? '% empresa' : row.section === 'worker' ? '% trabajador/a' : 'Porcentaje',
+    amount: company ? 'Cuota empresa' : row.section === 'worker' || row.section === 'worker_total'
+      ? 'Cuota trabajador/a' : row.kind === 'in_kind_irpf' ? 'Retención en especie' : 'Retención' };
+  const detected = discountFields(row).map(field => [labels[field], field]);
   if (detected.length) {
     const values = document.createElement('div');
     values.className = 'discounts-values';
-    detected.forEach(([label, value]) => values.appendChild(valueBox(label, value)));
+    detected.forEach(([label, field]) => values.appendChild(valueBox(label, row, field)));
     article.appendChild(values);
   }
   return article;
@@ -242,6 +181,8 @@ function renderGroup(title, rows) {
 }
 
 function renderResults(rows) {
+  latestRows = rows.map(row => ({ ...row }));
+  rows = latestRows;
   const groups = [
     ['Bases y prorratas', rows.filter((row) => row.section === 'bases')],
     ['Seguridad Social – trabajador/a', rows.filter((row) => row.section === 'worker')],
@@ -252,16 +193,23 @@ function renderResults(rows) {
     ['Otros conceptos detectados', rows.filter((row) => row.section === 'unknown')],
   ];
   elements.resultsContent.replaceChildren(...groups.map(([title, items]) => renderGroup(title, items)).filter(Boolean));
-  latestRows = rows.map((row) => ({ ...row }));
+
   elements.results.hidden = false;
 }
 
 function saveDiscounts() {
   if (!latestRows.length || activeRequest) return;
+  let rows;
+  try { rows = confirmedDiscountRows(latestRows); }
+  catch (error) { setStatus('failed', 'Revisa las cifras', error.message); return; }
+  if (!rows.length) {
+    setStatus('failed', 'Faltan cifras', 'Introduce al menos un importe. Los campos vacíos no se guardan como cero.');
+    return;
+  }
   elements.save.disabled = true;
   elements.cancel.disabled = true;
   const request = {
-    rows: latestRows,
+    rows,
     handled: false,
     onSaved: () => {},
     onError: () => {
@@ -279,62 +227,44 @@ function cancelDiscounts() {
   document.getElementById('top-back')?.click();
 }
 
-function readableError(status, code) {
-  if (status === 401 || status === 403) return 'Tu sesión privada ha caducado. Vuelve a entrar y repite la revisión.';
-  if (code === 'INVALID_IMAGE') return 'No se ha podido preparar esta imagen. Prueba con una captura JPG, PNG o WEBP.';
-  if (code === 'IMAGE_TOO_LARGE') return 'La captura es demasiado grande. Recorta únicamente la tabla Seguridad Social e IRPF.';
-  return 'No se ha podido revisar la captura. Comprueba la conexión y vuelve a intentarlo.';
-}
-
 async function reviewDiscounts() {
   if (!selectedFile || activeRequest) return;
   if (!elements.privacyCheckbox.checked) {
     setFileError('Confirma que la captura no contiene datos personales antes de revisarla.');
-    updateReviewAvailability();
     return;
   }
-  setFileError();
-  elements.results.hidden = true;
-  setBusy(true);
-  setStatus('checking', 'Revisando descuentos…', 'Buscando únicamente datos de Seguridad Social e IRPF.');
+  const file = selectedFile;
   const controller = new AbortController();
   activeRequest = controller;
+  setBusy(true);
+  setFileError();
+  setStatus('checking', 'Leyendo en tu dispositivo…', 'No enviamos la captura a servicios de IA.');
   try {
-    const imageDataUrl = await prepareImageDataUrl(selectedFile);
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session?.access_token) throw new Error('SESSION_REQUIRED');
-    const response = await fetch(FUNCTION_URL, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${session.access_token}`,
-        apikey: SUPABASE_PUBLISHABLE_KEY,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ imageDataUrl, readDiscounts: true }),
-      signal: controller.signal,
-    });
-    const payload = await response.json().catch(() => ({}));
-    if (!response.ok) throw Object.assign(new Error(payload?.error || 'REQUEST_FAILED'), { status: response.status });
-    const normalized = normalizeDiscountsResponse(payload);
-    if (!normalized.readable) {
-      setStatus('failed', 'No se puede leer esta captura', 'Comprueba que esté nítida, completa y que contenga la tabla Seguridad Social e IRPF. Después selecciona otra imagen.');
-      return;
-    }
-    renderResults(normalized.rows);
-    setStatus('ready', 'Lectura completada', 'Revisa los datos detectados. Las cifras ausentes o no legibles se muestran como “No indicado”.');
-  } catch (error) {
-    if (error?.name === 'AbortError') return;
-    const message = error?.message === 'SESSION_REQUIRED'
-      ? 'Tu sesión privada ha caducado. Vuelve a entrar y repite la revisión.'
-      : error?.message === 'IMAGE_DECODE_FAILED'
-        ? 'No se ha podido abrir esta imagen. En iPhone, prueba a guardarla como JPG o PNG y vuelve a seleccionarla.'
-        : readableError(error?.status, error?.message);
-    setStatus('failed', 'No se ha podido revisar', message);
+    const text = await recognizeLocally(file);
+    if (activeRequest !== controller || controller.signal.aborted) return;
+    renderResults(localDiscountRows(text));
+    setStatus('ready', 'Comprueba los descuentos', 'Revisa los importes sugeridos y completa las cuotas y porcentajes mirando la imagen. Los campos vacíos quedan sin indicar.');
+  } catch {
+    if (activeRequest !== controller || controller.signal.aborted) return;
+    renderResults(discountTemplates());
+    setStatus('warning', 'Completa las cifras manualmente', 'No se ha podido leer la imagen en este dispositivo. Puedes introducir los importes mirando la captura.');
   } finally {
-    if (activeRequest === controller) activeRequest = null;
-    setBusy(false);
+    if (activeRequest === controller) { activeRequest = null; setBusy(false); }
   }
 }
+
+const manualButton = document.createElement('button');
+manualButton.type = 'button';
+manualButton.id = 'enter-discounts-manually';
+manualButton.className = 'secondary select-image';
+manualButton.textContent = 'Introducir descuentos manualmente';
+manualButton.addEventListener('click', () => {
+  if (activeRequest) return;
+  renderResults(discountTemplates());
+  setBusy(false);
+  setStatus('ready', 'Introduce tus descuentos', 'Copia solo las cifras necesarias. Deja vacío lo que no aparezca en tu nómina.');
+});
+elements.select?.after(manualButton);
 
 elements.select?.addEventListener('click', chooseImage);
 elements.change?.addEventListener('click', chooseImage);

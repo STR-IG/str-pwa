@@ -1414,6 +1414,22 @@
       overflow-wrap: anywhere;
       font-size: 13px;
     }
+    .discounts-value input, .local-payroll-totals input {
+      display: block;
+      width: 100%;
+      min-width: 0;
+      min-height: 44px;
+      margin-top: 6px;
+      padding: 10px;
+      border: 1px solid #c9cdd4;
+      border-radius: 10px;
+      background: #fff;
+      color: #161616;
+      font: inherit;
+      font-size: 16px;
+    }
+    .local-payroll-totals label { display: block; margin-top: 14px; font-weight: 700; }
+    .local-payroll-totals p { margin-top: 8px; color: #6e6e73; line-height: 1.5; }
     .discounts-unknown-text {
       margin: 0;
       color: #45454a;
@@ -1649,6 +1665,7 @@
     .actions .primary,
     .actions .secondary { margin: 0; }
     .admin-context{width:min(100% - 28px,760px);margin:14px auto 0;padding:12px 16px;border:1px solid #f0b8bd;border-radius:14px;background:#fff3f4;color:#8e0010;font-size:14px;font-weight:800;line-height:1.45}
+    .user-delete { display:block; width:100%; min-height:44px; padding:12px; margin-top:12px; font:inherit; font-weight:700; border:1px solid #d9a4a8; border-radius:12px; background:#fff; color:#a4000c; }
     .admin-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}.admin-actions button{margin:0}.admin-danger{color:#a4000c!important;border-color:#d9a4a8!important;background:#fff!important}
 
     @media (max-width: 390px) {
@@ -1692,6 +1709,7 @@
 
   <p id="auth-check" class="auth-check">Comprobando el acceso privado…</p>
 
+  <p id="deletion-status" class="history-state" role="status" aria-live="polite" hidden></p>
   <main id="content" hidden>
     <section id="period-screen" aria-labelledby="period-page-title">
       <div class="tool-icon" aria-hidden="true">🔎</div>
@@ -1727,6 +1745,7 @@
           </div>
         </div>
         <p id="period-reset-note" class="reset-note" role="status" hidden></p>
+        <button id="delete-current-month" class="secondary admin-danger user-delete" type="button">Eliminar todos los datos de este mes</button>
         <button id="open-history" class="history-launch" type="button">
           <span class="history-launch-icon" aria-hidden="true">🗂️</span>
           <span class="history-launch-copy">
@@ -1755,6 +1774,7 @@
             </div>
           </div>
           <button id="open-timesheet" class="card-button" type="button">Añadir imagen</button>
+          <button id="delete-user-timesheet" class="secondary admin-danger user-delete" type="button">Eliminar Registro de este mes</button>
         </article>
 
       <section id="payroll-type-section" class="work-mode-section" hidden aria-labelledby="work-mode-title">
@@ -1871,6 +1891,7 @@
             </div>
           </div>
           <button id="open-payroll" class="card-button" type="button" disabled>Completa primero la jornada</button>
+          <button id="delete-user-payroll" class="secondary admin-danger user-delete" type="button">Eliminar esta nómina y sus cifras</button>
         </article>
 
         <article id="discounts-card" class="document-card">
@@ -1885,6 +1906,7 @@
             </div>
           </div>
           <button id="open-discounts" class="card-button" type="button" disabled>Abrir Descuentos</button>
+          <button id="delete-user-discounts" class="secondary admin-danger user-delete" type="button">Eliminar descuentos de este recibo</button>
           <button id="add-another-discounts" class="card-button" type="button" hidden>Añadir otro descuento</button>
         </article>
 
@@ -1944,7 +1966,7 @@
       </div>
 
       <section class="panel">
-        <p class="discounts-intro">Añade un solo pantallazo de la tabla “Seguridad Social e IRPF” de tu nómina.</p>
+        <p class="discounts-intro">La lectura se realiza en tu dispositivo, sin enviar la captura a servicios de IA. Puedes seleccionar la tabla “Seguridad Social e IRPF” o introducir sus cifras manualmente.</p>
         <div class="discounts-privacy">
           <span aria-hidden="true">🛡️</span>
           <div><strong>Antes de seleccionar la imagen</strong>Recorta la cabecera para que no aparezcan nombre, DNI/NIF, número de Seguridad Social, domicilio ni otros datos personales.</div>
@@ -2007,8 +2029,10 @@
           <button id="refresh-history" class="history-refresh" type="button">Actualizar</button>
         </div>
 
+        <button id="delete-all-history" class="secondary admin-danger user-delete" type="button">Eliminar todo mi historial</button>
         <p id="history-loading" class="history-state" role="status">Cargando historial…</p>
         <p id="history-error" class="history-state error" role="alert" hidden></p>
+        <p class="local-note">El borrado total incluye imágenes de nóminas y registros, revisiones, descuentos y estadísticas derivadas.</p>
         <div id="history-list" class="history-list" hidden></div>
         <div id="history-empty" class="history-state" hidden>
           Todavía no tienes ningún mes guardado.
@@ -2227,6 +2251,8 @@
     import { newReceiptId, receiptCreatedAt, monthReceipts, assertUniquePayroll, sha256 } from './payroll-receipts.mjs?v=1';
     import { adminPayrollApi } from './admin-payroll-storage.mjs?v=1';
     import { closeMonth, readMonthClosure } from './payroll-month.mjs?v=1';
+    import { deletePayrollData, clearLocalPayrollData, confirmDeletion } from './payroll-deletion.mjs?v=1';
+    import { renderLocalTotals, readLocalTotals } from './payroll-local-reader.mjs?v=1';
     import { renderSupplemental, readSupplemental } from './payroll-supplemental.mjs?v=3';
     import { renderOvertime, readOvertime } from './payroll-overtime.mjs?v=2';
     import { extractPaymentBreakdown, relatePaymentAdjustment, formatPaymentMoney, hasValidPayrollCrop, payrollRegularizationMonth } from './payroll-payments.mjs?v=8';
@@ -2276,6 +2302,14 @@
     const currentUserId = adminContext?.userId || session?.user?.id || '';
     const STORAGE_BUCKET = 'payroll-documents';
     const storageBucket = isAdminMode ? adminApi.bucket : supabase.storage.from(STORAGE_BUCKET);
+    try {
+      const notice = sessionStorage.getItem('strPayrollDeletionNotice');
+      if (notice) {
+        const status = document.getElementById('deletion-status');
+        status.textContent = notice; status.hidden = false;
+        sessionStorage.removeItem('strPayrollDeletionNotice');
+      }
+    } catch {}
 
     const month = document.getElementById('month');
     const year = document.getElementById('year');
@@ -3480,6 +3514,12 @@
         card.appendChild(openLabel);
         card.addEventListener('click', () => openHistoryPeriod(entry.year, entry.month, entry.receiptId));
         historyList.appendChild(card);
+        const erase = document.createElement('button');
+        erase.type = 'button'; erase.className = 'secondary admin-danger user-delete';
+        erase.textContent = 'Eliminar este recibo y su revisión';
+        erase.setAttribute('aria-label', `Eliminar recibo de ${monthNames[entry.month - 1]} de ${entry.year}, nómina ${entry.receiptNumber}`);
+        erase.addEventListener('click', () => performUserDeletion('receipt', { year: entry.year, month: entry.month, receiptId: entry.receiptId || '' }));
+        historyList.appendChild(erase);
       });
     }
 
@@ -4708,6 +4748,7 @@
       });
 
       renderSupplemental(comparisonFields, review?.supplemental || monthlyReviews.get(periodKey())?.supplemental, confirmed);
+      renderLocalTotals(comparisonFields, review?.payrollEconomics || documents.payroll.payrollEconomics || monthlyReviews.get(periodKey())?.payrollEconomics, confirmed);
       renderOvertime(comparisonFields, review?.overtime || monthlyReviews.get(periodKey())?.overtime, confirmed);
       renderPaymentInformation(comparisonFields, review?.paymentInfo || documents.payroll.paymentInfo);
       if (isAdminMode) {
@@ -4909,7 +4950,9 @@
 
       let supplemental;
       let overtime;
-      try { supplemental = readSupplemental(); overtime = readOvertime(); }
+      try { supplemental = readSupplemental(); overtime = readOvertime();
+        documents.payroll.payrollEconomics = readLocalTotals(document, documents.payroll.payrollEconomics);
+      }
       catch (error) {
         comparisonError.textContent = error.message;
         comparisonError.hidden = false;
@@ -5584,11 +5627,56 @@
 
     document.getElementById('open-timesheet').addEventListener('click', () => openDocument('timesheet'));
     document.getElementById('open-payroll').addEventListener('click', () => openDocument('payroll'));
+    let deletingPayrollData = false;
+    async function performUserDeletion(scope, selected = {}) {
+      if (!currentUserId) return;
+      if (deletingPayrollData || savingDocument || savingReview || loadingDocuments || analysisRunning || comparisonRunning) {
+        const status = document.getElementById('deletion-status');
+        status.hidden = false; status.textContent = 'Espera a que termine la operación actual antes de borrar.'; return;
+      }
+      const target = { scope, year: Number(year.value), month: Number(month.value) + 1, receiptId: activeReceiptId || '', ...selected };
+      const description = scope === 'all' ? (isAdminMode ? 'Eliminar todo el historial de ' + adminAffiliateEmail : 'Eliminar todo mi historial')
+        : `Eliminar datos de ${monthNames[target.month - 1]} de ${target.year}${isAdminMode ? ' · ' + adminAffiliateEmail : ''}`;
+      if (!confirmDeletion(scope, description)) return;
+      const status = document.getElementById('deletion-status');
+      deletingPayrollData = true;
+      content.inert = true; topBack.inert = true;
+      status.hidden = false; status.textContent = 'Eliminando y comprobando los datos…';
+      analysisRunVersion += 1; comparisonRunVersion += 1; storageLoadVersion += 1; historyLoadVersion += 1;
+      try {
+        await deletePayrollData({ bucket: storageBucket, userId: currentUserId, ...target });
+        await clearLocalPayrollData(currentUserId, globalThis, target);
+        status.textContent = 'Borrado completado y comprobado en el almacenamiento de la app.';
+      } catch {
+        status.textContent = 'No se ha podido completar o verificar el borrado. Puede haberse eliminado una parte. Actualiza y vuelve a intentarlo.';
+      } finally {
+        // Discard loaded images, drafts and derived values even after partial failure.
+        confirmedTimesheetAnalyses.clear(); confirmedPayrollAnalyses.clear(); monthlyReviews.clear(); workSchedules.clear();
+        historyEntries = []; activeReceiptId = null; monthlyComparisonFolder = '';
+        window.dispatchEvent(new CustomEvent('str:discounts-closed'));
+        hideMonthlyResults();
+        clearAllDocuments();
+        comparisonFields.replaceChildren(); historyList.replaceChildren();
+        content.inert = false; topBack.inert = false; deletingPayrollData = false;
+        try { localStorage.setItem(`strPayrollDeletion:${currentUserId}`, String(Date.now())); } catch {}
+        try { sessionStorage.setItem('strPayrollDeletionNotice', status.textContent); } catch {}
+        window.location.reload();
+      }
+    }
+    document.getElementById('delete-user-timesheet').addEventListener('click', () => performUserDeletion('timesheet'));
+    document.getElementById('delete-user-payroll').addEventListener('click', () => performUserDeletion('payroll'));
+    document.getElementById('delete-user-discounts').addEventListener('click', () => performUserDeletion('discounts'));
+    document.getElementById('delete-current-month').addEventListener('click', () => performUserDeletion('month'));
+    document.getElementById('delete-all-history').addEventListener('click', () => performUserDeletion('all'));
+    window.addEventListener('storage', event => {
+      if (event.key === `strPayrollDeletion:${currentUserId}`) window.location.reload();
+    });
+
     document.getElementById('open-discounts').addEventListener('click', () => showDiscountsScreen());
     document.getElementById('add-another-discounts').addEventListener('click', openNextPayrollDiscounts);
     document.getElementById('admin-replace-discounts').addEventListener('click', () => prepareAdminDiscounts('replace'));
     document.getElementById('admin-reprocess-discounts').addEventListener('click', () => prepareAdminDiscounts('reprocess'));
-    document.getElementById('admin-delete-discounts').addEventListener('click', deleteAdminDiscounts);
+    document.getElementById('admin-delete-discounts').addEventListener('click', () => performUserDeletion('discounts'));
     window.addEventListener('str:discounts-save', async (event) => {
       const request = event.detail;
       if (!request || !Array.isArray(request.rows) || !request.rows.length) return;
@@ -5748,8 +5836,8 @@
     document.getElementById('add-full-payroll').addEventListener('click', () => startAnotherPayroll('full'));
     document.getElementById('admin-replace-timesheet').addEventListener('click', () => prepareAdminReplacement('timesheet'));
     document.getElementById('admin-replace-payroll').addEventListener('click', () => prepareAdminReplacement('payroll'));
-    document.getElementById('admin-delete-timesheet').addEventListener('click', deleteAdminTimesheet);
-    document.getElementById('admin-delete-payroll').addEventListener('click', deleteAdminPayroll);
+    document.getElementById('admin-delete-timesheet').addEventListener('click', () => performUserDeletion('timesheet'));
+    document.getElementById('admin-delete-payroll').addEventListener('click', () => performUserDeletion('payroll'));
     document.getElementById('admin-calculate-v').addEventListener('click', () => {
       if (!isAdminMode) return;
       const params = new URLSearchParams({

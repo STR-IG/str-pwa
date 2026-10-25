@@ -1,4 +1,4 @@
-const CACHE_NAME = 'str-ig-cache-v125-calendarios-central-20261025';
+const CACHE_NAME = 'str-ig-cache-v126-payroll-privacy';
 
 const SUPABASE_URL = 'https://icneigdnuntzugisexaz.supabase.co';
 const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_apKjcPClIBTHS2wwN6qPsA_6Vm4tk9m';
@@ -190,6 +190,11 @@ async function trackPublicPermissionsNavigation(request) {
 
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
+  // Private API responses must not survive document erasure in offline caches.
+  if (new URL(event.request.url).origin === SUPABASE_URL || event.request.headers.has('Authorization')) {
+    event.respondWith(fetch(event.request, { cache: 'no-store' }));
+    return;
+  }
 
   // Survey APIs and survey pages must never return stale/private cached data.
   const surveyUrl = new URL(event.request.url);

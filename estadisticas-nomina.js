@@ -1,3 +1,4 @@
+import { deletePayrollData, clearLocalPayrollData, confirmDeletion } from './payroll-deletion.mjs?v=1';
 import { buildEconomicDonuts } from './salary-overview.mjs?v=3';
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 import { monthReceipts } from './payroll-receipts.mjs?v=1';
@@ -32,6 +33,12 @@ const euro = new Intl.NumberFormat('es-ES', {
 });
 const metricLabels = { gross: 'Bruto', net: 'Líquido', deductions: 'Deducciones' };
 
+const deletionNotice = sessionStorage.getItem('strPayrollDeletionNotice');
+if (deletionNotice) {
+  const status = document.getElementById('statistics-deletion-status');
+  status.textContent = deletionNotice; status.hidden = false;
+  sessionStorage.removeItem('strPayrollDeletionNotice');
+}
 const authCheck = document.getElementById('auth-check');
 const content = document.getElementById('content');
 const refreshButton = document.getElementById('refresh');
@@ -827,7 +834,7 @@ function renderYearOptions() {
 }
 
 async function loadStatistics() {
-  if (!currentUserId || loading) return;
+  if (!currentUserId || loading || deletingStatisticsData) return;
   const requestVersion = ++loadVersion;
   loading = true;
   refreshButton.disabled = true;
@@ -929,6 +936,32 @@ registerComparisonCutoff.addEventListener('change', () => {
 registerComparisonConcept.addEventListener('change', () => {
   registerComparisonMetric = registerComparisonConcept.value;
   renderRegisterPayrollComparison();
+});
+let deletingStatisticsData = false;
+document.getElementById('delete-statistics-data').addEventListener('click', async () => {
+  if (!currentUserId || loading || deletingStatisticsData) return;
+  if (!confirmDeletion('all', 'Eliminar todo mi historial y sus estadísticas')) return;
+  const status = document.getElementById('statistics-deletion-status');
+  deletingStatisticsData = true; content.inert = true;
+  status.hidden = false; status.textContent = 'Eliminando y comprobando los datos…';
+  loadVersion += 1;
+  receipts = []; timesheets = []; registerPayrollEntries = [];
+  try {
+    await deletePayrollData({ bucket: supabase.storage.from(STORAGE_BUCKET), userId: currentUserId, scope: 'all' });
+    await clearLocalPayrollData(currentUserId);
+    status.textContent = 'Historial eliminado. No quedan documentos ni revisiones en tu almacenamiento de nóminas de la app.';
+  } catch {
+    status.textContent = 'No se ha podido completar o verificar el borrado. Puede haberse eliminado una parte. Actualiza y vuelve a intentarlo.';
+  } finally {
+    content.inert = false; deletingStatisticsData = false;
+    // Reload the page after showing the outcome so every chart and cached view is discarded.
+    try { localStorage.setItem(`strPayrollDeletion:${currentUserId}`, String(Date.now())); } catch {}
+    try { sessionStorage.setItem('strPayrollDeletionNotice', status.textContent); } catch {}
+    window.location.reload();
+  }
+});
+window.addEventListener('storage', event => {
+  if (event.key === `strPayrollDeletion:${currentUserId}`) window.location.reload();
 });
 refreshButton.addEventListener('click', loadStatistics);
 window.addEventListener('pageshow', () => {

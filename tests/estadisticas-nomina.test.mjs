@@ -44,7 +44,7 @@ test('Registro de jornada deja de ser un marcador y muestra vistas anual y mensu
   assert.match(html, /id="register-annual-chart"/);
   assert.match(html, /Otros conceptos disponibles/);
   assert.doesNotMatch(html, /estadísticas del registro estarán disponibles próximamente/i);
-  assert.match(html, /estadisticas-nomina\.js\?v=6/);
+  assert.match(html, /estadisticas-nomina\.js\?v=8-delete/);
 });
 
 test('Registro permite elegir corte y concepto y muestra números de Registro frente a Nóminas', () => {
@@ -87,7 +87,9 @@ test('la página se actualiza al volver, al recuperar visibilidad o al pulsar ac
   assert.match(source, /addEventListener\('pageshow'/);
   assert.match(source, /addEventListener\('visibilitychange'/);
   assert.match(source, /refreshButton\.addEventListener\('click', loadStatistics\)/);
-  assert.doesNotMatch(source, /localStorage|indexedDB/);
+  assert.doesNotMatch(source, /indexedDB/);
+  assert.match(source, /localStorage\.setItem\(`strPayrollDeletion:/);
+  assert.doesNotMatch(source, /localStorage\.setItem\([^\n]*(?:JSON\.stringify|receipts|timesheets)/);
 });
 
 test('el mismo lector amplía y conserva datos económicos sin alterar la comparación', () => {

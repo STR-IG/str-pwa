@@ -5,6 +5,7 @@ import vm from 'node:vm';
 import { webcrypto } from 'node:crypto';
 import { newReceiptId, receiptCreatedAt, monthReceipts, assertUniquePayroll, sha256, listFiles } from '../payroll-receipts.mjs';
 import { readSupplemental } from '../payroll-supplemental.mjs';
+import { readLocalTotals, renderLocalTotals } from '../payroll-local-reader.mjs';
 import { readOvertime } from '../payroll-overtime.mjs';
 import { hasCompletePaymentBreakdown, hasValidPayrollCrop, payrollRegularizationMonth } from '../payroll-payments.mjs';
 
@@ -69,6 +70,8 @@ function harness(bucket) {
     renderSupplemental() {},
     renderOvertime() {},
     readSupplemental: () => readSupplemental({getElementById: id => nodes.get(id)}),
+    renderLocalTotals: (...args) => renderLocalTotals(...args, ctx.document),
+    readLocalTotals,
     readOvertime: () => readOvertime({getElementById: id => nodes.get(id)}),
     parseQuantityValue: Number, formatQuantity: String,
     hasCompletePaymentBreakdown, hasValidPayrollCrop, payrollRegularizationMonth,

@@ -25,8 +25,12 @@ export function adminPayrollApi({ supabase, endpoint, publishableKey, email }) {
   }
 
   const bucket = {
-    async list(path) {
-      try { return { data: (await request('list', { path })).data || [], error: null }; }
+    async list(path, options = {}) {
+      try {
+        const items = (await request('list', { path })).data || [];
+        const offset = options.offset || 0;
+        return { data: options.limit ? items.slice(offset, offset + options.limit) : items.slice(offset), error: null };
+      }
       catch (error) { return { data: null, error }; }
     },
     async download(path) {

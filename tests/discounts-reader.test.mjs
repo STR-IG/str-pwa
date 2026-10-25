@@ -16,8 +16,8 @@ test('the period screen keeps Registro and Nómina and adds Descuentos after the
   assert.ok(timesheet > 0 && timesheet < payroll && payroll < discounts);
   assert.match(base, /id="open-discounts"[^>]*>Abrir Descuentos</);
   assert.match(base, /id="discounts-screen"/);
-  assert.match(wrapper, /revisa-tu-nomina-base\.html\?v=prod-41/);
-  assert.match(wrapper, /discounts-reader\.js\?v=prod-7/);
+  assert.match(wrapper, /revisa-tu-nomina-base\.html\?v=prod-43-delete/);
+  assert.match(wrapper, /discounts-reader\.js\?v=prod-8-local/);
 });
 
 test('after saving payroll 1 quantities the flow offers the three explicit month actions', () => {
@@ -78,7 +78,8 @@ test('discounts reader uses one temporary image and never calls permanent storag
   assert.match(base, /Revisar descuentos/);
   assert.match(reader, /URL\.createObjectURL/);
   assert.match(reader, /URL\.revokeObjectURL/);
-  assert.match(reader, /readDiscounts: true/);
+  assert.match(reader, /recognizeLocally\(file\)/);
+  assert.doesNotMatch(reader, /fetch\(|FUNCTION_URL|gemini|lab-read-payroll/);
   assert.doesNotMatch(reader, /\.storage\b|STORAGE_BUCKET|\.upload\(/);
   assert.doesNotMatch(edge, /readDiscounts[\s\S]{0,1200}\.from\([^)]*payroll_documents/i);
 });

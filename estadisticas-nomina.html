@@ -225,7 +225,12 @@
 
   <p id="auth-check">Comprobando tu acceso privado…</p>
 
+  <p id="statistics-deletion-status" role="status" aria-live="polite" hidden></p>
   <main id="content" hidden>
+    <div class="panel" style="margin:16px 0;padding:16px">
+      <button id="delete-statistics-data" type="button" style="min-height:44px;padding:10px 16px;border:1px solid #d9a4a8;border-radius:12px;background:#fff;color:#a4000c;font:inherit;font-weight:700">Eliminar todo mi historial y sus estadísticas</button>
+      <p style="margin-top:10px;line-height:1.5">Elimina también todas las imágenes de nóminas y registros, revisiones y descuentos guardados.</p>
+    </div>
     <section id="statistics-home">
       <div class="hero"><span class="eyebrow">TU INFORMACIÓN</span><h1 tabindex="-1">Estadísticas</h1><p class="intro">Consulta tus datos económicos, el registro y las comparaciones.</p></div>
       <nav class="statistics-menu" aria-label="Apartados de Estadísticas">
@@ -456,7 +461,7 @@
     </section>
   </main>
 
-  <script type="module" src="estadisticas-nomina.js?v=6"></script>
+  <script type="module" src="estadisticas-nomina.js?v=8-delete"></script>
   <script src="estadisticas-comparaciones.js?v=2" defer></script>
   <script type="module" src="./app-analytics.js"></script>
 </body>
