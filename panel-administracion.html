@@ -39,6 +39,7 @@
     .affiliate-list{display:grid;gap:10px}
     .affiliate{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;padding:15px;border:1px solid var(--line);border-radius:15px;background:var(--white);text-align:left;cursor:pointer}
     .affiliate strong{display:block;font-size:16px}.affiliate small{display:block;margin-top:4px;color:var(--grey);font-size:13px}.affiliate b{color:var(--red);font-size:24px}
+    dialog{width:min(92vw,480px);padding:24px;border:0;border-radius:20px;color:var(--black)}dialog::backdrop{background:rgba(0,0,0,.5)}dialog p{line-height:1.5}dialog strong{overflow-wrap:anywhere}.danger-button{padding:12px 16px;border:1px solid var(--red);border-radius:12px;background:white;color:var(--red-dark);font-weight:800;cursor:pointer}.danger-button:disabled{opacity:.5;cursor:wait}
     .state{display:inline-flex;align-items:center;gap:7px;margin-top:8px;padding:5px 9px;border-radius:999px;color:var(--green);background:var(--green-soft);font-size:12px;font-weight:900;text-transform:uppercase}
     .state.inactive{color:#7a5510;background:#fff7e8}
     .empty,.error{padding:20px;border-radius:15px;color:var(--grey);background:var(--white);text-align:center;line-height:1.5}
@@ -124,6 +125,12 @@
         </div>
         <p id="access-message-status" role="status" aria-live="polite"></p>
       </article>
+      <article class="panel">
+        <h2>Retirar autorización</h2>
+        <p>Elimina este correo de la lista de acceso al área privada. No borra su cuenta de autenticación ni sus registros.</p>
+        <button id="delete-access-user" class="danger-button" type="button">Borrar usuario autorizado</button>
+        <p id="delete-access-status" role="status" aria-live="polite"></p>
+      </article>
       <article class="panel documents-admin">
         <h2>Nóminas y Registro</h2>
         <p>Consulta y gestión administrativa mediante los mismos flujos privados de Revisa tu nómina.</p>
@@ -141,6 +148,13 @@
     </section>
   </main>
 
+  <dialog id="delete-access-dialog" aria-labelledby="delete-access-title">
+    <h2 id="delete-access-title">¿Borrar este usuario autorizado?</h2>
+    <p>Se retirará el acceso al área privada de <strong id="delete-access-email"></strong>.</p>
+    <p>Para volver a autorizarlo, tendrás que añadir su correo de nuevo.</p>
+    <div class="access-actions"><button id="cancel-delete-access" type="button">Cancelar</button><button id="confirm-delete-access" class="danger-button" type="button">Borrar autorización</button></div>
+    <p id="delete-access-dialog-status" role="status" aria-live="polite"></p>
+  </dialog>
   <script type="module">
     import { privateAccessMessage } from './private-access-message.mjs?v=2-install';
     import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
@@ -153,6 +167,8 @@
     const MANAGE_ACCESS=SUPABASE_URL+'/functions/v1/manage-private-access';
     const accessSends=new Map();
     let sendingAccess=false;
+    let deletingAccess=false;
+    let pendingAccessDeletion=null;
     const ADMIN_DOCUMENTS=SUPABASE_URL+'/functions/v1/admin-payroll-documents';
     const GEMINI_TEST=SUPABASE_URL+'/functions/v1/gemini-str';
     const supabase=createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY,{auth:{detectSessionInUrl:false,persistSession:true,autoRefreshToken:true}});
@@ -171,10 +187,10 @@
     function matches(affiliate,query){const value=normalized(query);if(!value)return true;return [affiliate.display_name,affiliate.email,affiliate.employee_number,affiliate.phone].some(field=>normalized(field).includes(value))}
     function addText(parent,tag,text){const element=document.createElement(tag);element.textContent=text;parent.appendChild(element);return element}
 
-    async function adminRequest(action){
+    async function adminRequest(action,body={}){
       const {data:{session}}=await supabase.auth.getSession();
       if(!session?.access_token){const problem=new Error('NO_SESSION');problem.status=401;throw problem}
-      const response=await fetch(MANAGE_AFFILIATES,{method:'POST',headers:{Authorization:`Bearer ${session.access_token}`,'Content-Type':'application/json',apikey:SUPABASE_PUBLISHABLE_KEY},body:JSON.stringify({action})});
+      const response=await fetch(MANAGE_AFFILIATES,{method:'POST',headers:{Authorization:`Bearer ${session.access_token}`,'Content-Type':'application/json',apikey:SUPABASE_PUBLISHABLE_KEY},body:JSON.stringify({action,...body})});
       const result=await response.json().catch(()=>({}));
       if(!response.ok){const problem=new Error(result?.error||'REQUEST_FAILED');problem.status=response.status;throw problem}
       return result;
@@ -235,6 +251,8 @@
 
     function openDetail(affiliate){
       currentAffiliate=affiliate;
+      document.getElementById('delete-access-status').textContent='';
+      document.getElementById('delete-access-user').disabled=deletingAccess||sendingAccess;
       document.getElementById('access-message-preview').hidden=true;
       document.getElementById('access-message-body').value='';
       document.getElementById('send-access-message').disabled=true;
@@ -298,14 +316,14 @@
       finally{button.disabled=false;}
     });
     document.getElementById('send-access-message').addEventListener('click',async()=>{
-      if(sendingAccess)return;
+      if(sendingAccess||deletingAccess)return;
       let message;
       try{message=privateAccessMessage(currentAffiliate);}catch{return;}
       const email=message.email.toLowerCase(),button=document.getElementById('send-access-message'),status=document.getElementById('access-message-status');
       let intent=accessSends.get(email);
       if(intent?.sent)return;
       if(!intent){intent={requestId:crypto.randomUUID(),sent:false};accessSends.set(email,intent);}
-      sendingAccess=true;button.disabled=true;button.textContent='Enviando…';status.textContent='Enviando a '+email+'…';
+      sendingAccess=true;document.getElementById('delete-access-user').disabled=true;button.disabled=true;button.textContent='Enviando…';status.textContent='Enviando a '+email+'…';
       try{
         const result=await accessRequest('send',{email,requestId:intent.requestId});
         if(!result.sent)throw Error('No se ha confirmado el envío.');
@@ -313,11 +331,39 @@
         if(currentAffiliate?.email.toLowerCase()===email)status.textContent='Correo enviado a '+email+'. El proveedor ha aceptado el envío.';
       }catch(problem){if(currentAffiliate?.email.toLowerCase()===email)status.textContent=(problem.message||'No se ha podido confirmar el envío.')+' Reintentar reutiliza la misma solicitud para evitar duplicados.';}
       finally{
-        sendingAccess=false;
+        sendingAccess=false;document.getElementById('delete-access-user').disabled=false;
         const current=accessSends.get(currentAffiliate?.email.toLowerCase());
         button.disabled=current?.sent===true||currentAffiliate?.active===false;
         button.textContent=current?.sent?'Correo enviado':'Enviar correo de acceso';
       }
+    });
+    const deleteAccessDialog=document.getElementById('delete-access-dialog');
+    document.getElementById('delete-access-user').addEventListener('click',()=>{
+      if(!currentAffiliate||sendingAccess||deletingAccess)return;
+      pendingAccessDeletion=currentAffiliate.email;
+      document.getElementById('delete-access-email').textContent=pendingAccessDeletion;
+      document.getElementById('delete-access-dialog-status').textContent='';
+      deleteAccessDialog.showModal();
+    });
+    document.getElementById('cancel-delete-access').addEventListener('click',()=>{if(deletingAccess)return;pendingAccessDeletion=null;deleteAccessDialog.close();});
+    deleteAccessDialog.addEventListener('cancel',event=>{if(deletingAccess)event.preventDefault();else pendingAccessDeletion=null;});
+    document.getElementById('confirm-delete-access').addEventListener('click',async()=>{
+      if(!pendingAccessDeletion||deletingAccess||sendingAccess)return;
+      const email=pendingAccessDeletion;
+      const button=document.getElementById('confirm-delete-access'),cancel=document.getElementById('cancel-delete-access'),status=document.getElementById('delete-access-dialog-status');
+      deletingAccess=true;button.disabled=true;cancel.disabled=true;status.textContent='Borrando autorización…';
+      try{
+        const result=await adminRequest('delete',{email});
+        if(result.deleted!==true)throw Error('DELETE_UNCONFIRMED');
+        affiliates=affiliates.filter(item=>item.email!==email);
+        accessSends.delete(email.toLowerCase());currentAffiliate=null;pendingAccessDeletion=null;
+        document.getElementById('access-message-body').value='';
+        document.getElementById('access-message-preview').hidden=true;
+        deleteAccessDialog.close();show('affiliates');renderAffiliates();
+        document.getElementById('add-access-status').textContent='Se ha borrado la autorización de '+email+'.';
+      }catch{
+        status.textContent='No se ha podido confirmar el borrado. Comprueba tu conexión y vuelve a intentarlo.';
+      }finally{deletingAccess=false;button.disabled=false;cancel.disabled=false;}
     });
     document.getElementById('prepare-access-message').addEventListener('click',()=>{
       const status=document.getElementById('access-message-status');

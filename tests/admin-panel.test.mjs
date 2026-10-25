@@ -14,10 +14,10 @@ test('el módulo del panel compila', () => {
   assert.doesNotThrow(() => new vm.SourceTextModule(source));
 });
 
-test('el panel solo consulta mediante el endpoint administrativo existente', () => {
+test('el panel consulta usuarios y conserva la autorización administrativa del servidor', () => {
   assert.match(panel, /adminRequest\('authorize'\)/);
   assert.match(panel, /adminRequest\('list'\)/);
-  assert.doesNotMatch(panel, /adminRequest\('(upsert|delete)'/);
+  assert.doesNotMatch(panel, /adminRequest\('upsert'/);
   assert.doesNotMatch(panel, /localStorage/);
   assert.match(panel, /display_name,affiliate\.email,affiliate\.employee_number,affiliate\.phone/);
 });
