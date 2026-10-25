@@ -1,4 +1,4 @@
-const CACHE_NAME = 'str-ig-cache-v124-calendarios-20261025';
+const CACHE_NAME = 'str-ig-cache-v125-calendarios-central-20261025';
 
 const SUPABASE_URL = 'https://icneigdnuntzugisexaz.supabase.co';
 const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_apKjcPClIBTHS2wwN6qPsA_6Vm4tk9m';
