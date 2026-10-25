@@ -145,15 +145,7 @@ function applyPrivateAreaLayout() {
   const personalArea = byImage('mi-espacio-str-ig.png');
   if (!review || !calculateV || !askStr || !internalCommunications || !personalArea) return;
 
-  let statistics = byImage('card-estadisticas-nomina.webp');
-  if (!statistics) {
-    statistics = document.createElement('article');
-    statistics.className = 'quick-card menu-image-card';
-    statistics.setAttribute('aria-label', 'Estadísticas de nómina, próximamente');
-    statistics.innerHTML = '<img src="card-estadisticas-nomina.webp" alt="Estadísticas de nómina, área privada">';
-  }
-
-  grid.replaceChildren(review, statistics, calculateV, askStr, internalCommunications, personalArea);
+  grid.replaceChildren(review, calculateV, askStr, internalCommunications, personalArea);
 }
 
 

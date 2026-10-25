@@ -1698,6 +1698,7 @@
       .month-payroll-summary-values { grid-template-columns: 1fr; }
     }
   </style>
+<style>#open-history,#history-screen{display:none!important}</style>
 </head>
 <body>
   <div class="labbar">🧪 STR-IG LABORATORIO · NO ES PRODUCCIÓN</div>
@@ -1714,7 +1715,8 @@
     <section id="period-screen" aria-labelledby="period-page-title">
       <div class="tool-icon" aria-hidden="true">🔎</div>
       <h1 id="period-page-title" tabindex="-1">Revisa tu nómina</h1>
-      <p class="intro">Elige el periodo y prepara primero el registro de jornada y después la nómina.</p>
+      <p class="intro">Revisión mensual: elige el periodo y prepara el registro de jornada y la nómina. Las imágenes y cifras se utilizan solo en esta sesión, sin enviarse a IA externa ni guardarse en el servidor. Al finalizar o salir se descartan; no habrá historial ni estadísticas.</p>
+      <button id="finish-monthly-review" class="secondary" type="button">Finalizar revisión y borrar datos temporales</button>
 
       <section class="panel" aria-labelledby="period-title">
         <div class="panel-header">
@@ -1759,7 +1761,7 @@
       <div id="documents-section" class="documents-section">
         <div class="documents-heading">
           <h2>Documentos</h2>
-          <span id="document-count" class="document-count">0 de 2 guardados</span>
+          <span id="document-count" class="document-count">0 de 2 preparados</span>
         </div>
 
         <article id="timesheet-card" class="document-card">
@@ -2161,7 +2163,7 @@
       <section class="panel">
         <section id="saved-document-notice" class="completion-panel" aria-label="Revisión guardada" hidden>
           <strong>Esta revisión ya está guardada</strong>
-          <p>Sus imágenes se conservan sin cambios. Para guardar otro recibo de este mes, inicia una nueva revisión.</p>
+          <p>Las imágenes permanecen únicamente durante esta sesión. Para guardar otro recibo de este mes, inicia una nueva revisión.</p>
           <button id="add-document-payroll" class="primary" type="button">Añadir otra nómina de este mes</button>
           <button id="open-document-review" class="secondary" type="button">Ver revisión guardada</button>
         </section>
@@ -2175,7 +2177,7 @@
         </div>
 
         <div class="privacy-warning">
-          <strong>🔒 Antes de guardar la imagen</strong>
+          <strong>🔒 Antes de utilizar la imagen</strong>
           Recorta o tapa cualquier dato que permita identificarte. Para el registro de jornada podrás ajustar el recorte en el visor.
           <ul class="privacy-list">
             <li>No deben verse nombre, DNI/NIE, número de empleado ni Seguridad Social.</li>
@@ -2233,7 +2235,7 @@
 
         <div id="image-preview" class="preview" hidden>
           <img id="preview-image" alt="Vista previa de la imagen seleccionada">
-          <div class="preview-label"><span aria-hidden="true">✓</span><span id="preview-status-text">Imagen lista para guardar</span></div>
+          <div class="preview-label"><span aria-hidden="true">✓</span><span id="preview-status-text">Imagen lista para revisar</span></div>
         </div>
 
         <div id="document-actions" class="actions" hidden>
@@ -2249,6 +2251,7 @@
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@7.0.0/dist/tesseract.min.js" integrity="sha384-2BQ3U3OdKOb0Uczxqr41I9UvZkzr4V9Hv8uSzMMZAlmhsFClvdZX5wi5fDCzG+tM" crossorigin="anonymous"></script>
   <script type="module">
     import { newReceiptId, receiptCreatedAt, monthReceipts, assertUniquePayroll, sha256 } from './payroll-receipts.mjs?v=1';
+    import { createPayrollSession } from './payroll-session.mjs?v=1';
     import { adminPayrollApi } from './admin-payroll-storage.mjs?v=1';
     import { closeMonth, readMonthClosure } from './payroll-month.mjs?v=1';
     import { deletePayrollData, clearLocalPayrollData, confirmDeletion } from './payroll-deletion.mjs?v=1';
@@ -2301,7 +2304,7 @@
     const isAdminMode = Boolean(adminContext?.userId);
     const currentUserId = adminContext?.userId || session?.user?.id || '';
     const STORAGE_BUCKET = 'payroll-documents';
-    const storageBucket = isAdminMode ? adminApi.bucket : supabase.storage.from(STORAGE_BUCKET);
+    const storageBucket = createPayrollSession();
     try {
       const notice = sessionStorage.getItem('strPayrollDeletionNotice');
       if (notice) {
@@ -2857,19 +2860,12 @@
 
     function saveWorkSchedule(settings) {
       workSchedules.set(periodKey(), settings);
-      try {
-        globalThis.localStorage?.setItem(scheduleStorageKey(), JSON.stringify(settings));
-      } catch {}
+
     }
 
     function loadWorkSchedule() {
       let settings = workSchedules.get(periodKey());
-      if (!settings) {
-        try {
-          const stored = globalThis.localStorage?.getItem(scheduleStorageKey());
-          if (stored) settings = JSON.parse(stored);
-        } catch {}
-      }
+
       settings ||= {
         type: '',
         percentage: '',
@@ -5915,7 +5911,15 @@
       showPeriodScreen();
     });
 
+    document.getElementById('finish-monthly-review').addEventListener('click', () => {
+      storageBucket.close();
+      window.location.reload();
+    });
+    window.addEventListener('pagehide', () => storageBucket.close());
+    // A back/forward cache restore must never revive documents from a finished visit.
+    window.addEventListener('pageshow', event => { if (event.persisted) window.location.reload(); });
     window.addEventListener('beforeunload', () => {
+      storageBucket.close();
       revokeWorkingUrlIfTemporary();
       Object.values(documents).forEach((document) => {
         if (document.url) URL.revokeObjectURL(document.url);
