@@ -9,6 +9,8 @@ import {
   validateSurvey,
 } from "../_shared/survey-core.mjs";
 
+import { surveyCodeMessage } from "../_shared/survey-mail.mjs";
+
 const origins = new Set(["https://str-ig.github.io", "http://localhost:8000"]);
 Deno.serve(async (req: Request) => {
   const origin = req.headers.get("origin") ?? "";
@@ -127,9 +129,7 @@ Deno.serve(async (req: Request) => {
         body: JSON.stringify({
           from,
           to: [email],
-          subject: "Tu código para las encuestas STR",
-          text:
-            `Tu código es ${code}. Caduca en 10 minutos. Si no lo has solicitado, ignora este correo.`,
+          ...surveyCodeMessage(code),
         }),
         signal: AbortSignal.timeout(10000),
       });
