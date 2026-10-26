@@ -1,4 +1,4 @@
-const CACHE_NAME = 'str-ig-cache-v132-card-counts';
+const CACHE_NAME = 'str-ig-cache-v133-remove-unused-cards';
 
 const SUPABASE_URL = 'https://icneigdnuntzugisexaz.supabase.co';
 self.addEventListener('install', (event) => {
