@@ -28,7 +28,13 @@ export function accessHandler({ createClient, env, send = fetch }) {
       if (role.error) return reply({ error: 'AUTHORIZATION_CHECK_FAILED' }, 503);
       if (!role.data) return reply({ error: 'FORBIDDEN' }, 403);
       const body = await req.json().catch(() => null);
-      if (!body || !['add', 'send'].includes(body.action)) return reply({ error: 'INVALID_ACTION' }, 400);
+      if (!body || !['add', 'send', 'stats'].includes(body.action)) return reply({ error: 'INVALID_ACTION' }, 400);
+      if (body.action === 'stats') {
+        if (typeof body.month !== 'string' || !/^\d{4}-(0[1-9]|1[0-2])$/.test(body.month)) return reply({error:'INVALID_MONTH'},400);
+        const result=await admin.from('app_card_counts').select('month, card, accesses').eq('month',body.month+'-01').order('accesses',{ascending:false});
+        if(result.error)return reply({error:'READ_FAILED'},503);
+        return reply({counts:result.data||[]});
+      }
       const email = typeof body.email === 'string' ? body.email.trim().toLowerCase() : '';
       let message;
       try {

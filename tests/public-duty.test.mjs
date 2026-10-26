@@ -51,37 +51,12 @@ test('AI errors and malformed guidance are failures, allowing shared quota relea
   assert.equal((await loadAnswer({}, true).call(facts)).status, 502);
   assert.equal((await loadAnswer(guidance, false).call(facts)).status, 502);
 });
-function inbox({ member = false, committee = false, auth = true, dbError = false } = {}) {
-  const writes = [];
-  const admin = {
-    auth: { getUser: async () => ({ data: { user: auth ? { id: 'user-id', email: 'member@example.test', email_confirmed_at: '2026-01-01' } : null }, error: null }) },
-    from: table => {
-      const query = { select: () => query, eq: () => query, order: () => query,
-        maybeSingle: async () => ({ data: (table === 'committee_admins' ? committee : member) ? { email: 'member@example.test' } : null, error: dbError ? {} : null }),
-        limit: async () => ({ data: [], error: null }),
-        upsert: async (row, options) => { writes.push({ row, options }); return { error: null }; }
-      }; return query;
-    }
-  };
-  const handler = permitCaseHandler(admin);
-  return { writes, call: (body, token = 'valid-token') => handler(new Request('https://example.test', { method: 'POST', headers: token ? { Authorization: `Bearer ${token}` } : {}, body: JSON.stringify(body) })) };
-}
-const payload = { id: '814fe349-6da1-4872-8c89-2175bb3f6ef5', facts, guidance };
-test('human inbox rejects public, invalid sessions and nonmembers independently of client flags', async () => {
-  for (const [options, token, expected] of [[{}, '', 401], [{ auth: false }, 'bad', 401], [{}, 'valid', 403]]) {
-    const fn = inbox(options); assert.equal((await fn.call({ ...payload, affiliated: true }, token)).status, expected); assert.equal(fn.writes.length, 0);
+test('retired case endpoint never reads or saves cases, even for administrators and old clients', async () => {
+  const forbidden = new Proxy({}, { get() { throw Error('Personal case database must not be accessed'); } });
+  const handler = permitCaseHandler(forbidden);
+  for (const body of [{action:'list'},{facts,guidance}]) {
+    const response = await handler(new Request('https://example.test',{method:'POST',headers:{Authorization:'Bearer old-admin-token'},body:JSON.stringify(body)}));
+    assert.equal(response.status,410);
+    assert.equal((await response.json()).error,'CASE_COLLECTION_DISABLED');
   }
-});
-test('active member can submit with server identity and idempotent retry configuration', async () => {
-  const fn = inbox({ member: true }); assert.equal((await fn.call({ ...payload, email: 'spoof@example.test' })).status, 200);
-  assert.equal(fn.writes[0].row.email, 'member@example.test'); assert.equal(fn.writes[0].row.user_id, 'user-id');
-  assert.equal(fn.writes[0].options.ignoreDuplicates, true);
-});
-test('member cannot read inbox; committee admin can; membership errors fail closed', async () => {
-  assert.equal((await inbox({ member: true }).call({ action: 'list' })).status, 403);
-  assert.equal((await inbox({ committee: true }).call({ action: 'list' })).status, 200);
-  const fn = inbox({ member: true, dbError: true }); assert.equal((await fn.call(payload)).status, 503); assert.equal(fn.writes.length, 0);
-});
-test('invalid case is rejected without storage', async () => {
-  const fn = inbox({ member: true }); assert.equal((await fn.call({ ...payload, guidance: {} })).status, 400); assert.equal(fn.writes.length, 0);
 });

@@ -2,8 +2,8 @@ import { permitFetch, showPublicPermitPage, handlePermitError } from './permisos
 import { dutyChoices, dutySections, validDutyFacts, dutyFacts, validDutyGuidance } from './public-duty.js';
 
 const URL = 'https://icneigdnuntzugisexaz.supabase.co';
-const KEY = 'sb_publishable_apKjcPClIBTHS2wwN6qPsA_6Vm4tk9m';
-const PAGE = 'preguntale-deber-inexcusable.html';
+
+
 const DRAFT = 'strPublicDutyDraftV1';
 const form = document.getElementById('questionnaire');
 const result = document.getElementById('result');
@@ -11,7 +11,7 @@ const actions = document.getElementById('send-actions');
 const status = document.getElementById('send-status');
 const consult = document.getElementById('consult');
 const previous = document.getElementById('previous');
-let step = 1, busy = false, completed = null, authClient;
+let step = 1, busy = false, completed = null;
 const state = { obligation: '', overlap: '', outside: '', proof: '' };
 const questions = ['¿Qué obligación tienes que atender?', '¿La obligación coincide con tu jornada de trabajo?', '¿Puedes realizarla fuera de tu horario laboral?', '¿Tienes justificante o citación?'];
 Object.entries(dutyChoices).forEach(([field, values], i) => {
@@ -41,9 +41,7 @@ const inputs = ['date', 'time', 'workSchedule', 'electoralDayStatus', 'electoral
 const electoralFields = document.getElementById('electoral-fields');
 const substituteFields = document.getElementById('substitute-fields');
 function facts() { return { ...state, ...Object.fromEntries(inputs.map(i => [i.id, i.value])) }; }
-function saveDraft() {
-  try { sessionStorage.setItem(DRAFT, JSON.stringify({ facts: facts(), completed, step })); } catch { /* Consultation works without a draft. */ }
-}
+function saveDraft() { /* Form and result stay in page memory only. */ }
 function refresh() {
   const election = state.obligation === 'Mesa electoral / elecciones';
   electoralFields.hidden = !election;
@@ -68,61 +66,13 @@ inputs.forEach(i => { i.addEventListener('input', refresh); i.addEventListener('
 previous.onclick = () => go(step - 1);
 document.getElementById('back').onclick = e => { if (busy || step > 1) { e.preventDefault(); if (!busy) go(step - 1); } };
 
-async function client() {
-  // Lazy load: authentication is needed only for human submission, never for public AI.
-  if (!authClient) {
-    const { createClient } = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.4/+esm');
-    authClient = createClient(URL, KEY, { auth: { detectSessionInUrl: false, persistSession: true, autoRefreshToken: true } });
-    authClient.auth.onAuthStateChange(() => { if (completed) setTimeout(updateSendActions, 0); });
-  }
-  return authClient;
-}
-function message(copy) { const p = document.createElement('p'); p.textContent = copy; actions.replaceChildren(p); }
-async function updateSendActions() {
-  if (!completed) return;
-  actions.hidden = false; message('Comprobando acceso al envío…');
-  try {
-    const supabase = await client();
-    const { data: { session }, error } = await supabase.auth.getSession();
-    if (error) throw error;
-    if (!session) {
-      const link = document.createElement('a'); link.className = 'primary';
-      link.textContent = 'Iniciar sesión para enviar tu caso a STR'; link.href = `acceso-privado.html?next=${PAGE}`;
-      link.onclick = saveDraft; actions.replaceChildren(link); return;
-    }
-    const { data, error: accessError } = await supabase.rpc('is_current_user_private_access_allowed');
-    if (accessError) throw accessError;
-    if (data !== true) { message('El envío directo de consultas al equipo de STR está disponible para personas afiliadas.'); return; }
-    const button = document.createElement('button'); button.type = 'button'; button.className = 'primary'; button.textContent = 'Enviar mi caso a STR';
-    button.onclick = async () => {
-      button.disabled = true; status.textContent = 'Enviando tu caso…';
-      try {
-        const { data: { session: current } } = await supabase.auth.getSession();
-        if (!current) { await updateSendActions(); throw new Error('UNAUTHORIZED'); }
-        // Do not use permitFetch here: it intentionally removes Authorization for public AI.
-        const response = await fetch(`${URL}/functions/v1/submit-permit-case`, {
-          method: 'POST', signal: AbortSignal.timeout(15000),
-          headers: { apikey: KEY, Authorization: `Bearer ${current.access_token}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id: completed.id, facts: completed.facts, guidance: completed.guidance })
-        });
-        const data = await response.json().catch(() => ({}));
-        if (!response.ok || data.sent !== true) throw new Error(data.error || 'SEND_FAILED');
-        completed.sent = true; saveDraft(); message('Tu caso se ha enviado a STR.'); status.textContent = '';
-      } catch (error) {
-        if (error.message === 'FORBIDDEN' || error.message === 'UNAUTHORIZED') await updateSendActions();
-        status.textContent = 'No se ha podido enviar tu caso. Comprueba tu sesión y vuelve a intentarlo.'; button.disabled = false;
-      }
-    };
-    if (completed.sent) message('Tu caso se ha enviado a STR.'); else actions.replaceChildren(button);
-  } catch { message('No podemos comprobar tu acceso al envío ahora. Vuelve a intentarlo más tarde.'); }
-}
 function showGuidance() {
   result.hidden = false; result.replaceChildren();
   for (const [key, title] of Object.entries(dutySections)) {
     const heading = document.createElement('h3'); heading.textContent = title;
     const p = document.createElement('p'); p.textContent = completed.guidance[key]; result.append(heading, p);
   }
-  updateSendActions();
+  actions.hidden = true;
 }
 form.noValidate = true; // Validate the full questionnaire explicitly, including previous hidden steps.
 form.onsubmit = async e => {
@@ -139,7 +89,7 @@ form.onsubmit = async e => {
     const data = await response.json().catch(() => ({}));
     if (!response.ok) throw new Error(data.error || 'AI_UNAVAILABLE');
     if (!validDutyGuidance(data.guidance)) throw new Error('AI_EMPTY_RESPONSE');
-    completed = { id: crypto.randomUUID(), facts: submittedFacts, guidance: data.guidance, sent: false };
+    completed = { guidance: data.guidance };
     saveDraft(); showGuidance();
   } catch (error) {
     if (!handlePermitError(error, result)) result.textContent = 'No se ha podido completar la consulta. Inténtalo de nuevo en unos minutos.';
@@ -147,14 +97,5 @@ form.onsubmit = async e => {
     busy = false; consult.disabled = false; previous.disabled = false; consult.textContent = completed ? 'Actualizar orientación' : 'Volver a intentarlo'; refresh();
   }
 };
-try {
-  const draft = JSON.parse(sessionStorage.getItem(DRAFT) || 'null');
-  if (draft && validDutyFacts(draft.facts)) {
-    Object.keys(state).forEach(k => { state[k] = draft.facts[k]; }); inputs.forEach(i => { i.value = draft.facts[i.id] || ''; });
-    screens.forEach(s => s.querySelectorAll('.answer').forEach(b => b.setAttribute('aria-pressed', String(state[s.dataset.field] === b.textContent))));
-    if (draft.completed && validDutyFacts(draft.completed.facts) && validDutyGuidance(draft.completed.guidance)) completed = draft.completed;
-    step = completed ? 6 : Math.min(6, Math.max(1, Number(draft.step) || 1));
-  }
-} catch { /* Invalid or unavailable draft. */ }
+try { sessionStorage.removeItem(DRAFT); } catch {}
 showPublicPermitPage(true); go(step); refresh(); if (completed) showGuidance();
-window.addEventListener('focus', () => { if (completed) updateSendActions(); });

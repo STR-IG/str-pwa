@@ -66,9 +66,7 @@
         <button id="open-affiliates" class="module" type="button">
           <span><strong>Usuarios del área privada</strong><span>Añadir correos y enviar el mensaje de acceso.</span></span><b aria-hidden="true">›</b>
         </button>
-        <button id="open-permit-cases" class="module" type="button">
-          <span><strong>Consultas de permisos</strong><span>Casos enviados por personas afiliadas.</span></span><b aria-hidden="true">›</b>
-        </button>
+        <button id="open-card-stats" class="module" type="button"><span><strong>Accesos a tarjetas</strong><span>Totales mensuales, sin identificar personas.</span></span><b aria-hidden="true">›</b></button>
         <button id="test-gemini" class="module" type="button">
           <span><strong>Probar conexión Gemini</strong><span id="gemini-status" role="status">Prueba técnica interna.</span></span><b aria-hidden="true">›</b>
         </button>
@@ -76,10 +74,9 @@
       </div>
     </section>
 
-    <section id="permit-cases" class="screen" hidden>
-      <div class="screen-head"><button class="screen-back" type="button" data-back="home" aria-label="Volver al panel">‹</button><div><h1>Consultas de permisos</h1><p>Últimos 100 casos enviados</p></div></div>
-      <button id="refresh-permit-cases" class="module" type="button">Actualizar consultas</button>
-      <p id="permit-cases-status" role="status"></p><div id="permit-cases-list"></div>
+    <section id="card-stats" class="screen" hidden>
+      <div class="screen-head"><button class="screen-back" type="button" data-back="home" aria-label="Volver al panel">‹</button><div><h1>Accesos a tarjetas</h1><p>Pulsaciones, sin identificar personas</p></div></div>
+      <div class="panel"><label for="card-stats-month">Mes</label><input id="card-stats-month" class="search" type="month"><button id="refresh-card-stats" class="module" type="button">Actualizar recuentos</button><p id="card-stats-status" role="status"></p><p class="privacy-note">Se suma una pulsación cada vez que se abre una tarjeta. No se guardan personas, sesiones, respuestas ni historiales de navegación. No son usuarios únicos. Los recuentos comienzan con esta versión.</p><div id="card-stats-list"></div></div>
     </section>
     <section id="affiliates" class="screen" hidden>
       <div class="screen-head"><button class="screen-back" type="button" data-back="home" aria-label="Volver al panel">‹</button><div><h1>Usuarios del área privada</h1><p>Correos autorizados · No exige afiliación</p></div></div>
@@ -156,6 +153,7 @@
     <p id="delete-access-dialog-status" role="status" aria-live="polite"></p>
   </dialog>
   <script type="module">
+    import { CARD_LABELS } from './card-catalog.mjs?v=1';
     import { privateAccessMessage } from './private-access-message.mjs?v=2-install';
     import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
     import { adminPayrollApi } from './admin-payroll-storage.mjs?v=1';
@@ -172,7 +170,7 @@
     const ADMIN_DOCUMENTS=SUPABASE_URL+'/functions/v1/admin-payroll-documents';
     const GEMINI_TEST=SUPABASE_URL+'/functions/v1/gemini-str';
     const supabase=createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY,{auth:{detectSessionInUrl:false,persistSession:true,autoRefreshToken:true}});
-    const screens={home:document.getElementById('home'),affiliates:document.getElementById('affiliates'),detail:document.getElementById('affiliate-detail'),denied:document.getElementById('denied'),'permit-cases':document.getElementById('permit-cases')};
+    const screens={home:document.getElementById('home'),affiliates:document.getElementById('affiliates'),detail:document.getElementById('affiliate-detail'),denied:document.getElementById('denied'),'card-stats':document.getElementById('card-stats')};
     const loading=document.getElementById('loading');
     const search=document.getElementById('affiliate-search');
     const list=document.getElementById('affiliate-list');
@@ -389,29 +387,24 @@
       }catch{status.textContent='No se ha podido copiar. Puedes seleccionar el texto del mensaje y copiarlo manualmente.';}
     });
     document.getElementById('open-affiliates').addEventListener('click',()=>{show('affiliates');loadAffiliates()});
-    async function loadPermitCases(){
-      const status=document.getElementById('permit-cases-status'),list=document.getElementById('permit-cases-list');
-      status.textContent='Cargando consultas…';list.replaceChildren();
+    const statsMonth=document.getElementById('card-stats-month');
+    const now=new Date();statsMonth.value=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
+    let statsLoad=0;
+    async function loadCardStats(){
+      const version=++statsLoad;
+      const status=document.getElementById('card-stats-status'),target=document.getElementById('card-stats-list');
+      status.textContent='Cargando recuentos…';target.replaceChildren();
       try{
-        const {data:{session}}=await supabase.auth.getSession();
-        if(!session)throw new Error('NO_SESSION');
-        const response=await fetch(`${SUPABASE_URL}/functions/v1/submit-permit-case`,{method:'POST',signal:AbortSignal.timeout(15000),headers:{Authorization:`Bearer ${session.access_token}`,apikey:SUPABASE_PUBLISHABLE_KEY,'Content-Type':'application/json'},body:JSON.stringify({action:'list'})});
-        const data=await response.json();if(!response.ok)throw new Error(data.error);
-        status.textContent=data.cases?.length?'':'No hay consultas enviadas.';
-        const titles={case:'Tu caso',eligibility:'¿Puede corresponderte?',time:'Tiempo',documents:'Qué debes presentar',next:'Qué hacer ahora'};
-        for(const item of data.cases||[]){
-          const article=document.createElement('article');article.className='panel';
-          addText(article,'h2',item.email);addText(article,'p',new Date(item.created_at).toLocaleString('es-ES'));
-          addText(article,'p','Orientación automática aportada por la persona. Pendiente de revisión por STR.');
-          const facts=document.createElement('dl');
-          const labels={obligation:'Obligación',overlap:'Coincidencia con jornada',outside:'Fuera de horario',date:'Fecha',time:'Hora',workSchedule:'Horario de trabajo',proof:'Justificación',details:'Detalles'};
-          for(const [key,label] of Object.entries(labels)){addText(facts,'dt',label);addText(facts,'dd',String(item.facts?.[key]||'—'))}article.append(facts);
-          for(const [key,title] of Object.entries(titles)){addText(article,'h3',title);addText(article,'p',String(item.guidance?.[key]||''))}list.append(article);
-        }
-      }catch{status.textContent='No se han podido consultar los casos. Comprueba tu acceso de administrador e inténtalo de nuevo.'}
+        const result=await accessRequest('stats',{month:statsMonth.value});
+        if(version!==statsLoad)return;
+        const rows=Array.isArray(result.counts)?result.counts:[];
+        status.textContent=rows.length?rows.reduce((total,row)=>total+Number(row.accesses),0)+' accesos a tarjetas en este mes.':'Todavía no hay accesos registrados en este mes.';
+        for(const row of rows){const line=document.createElement('p');line.style.cssText='display:flex;justify-content:space-between;gap:16px;border-bottom:1px solid #eee;padding:12px 0';addText(line,'span',CARD_LABELS[row.card]||row.card);addText(line,'strong',String(row.accesses));target.appendChild(line);}
+      }catch{if(version===statsLoad)status.textContent='No se han podido cargar los recuentos. Comprueba tu sesión de administrador.';}
     }
-    document.getElementById('open-permit-cases').addEventListener('click',()=>{show('permit-cases');loadPermitCases()});
-    document.getElementById('refresh-permit-cases').addEventListener('click',loadPermitCases);
+    document.getElementById('open-card-stats').addEventListener('click',()=>{show('card-stats');loadCardStats();});
+    document.getElementById('refresh-card-stats').addEventListener('click',loadCardStats);
+    statsMonth.addEventListener('change',loadCardStats);
     document.getElementById('test-gemini').addEventListener('click',testGeminiConnection);
     document.querySelectorAll('[data-back]').forEach(button=>button.addEventListener('click',()=>show(button.dataset.back)));
     search.addEventListener('input',renderAffiliates);

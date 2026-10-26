@@ -1,84 +1,38 @@
-const SUPABASE_URL = 'https://icneigdnuntzugisexaz.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_apKjcPClIBTHS2wwN6qPsA_6Vm4tk9m';
-const VISITOR_KEY = 'str_analytics_visitor_v1';
-const SESSION_KEY = 'str_analytics_session_v1';
-
-function uuid() {
-  if (globalThis.crypto?.randomUUID) return globalThis.crypto.randomUUID();
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, char => {
-    const value = Math.random() * 16 | 0;
-    return (char === 'x' ? value : (value & 3 | 8)).toString(16);
-  });
+import { CARD_LABELS } from './card-catalog.mjs?v=1';
+const ENDPOINT = 'https://icneigdnuntzugisexaz.supabase.co/rest/v1/rpc/record_card_access';
+const KEY = 'sb_publishable_apKjcPClIBTHS2wwN6qPsA_6Vm4tk9m';
+for (const key of ['str_analytics_visitor_v1', 'str_analytics_session_v1']) {
+  try { localStorage.removeItem(key); sessionStorage.removeItem(key); } catch {}
 }
-function getId(storage, key) {
+try { indexedDB.deleteDatabase('str-ig-analytics'); } catch {}
+try { sessionStorage.removeItem('strPublicDutyDraftV1'); } catch {}
+export function cardDestination(href, base = location.href) {
   try {
-    let value = storage.getItem(key);
-    if (!value) { value = uuid(); storage.setItem(key, value); }
-    return value;
-  } catch (_) { return uuid(); }
+    const current = new URL(base), target = new URL(href, current);
+    if (target.origin !== current.origin || !target.pathname.startsWith('/str-pwa/')) return null;
+    let card = target.pathname.slice('/str-pwa/'.length) || 'index.html';
+    if (card === 'acceso-privado.html') {
+      const next = target.searchParams.get('next');
+      if (Object.hasOwn(CARD_LABELS, next)) card = next;
+    }
+    if (card === 'revisa-nomina.html') card = 'revisa-tu-nomina.html';
+    return Object.hasOwn(CARD_LABELS, card) ? card : null;
+  } catch { return null; }
 }
-const visitorId = getId(localStorage, VISITOR_KEY);
-const sessionId = getId(sessionStorage, SESSION_KEY);
-
-function clean(value, max) {
-  return value == null ? null : String(value).trim().slice(0, max);
-}
-function inferArea() {
-  return document.documentElement.dataset.analyticsArea === 'private' ? 'private' : 'public';
-}
-function inferSection() {
-  const explicit = document.documentElement.dataset.analyticsSection;
-  if (explicit) return clean(explicit, 120);
-  const route = location.pathname.split('/').pop()?.replace(/\.html$/i, '') || 'index';
-  if (route === 'permisos-publicos' || route === 'permisos') return 'permisos_retribuidos';
-  return clean(route, 120);
-}
-export async function track(eventType, target = null) {
-  const payload = {
-    visitor_id: visitorId,
-    session_id: sessionId,
-    event_type: eventType,
-    area: inferArea(),
-    section: inferSection(),
-    target: clean(target, 120),
-    path: clean(location.pathname + location.hash, 160),
-    environment: 'production'
-  };
+export async function track(eventType, card) {
+  if (eventType !== 'card_click' || !Object.hasOwn(CARD_LABELS, card)) return;
   try {
-    await fetch(SUPABASE_URL + '/rest/v1/app_analytics_events', {
-      method: 'POST',
-      keepalive: true,
-      headers: {
-        apikey: SUPABASE_KEY,
-        Authorization: 'Bearer ' + SUPABASE_KEY,
-        'Content-Type': 'application/json',
-        Prefer: 'return=minimal'
-      },
-      body: JSON.stringify(payload)
+    await fetch(ENDPOINT, {
+      method: 'POST', keepalive: true, credentials: 'omit', referrerPolicy: 'no-referrer',
+      headers: { apikey: KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ p_card: card })
     });
-  } catch (_) {}
+  } catch { /* Statistics never affect navigation; no persistent retry queue. */ }
 }
-function targetFor(anchor) {
-  return clean(
-    anchor.dataset.analyticsTarget ||
-    anchor.getAttribute('aria-label') ||
-    anchor.querySelector('img')?.alt ||
-    anchor.querySelector('h2,h3,strong')?.textContent ||
-    anchor.getAttribute('href'),
-    120
-  );
-}
-function isInterestClick(anchor) {
-  if (anchor.dataset.analyticsIgnore != null) return false;
-  if (anchor.dataset.analyticsTarget) return true;
-  return anchor.matches(
-    '.quick-card, .menu-image-card, .news-card, .image-card, .option, .module, .post-media, .permit-link, [data-news-category]'
-  );
-}
-
-track('page_view');
 document.addEventListener('click', event => {
-  const anchor = event.target.closest('a[href]');
-  if (!anchor || !isInterestClick(anchor)) return;
-  track('card_click', targetFor(anchor));
+  const anchor = event.target.closest?.('a[href]');
+  if (!anchor || anchor.dataset.analyticsIgnore != null) return;
+  if (!anchor.matches('.quick-card,.menu-image-card,.news-card,.image-card,.option,.module,.post-media,.permit-link,[data-news-category],[data-analytics-target]')) return;
+  const card = cardDestination(anchor.getAttribute('href'));
+  if (card) void track('card_click', card);
 }, { capture: true });
