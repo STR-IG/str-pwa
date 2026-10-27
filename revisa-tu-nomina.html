@@ -11,7 +11,7 @@
   <script>
     (async () => {
       try {
-        const response = await fetch('revisa-tu-nomina-base.html?v=prod-46-previous-month', { cache: 'no-store' });
+        const response = await fetch('revisa-tu-nomina-base.html?v=prod-47-no-discounts', { cache: 'no-store' });
         if (!response.ok) throw new Error('BASE_NOT_AVAILABLE');
         let html = await response.text();
         html = html
@@ -31,7 +31,6 @@
         const productionScripts = [
           '<script src="payroll-lab-patch.js?v=prod-9"><\/script>',
           '<script src="timesheet-crop-guard-lab.js?v=prod-4"><\/script>',
-          '<script type="module" src="discounts-reader.js?v=prod-8-local"><\/script>',
           '<script src="payroll-month-warning-patch.js?v=prod-1"><\/script>',
           '<script src="admin-payroll-manual-edit.js?v=prod-2"><\/script>'
         ].join('');

@@ -1330,91 +1330,7 @@
       font-weight: 700;
     }
 
-    .discounts-intro {
-      margin-bottom: 16px;
-      color: var(--muted);
-      text-align: center;
-      font-size: 13px;
-      line-height: 1.5;
-    }
-
-    .discounts-privacy {
-      display: flex;
-      gap: 10px;
-      padding: 13px;
-      border-radius: 14px;
-      color: #684900;
-      background: #fff8df;
-      font-size: 12px;
-      line-height: 1.45;
-    }
-
-    .discounts-privacy strong { display: block; margin-bottom: 3px; }
-    .discounts-consent {
-      display: flex;
-      align-items: flex-start;
-      gap: 11px;
-      margin-top: 14px;
-      padding: 13px;
-      border: 1px solid var(--line);
-      border-radius: 14px;
-      background: #fff;
-      color: #252529;
-      font-size: 14px;
-      font-weight: 700;
-      line-height: 1.45;
-      cursor: pointer;
-    }
-    .discounts-consent input {
-      flex: 0 0 auto;
-      width: 21px;
-      height: 21px;
-      margin: 1px 0 0;
-      accent-color: var(--red);
-    }
-    .discounts-preview img { max-height: 430px; }
-    .discounts-status { margin-top: 15px; }
-    .discounts-results { margin-top: 19px; }
-    .discounts-results h2 { margin: 0 0 12px; font-size: 18px; }
-    .discounts-group + .discounts-group { margin-top: 17px; }
-    .discounts-group h3 {
-      margin: 0 0 9px;
-      color: var(--red-dark);
-      font-size: 15px;
-    }
-    .discounts-list { display: grid; gap: 10px; }
-    .discounts-row {
-      padding: 13px;
-      border: 1px solid var(--line);
-      border-radius: 14px;
-      background: #fbfbfc;
-    }
-    .discounts-row h4 { margin: 0 0 9px; font-size: 14px; line-height: 1.35; }
-    .discounts-values {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(118px, 1fr));
-      gap: 8px;
-    }
-    .discounts-value {
-      min-width: 0;
-      padding: 9px;
-      border-radius: 10px;
-      background: white;
-    }
-    .discounts-value span {
-      display: block;
-      color: var(--muted);
-      font-size: 9px;
-      font-weight: 800;
-      text-transform: uppercase;
-    }
-    .discounts-value strong {
-      display: block;
-      margin-top: 4px;
-      overflow-wrap: anywhere;
-      font-size: 13px;
-    }
-    .discounts-value input, .local-payroll-totals input {
+    .local-payroll-totals input {
       display: block;
       width: 100%;
       min-width: 0;
@@ -1430,14 +1346,6 @@
     }
     .local-payroll-totals label { display: block; margin-top: 14px; font-weight: 700; }
     .local-payroll-totals p { margin-top: 8px; color: #6e6e73; line-height: 1.5; }
-    .discounts-unknown-text {
-      margin: 0;
-      color: #45454a;
-      font-size: 12px;
-      line-height: 1.45;
-      overflow-wrap: anywhere;
-    }
-
     .instruction {
       display: flex;
       gap: 12px;
@@ -1671,7 +1579,6 @@
     @media (max-width: 390px) {
       .document-line { display: block; }
       .status-pill { display: inline-block; margin-top: 7px; }
-      .discounts-values { grid-template-columns: 1fr; }
       .work-mode-card {
         grid-template-columns: 43px 1fr;
         padding: 14px;
@@ -1896,22 +1803,6 @@
           <button id="delete-user-payroll" class="secondary admin-danger user-delete" type="button">Eliminar esta nómina y sus cifras</button>
         </article>
 
-        <article id="discounts-card" class="document-card">
-          <div class="document-card-top">
-            <span class="document-icon" aria-hidden="true">📉</span>
-            <div class="document-info">
-              <div class="document-line">
-                <h3 id="discounts-card-title" class="document-title">Descuentos</h3>
-                <span id="discounts-card-status" class="status-pill">Bloqueados</span>
-              </div>
-              <p id="discounts-card-help" class="document-help">Completa primero la nómina de este recibo.</p>
-            </div>
-          </div>
-          <button id="open-discounts" class="card-button" type="button" disabled>Abrir Descuentos</button>
-          <button id="delete-user-discounts" class="secondary admin-danger user-delete" type="button">Eliminar descuentos de este recibo</button>
-          <button id="add-another-discounts" class="card-button" type="button" hidden>Añadir otro descuento</button>
-        </article>
-
         <section id="admin-document-actions" class="panel" hidden>
           <h2 class="section-title">Gestión administrativa</h2>
           <p class="document-help">Las sustituciones vuelven a pasar por el mismo recorte, privacidad y lector. No permiten modificar resultados manualmente.</p>
@@ -1921,9 +1812,6 @@
             <button id="admin-delete-timesheet" class="secondary admin-danger" type="button">Eliminar Registro</button>
             <button id="admin-replace-payroll" class="secondary" type="button">Sustituir nómina</button>
             <button id="admin-delete-payroll" class="secondary admin-danger" type="button">Eliminar nómina</button>
-            <button id="admin-replace-discounts" class="secondary" type="button" hidden>Sustituir Descuentos</button>
-            <button id="admin-reprocess-discounts" class="secondary" type="button" hidden>Volver a procesar Descuentos</button>
-            <button id="admin-delete-discounts" class="secondary admin-danger" type="button" hidden>Eliminar Descuentos</button>
           </div>
         </section>
 
@@ -1960,61 +1848,6 @@
       </div>
     </section>
 
-    <section id="discounts-screen" aria-labelledby="discounts-screen-title" hidden>
-      <div class="document-screen-header">
-        <span class="step-label">DESCUENTOS</span>
-        <h1 id="discounts-screen-title" tabindex="-1">Descuentos</h1>
-        <p id="discounts-period" class="document-period"></p>
-      </div>
-
-      <section class="panel">
-        <p class="discounts-intro">La lectura se realiza en tu dispositivo, sin enviar la captura a servicios de IA. Puedes seleccionar la tabla “Seguridad Social e IRPF” o introducir sus cifras manualmente.</p>
-        <div class="discounts-privacy">
-          <span aria-hidden="true">🛡️</span>
-          <div><strong>Antes de seleccionar la imagen</strong>Recorta la cabecera para que no aparezcan nombre, DNI/NIF, número de Seguridad Social, domicilio ni otros datos personales.</div>
-        </div>
-
-        <input id="discounts-image" class="file-input" type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif">
-        <button id="select-discounts-image" class="secondary select-image" type="button">Seleccionar pantallazo</button>
-        <p class="select-hint">La captura no se guardará: se utilizará únicamente durante esta revisión.</p>
-
-        <div id="discounts-preview" class="preview discounts-preview" hidden>
-          <img id="discounts-preview-image" alt="Pantallazo seleccionado de Seguridad Social e IRPF">
-          <span class="preview-label">✓ Imagen preparada para revisar</span>
-        </div>
-
-        <label id="discounts-privacy-consent" class="discounts-consent" hidden>
-          <input id="confirm-discounts-privacy" type="checkbox">
-          <span>Confirmo que la captura muestra únicamente la tabla “Seguridad Social e IRPF” y no contiene nombre, DNI/NIF, número de Seguridad Social, domicilio ni otros datos personales.</span>
-        </label>
-
-        <p id="discounts-file-error" class="error" role="alert" hidden></p>
-        <div id="discounts-actions" class="actions" hidden>
-          <button id="change-discounts-image" class="secondary" type="button">Cambiar imagen</button>
-          <button id="review-discounts" class="primary" type="button" disabled>Revisar descuentos</button>
-        </div>
-
-        <div id="discounts-status" class="analysis-progress discounts-status" role="status" aria-live="polite" hidden>
-          <span id="discounts-status-icon" class="analysis-progress-icon" aria-hidden="true">🔎</span>
-          <div>
-            <strong id="discounts-status-title">Revisando descuentos…</strong>
-            <p id="discounts-status-message">Buscando únicamente datos de Seguridad Social e IRPF.</p>
-          </div>
-        </div>
-
-        <div id="discounts-results" class="discounts-results" hidden>
-          <h2>Datos detectados</h2>
-          <div id="discounts-results-content"></div>
-          <div class="actions">
-            <button id="save-discounts" class="primary" type="button">✓ Guardar descuentos y continuar</button>
-            <button id="cancel-discounts" class="secondary" type="button">← Volver sin guardar</button>
-          </div>
-        </div>
-      </section>
-
-      <p class="local-note"><span aria-hidden="true">🔒</span><span>La imagen no se almacena. El resultado no mostrará identificadores personales.</span></p>
-    </section>
-
     <section id="history-screen" aria-labelledby="history-screen-title" hidden>
       <div class="document-screen-header">
         <span class="step-label">HISTORIAL PRIVADO</span>
@@ -2034,7 +1867,7 @@
         <button id="delete-all-history" class="secondary admin-danger user-delete" type="button">Eliminar todo mi historial</button>
         <p id="history-loading" class="history-state" role="status">Cargando historial…</p>
         <p id="history-error" class="history-state error" role="alert" hidden></p>
-        <p class="local-note">El borrado total incluye imágenes de nóminas y registros, revisiones, descuentos y estadísticas derivadas.</p>
+        <p class="local-note">El borrado total incluye imágenes de nóminas y registros, revisiones y resultados temporales.</p>
         <div id="history-list" class="history-list" hidden></div>
         <div id="history-empty" class="history-state" hidden>
           Todavía no tienes ningún mes guardado.
@@ -2324,7 +2157,6 @@
     const reductionSetup = document.getElementById('reduction-setup');
     const documentsSection = document.getElementById('documents-section');
     const periodScreen = document.getElementById('period-screen');
-    const discountsScreen = document.getElementById('discounts-screen');
     const historyScreen = document.getElementById('history-screen');
     const analysisScreen = document.getElementById('analysis-screen');
     const comparisonScreen = document.getElementById('comparison-screen');
@@ -2655,7 +2487,6 @@
       const affiliateName = adminContext.affiliate?.display_name || adminAffiliateEmail;
       const context = document.getElementById('admin-context'); context.textContent = `Administración · ${affiliateName} · ${adminAffiliateEmail}`; context.hidden = false;
       topBack.href = 'panel-administracion.html';
-      document.getElementById('discounts-card').hidden = false;
       document.getElementById('admin-document-actions').hidden = false;
     }
 
@@ -3017,7 +2848,7 @@
       const affiliate = adminContext?.affiliate?.display_name || adminAffiliateEmail;
       const documentName = kind === 'timesheet'
         ? 'Registro de jornada'
-        : (kind === 'discounts' ? 'Descuentos de este recibo' : 'nómina de este recibo');
+        : 'nómina de este recibo';
       return `${documentName} · ${periodLabel()} · ${affiliate}`;
     }
 
@@ -3061,37 +2892,6 @@
         showPeriodMessage('Registro eliminado. Las nóminas del mes permanecen intactas.');
       } catch { showPeriodMessage('No se ha podido eliminar el Registro. No se han borrado las nóminas.', true); }
       finally { savingDocument = false; updatePeriodCards(); }
-    }
-
-    function prepareAdminDiscounts(action) {
-      const saved = Array.isArray(monthlyReviews.get(periodKey())?.discounts)
-        && monthlyReviews.get(periodKey()).discounts.length > 0;
-      if (!isAdminMode || !saved || savingReview || savingDocument) return;
-      const verb = action === 'reprocess' ? 'volver a procesar' : 'sustituir';
-      if (!window.confirm(`Vas a ${verb} los Descuentos de este recibo.\n\n${adminActionDescription('discounts')}\n\nNecesitarás seleccionar de nuevo la captura. ¿Continuar?`)) return;
-      showDiscountsScreen({ fresh: true });
-    }
-
-    async function deleteAdminDiscounts() {
-      const key = periodKey();
-      const previous = monthlyReviews.get(key);
-      if (!isAdminMode || !Array.isArray(previous?.discounts) || !previous.discounts.length || savingReview || savingDocument) return;
-      if (!window.confirm(`¿Seguro que quieres eliminar los Descuentos de este recibo?\n\n${adminActionDescription('discounts')}\n\nLa Nómina y el Registro se conservarán.`)) return;
-      const updated = { ...previous, updatedAt: new Date().toISOString() };
-      delete updated.discounts;
-      savingReview = true;
-      try {
-        await uploadMonthlyReview(updated);
-        if (key !== periodKey()) return;
-        monthlyReviews.set(key, updated);
-        updatePeriodCards();
-        showPeriodMessage('Descuentos eliminados. La Nómina, el Registro y la comparación permanecen intactos.');
-      } catch {
-        showPeriodMessage('No se han podido eliminar los Descuentos. No se ha modificado ningún otro dato.', true);
-      } finally {
-        savingReview = false;
-        updatePeriodCards();
-      }
     }
 
     function showPeriodMessage(message = '', isError = false) {
@@ -3315,21 +3115,12 @@
       target.scrollIntoView({behavior:'smooth', block:'nearest'});
     }
 
-    function receiptDiscountsTotal(review) {
-      const amounts = (Array.isArray(review?.discounts) ? review.discounts : [])
-        .filter((row) => row?.section === 'worker' || row?.section === 'irpf')
-        .map((row) => Number(row?.amount))
-        .filter(Number.isFinite);
-      return amounts.length ? Math.round(amounts.reduce((sum, amount) => sum + amount, 0) * 100) / 100 : null;
-    }
-
     function appendPayrollSummaryValues(target, metrics) {
       const valuesToRender = [
         ['Devengos', metrics.gross],
         ['Deducciones', metrics.deductions],
         ['Líquido', metrics.net]
       ];
-      if (Object.hasOwn(metrics, 'discounts')) valuesToRender.push(['SS e IRPF leídos', metrics.discounts]);
       for (const [label, value] of valuesToRender) {
         const item = document.createElement('div');
         item.className = 'month-payroll-summary-value';
@@ -3359,13 +3150,13 @@
           year: Number(year.value), month: Number(month.value) + 1,
           receiptId: receipt.id || `legacy:${year.value}-${Number(month.value) + 1}`
         });
-        if (normalized) rows.push({ index, review, normalized, discounts: receiptDiscountsTotal(review) });
+        if (normalized) rows.push({ index, review, normalized });
       }
       if (rows.length < 2) return;
 
-      const totals = { gross: 0, deductions: 0, net: 0, discounts: 0 };
-      const available = { gross: 0, deductions: 0, net: 0, discounts: 0 };
-      for (const { index, review, normalized, discounts } of rows) {
+      const totals = { gross: 0, deductions: 0, net: 0 };
+      const available = { gross: 0, deductions: 0, net: 0 };
+      for (const { index, review, normalized } of rows) {
         const card = document.createElement('article');
         card.className = 'month-payroll-summary-card';
         const title = document.createElement('h3');
@@ -3373,12 +3164,12 @@
         const result = document.createElement('p');
         const type = review.schedule?.type === 'reduced' ? 'Con reducción' : 'Sin reducción';
         const reviewStatus = review.status === 'complete' ? 'Revisión completada' : 'Revisión pendiente';
-        result.textContent = `Tipo: ${type} · Resultado: ${reviewStatus} · Descuentos propios: ${Array.isArray(review.discounts) && review.discounts.length ? 'guardados' : 'pendientes'}`;
+        result.textContent = `Tipo: ${type} · Resultado: ${reviewStatus}`;
         const values = document.createElement('div');
         values.className = 'month-payroll-summary-values';
-        appendPayrollSummaryValues(values, { ...normalized.metrics, discounts });
+        appendPayrollSummaryValues(values, normalized.metrics);
         for (const key of Object.keys(totals)) {
-          const value = key === 'discounts' ? discounts : normalized.metrics[key];
+          const value = normalized.metrics[key];
           if (Number.isFinite(value)) {
             totals[key] = Math.round((totals[key] + value) * 100) / 100;
             available[key] += 1;
@@ -3393,7 +3184,7 @@
       const totalTitle = document.createElement('h3');
       totalTitle.textContent = 'TOTAL MES';
       const totalNote = document.createElement('p');
-      totalNote.textContent = 'Suma económica final. Las revisiones y los descuentos permanecen separados por nómina.';
+      totalNote.textContent = 'Suma económica final. Las revisiones permanecen separadas por nómina.';
       const totalValues = document.createElement('div');
       totalValues.className = 'month-payroll-summary-values';
       appendPayrollSummaryValues(totalValues, Object.fromEntries(
@@ -3649,29 +3440,6 @@
 
       const completed = Number(timesheetComplete) + Number(payrollComplete);
       const savedReview = monthlyReviews.get(periodKey());
-      const discountsSaved = Array.isArray(savedReview?.discounts) && savedReview.discounts.length > 0;
-      const discountsCard = document.getElementById('discounts-card');
-      const openDiscounts = document.getElementById('open-discounts');
-      const addAnotherDiscounts = document.getElementById('add-another-discounts');
-      document.getElementById('discounts-card-title').textContent = `Descuentos · Nómina ${activeReceiptNumber}`;
-      discountsCard.classList.toggle('complete', discountsSaved);
-      discountsCard.classList.toggle('locked', !payrollComplete);
-      document.getElementById('discounts-card-status').textContent = discountsSaved ? 'Guardados' : (payrollComplete ? 'Disponible' : 'Bloqueados');
-      document.getElementById('discounts-card-help').textContent = payrollComplete
-        ? 'Descuentos vinculados exclusivamente a esta nómina.'
-        : 'Completa primero la nómina de este recibo.';
-      openDiscounts.disabled = !payrollComplete;
-      openDiscounts.textContent = !payrollComplete
-        ? 'Completa primero la nómina'
-        : (isAdminMode
-          ? (discountsSaved ? 'Consultar Descuentos' : 'Añadir Descuentos')
-          : (discountsSaved ? 'Revisar descuentos' : 'Abrir Descuentos'));
-      addAnotherDiscounts.hidden = isAdminMode || !discountsSaved;
-      if (isAdminMode) {
-        document.getElementById('admin-replace-discounts').hidden = !discountsSaved;
-        document.getElementById('admin-reprocess-discounts').hidden = !discountsSaved;
-        document.getElementById('admin-delete-discounts').hidden = !discountsSaved;
-      }
       const incidents = monthlyIncidentCount(savedReview);
       document.getElementById('document-count').textContent = `${completed} de 2 guardados`;
       document.getElementById('completion-panel').hidden = completed !== 2 || savedReview?.status === 'complete';
@@ -4970,9 +4738,6 @@
         } : {}),
         ...(documents.payroll.paymentInfo ? { paymentInfo: documents.payroll.paymentInfo } : {}),
         ...(documents.payroll.payrollEconomics ? { payrollEconomics: documents.payroll.payrollEconomics } : {}),
-        ...(Array.isArray(monthlyReviews.get(periodKey())?.discounts)
-          ? { discounts: monthlyReviews.get(periodKey()).discounts }
-          : {}),
         comparisons,
         incidentCount: incidents,
         updatedAt: new Date().toISOString()
@@ -5046,10 +4811,10 @@
           if (!confirmedTimesheetAnalyses.get(periodKey())?.size && shared) {
             confirmedTimesheetAnalyses.set(periodKey(), plainObjectToMap(shared));
           }
-          if (!documents.payroll.confirmed || !pending.review.discounts?.length) {
+          if (!documents.payroll.confirmed) {
             monthlyComparisonFolder = '';
             showPeriodScreen();
-            showPeriodMessage('Completa la nómina y sus descuentos antes de comparar el mes.', true);
+            showPeriodMessage('Completa la nómina antes de comparar el mes.', true);
             return;
           }
           startMonthlyReview();
@@ -5298,58 +5063,12 @@
       historyScreen.hidden = true;
       analysisScreen.hidden = true;
       comparisonScreen.hidden = true;
-      discountsScreen.hidden = true;
       periodScreen.hidden = false;
       topBack.setAttribute('aria-label', 'Volver a la pantalla principal');
       updateScheduleUI();
       updatePeriodCards();
       window.scrollTo({ top: 0, behavior: 'auto' });
       document.getElementById('period-page-title').focus({ preventScroll: true });
-      window.dispatchEvent(new CustomEvent('str:discounts-closed'));
-    }
-
-    function showDiscountsScreen(options = {}) {
-      if (savingReview || savingDocument) return;
-      periodScreen.hidden = true;
-      historyScreen.hidden = true;
-      analysisScreen.hidden = true;
-      comparisonScreen.hidden = true;
-      documentScreen.hidden = true;
-      discountsScreen.hidden = false;
-      document.getElementById('discounts-period').textContent = periodLabel();
-      document.getElementById('discounts-screen-title').textContent = `Descuentos · Nómina ${activeReceiptNumber}`;
-      topBack.setAttribute('aria-label', 'Volver al resumen de documentos');
-      window.scrollTo({ top: 0, behavior: 'auto' });
-      document.getElementById('discounts-screen-title').focus({ preventScroll: true });
-      window.dispatchEvent(new CustomEvent('str:discounts-opened', {
-        detail: { rows: options?.fresh === true ? [] : (monthlyReviews.get(periodKey())?.discounts || []) }
-      }));
-    }
-
-    async function openNextPayrollDiscounts() {
-      if (!currentUserId || loadingDocuments || savingReview || savingDocument) return;
-      const selectedFolder = monthFolder();
-      let receipts;
-      try {
-        receipts = await monthReceipts(storageBucket, selectedFolder);
-      } catch {
-        showPeriodMessage('No se han podido consultar las nóminas de este mes. Vuelve a intentarlo.', true);
-        return;
-      }
-      for (const [index, receipt] of receipts.entries()) {
-        if (!receipt.files.some((file) => file.id && file.name === 'payroll')) continue;
-        const review = receipt.files.some((file) => file.id && file.name === 'review')
-          ? await downloadMonthlyReview(`${receipt.folder}/review`)
-          : null;
-        if (Array.isArray(review?.discounts) && review.discounts.length) continue;
-        activeReceiptId = receipt.id;
-        activeReceiptNumber = index + 1;
-        await loadStoredDocuments();
-        if (selectedFolder !== monthFolder() || !documents.payroll.confirmed) return;
-        showDiscountsScreen({ fresh: true });
-        return;
-      }
-      showPeriodMessage('Todas las nóminas guardadas de este mes ya tienen sus propios descuentos.');
     }
 
     async function handlePeriodChange() {
@@ -5643,7 +5362,6 @@
         // Discard loaded images, drafts and derived values even after partial failure.
         confirmedTimesheetAnalyses.clear(); confirmedPayrollAnalyses.clear(); monthlyReviews.clear(); workSchedules.clear();
         historyEntries = []; activeReceiptId = null; monthlyComparisonFolder = '';
-        window.dispatchEvent(new CustomEvent('str:discounts-closed'));
         hideMonthlyResults();
         clearAllDocuments();
         comparisonFields.replaceChildren(); historyList.replaceChildren();
@@ -5655,63 +5373,12 @@
     }
     document.getElementById('delete-user-timesheet').addEventListener('click', () => performUserDeletion('timesheet'));
     document.getElementById('delete-user-payroll').addEventListener('click', () => performUserDeletion('payroll'));
-    document.getElementById('delete-user-discounts').addEventListener('click', () => performUserDeletion('discounts'));
     document.getElementById('delete-current-month').addEventListener('click', () => performUserDeletion('month'));
     document.getElementById('delete-all-history').addEventListener('click', () => performUserDeletion('all'));
     window.addEventListener('storage', event => {
       if (event.key === `strPayrollDeletion:${currentUserId}`) window.location.reload();
     });
 
-    document.getElementById('open-discounts').addEventListener('click', () => showDiscountsScreen());
-    document.getElementById('add-another-discounts').addEventListener('click', openNextPayrollDiscounts);
-    document.getElementById('admin-replace-discounts').addEventListener('click', () => prepareAdminDiscounts('replace'));
-    document.getElementById('admin-reprocess-discounts').addEventListener('click', () => prepareAdminDiscounts('reprocess'));
-    document.getElementById('admin-delete-discounts').addEventListener('click', () => performUserDeletion('discounts'));
-    window.addEventListener('str:discounts-save', async (event) => {
-      const request = event.detail;
-      if (!request || !Array.isArray(request.rows) || !request.rows.length) return;
-      request.handled = true;
-      const savingKey = periodKey();
-      const previous = monthlyReviews.get(savingKey) || {};
-      const review = {
-        ...previous,
-        version: previous.version || 2,
-        status: previous.status || 'pending',
-        period: savingKey,
-        schedule: previous.schedule || currentScheduleSettings(),
-        ...(previous.payrollEconomics || !documents.payroll.payrollEconomics ? {} : { payrollEconomics: documents.payroll.payrollEconomics }),
-        ...(previous.paymentInfo || !documents.payroll.paymentInfo ? {} : { paymentInfo: documents.payroll.paymentInfo }),
-        discounts: request.rows,
-        updatedAt: new Date().toISOString()
-      };
-      savingReview = true;
-      let continueAfterSecondPayroll = false;
-      try {
-        await uploadMonthlyReview(review);
-        if (savingKey !== periodKey()) return;
-        monthlyReviews.set(savingKey, review);
-        request.onSaved?.();
-        try {
-          const receipts = await monthReceipts(storageBucket, monthFolder());
-          if (savingKey !== periodKey()) return;
-          currentMonthReceiptCount = receipts.length;
-        } catch {
-          currentMonthReceiptCount = Math.max(1, currentMonthReceiptCount);
-        }
-        showPeriodScreen();
-        continueAfterSecondPayroll = currentMonthReceiptCount >= 2;
-      } catch {
-        request.onError?.();
-      } finally {
-        savingReview = false;
-      }
-      if (savingKey !== periodKey()) return;
-      if (continueAfterSecondPayroll) {
-        await continueMonthComparison();
-      } else {
-        document.getElementById('completion-panel').scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }
-    });
     workModeFull.addEventListener('click', () => selectWorkMode('full'));
     workModeReduced.addEventListener('click', () => selectWorkMode('reduced'));
     startAnalysisButton.addEventListener('click', startMonthlyReview);
@@ -5725,11 +5392,10 @@
     async function startAnotherPayroll() {
       const selectedType = typeof arguments[0] === 'string' ? arguments[0] : '';
       const currentReview = monthlyReviews.get(periodKey());
-      const hasOwnDiscounts = Array.isArray(currentReview?.discounts) && currentReview.discounts.length > 0;
       const completeReview = isCurrentReviewComplete();
       if (!currentUserId || loadingDocuments || savingReview || savingDocument || preparingMonthComparison
         || currentMonthReceiptCount >= 2
-        || (!completeReview && (!documents.timesheet.confirmed || !documents.payroll.confirmed || !hasOwnDiscounts))) return;
+        || (!completeReview && (!documents.timesheet.confirmed || !documents.payroll.confirmed))) return;
       monthlyComparisonFolder = '';
       const sourcePath = documents.timesheet.path || storagePath('timesheet');
       const sourceTimesheet = { ...documents.timesheet };
@@ -5879,11 +5545,6 @@
     topBack.addEventListener('click', (event) => {
       if (savingReview || savingDocument) { event.preventDefault(); return; }
       monthlyComparisonFolder = '';
-      if (!discountsScreen.hidden) {
-        event.preventDefault();
-        showPeriodScreen();
-        return;
-      }
       if (!comparisonScreen.hidden) {
         event.preventDefault();
         showPeriodScreen();

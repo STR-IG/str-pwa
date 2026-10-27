@@ -78,7 +78,7 @@ function harness(bucket) {
     document: { getElementById(id) { if (!nodes.has(id)) nodes.set(id, element()); return nodes.get(id); } }
   });
   for (const key of ['addMonthlyPayroll','addPeriodPayroll','addDocumentPayroll','historyCount','historyLoading','historyError','historyList','historyEmpty','refreshHistoryButton','comparisonError','confirmComparisonButton','comparisonSaved','comparisonResult','comparisonDetectedCount']) ctx[key] = element();
-  for (const name of ['monthFolder','periodFolder','periodKey','storagePath','mapToPlainObject','plainObjectToMap','uploadMonthlyReview','hydrateMonthlyReview','downloadMonthlyReview','loadStoredDocuments','listAllStorageItems','loadPrivateHistory','openHistoryPeriod','confirmMonthlyComparison','isCurrentReviewComplete','clearAllDocuments','revokeWorkingUrlIfTemporary','saveWorkSchedule','resetReviewDocument','openNextPayrollDiscounts','startAnotherPayroll','continueMonthComparison']) vm.runInContext(extract(name), ctx);
+  for (const name of ['monthFolder','periodFolder','periodKey','storagePath','mapToPlainObject','plainObjectToMap','uploadMonthlyReview','hydrateMonthlyReview','downloadMonthlyReview','loadStoredDocuments','listAllStorageItems','loadPrivateHistory','openHistoryPeriod','confirmMonthlyComparison','isCurrentReviewComplete','clearAllDocuments','revokeWorkingUrlIfTemporary','saveWorkSchedule','resetReviewDocument','startAnotherPayroll','continueMonthComparison']) vm.runInContext(extract(name), ctx);
   return ctx;
 }
 
@@ -628,17 +628,17 @@ test('comparison skips the already confirmed shared register for the second rece
   assert.equal(app.payrollOpened, true);
 });
 
-test('both add buttons open payroll 2 immediately after discounts, without reviewing payroll 1', async () => {
+test('both add buttons open payroll 2 without discounts, without reviewing payroll 1', async () => {
   for (const type of ['full','reduced']) {
     const bucket = bucketFor('owner-a');
     await seedSavedReceipt(bucket, 'owner-a/2026/08');
     const firstPath = 'owner-a/2026/08/review';
-    const first = {period:'2026-08',status:'pending',schedule:{type:'full'},discounts:[{kind:'irpf',amount:100}]};
+    const first = {period:'2026-08',status:'pending',schedule:{type:'full'}};
     bucket.objects.set(firstPath,new Blob([JSON.stringify(first)]));
     const app = documentHarness(bucket);
     await app.loadStoredDocuments();
     assert.equal(app.currentMonthReceiptCount, 1);
-    assert.equal(app.monthlyReviews.get(app.periodKey())?.discounts?.length, 1);
+    assert.equal(app.monthlyReviews.get(app.periodKey())?.discounts, undefined);
     assert.equal(app.documents.timesheet.confirmed, true);
     assert.equal(app.documents.payroll.confirmed, true);
     app.startMonthlyReview = () => { throw new Error('must not open comparison while adding'); };
@@ -654,7 +654,7 @@ test('both add buttons open payroll 2 immediately after discounts, without revie
     assert.equal(draft.discounts,undefined);
     assert.equal(draft.timesheetPath,'owner-a/2026/08/timesheet');
     assert.equal(app.monthlyReviews.get(app.periodKey()).receiptId, app.activeReceiptId);
-    assert.equal(app.document.getElementById('discounts-card-title').textContent, 'Descuentos · Nómina 2');
+
   }
 });
 
@@ -679,37 +679,15 @@ test('November 2022 renders the three actions only after payroll 1 quantities ar
   assert.equal(app.document.getElementById('payroll-next-actions').hidden, true, 'the decision is never shown after payroll 2');
 });
 
-test('Añadir otro descuento opens the next payroll without discounts and preserves discounts 1', async () => {
-  const bucket = bucketFor('owner-a');
-  const secondId = newReceiptId();
-  const folder = 'owner-a/2026/08';
-  const discounts1 = [{section:'irpf', kind:'irpf', amount:100}];
-  bucket.objects.set(`${folder}/timesheet`, new Blob(['shared register']));
-  bucket.objects.set(`${folder}/payroll`, new Blob(['payroll 1']));
-  bucket.objects.set(`${folder}/review`, new Blob([JSON.stringify({period:'2026-08',status:'complete',timesheet:{night:'10'},payroll:{night:'10'},discounts:discounts1})]));
-  bucket.objects.set(`${folder}/${secondId}/payroll`, new Blob(['payroll 2']));
-  bucket.objects.set(`${folder}/${secondId}/review`, new Blob([JSON.stringify({period:`2026-08/${secondId}`,status:'pending',timesheet:{night:'10'}})]));
-  const app = documentHarness(bucket);
-  app.activeReceiptId = '';
-  await app.loadStoredDocuments();
-  let openedFresh = false;
-  app.showDiscountsScreen = (options) => { openedFresh = options?.fresh === true; };
-  await app.openNextPayrollDiscounts();
-  assert.equal(app.activeReceiptId, secondId);
-  assert.equal(app.activeReceiptNumber, 2);
-  assert.equal(openedFresh, true);
-  assert.deepEqual(JSON.parse(await bucket.objects.get(`${folder}/review`).text()).discounts, discounts1);
-});
-
 test('Comparison reviews pending receipts in order and closes after both, reusing confirmed register',async()=>{
   const bucket=bucketFor('owner-a');
   const id=newReceiptId();
   const folder='owner-a/2026/08';
-  const discounts=[{kind:'irpf',amount:100}];
+
   bucket.objects.set(`${folder}/timesheet`,new Blob(['shared register']));
   for(const [suffix,period,type] of [['','2026-08','full'],[`/${id}`,`2026-08/${id}`,'reduced']]){
     bucket.objects.set(`${folder}${suffix}/payroll`,new Blob([`payroll ${type}`]));
-    bucket.objects.set(`${folder}${suffix}/review`,new Blob([JSON.stringify({period,status:'pending',schedule:{type},discounts})]));
+    bucket.objects.set(`${folder}${suffix}/review`,new Blob([JSON.stringify({period,status:'pending',schedule:{type}})]));
   }
   const app=documentHarness(bucket);
   app.renderMultiPayrollSummary=async()=>{app.summaryRendered=true;};
@@ -732,7 +710,7 @@ test('Comparison reviews pending receipts in order and closes after both, reusin
   for(const suffix of ['',`/${id}`]){
     const review=JSON.parse(await bucket.objects.get(`${folder}${suffix}/review`).text());
     assert.equal(review.status,'complete');
-    assert.deepEqual(review.discounts,discounts);
+    assert.equal(review.discounts,undefined);
     assert.equal(review.timesheet.night,'17');
   }
 });
