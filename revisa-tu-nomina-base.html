@@ -1715,7 +1715,7 @@
     <section id="period-screen" aria-labelledby="period-page-title">
       <div class="tool-icon" aria-hidden="true">🔎</div>
       <h1 id="period-page-title" tabindex="-1">Revisa tu nómina</h1>
-      <p class="intro">Revisión mensual: elige el periodo y prepara el registro de jornada y la nómina. Las imágenes y cifras se utilizan solo en esta sesión, sin enviarse a IA externa ni guardarse en el servidor. Al finalizar o salir se descartan; no habrá historial ni estadísticas.</p>
+      <p class="intro">Solo puedes añadir y revisar la nómina y el registro de jornada del mes anterior al actual. Por ejemplo, en noviembre se revisa octubre y en diciembre, noviembre. El periodo se actualiza automáticamente. Las imágenes y cifras se utilizan solo en esta sesión, sin enviarse a IA externa ni guardarse en el servidor. Al finalizar o salir se descartan; no habrá historial ni estadísticas.</p>
       <button id="finish-monthly-review" class="secondary" type="button">Finalizar revisión y borrar datos temporales</button>
 
       <section class="panel" aria-labelledby="period-title">
@@ -2251,7 +2251,7 @@
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@7.0.0/dist/tesseract.min.js" integrity="sha384-2BQ3U3OdKOb0Uczxqr41I9UvZkzr4V9Hv8uSzMMZAlmhsFClvdZX5wi5fDCzG+tM" crossorigin="anonymous"></script>
   <script type="module">
     import { newReceiptId, receiptCreatedAt, monthReceipts, assertUniquePayroll, sha256 } from './payroll-receipts.mjs?v=1';
-    import { createPayrollSession } from './payroll-session.mjs?v=1';
+    import { allowedPayrollPeriod, createPayrollSession } from './payroll-session.mjs?v=2';
     import { adminPayrollApi } from './admin-payroll-storage.mjs?v=1';
     import { closeMonth, readMonthClosure } from './payroll-month.mjs?v=1';
     import { deletePayrollData, clearLocalPayrollData, confirmDeletion } from './payroll-deletion.mjs?v=1';
@@ -2633,31 +2633,25 @@
     let ocrWorkerPromise = null;
     let ocrQueue = Promise.resolve();
 
-    const now = new Date();
-    for (let value = now.getFullYear() + 1; value >= now.getFullYear() - 4; value -= 1) {
-      const option = document.createElement('option');
-      option.value = String(value);
-      option.textContent = String(value);
-      year.appendChild(option);
+    const reviewPeriod = allowedPayrollPeriod();
+    month.replaceChildren(new Option(monthNames[reviewPeriod.month - 1], String(reviewPeriod.month - 1)));
+    year.replaceChildren(new Option(String(reviewPeriod.year), String(reviewPeriod.year)));
+    month.disabled = true;
+    year.disabled = true;
+    function expireReviewPeriod() {
+      const current = allowedPayrollPeriod();
+      if (current.year === reviewPeriod.year && current.month === reviewPeriod.month) return;
+      storageBucket.close();
+      window.location.reload();
     }
-    month.value = String(now.getMonth());
-    year.value = String(now.getFullYear());
+    setInterval(expireReviewPeriod, 1000);
+    document.addEventListener('visibilitychange', expireReviewPeriod);
     monthNames.forEach((name, index) => {
       const option = document.createElement('option'); option.value = String(index + 1);
       option.textContent = `${name[0].toUpperCase()}${name.slice(1)}`; regularizationMonth.appendChild(option);
     });
     if (isAdminMode) {
-      const selectedAdminYear = Number(query.get('adminYear'));
-      const selectedAdminMonth = Number(query.get('adminMonth'));
-      if (Number.isInteger(selectedAdminYear) && selectedAdminYear >= 2000 && selectedAdminYear <= 2100) {
-        if (![...year.options].some(option => Number(option.value) === selectedAdminYear)) {
-          const option = document.createElement('option'); option.value = String(selectedAdminYear); option.textContent = String(selectedAdminYear); year.appendChild(option);
-        }
-        year.value = String(selectedAdminYear);
-      }
-      if (Number.isInteger(selectedAdminMonth) && selectedAdminMonth >= 1 && selectedAdminMonth <= 12) month.value = String(selectedAdminMonth - 1);
-      const selectedReceipt = String(query.get('adminReceipt') || '');
-      activeReceiptId = /^receipt-\d{13}-[0-9a-f-]{36}$/.test(selectedReceipt) ? selectedReceipt : null;
+      activeReceiptId = null;
       const affiliateName = adminContext.affiliate?.display_name || adminAffiliateEmail;
       const context = document.getElementById('admin-context'); context.textContent = `Administración · ${affiliateName} · ${adminAffiliateEmail}`; context.hidden = false;
       topBack.href = 'panel-administracion.html';

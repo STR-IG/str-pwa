@@ -11,7 +11,7 @@
   <script>
     (async () => {
       try {
-        const response = await fetch('revisa-tu-nomina-base.html?v=prod-44-session', { cache: 'no-store' });
+        const response = await fetch('revisa-tu-nomina-base.html?v=prod-46-previous-month', { cache: 'no-store' });
         if (!response.ok) throw new Error('BASE_NOT_AVAILABLE');
         let html = await response.text();
         html = html
@@ -46,6 +46,6 @@
       }
     })();
   </script>
-  <script type="module" src="./app-analytics.js?v=2-card-counts"></script>
+  <script type="module" src="./app-analytics.js"></script>
 </body>
 </html>

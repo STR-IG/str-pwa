@@ -1,4 +1,4 @@
-const CACHE_NAME = 'str-ig-cache-v134-survey-mail';
+const CACHE_NAME = 'str-ig-cache-v135-payroll-previous-month';
 
 const SUPABASE_URL = 'https://icneigdnuntzugisexaz.supabase.co';
 self.addEventListener('install', (event) => {
