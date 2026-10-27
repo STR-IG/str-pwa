@@ -1,4 +1,4 @@
-const CACHE_NAME = 'str-ig-cache-v136-payroll-no-discounts';
+const CACHE_NAME = 'str-ig-cache-v137-timesheet-consent';
 
 const SUPABASE_URL = 'https://icneigdnuntzugisexaz.supabase.co';
 self.addEventListener('install', (event) => {

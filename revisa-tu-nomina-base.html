@@ -2011,10 +2011,10 @@
 
         <div class="privacy-warning">
           <strong>🔒 Antes de utilizar la imagen</strong>
-          Recorta o tapa cualquier dato que permita identificarte. Para el registro de jornada podrás ajustar el recorte en el visor.
+          <span id="document-privacy-copy">Recorta o tapa cualquier dato que permita identificarte. Para el registro de jornada podrás ajustar el recorte en el visor.</span>
           <ul class="privacy-list">
-            <li>No deben verse nombre, DNI/NIE, número de empleado ni Seguridad Social.</li>
-            <li>Oculta domicilio, cuenta bancaria, códigos QR o de barras.</li>
+            <li id="document-privacy-identifiers">No deben verse nombre, DNI/NIE, número de empleado ni Seguridad Social.</li>
+            <li id="document-privacy-codes">Oculta domicilio, cuenta bancaria, códigos QR o de barras.</li>
             <li>Deja visibles solo los conceptos y datos numéricos necesarios.</li>
           </ul>
         </div>
@@ -2027,6 +2027,7 @@
         <input id="document-image" class="file-input" type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif">
         <button id="select-image" class="secondary select-image" type="button" disabled><span aria-hidden="true">▣</span> Seleccionar imagen</button>
         <p id="select-hint" class="select-hint">Marca primero la casilla de aceptación.</p>
+        <p id="timesheet-local-note" class="select-hint" hidden>La imagen se procesa únicamente en tu dispositivo: no se envía ni se almacena en ningún servidor.</p>
         <p id="file-error" class="error" role="alert" hidden></p>
 
         <section id="timesheet-crop-editor" class="crop-editor" aria-labelledby="crop-editor-title" hidden>
@@ -4948,8 +4949,15 @@
       preview.hidden = !hasImage;
       preview.classList.toggle('scan-blocked', privacyBlocked);
       documentActions.hidden = !hasImage;
-      const selectionNeedsConsent = false;
+      const selectionNeedsConsent = activeKind === 'timesheet' && !privacyConfirmation.checked;
       selectImageButton.disabled = readOnly || savingDocument || checkingPrivacy || selectionNeedsConsent;
+      if (activeKind === 'timesheet') {
+        selectHint.textContent = 'Elige una imagen que ya tengas guardada en tu dispositivo. No hagas la foto directamente desde aquí, ya que podría no procesarse correctamente.';
+        selectImageButton.setAttribute('aria-disabled', String(selectImageButton.disabled));
+        document.getElementById('document-footer-note').textContent = 'Al confirmar volverás al resumen para continuar con el siguiente documento.';
+      } else {
+        selectImageButton.removeAttribute('aria-disabled');
+      }
       changeImageButton.disabled = readOnly || savingDocument || checkingPrivacy || selectionNeedsConsent;
       changeImageButton.textContent = privacyBlocked ? 'Recortar o cambiar imagen' : 'Cambiar imagen';
       confirmImageButton.disabled = savingDocument || !hasImage || (needsUpload && !readyToUpload);
@@ -4996,6 +5004,19 @@
         selectHint.textContent = 'Selecciona la hoja completa; podrás recortarla dentro de la aplicación.';
       }
 
+      const isTimesheet = kind === 'timesheet';
+      document.getElementById('document-privacy-copy').textContent = isTimesheet
+        ? 'Selecciona la hoja completa y, en el siguiente paso, recorta solo el «Resumen de variables del mes». Tapa o recorta cualquier dato que permita identificarte:'
+        : 'Recorta o tapa cualquier dato que permita identificarte. Para el registro de jornada podrás ajustar el recorte en el visor.';
+      document.getElementById('document-privacy-identifiers').textContent = isTimesheet
+        ? 'No deben verse nombre, DNI/NIE, número de empleado ni número de afiliación a la Seguridad Social.'
+        : 'No deben verse nombre, DNI/NIE, número de empleado ni Seguridad Social.';
+      document.getElementById('document-privacy-codes').textContent = isTimesheet
+        ? 'Oculta domicilio, cuenta bancaria y códigos QR o de barras.'
+        : 'Oculta domicilio, cuenta bancaria, códigos QR o de barras.';
+      document.getElementById('timesheet-local-note').hidden = !isTimesheet;
+      const productionHint = document.getElementById('production-device-hint');
+      if (productionHint) productionHint.hidden = isTimesheet;
       const copy = documentCopy[kind];
       document.getElementById('document-step').textContent = copy.step;
       document.getElementById('document-screen-title').textContent = copy.title;
@@ -5079,6 +5100,7 @@
     }
 
     function chooseImage() {
+      if (activeKind === 'timesheet' && !privacyConfirmation.checked) return;
       if ((isCurrentReviewComplete() && !(isAdminMode && adminReplacementKind === activeKind)) || savingDocument) return;
       fileInput.value = '';
       fileInput.click();
