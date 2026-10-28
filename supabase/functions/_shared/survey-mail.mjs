@@ -1,13 +1,15 @@
 export const SURVEY_PRIVACY_URL = 'https://str-ig.github.io/str-pwa/encuestas.html#privacidad';
 
-export function surveyCodeMessage(code) {
+export function surveyCodeMessage(
+  code,
+  { minutes = 10, subject = 'Tu código para participar en la encuesta de STR' } = {},
+) {
   if (!/^\d{6}$/.test(String(code))) throw new Error('INVALID_CODE');
-  const subject = 'Tu código para participar en la encuesta de STR';
   const text = `Encuesta STR
 
 Tu código de verificación es: ${code}
 
-Introdúcelo en la app de STR para participar. Caduca en 10 minutos y solo puede usarse una vez para votar.
+Introdúcelo en la app de STR para participar. Caduca en ${minutes} minutos y solo puede usarse una vez.
 
 Tu voto se añade a un recuento por opción. El control de participación se guarda por separado, mediante una huella del correo, sin la opción elegida.
 
@@ -21,7 +23,7 @@ Sección sindical de STR en Instituto Grifols`;
 <h2>Encuesta STR</h2>
 <p>Tu código de verificación es:</p>
 <p style="font-size:32px;font-weight:bold;letter-spacing:6px">${code}</p>
-<p>Introdúcelo en la app de STR para participar. <strong>Caduca en 10 minutos</strong> y solo puede usarse una vez para votar.</p>
+<p>Introdúcelo en la app de STR para participar. <strong>Caduca en ${minutes} minutos</strong> y solo puede usarse una vez.</p>
 <p>Tu voto se añade a un recuento por opción. El control de participación se guarda por separado, mediante una huella del correo, sin la opción elegida.</p>
 <p>Si no has pedido este código, ignora este mensaje. No compartas el código.</p>
 <p><a href="${SURVEY_PRIVACY_URL}">Información de privacidad de las encuestas</a></p>
