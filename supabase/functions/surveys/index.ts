@@ -48,6 +48,7 @@ Deno.serve(async (req: Request) => {
       return data;
     };
     let isAdmin = false;
+    let actorId: string | null = null;
     const token = (req.headers.get("authorization") ?? "").replace(
       /^Bearer /,
       "",
@@ -55,6 +56,7 @@ Deno.serve(async (req: Request) => {
     if (token) {
       const { data, error } = await db.auth.getUser(token);
       if (!error && data.user?.email && data.user.email_confirmed_at) {
+        actorId = data.user.id;
         const { data: row, error: adminError } = await db.from(
           "committee_admins",
         ).select("email")
@@ -71,6 +73,146 @@ Deno.serve(async (req: Request) => {
     if (action === "list") {
       return reply({ surveys: await rpc("survey_list", { p_admin: isAdmin }) });
     }
+
+    const weatherCall = async (
+      weatherAction: string,
+      surveyId: string | null,
+      data: Record<string, unknown> = {},
+    ) =>
+      await rpc("weather_action", {
+        p_action: weatherAction,
+        p_survey: surveyId,
+        p_actor: actorId,
+        p_data: data,
+      });
+    const weatherId = () => uuid(body.surveyId);
+
+    if (action === "weather_list") {
+      return reply({ surveys: await weatherCall("list", null) });
+    }
+    if (action === "weather_get") {
+      return reply(await weatherCall("get", weatherId()));
+    }
+    if (action === "weather_results") {
+      if (!isAdmin) return reply({ error: "FORBIDDEN" }, 403);
+      return reply(
+        await weatherCall("results", weatherId(), {
+          test: body.test === true,
+        }),
+      );
+    }
+    if (action === "weather_cleanup") {
+      if (!isAdmin) return reply({ error: "FORBIDDEN" }, 403);
+      return reply(await weatherCall("cleanup", weatherId()));
+    }
+    if (action === "weather_publish") {
+      if (!isAdmin) return reply({ error: "FORBIDDEN" }, 403);
+      if (body.confirm !== true) {
+        return reply({ error: "CONFIRMATION_REQUIRED" }, 400);
+      }
+      return reply(await weatherCall("publish", weatherId()));
+    }
+    if (action === "weather_close") {
+      if (!isAdmin) return reply({ error: "FORBIDDEN" }, 403);
+      return reply(await weatherCall("close", weatherId()));
+    }
+    if (action === "weather_cancel") {
+      return reply(
+        await weatherCall("cancel", weatherId(), { id: uuid(body.challengeId) }),
+      );
+    }
+
+    const weatherSurveyId = () => uuid(body.surveyId);
+    const weatherSecret = () => {
+      const value = Deno.env.get("SURVEY_HMAC_SECRET");
+      if (!value || value.length < 32) throw new Error("SERVER_CONFIGURATION");
+      return value;
+    };
+    if (action === "weather_request") {
+      const email = cleanEmail(body.email);
+      const secret = weatherSecret();
+      const mailKey = Deno.env.get("SURVEY_RESEND_API_KEY");
+      const from = Deno.env.get("SURVEY_MAIL_FROM");
+      if (!mailKey || !from) return reply({ error: "MAIL_NOT_CONFIGURED" }, 503);
+      const surveyId = weatherSurveyId();
+      const id = crypto.randomUUID();
+      const code = randomCode();
+      const forwarded = req.headers.get("cf-connecting-ip") ??
+        req.headers.get("x-forwarded-for")?.split(",")[0].trim() ??
+        "unknown";
+      const result = await weatherCall("request", surveyId, {
+        id,
+        email_key: await hmac(secret, `email:${email}`),
+        ip_key: await hmac(secret, `weather-ip:${forwarded}`),
+        code_hash: await hmac(secret, `code:${id}:${code}`),
+      });
+      if (result?.error) return reply(result, 400);
+      const sent = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${mailKey}`,
+          "Content-Type": "application/json",
+          "Idempotency-Key": id,
+        },
+        body: JSON.stringify({
+          from,
+          to: [email],
+          ...surveyCodeMessage(code, {
+            minutes: 5,
+            subject: "Tu código para la encuesta sobre alertas meteorológicas",
+          }),
+        }),
+        signal: AbortSignal.timeout(10000),
+      });
+      if (!sent.ok) {
+        await weatherCall("cancel", surveyId, { id });
+        return reply({ error: "MAIL_FAILED" }, 503);
+      }
+      return reply({ challengeId: id });
+    }
+    if (action === "weather_verify") {
+      const email = cleanEmail(body.email);
+      const secret = weatherSecret();
+      const challengeId = uuid(body.challengeId);
+      if (!/^\d{6}$/.test(String(body.code))) {
+        return reply({ error: "INVALID_CODE" }, 400);
+      }
+      const permit = crypto.randomUUID() + crypto.randomUUID();
+      const result = await weatherCall("verify", weatherSurveyId(), {
+        id: challengeId,
+        email_key: await hmac(secret, `email:${email}`),
+        code_hash: await hmac(secret, `code:${challengeId}:${body.code}`),
+        permit: await hmac(secret, `permit:${permit}`),
+      });
+      return reply(result?.error ? result : { permit }, result?.error ? 400 : 200);
+    }
+    if (action === "weather_submit") {
+      const secret = weatherSecret();
+      if (typeof body.consent !== "boolean") {
+        return reply({ error: "INVALID_CONSENT" }, 400);
+      }
+      let contact: string | undefined;
+      let emailKey: string | undefined;
+      if (body.consent) {
+        contact = cleanEmail(body.email);
+        emailKey = await hmac(secret, `email:${contact}`);
+      }
+      if (!body.answers || typeof body.answers !== "object" || Array.isArray(body.answers)) {
+        return reply({ error: "INVALID_ANSWERS" }, 400);
+      }
+      const permit = String(body.permit ?? "");
+      if (permit.length < 32 || permit.length > 128) {
+        return reply({ error: "INVALID_PERMIT" }, 400);
+      }
+      const result = await weatherCall("submit", weatherSurveyId(), {
+        permit: await hmac(secret, `permit:${permit}`),
+        answers: body.answers,
+        consent: body.consent,
+        ...(body.consent ? { contact, email_key: emailKey } : {}),
+      });
+      return reply(result, result?.error ? 400 : 200);
+    }
+
     if (["create", "activate", "close", "results"].includes(action)) {
       if (!isAdmin) return reply({ error: "FORBIDDEN" }, 403);
       if (action === "create") {
@@ -156,6 +298,8 @@ Deno.serve(async (req: Request) => {
     return reply({
       error: ["INVALID_EMAIL", "INVALID_ID", "INVALID_SURVEY"].includes(code)
         ? code
+        : code === "SERVER_CONFIGURATION"
+        ? "SERVER_CONFIGURATION"
         : "REQUEST_FAILED",
     }, 400);
   }

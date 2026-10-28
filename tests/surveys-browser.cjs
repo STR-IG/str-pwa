@@ -41,7 +41,9 @@ const server = http.createServer(async (req, res) => {
       available = true,
       failMail = false,
       votes = [],
-      drafts = [];
+      drafts = [],
+      weatherState = "solo_admin",
+      weatherVotes = [];
     const survey = {
       id: "11111111-1111-4111-8111-111111111111",
       title: "¿Qué tema prefieres tratar?",
@@ -52,6 +54,30 @@ const server = http.createServer(async (req, res) => {
         id: "22222222-2222-4222-8222-222222222222",
         label: "Jornada",
       }, { id: "33333333-3333-4333-8333-333333333333", label: "Permisos" }],
+    };
+    const weatherSurvey = {
+      id: "66666666-6666-4666-8666-666666666666",
+      title: "Alertas meteorológicas",
+      state: weatherState,
+      closed: false,
+      questions: [
+        {
+          id: "q1",
+          block: 1,
+          title: "Durante las alertas, mi trabajo era:",
+          max: 1,
+          options: ["Presencial", "Teletrabajo"],
+          exclusive: [],
+        },
+        {
+          id: "q7",
+          block: 3,
+          title: "¿Se te ofreció alguna alternativa?",
+          max: 2,
+          options: ["Teletrabajar", "Ninguna", "Cambiar el turno"],
+          exclusive: ["Ninguna"],
+        },
+      ],
     };
     const errors = [];
     page.on("pageerror", (error) => errors.push(error.message));
@@ -73,6 +99,40 @@ const server = http.createServer(async (req, res) => {
         }
         if (body.action === "list") {
           result = { surveys: available ? [survey, ...drafts] : [] };
+        }
+        if (body.action === "weather_list") {
+          result = {
+            surveys: weatherState === "publicada" || admin
+              ? [{ id: weatherSurvey.id, title: weatherSurvey.title, state: weatherState, closed: weatherSurvey.closed, kind: "weather" }]
+              : [],
+          };
+        }
+        if (body.action === "weather_get") {
+          result = admin && body.surveyId === weatherSurvey.id
+            ? weatherSurvey
+            : { error: "UNAVAILABLE" };
+          status = result.error ? 404 : 200;
+        }
+        if (body.action === "weather_request") {
+          result = failMail
+            ? { error: "MAIL_FAILED" }
+            : { challengeId: "77777777-7777-4777-8777-777777777777" };
+          status = failMail ? 503 : 200;
+        }
+        if (body.action === "weather_verify") result = { permit: "opaque-test-permit" };
+        if (body.action === "weather_submit") {
+          weatherVotes.push(body);
+          result = { ok: true };
+        }
+        if (body.action === "weather_results") {
+          result = { total: weatherVotes.length, counts: { q1: { Presencial: weatherVotes.length } }, groups: [] };
+        }
+        if (body.action === "weather_cleanup") result = { ok: true, test_responses_deleted: weatherVotes.length, test_participations_deleted: weatherVotes.length };
+        if (body.action === "weather_publish") {
+          weatherState = "publicada";
+          weatherSurvey.state = weatherState;
+          weatherVotes = [];
+          result = { ok: true };
         }
         if (body.action === "request") {
           result = failMail
@@ -127,6 +187,7 @@ const server = http.createServer(async (req, res) => {
     for (const width of [320, 390, 768, 1280]) {
       await page.setViewportSize({ width, height: 900 });
       await page.goto(base + "/encuestas.html");
+      assert.equal(await page.getByText("Alertas meteorológicas").count(), 0);
       await page.getByRole("button", { name: "Participar", exact: true })
         .click();
       await page.locator("#email").fill("voter@example.com");
@@ -181,6 +242,32 @@ const server = http.createServer(async (req, res) => {
     admin = true;
     await page.reload();
     await page.locator("#admin-content").waitFor({ state: "visible" });
+    assert.equal(await page.locator("#weather-surveys h3").count(), 1);
+    await page.goto(base + `/encuestas.html?surveyId=${weatherSurvey.id}`);
+    await page.locator("#weather-vote-form").waitFor({ state: "visible" });
+    await page.locator("#email").fill("admin@example.com");
+    await page.getByRole("button", { name: "Enviar código", exact: true }).click();
+    await page.locator("#weather-vote-form").waitFor({ state: "visible" });
+    await page.getByLabel("Presencial", { exact: true }).check();
+    await page.getByLabel("Teletrabajar", { exact: true }).check();
+    await page.locator("#weather-code").fill("123456");
+    assert.equal(await page.locator("#weather-consent").isChecked(), false);
+    await page.getByRole("button", { name: "Verificar código y enviar respuestas" }).click();
+    await page.getByRole("status").filter({ hasText: "Gracias" }).waitFor();
+    assert.equal(weatherVotes.at(-1).consent, false);
+    assert.deepEqual(weatherVotes.at(-1).answers, { q1: ["Presencial"], q7: ["Teletrabajar"] });
+    await page.goto(base + "/encuestas-admin.html");
+    await page.getByRole("button", { name: "Resultados de prueba" }).click();
+    await page.locator("#results").waitFor({ state: "visible" });
+    page.once("dialog", (dialog) => dialog.accept());
+    await page.getByRole("button", { name: "Publicar para la plantilla" }).click();
+    await page.getByRole("status").filter({ hasText: "Encuesta publicada" }).waitFor();
+    admin = false;
+    await page.goto(base + "/encuestas.html");
+    await page.getByRole("button", { name: "Participar", exact: true }).last().waitFor();
+    assert.equal(await page.getByText("Prueba exclusiva para administradores").count(), 0);
+    admin = true;
+    await page.goto(base + "/encuestas-admin.html");
     await page.locator("#title").fill("Prueba creada");
     await page.locator("#new-options").fill("Sí\nNo");
     assert.equal(await page.locator("#admin-only").isChecked(), true);

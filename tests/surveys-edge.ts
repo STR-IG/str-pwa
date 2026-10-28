@@ -47,6 +47,10 @@ Deno.test("survey Edge authorization, mail privacy and forged admin flags", asyn
         return Response.json(admin ? [{ email: "admin@example.com" }] : []);
       }
       if (url.includes("/rpc/survey_list")) return Response.json([]);
+      if (url.includes("/rpc/weather_action")) {
+        if (body.p_action === "list") return Response.json([]);
+        return Response.json({ ok: true });
+      }
       if (url.includes("/rpc/")) return Response.json({ ok: true });
       if (url === "https://api.resend.com/emails") {
         return Response.json(mailOk ? { id: "mail-id" } : { error: "failed" }, {
@@ -90,6 +94,15 @@ Deno.test("survey Edge authorization, mail privacy and forged admin flags", asyn
       (await request({ action: "create" }, true)).status === 403,
       "non-admin blocked",
     );
+    assert(
+      (await request({ action: "weather_publish", surveyId: survey })).status === 403,
+      "anonymous weather publication blocked",
+    );
+    await request({ action: "weather_list", actorId: "admin-id" });
+    assert(
+      calls.at(-1)?.body.p_actor === null,
+      "client cannot forge weather administrator identity",
+    );
     await request({ action: "list", admin: true, p_admin: true });
     assert(
       calls.at(-1)?.body.p_admin === false,
@@ -105,6 +118,52 @@ Deno.test("survey Edge authorization, mail privacy and forged admin flags", asyn
       (await request({ action: "authorize" }, true)).status === 200,
       "verified admin allowed",
     );
+    await request({ action: "weather_list", actorId: "forged-id" }, true);
+    assert(
+      calls.at(-1)?.body.p_actor === "admin-id",
+      "weather operations use verified Auth identity",
+    );
+    const weatherSent = await request({
+      action: "weather_request",
+      surveyId: survey,
+      email: " ADMIN@example.com ",
+      p_actor: "forged-id",
+    }, true);
+    const weatherChallenge = await weatherSent.json();
+    assert(weatherChallenge.challengeId, "weather code sent without returning it");
+    const weatherReservation = calls.findLast((call) =>
+      call.url.includes("/rpc/weather_action") && call.body.p_action === "request"
+    )!;
+    assert(weatherReservation.body.p_actor === "admin-id", "weather challenge uses verified admin");
+    assert(!JSON.stringify(weatherReservation.body.p_data).includes("admin@example.com"), "weather challenge stores no clear email");
+    assert(String(weatherReservation.body.p_data.code_hash).length === 64, "weather code hashed");
+    const weatherMail = calls.findLast((call) => call.url === "https://api.resend.com/emails")!;
+    const weatherCode = String(weatherMail.body.text).match(/\b\d{6}\b/)![0];
+    assert(String(weatherMail.body.text).includes("Caduca en 5 minutos"), "weather code expires in five minutes");
+    const verified = await request({
+      action: "weather_verify",
+      surveyId: survey,
+      email: "admin@example.com",
+      challengeId: weatherChallenge.challengeId,
+      code: weatherCode,
+    }, true);
+    const permit = await verified.json();
+    assert(permit.permit && !JSON.stringify(permit).includes(weatherCode), "weather verification returns only an opaque permit");
+    await request({
+      action: "weather_submit",
+      surveyId: survey,
+      email: "admin@example.com",
+      permit: permit.permit,
+      answers: { q1: ["Presencial"] },
+      consent: true,
+    }, true);
+    const weatherSubmit = calls.findLast((call) =>
+      call.url.includes("/rpc/weather_action") && call.body.p_action === "submit"
+    )!;
+    assert(weatherSubmit.body.p_actor === "admin-id", "weather response uses verified admin");
+    assert(weatherSubmit.body.p_data.contact === "admin@example.com", "explicit consent sends the normalized contact for separate storage");
+    assert(String(weatherSubmit.body.p_data.email_key).length === 64, "consent contact matches the verified email fingerprint");
+    assert(!JSON.stringify(weatherSubmit.body.p_data).includes(permit.permit), "raw weather permit is never sent to the database");
     const sent = await request({
       action: "request",
       surveyId: survey,
@@ -120,7 +179,7 @@ Deno.test("survey Edge authorization, mail privacy and forged admin flags", asyn
       "database receives no email",
     );
     assert(String(reservation.body.p_code_hash).length === 64, "code hashed");
-    const mail = calls.find((call) =>
+    const mail = calls.findLast((call) =>
       call.url === "https://api.resend.com/emails"
     )!;
     assert(

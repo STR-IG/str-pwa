@@ -26,6 +26,15 @@ export const messages = {
   INVALID_TRANSITION: "La encuesta ya cambió de estado. Actualiza el listado.",
   INVALID_SURVEY:
     "Revisa la pregunta y las opciones: entre 2 y 10, sin duplicados y de hasta 180 caracteres.",
+  INVALID_CONSENT: "No se ha podido validar el consentimiento para comunicaciones.",
+  INVALID_ANSWERS: "Responde cada pregunta y respeta el máximo indicado.",
+  INVALID_PERMIT: "La verificación ha caducado. Solicita un código nuevo.",
+  CONFIRMATION_REQUIRED: "Confirma la publicación desde el panel de administración.",
+  CLEAN_TEST_DATA_FIRST: "Limpia las respuestas de prueba antes de publicar.",
+  SERVER_CONFIGURATION: "El envío de códigos todavía no está configurado.",
+  UNAVAILABLE: "La encuesta no está disponible.",
+  ALREADY_VOTED: "Este correo ya ha participado en esta encuesta.",
+  RATE_LIMITED: "Has alcanzado el límite de envíos. Espera antes de volver a intentarlo.",
 };
 export async function api(action, body = {}) {
   const { data: { session } } = await supabase.auth.getSession();
