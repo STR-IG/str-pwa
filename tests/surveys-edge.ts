@@ -10,6 +10,7 @@ Deno.test("survey Edge authorization, mail privacy and forged admin flags", asyn
     "SURVEY_HMAC_SECRET",
     "SURVEY_RESEND_API_KEY",
     "SURVEY_MAIL_FROM",
+    "RESEND_API_KEY",
   ];
   const originalEnv = names.map((name) => Deno.env.get(name));
   let handler: (req: Request) => Promise<Response>;
@@ -21,7 +22,7 @@ Deno.test("survey Edge authorization, mail privacy and forged admin flags", asyn
     for (
       const [name, value] of Object.entries({
         SUPABASE_URL: "https://survey-test.invalid",
-        SUPABASE_SERVICE_ROLE_KEY: "test-service-key",
+        SUPABASE_SERVICE_ROLE_KEY: "test-service-key-with-more-than-thirty-two-characters",
         SURVEY_HMAC_SECRET: "s".repeat(32),
         SURVEY_RESEND_API_KEY: "test-mail-key",
         SURVEY_MAIL_FROM: "STR <test@example.com>",
@@ -236,14 +237,22 @@ Deno.test("survey Edge authorization, mail privacy and forged admin flags", asyn
       "mail failure reported",
     );
     Deno.env.delete("SURVEY_HMAC_SECRET");
+    Deno.env.delete("SURVEY_RESEND_API_KEY");
+    Deno.env.delete("SURVEY_MAIL_FROM");
+    Deno.env.set("RESEND_API_KEY", "existing-project-mail-key");
+    mailOk = true;
     assert(
       (await request({
         action: "request",
         surveyId: survey,
         email: "other@example.com",
-      })).status === 503,
-      "missing secret fails closed",
+      })).status === 200,
+      "existing project secrets support OTP without duplicating config",
     );
+    const fallbackMail = calls.findLast((call) =>
+      call.url === "https://api.resend.com/emails"
+    )!;
+    assert(fallbackMail.body.from === "STR-IG <acceso@str-ig.es>", "uses the existing verified sender");
   } finally {
     globalThis.fetch = originalFetch;
     Deno.serve = originalServe;

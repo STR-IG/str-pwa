@@ -1,4 +1,3 @@
-import "jsr:@supabase/functions-js@2.118.0/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2.57.4";
 import {
   cleanEmail,
@@ -12,6 +11,21 @@ import {
 import { surveyCodeMessage } from "../_shared/survey-mail.mjs";
 
 const origins = new Set(["https://str-ig.github.io", "http://localhost:8000"]);
+async function surveySecret() {
+  const configured = Deno.env.get("SURVEY_HMAC_SECRET");
+  if (configured && configured.length >= 32) return configured;
+  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  if (!serviceKey || serviceKey.length < 32) {
+    throw new Error("SERVER_CONFIGURATION");
+  }
+  // Domain separation keeps survey HMACs independent from Supabase JWT use.
+  return await hmac(serviceKey, "str-surveys:hmac-key:v1");
+}
+const surveyMailKey = () =>
+  Deno.env.get("SURVEY_RESEND_API_KEY") ?? Deno.env.get("RESEND_API_KEY");
+const surveyMailFrom = () =>
+  Deno.env.get("SURVEY_MAIL_FROM") ?? "STR-IG <acceso@str-ig.es>";
+
 Deno.serve(async (req: Request) => {
   const origin = req.headers.get("origin") ?? "";
   const headers = {
@@ -123,16 +137,12 @@ Deno.serve(async (req: Request) => {
     }
 
     const weatherSurveyId = () => uuid(body.surveyId);
-    const weatherSecret = () => {
-      const value = Deno.env.get("SURVEY_HMAC_SECRET");
-      if (!value || value.length < 32) throw new Error("SERVER_CONFIGURATION");
-      return value;
-    };
+    const weatherSecret = surveySecret;
     if (action === "weather_request") {
       const email = cleanEmail(body.email);
-      const secret = weatherSecret();
-      const mailKey = Deno.env.get("SURVEY_RESEND_API_KEY");
-      const from = Deno.env.get("SURVEY_MAIL_FROM");
+      const secret = await weatherSecret();
+      const mailKey = surveyMailKey();
+      const from = surveyMailFrom();
       if (!mailKey || !from) return reply({ error: "MAIL_NOT_CONFIGURED" }, 503);
       const surveyId = weatherSurveyId();
       const id = crypto.randomUUID();
@@ -172,7 +182,7 @@ Deno.serve(async (req: Request) => {
     }
     if (action === "weather_verify") {
       const email = cleanEmail(body.email);
-      const secret = weatherSecret();
+      const secret = await weatherSecret();
       const challengeId = uuid(body.challengeId);
       if (!/^\d{6}$/.test(String(body.code))) {
         return reply({ error: "INVALID_CODE" }, 400);
@@ -238,14 +248,16 @@ Deno.serve(async (req: Request) => {
     }
     const surveyId = uuid(body.surveyId);
     const email = cleanEmail(body.email);
-    const secret = Deno.env.get("SURVEY_HMAC_SECRET");
-    if (!secret || secret.length < 32) {
+    let secret: string;
+    try {
+      secret = await surveySecret();
+    } catch {
       return reply({ error: "SERVER_CONFIGURATION" }, 503);
     }
     const emailKey = await hmac(secret, `email:${email}`);
     if (action === "request") {
-      const mailKey = Deno.env.get("SURVEY_RESEND_API_KEY");
-      const from = Deno.env.get("SURVEY_MAIL_FROM");
+      const mailKey = surveyMailKey();
+      const from = surveyMailFrom();
       if (!mailKey || !from) {
         return reply({ error: "MAIL_NOT_CONFIGURED" }, 503);
       }
