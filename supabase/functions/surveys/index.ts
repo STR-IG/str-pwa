@@ -3,6 +3,7 @@ import {
   cleanEmail,
   CONSENT_VERSION,
   hmac,
+  isCorporateEmail,
   randomCode,
   uuid,
   validateSurvey,
@@ -21,6 +22,12 @@ async function surveySecret() {
   // Domain separation keeps survey HMACs independent from Supabase JWT use.
   return await hmac(serviceKey, "str-surveys:hmac-key:v1");
 }
+function participantEmail(value: unknown) {
+  const email = cleanEmail(value);
+  if (isCorporateEmail(email)) throw new Error("CORPORATE_EMAIL_NOT_ALLOWED");
+  return email;
+}
+
 const surveyMailKey = () =>
   Deno.env.get("SURVEY_RESEND_API_KEY") ?? Deno.env.get("RESEND_API_KEY");
 const surveyMailFrom = () =>
@@ -139,7 +146,7 @@ Deno.serve(async (req: Request) => {
     const weatherSurveyId = () => uuid(body.surveyId);
     const weatherSecret = surveySecret;
     if (action === "weather_request") {
-      const email = cleanEmail(body.email);
+      const email = participantEmail(body.email);
       const secret = await weatherSecret();
       const mailKey = surveyMailKey();
       const from = surveyMailFrom();
@@ -181,7 +188,7 @@ Deno.serve(async (req: Request) => {
       return reply({ challengeId: id });
     }
     if (action === "weather_verify") {
-      const email = cleanEmail(body.email);
+      const email = participantEmail(body.email);
       const secret = await weatherSecret();
       const challengeId = uuid(body.challengeId);
       if (!/^\d{6}$/.test(String(body.code))) {
@@ -204,7 +211,7 @@ Deno.serve(async (req: Request) => {
       let contact: string | undefined;
       let emailKey: string | undefined;
       if (body.consent) {
-        contact = cleanEmail(body.email);
+        contact = participantEmail(body.email);
         emailKey = await hmac(secret, `email:${contact}`);
       }
       if (!body.answers || typeof body.answers !== "object" || Array.isArray(body.answers)) {
@@ -247,7 +254,7 @@ Deno.serve(async (req: Request) => {
       return reply({ error: "INVALID_ACTION" }, 400);
     }
     const surveyId = uuid(body.surveyId);
-    const email = cleanEmail(body.email);
+    const email = participantEmail(body.email);
     let secret: string;
     try {
       secret = await surveySecret();
@@ -308,7 +315,7 @@ Deno.serve(async (req: Request) => {
   } catch (error) {
     const code = error instanceof Error ? error.message : "";
     return reply({
-      error: ["INVALID_EMAIL", "INVALID_ID", "INVALID_SURVEY"].includes(code)
+      error: ["INVALID_EMAIL", "INVALID_ID", "INVALID_SURVEY", "CORPORATE_EMAIL_NOT_ALLOWED"].includes(code)
         ? code
         : code === "SERVER_CONFIGURATION"
         ? "SERVER_CONFIGURATION"
