@@ -29,6 +29,7 @@
         <label for="email">Correo electrónico</label>
         <input id="email" name="email" type="email" autocomplete="email" maxlength="254" required>
         <p id="email-note">Te enviaremos un código de un solo uso.</p>
+        <p class="privacy-summary">Usaremos el correo para enviarte y verificar el código y para limitar la participación a una respuesta por correo en esta encuesta. <a href="#privacidad">Lee el aviso de privacidad</a>.</p>
         <button type="submit">Enviar código</button>
       </form>
       <form id="vote-form" hidden>
@@ -62,7 +63,7 @@
           <input id="weather-consent" type="checkbox">
           <span>Quiero recibir comunicaciones laborales de STR en este correo. Es opcional y puedo responder sin aceptarlo. En la prueba privada no se guarda este consentimiento.</span>
         </label>
-        <p>Una respuesta por correo verificado. La respuesta y el control de participación se guardan por separado.</p>
+        <p class="privacy-summary">La huella de participación se separa de tus respuestas. Se conserva hasta 15 días después del cierre de la encuesta y luego se elimina automáticamente. <a href="#privacidad">Consulta el aviso completo</a>.</p>
         <button id="weather-submit" type="submit" hidden>Verificar código y enviar respuestas</button>
         <button id="weather-change-email" type="button" class="secondary">Cambiar correo o solicitar otro código</button>
       </form>
@@ -70,11 +71,18 @@
 
     <aside id="privacidad" class="panel privacy" aria-labelledby="privacy-heading">
       <h2 id="privacy-heading">Privacidad y participación</h2>
-      <p>Organiza: Sección sindical de STR en Instituto Grifols. Contacto para privacidad y ejercicio de derechos: <a href="mailto:str.ig@str.es">str.ig@str.es</a>.</p>
-      <p>El correo se usa para enviar y verificar un código de un solo uso y para impedir una segunda respuesta. El control de participación guarda una huella del correo, sin asociarla a las respuestas. En la encuesta meteorológica, las respuestas se guardan por separado y el panel presenta recuentos agregados.</p>
-      <p>El consentimiento para recibir comunicaciones laborales de STR es opcional, está desmarcado por defecto y se guarda en una lista independiente. Las respuestas de prueba para administradores no se añaden a esa lista.</p>
-      <p>Esto reduce la vinculación entre identidad y respuesta, pero no garantiza anonimato absoluto: el proveedor de correo y la infraestructura pueden tratar datos técnicos y registros. No incluyas información personal en las respuestas.</p>
-    </aside>
+      <p><strong>Responsable:</strong> Sección sindical de STR en Instituto Grifols. Para ejercer tus derechos o plantear una consulta de privacidad, escribe a <a href="mailto:str.ig@str.es">str.ig@str.es</a>.</p>
+      <h3>Finalidad y base jurídica</h3>
+      <p>Usamos tu correo personal para enviarte un código de un solo uso, verificarlo y limitar a una respuesta por correo y encuesta. La base jurídica de esta verificación es el interés legítimo de STR en proteger la integridad de los resultados (art. 6.1.f del RGPD). No se admiten correos corporativos.</p>
+      <h3>Qué datos se usan</h3>
+      <p>El servidor genera una huella HMAC-SHA-256 del correo normalizado con una clave secreta. La huella se usa para impedir respuestas duplicadas y se mantiene separada de las respuestas; el panel muestra resultados agregados, no respuestas individuales. El proveedor de correo recibe tu dirección para enviar el código, y la infraestructura puede tratar datos técnicos y registros.</p>
+      <h3>Conservación</h3>
+      <p>La huella de participación se conserva mientras la encuesta está abierta y hasta 15 días después de su cierre. Después se elimina automáticamente. Los resultados agregados se conservan.</p>
+      <h3>Comunicaciones laborales opcionales</h3>
+      <p>La casilla para recibir comunicaciones de STR es voluntaria, está desmarcada por defecto y no condiciona tu participación. Si la marcas, el correo se guarda en una lista independiente para esa finalidad, con base en tu consentimiento (art. 6.1.a del RGPD); puedes retirar el consentimiento y solicitar la baja escribiendo a STR.</p>
+      <h3>Tus derechos y límites</h3>
+      <p>Puedes solicitar acceso, rectificación, supresión, limitación u oposición al tratamiento mediante el correo de contacto. La huella es un dato seudonimizado, no anónimo: aunque no se vincula a las respuestas en el panel, no se puede garantizar anonimato absoluto frente a registros técnicos o accesos privilegiados. Evita incluir información personal en tus respuestas.</p>
+    </aside>ide>
   </main>
   <script type="module" src="encuestas.js"></script>
 </body>
