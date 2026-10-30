@@ -1,4 +1,4 @@
-import { api, busy, text } from "./survey-api.js";
+import { api, busy, isCorporateEmail, messages, text } from "./survey-api.js";
 
 const $ = (id) => document.getElementById(id);
 const status = $("status");
@@ -226,6 +226,11 @@ $("email-form").onsubmit = async (event) => {
   await busy(event.currentTarget, async () => {
     try {
       email = $("email").value.trim().toLowerCase();
+      if (isCorporateEmail(email)) {
+        status.textContent = messages.CORPORATE_EMAIL_NOT_ALLOWED;
+        $("email").focus();
+        return;
+      }
       if (selected.kind === "weather") {
         const result = await api("weather_request", { surveyId: selected.id, email });
         challengeId = result.challengeId;
