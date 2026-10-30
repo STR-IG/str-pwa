@@ -1,4 +1,4 @@
-import { api, busy, isCorporateEmail, messages, text } from "./survey-api.js";
+import { api, busy, isCorporateEmail, messages, text } from "./survey-api.js?v=20261030-1";
 
 const $ = (id) => document.getElementById(id);
 const status = $("status");
