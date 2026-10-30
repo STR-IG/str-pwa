@@ -11,7 +11,7 @@ const supabase = createClient(url, key, {
 });
 export const messages = {
   ALREADY_VOTED: "Este correo ya ha participado en esta encuesta.",
-  CORPORATE_EMAIL_NOT_ALLOWED: "Para participar, utiliza un correo personal. No se admiten direcciones @grifols.com.",
+  CORPORATE_EMAIL_NOT_ALLOWED: "Para participar, utiliza un correo personal.",
   INVALID_CODE:
     "El código es incorrecto, ha caducado o ha agotado sus intentos. Solicita otro código.",
   RATE_LIMITED:
