@@ -14,6 +14,9 @@ let selected = null;
 let email = "";
 let challengeId = "";
 let permit = "";
+let weatherQuestionSlides = [];
+let weatherQuestionIndex = 0;
+let touchStartX = null;
 
 function reset() {
   selected = null;
@@ -102,34 +105,81 @@ async function open(survey) {
 function renderWeatherQuestions(questions) {
   const root = $("weather-questions");
   root.replaceChildren();
-  let currentBlock = null;
-  let group = null;
+  weatherQuestionSlides = [];
+  weatherQuestionIndex = 0;
   for (const question of questions || []) {
-    if (question.block !== currentBlock) {
-      currentBlock = question.block;
-      group = text(root, "section", "", "question-block");
-      text(group, "h3", blockTitles[currentBlock] || `Bloque ${currentBlock}`);
-    }
-    const fieldset = text(group, "fieldset", "", "weather-question");
+    const slide = text(root, "section", "", "question-slide");
+    slide.tabIndex = -1;
+    slide.setAttribute("aria-label", question.title);
+    text(slide, "p", blockTitles[question.block] || `Bloque ${question.block}`, "question-category");
+    const fieldset = text(slide, "fieldset", "", "weather-question");
     const legend = text(fieldset, "legend", question.title);
     legend.id = `legend-${question.id}`;
     if (question.max > 1) {
-      text(fieldset, "p", `Puedes elegir hasta ${question.max}.`, "hint");
+      text(fieldset, "p", `Puedes elegir hasta ${question.max} respuestas.`, "hint");
     }
     for (const option of question.options) {
-      const label = text(fieldset, "label", "", "choice");
+      const label = text(fieldset, "label", "", "choice answer-card");
       const input = document.createElement("input");
       input.type = question.max === 1 ? "radio" : "checkbox";
       input.name = question.id;
       input.value = option;
-      input.required = question.max === 1;
       input.setAttribute("aria-labelledby", legend.id);
       input.addEventListener("change", () => updateWeatherChoices(fieldset, question, input));
       label.append(input);
       text(label, "span", option);
     }
+    weatherQuestionSlides.push({ element: slide, question });
   }
+  showWeatherQuestion(0, false);
 }
+
+function showWeatherQuestion(index, focus = true) {
+  if (!weatherQuestionSlides.length) return;
+  weatherQuestionIndex = Math.max(0, Math.min(index, weatherQuestionSlides.length - 1));
+  weatherQuestionSlides.forEach(({ element }, slideIndex) => {
+    element.hidden = slideIndex !== weatherQuestionIndex;
+    element.setAttribute("aria-hidden", slideIndex === weatherQuestionIndex ? "false" : "true");
+  });
+  const total = weatherQuestionSlides.length;
+  const position = weatherQuestionIndex + 1;
+  $("weather-question-count").textContent = `Pregunta ${position} de ${total}`;
+  const progress = $("weather-progress-fill");
+  progress.style.width = `${(position / total) * 100}%`;
+  const track = progress.parentElement;
+  track.setAttribute("aria-valuemax", String(total));
+  track.setAttribute("aria-valuenow", String(position));
+  $("weather-previous").disabled = weatherQuestionIndex === 0;
+  $("weather-next").hidden = weatherQuestionIndex === total - 1;
+  $("weather-submit").hidden = weatherQuestionIndex !== total - 1;
+  if (focus) weatherQuestionSlides[weatherQuestionIndex].element.focus();
+}
+
+function advanceWeatherQuestion() {
+  const current = weatherQuestionSlides[weatherQuestionIndex];
+  if (!current) return;
+  const checked = current.element.querySelector('input:checked');
+  if (!checked) {
+    status.textContent = "Selecciona una respuesta para continuar.";
+    current.element.querySelector("input")?.focus();
+    return;
+  }
+  showWeatherQuestion(weatherQuestionIndex + 1);
+}
+
+$("weather-previous").onclick = () => showWeatherQuestion(weatherQuestionIndex - 1);
+$("weather-next").onclick = advanceWeatherQuestion;
+$("weather-questions").addEventListener("touchstart", (event) => {
+  touchStartX = event.changedTouches[0].clientX;
+}, { passive: true });
+$("weather-questions").addEventListener("touchend", (event) => {
+  if (touchStartX === null) return;
+  const distance = event.changedTouches[0].clientX - touchStartX;
+  touchStartX = null;
+  if (Math.abs(distance) < 55) return;
+  if (distance < 0) advanceWeatherQuestion();
+  else if (weatherQuestionIndex > 0) showWeatherQuestion(weatherQuestionIndex - 1);
+}, { passive: true });
 
 function updateWeatherChoices(fieldset, question, changed) {
   const inputs = [...fieldset.querySelectorAll("input")];
@@ -258,6 +308,10 @@ $("weather-vote-form").onsubmit = async (event) => {
     try {
       const answers = weatherAnswers();
       if (!answers) {
+        const firstUnanswered = weatherQuestionSlides.findIndex(({ question }) =>
+          !$("weather-questions").querySelector(`input[name="${CSS.escape(question.id)}"]:checked`)
+        );
+        if (firstUnanswered >= 0) showWeatherQuestion(firstUnanswered);
         status.textContent = "Responde cada pregunta y respeta el máximo indicado.";
         return;
       }
