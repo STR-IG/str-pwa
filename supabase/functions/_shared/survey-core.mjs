@@ -1,4 +1,9 @@
 export const CONSENT_VERSION = "str-laboral-v1";
+export function isCorporateEmail(value) {
+  const email = String(value ?? "").trim().toLowerCase();
+  const domain = email.slice(email.lastIndexOf("@") + 1);
+  return domain === "grifols.com" || domain.endsWith(".grifols.com");
+}
 export function cleanEmail(value) {
   const email = String(value ?? "").trim().toLowerCase();
   if (email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
