@@ -47,13 +47,23 @@
         <label for="weather-code">Código del correo</label>
         <input id="weather-code" name="code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" minlength="6" maxlength="6" required>
         <p id="weather-code-note">Verificaremos el código antes de registrar tus respuestas.</p>
+        <div class="carousel-progress" aria-live="polite">
+          <span id="weather-question-count"></span>
+          <div class="progress-track" role="progressbar" aria-label="Progreso de la encuesta" aria-valuemin="1" aria-valuemax="1" aria-valuenow="1">
+            <span id="weather-progress-fill"></span>
+          </div>
+        </div>
         <div id="weather-questions"></div>
+        <div class="carousel-controls" aria-label="Navegación de preguntas">
+          <button id="weather-previous" type="button" class="secondary" disabled>← Anterior</button>
+          <button id="weather-next" type="button">Siguiente →</button>
+        </div>
         <label class="choice consent">
           <input id="weather-consent" type="checkbox">
           <span>Quiero recibir comunicaciones laborales de STR en este correo. Es opcional y puedo responder sin aceptarlo. En la prueba privada no se guarda este consentimiento.</span>
         </label>
         <p>Una respuesta por correo verificado. La respuesta y el control de participación se guardan por separado.</p>
-        <button type="submit">Verificar código y enviar respuestas</button>
+        <button id="weather-submit" type="submit" hidden>Verificar código y enviar respuestas</button>
         <button id="weather-change-email" type="button" class="secondary">Cambiar correo o solicitar otro código</button>
       </form>
     </section>
