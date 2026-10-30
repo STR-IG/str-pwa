@@ -9,6 +9,11 @@ const supabase = createClient(url, key, {
     autoRefreshToken: true,
   },
 });
+export function isCorporateEmail(value) {
+  const email = String(value ?? "").trim().toLowerCase();
+  const domain = email.slice(email.lastIndexOf("@") + 1);
+  return domain === "grifols.com" || domain.endsWith(".grifols.com");
+}
 export const messages = {
   ALREADY_VOTED: "Este correo ya ha participado en esta encuesta.",
   CORPORATE_EMAIL_NOT_ALLOWED: "Para participar, utiliza un correo personal.",
