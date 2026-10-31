@@ -1,4 +1,4 @@
-import { api, busy, isCorporateEmail, messages, text } from "./survey-api.js?v=20261030-2";
+import { api, busy, isCorporateEmail, messages, text } from "./survey-api.js?v=20261031-1";
 
 const $ = (id) => document.getElementById(id);
 const status = $("status");
@@ -120,6 +120,10 @@ function renderWeatherQuestions(questions) {
     const fieldset = text(slide, "fieldset", "", "weather-question");
     const legend = text(fieldset, "legend", question.title);
     legend.id = `legend-${question.id}`;
+    const optionValues = new Set((question.options || []).map(String));
+    if (["1", "2", "3", "4", "5"].every((value) => optionValues.has(value))) {
+      text(fieldset, "p", "1 es la peor valoración y 5 la mejor.", "hint");
+    }
     if (question.max > 1) {
       text(fieldset, "p", `Puedes elegir hasta ${question.max} respuestas.`, "hint");
     }
@@ -197,7 +201,8 @@ function updateWeatherChoices(fieldset, question, changed) {
   const chosen = inputs.filter((input) => input.checked);
   const hasExclusive = chosen.some((input) => exclusive.has(input.value));
   for (const input of inputs) {
-    input.disabled = !input.checked && (hasExclusive || chosen.length >= question.max);
+    input.disabled = question.max > 1 && !input.checked &&
+      (hasExclusive || chosen.length >= question.max);
   }
 }
 
