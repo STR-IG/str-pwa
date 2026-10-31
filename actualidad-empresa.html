@@ -21,6 +21,11 @@
     .post { overflow:hidden; border-radius:24px; background:var(--paper); box-shadow:0 6px 22px rgba(0,0,0,.08); }
     .post-media { display:block; width:100%; }
     .post-media img { display:block; width:100%; height:auto; }
+    .post-copy { padding:20px; }
+    .post-title { margin:0 0 10px; font-size:20px; line-height:1.25; }
+    .post-summary { color:#555; font-size:15px; line-height:1.5; }
+    .post-meta { margin-top:14px; color:#707078; font-size:12px; font-weight:700; }
+    .post-link { display:inline-block; margin-top:14px; color:var(--red); font-weight:800; text-decoration:none; }
     a:focus-visible { outline:3px solid var(--red); outline-offset:4px; }
     .post:focus-within { outline:3px solid var(--red); outline-offset:4px; }
     .empty { padding:22px; border-radius:18px; color:#555; background:var(--paper); line-height:1.5; text-align:center; }
@@ -32,7 +37,14 @@
   <header class="top"><div class="top-inner"><a class="back" href="index.html" aria-label="Volver al menú principal">‹</a><h1>Actualidad de tu empresa</h1></div></header>
   <main>
     <section class="feed" aria-label="Noticias de tu empresa">
-      <p class="empty">Próximamente compartiremos noticias de la empresa con un resumen propio y enlace al medio.</p>
+      <article class="post">
+        <div class="post-copy">
+          <h2 class="post-title">El suministro de plasma, un reto para España</h2>
+          <p class="post-summary">España sigue dependiendo del plasma de otros países para fabricar medicamentos derivados del plasma. La noticia también recoge una encuesta encargada por Grifols según la cual la mitad de las personas consultadas desconocía que se puede donar plasma específicamente.</p>
+          <p class="post-meta">Cinco Días · 5 de octubre de 2026</p>
+          <a class="post-link" href="https://cincodias.elpais.com/companias/2026-10-05/grifols-invita-a-la-donacion-de-plasma-y-advierte-de-que-espana-sigue-lejos-de-la-autosuficiencia.html" target="_blank" rel="noopener noreferrer">Leer la noticia en Cinco Días <span aria-hidden="true">↗</span></a>
+        </div>
+      </article>
     </section>
     <a class="home" href="index.html">Volver al menú principal</a>
   </main>
