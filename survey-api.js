@@ -1,6 +1,9 @@
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.4/+esm";
 const url = "https://icneigdnuntzugisexaz.supabase.co";
 const key = "sb_publishable_apKjcPClIBTHS2wwN6qPsA_6Vm4tk9m";
+// Keep survey verification and voting in the same EU region as the database.
+const surveyFunctionUrl =
+  url + "/functions/v1/surveys?forceFunctionRegion=eu-west-3";
 // Existing admin session is read, never replaced by public survey verification.
 const supabase = createClient(url, key, {
   auth: {
@@ -48,7 +51,7 @@ export async function api(action, body = {}) {
   if (session?.access_token) {
     headers.Authorization = `Bearer ${session.access_token}`;
   }
-  const response = await fetch(url + "/functions/v1/surveys", {
+  const response = await fetch(surveyFunctionUrl, {
     method: "POST",
     headers,
     body: JSON.stringify({ action, ...body }),

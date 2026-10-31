@@ -1,4 +1,4 @@
-import { api, busy, text } from "./survey-api.js";
+import { api, busy, text } from "./survey-api.js?v=20261030-2";
 
 const $ = (id) => document.getElementById(id);
 const status = $("status");
@@ -207,6 +207,23 @@ $("create-form").onsubmit = async (event) => {
       $("create-form").reset();
       await loadSimpleSurveys();
       status.textContent = "Borrador creado. Revisa las opciones antes de activarlo.";
+    } catch (error) {
+      status.textContent = error.message;
+    }
+  });
+};
+
+$("withdraw-consent-form").onsubmit = async (event) => {
+  event.preventDefault();
+  const form = event.currentTarget;
+  await busy(form, async () => {
+    try {
+      const email = $("withdraw-email").value.trim().toLowerCase();
+      const result = await api("contact_withdraw", { email });
+      form.reset();
+      status.textContent = result.deleted
+        ? "El correo se ha eliminado de la lista de comunicaciones laborales."
+        : "Ese correo no figuraba en la lista de comunicaciones laborales.";
     } catch (error) {
       status.textContent = error.message;
     }

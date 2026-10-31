@@ -1,4 +1,4 @@
-export const CONSENT_VERSION = "str-laboral-v1";
+export const CONSENT_VERSION = "str-laboral-v2-2026-10-30";
 export function isCorporateEmail(value) {
   const email = String(value ?? "").trim().toLowerCase();
   const domain = email.slice(email.lastIndexOf("@") + 1);
