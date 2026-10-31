@@ -1,4 +1,4 @@
-export const SURVEY_PRIVACY_URL = 'https://str-ig.github.io/str-pwa/encuestas.html#privacidad';
+export const SURVEY_PRIVACY_URL = 'https://str-ig.github.io/str-pwa/docs/aviso-privacidad-encuestas-str.pdf?v=20261030-2';
 
 export function surveyCodeMessage(
   code,

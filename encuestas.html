@@ -29,16 +29,16 @@
         <label for="email">Correo personal</label>
         <input id="email" name="email" type="email" autocomplete="email" maxlength="254" required>
         <p id="email-note">Te enviaremos un código de un solo uso.</p>
-        <p class="privacy-summary"><strong>Protección de datos:</strong> STR utiliza tu correo personal para verificar una única participación, con base en su interés legítimo. Tus respuestas se mantienen separadas de la huella del correo. <a href="docs/aviso-privacidad-encuestas-str.pdf" target="_blank" rel="noopener" download>Ver y descargar el aviso completo (PDF)</a>.</p>
+        <p class="privacy-summary"><strong>Protección de datos:</strong> la sección sindical de STR utiliza tu correo personal para verificar una única participación, con base en su interés legítimo. Tus respuestas se mantienen separadas de la huella del correo. <a href="docs/aviso-privacidad-encuestas-str.pdf?v=20261030-2" target="_blank" rel="noopener" download>Ver y descargar el aviso completo (PDF)</a>.</p>
         <button type="submit">Enviar código</button>
       </form>
       <form id="vote-form" hidden>
         <label for="code">Código del correo</label>
         <input id="code" name="code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" minlength="6" maxlength="6" required>
         <fieldset id="options"><legend>Selecciona una respuesta</legend></fieldset>
-        <label class="choice consent">
+        <label id="consent-choice" class="choice consent">
           <input id="consent" type="checkbox">
-          <span>Quiero recibir comunicaciones laborales de STR en mi correo. Es opcional y puedo votar sin aceptarlo. Puedo solicitar la baja a STR por sus canales de contacto.</span>
+          <span>Quiero recibir por correo información estrictamente laboral enviada por la sección sindical de STR en Instituto Grifols, incluida la información del sindicato STR que la sección decida reenviarme. Esta casilla es opcional; puedo participar sin marcarla y retirar mi consentimiento en cualquier momento escribiendo a str.ig@str.es.</span>
         </label>
         <p>Verificaremos el código al enviar tu voto.</p>
         <button type="submit">Verificar código y votar</button>
@@ -59,9 +59,9 @@
           <button id="weather-previous" type="button" class="secondary" disabled>← Anterior</button>
           <button id="weather-next" type="button">Siguiente →</button>
         </div>
-        <label class="choice consent">
+        <label id="weather-consent-choice" class="choice consent">
           <input id="weather-consent" type="checkbox">
-          <span>Quiero recibir comunicaciones laborales de STR en este correo. Es opcional y puedo responder sin aceptarlo. En la prueba privada no se guarda este consentimiento.</span>
+          <span>Quiero recibir por correo información estrictamente laboral enviada por la sección sindical de STR en Instituto Grifols, incluida la información del sindicato STR que la sección decida reenviarme. Esta casilla es opcional; puedo participar sin marcarla y retirar mi consentimiento en cualquier momento escribiendo a str.ig@str.es.</span>
         </label>
         <button id="weather-submit" type="submit" hidden>Verificar código y enviar respuestas</button>
         <button id="weather-change-email" type="button" class="secondary">Cambiar correo o solicitar otro código</button>
@@ -69,6 +69,6 @@
     </section>
 
   </main>
-  <script type="module" src="encuestas.js?v=20261030-1"></script>
+  <script type="module" src="encuestas.js?v=20261030-2"></script>
 </body>
 </html>

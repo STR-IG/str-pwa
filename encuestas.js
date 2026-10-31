@@ -1,4 +1,4 @@
-import { api, busy, isCorporateEmail, messages, text } from "./survey-api.js?v=20261030-1";
+import { api, busy, isCorporateEmail, messages, text } from "./survey-api.js?v=20261030-2";
 
 const $ = (id) => document.getElementById(id);
 const status = $("status");
@@ -92,6 +92,11 @@ async function open(survey) {
       ? "Cuestionario sobre información, desplazamientos y seguridad durante las alertas meteorológicas."
       : "");
   const isWeatherTest = selected.kind === "weather" && selected.state !== "publicada";
+  const isPrivateTest = selected.admin_only === true || isWeatherTest;
+  $("consent-choice").hidden = selected.kind !== "simple" || isPrivateTest;
+  $("weather-consent-choice").hidden = selected.kind !== "weather" || isPrivateTest;
+  $("consent").checked = false;
+  $("weather-consent").checked = false;
   $("email-note").textContent = selected.kind === "weather"
     ? "Te enviaremos un código de un solo uso, válido durante 5 minutos."
     : "Te enviaremos un código de un solo uso, válido durante 10 minutos.";

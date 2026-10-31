@@ -91,6 +91,12 @@ Deno.serve(async (req: Request) => {
     if (action === "authorize") {
       return isAdmin ? reply({ ok: true }) : reply({ error: "FORBIDDEN" }, 403);
     }
+    if (action === "contact_withdraw") {
+      if (!isAdmin) return reply({ error: "FORBIDDEN" }, 403);
+      return reply(await rpc("survey_contact_withdraw", {
+        p_email: cleanEmail(body.email),
+      }));
+    }
     if (action === "list") {
       return reply({ surveys: await rpc("survey_list", { p_admin: isAdmin }) });
     }
@@ -225,7 +231,13 @@ Deno.serve(async (req: Request) => {
         permit: await hmac(secret, `permit:${permit}`),
         answers: body.answers,
         consent: body.consent,
-        ...(body.consent ? { contact, email_key: emailKey } : {}),
+        ...(body.consent
+          ? {
+            contact,
+            email_key: emailKey,
+            consent_version: CONSENT_VERSION,
+          }
+          : {}),
       });
       return reply(result, result?.error ? 400 : 200);
     }

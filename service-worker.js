@@ -1,4 +1,4 @@
-const CACHE_NAME = 'str-ig-cache-v137-timesheet-consent';
+const CACHE_NAME = 'str-ig-cache-v138-survey-privacy-v2';
 
 const SUPABASE_URL = 'https://icneigdnuntzugisexaz.supabase.co';
 self.addEventListener('install', (event) => {

@@ -37,10 +37,17 @@
         <p>Se crea como borrador. Al activar, la pregunta y las opciones quedan fijadas. El cierre es definitivo.</p>
         <button type="submit">Crear borrador</button>
       </form>
+      <form id="withdraw-consent-form" class="panel">
+        <h2>Retirada de comunicaciones laborales</h2>
+        <p>Utiliza esta opción cuando una persona solicite la baja escribiendo a str.ig@str.es. El correo se elimina de la lista independiente de comunicaciones y no afecta a sus respuestas ni a los resultados agregados.</p>
+        <label for="withdraw-email">Correo que solicita la baja</label>
+        <input id="withdraw-email" name="email" type="email" autocomplete="off" maxlength="254" required>
+        <button type="submit">Eliminar de la lista de comunicaciones</button>
+      </form>
       <section id="surveys" aria-label="Gestión de encuestas"></section>
       <section id="results" class="panel" aria-live="polite" hidden></section>
     </section>
   </main>
-  <script type="module" src="encuestas-admin.js"></script>
+  <script type="module" src="encuestas-admin.js?v=20261030-2"></script>
 </body>
 </html>
