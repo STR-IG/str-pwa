@@ -23,6 +23,7 @@
     .post-media img { display:block; width:100%; height:auto; }
     a:focus-visible { outline:3px solid var(--red); outline-offset:4px; }
     .post:focus-within { outline:3px solid var(--red); outline-offset:4px; }
+    .empty { padding:22px; border-radius:18px; color:#555; background:var(--paper); line-height:1.5; text-align:center; }
     .home { display:block; margin-top:2px; padding:15px 18px; border-radius:999px; color:#555; background:#e8e8eb; font-size:14px; font-weight:800; text-align:center; text-decoration:none; }
     @media (min-width:700px) { main { padding-top:30px; } }
   </style>
@@ -31,14 +32,7 @@
   <header class="top"><div class="top-inner"><a class="back" href="index.html" aria-label="Volver al menú principal">‹</a><h1>Actualidad de tu empresa</h1></div></header>
   <main>
     <section class="feed" aria-label="Noticias de tu empresa">
-      <!-- Para añadir noticias, duplicar un article: data-title = titular/nombre interno,
-           data-date = fecha ISO (mes o día conocido), img src = imagen, a href = URL externa.
-           Mantener target y rel. La fecha original disponible para esta noticia es septiembre de 2026. -->
-      <article class="post" data-title="Grifols y PharmaMar eluden el arancel del 15% de Trump y Almirall acota su impacto" data-date="2026-09">
-        <a class="post-media" href="https://www.eleconomista.es/salud-bienestar/noticias/14017502/09/26/grifols-y-pharmamar-eluden-el-arancel-del-15-de-trump-y-almirall-acota-su-impacto.html" target="_blank" rel="noopener noreferrer" aria-label="Grifols y PharmaMar eluden el arancel del 15% de Trump y Almirall acota su impacto. Abrir noticia en elEconomista en una pestaña nueva">
-          <img src="ficha-noticia-aranceles.png" alt="Grifols y PharmaMar eluden el arancel del 15% de Trump y Almirall acota su impacto">
-        </a>
-      </article>
+      <p class="empty">Próximamente compartiremos noticias de la empresa con un resumen propio y enlace al medio.</p>
     </section>
     <a class="home" href="index.html">Volver al menú principal</a>
   </main>
