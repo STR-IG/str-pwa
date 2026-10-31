@@ -20,7 +20,7 @@ test('la entrada sindical unificada conserva contenido, rutas y avisos', () => {
   }
   assert.match(read('nuestra-explicacion-documentacion.html'), /markNewsRead\(\['documentation-explanation-2026-09-30'\]\)/);
   assert.match(read('dia-afiliacion.html'), /markNewsRead\(\['activity-dia-afiliacion-2026-10-24'\]\)/);
-  for (const file of ['index.html', 'demo-app.html', 'menu-comedor.html', 'permisos.html', 'preguntale-str-permisos.html']) {
+  for (const file of ['index.html', 'menu-comedor.html', 'permisos.html', 'preguntale-str-permisos.html']) {
     assert.doesNotMatch(read(file), /bottom-nav/);
   }
   assert.doesNotMatch(read('novedades.js'), /applyBottomNavActivity|bottom-nav/);

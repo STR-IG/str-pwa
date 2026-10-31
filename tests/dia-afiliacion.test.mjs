@@ -4,9 +4,10 @@ import { existsSync, readFileSync } from 'node:fs';
 
 const read = name => readFileSync(new URL(`../${name}`, import.meta.url), 'utf8');
 
-test('el carrusel conserva la demo y retira el Día de la Afiliación', () => {
+test('el carrusel conserva la tarjeta informativa y retira el Día de la Afiliación', () => {
   const html = read('app.html');
-  assert.match(html, /<a class="hero-slide" href="demo-app\.html"/);
+  assert.match(html, /<div class="hero-slide" role="img" aria-label="STR-IG:/);
+  assert.doesNotMatch(html, /demo-app\.html|Prueba la demo/);
   assert.doesNotMatch(html, /hero-slide dia-afiliacion|\.hero-slide\.dia-afiliacion|card-carrusel-dia-afiliado\.png/);
   assert.equal((html.match(/class="hero-slide[^"]*"/g) || []).length, 2);
   assert.equal((html.match(/data-slide="\d+"/g) || []).length, 2);
