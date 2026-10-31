@@ -57,6 +57,7 @@
     h1 { font-size: 27px; line-height: 1.05; }
     main { max-width: 900px; margin: auto; padding: 22px 18px 34px; }
     .intro { color: var(--grey); font-size: 15px; line-height: 1.45; margin-bottom: 20px; }
+    .privacy-note { margin:-6px 0 22px; padding:15px 16px; border-left:4px solid var(--red); border-radius:12px; color:#45454a; background:var(--white); font-size:14px; line-height:1.5; }
     .permit-section + .permit-section { margin-top: 28px; }
     .section-title { font-size: 20px; line-height: 1.25; margin-bottom: 14px; }
     .grid {
@@ -123,6 +124,7 @@
     <p id="auth-check">Preparando consulta…</p>
     <section id="content" hidden>
     <p class="intro">Selecciona el permiso que quieres consultar. Las fichas están agrupadas por temas.</p>
+    <aside class="privacy-note"><strong>Orientación para situaciones reales.</strong> Al solicitarla, las respuestas seleccionadas se envían a Supabase y OpenAI para preparar la orientación. Se usa también un identificador aleatorio del navegador para gestionar el límite de consultas. No incluyas nombres, DNI, diagnósticos ni documentos médicos. La respuesta es una orientación sindical; no es una resolución de Recursos Humanos.</aside>
 
     <section class="permit-section" aria-labelledby="hospitalizacion-title">
       <h2 class="section-title" id="hospitalizacion-title">Hospitalización de familiares</h2>
