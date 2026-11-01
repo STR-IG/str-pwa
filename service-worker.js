@@ -1,4 +1,4 @@
-const CACHE_NAME = 'str-ig-cache-v140-permit-privacy-consent';
+const CACHE_NAME = 'str-ig-cache-v141-calendar-viewer-back';
 
 const SUPABASE_URL = 'https://icneigdnuntzugisexaz.supabase.co';
 self.addEventListener('install', (event) => {

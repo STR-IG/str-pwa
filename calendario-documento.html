@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="es" data-analytics-area="private">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#ffffff">
+  <title>Calendario 2027 · STR-IG</title>
+  <link rel="icon" href="icono-str-ig.png">
+  <link rel="manifest" href="manifest.json">
+  <style>
+    *{box-sizing:border-box}
+    [hidden]{display:none!important}
+    html,body{height:100%}
+    body{margin:0;display:grid;grid-template-rows:auto minmax(0,1fr);overflow:hidden;background:#777;color:#202124;font-family:Arial,Helvetica,sans-serif}
+    header{position:relative;z-index:10;padding:calc(10px + env(safe-area-inset-top)) 12px 10px;background:#fff;box-shadow:0 2px 12px #0003}
+    nav{max-width:1100px;margin:auto;display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:10px}
+    .back,.download{display:inline-flex;align-items:center;justify-content:center;min-height:46px;border-radius:24px;text-decoration:none;font-weight:800}
+    .back{gap:5px;padding:8px 15px 8px 12px;background:#fff0f1;color:#b9000b}
+    .back-mark{font-size:29px;line-height:0;transform:translateY(-1px)}
+    .download{padding:8px 14px;background:#e30613;color:#fff}
+    .heading{min-width:0}
+    .eyebrow{margin:0;color:#666;font-size:12px;font-weight:700}
+    h1{margin:1px 0 0;overflow:hidden;color:#202124;font-size:17px;line-height:1.25;text-overflow:ellipsis;white-space:nowrap}
+    main{min-height:0;overflow:auto;-webkit-overflow-scrolling:touch;padding:14px 10px calc(18px + env(safe-area-inset-bottom))}
+    .status{max-width:620px;margin:18vh auto 0;padding:18px 20px;border-radius:16px;background:#fff;color:#333;text-align:center;box-shadow:0 5px 22px #0003}
+    .status.error{border-left:5px solid #e30613;color:#8f0009;text-align:left}
+    .pages{width:min(100%,920px);margin:0 auto;display:grid;gap:14px}
+    .page{margin:0;overflow:hidden;border-radius:4px;background:#fff;box-shadow:0 4px 16px #0006;line-height:0}
+    .page canvas{display:block;width:100%;height:auto}
+    .page figcaption{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap}
+    noscript{display:block;max-width:620px;margin:18vh auto 0;padding:18px 20px;border-radius:16px;background:#fff}
+    @media (max-width:520px){
+      header{padding-left:8px;padding-right:8px}
+      nav{gap:7px}
+      .back{padding:8px 12px}
+      .download{width:46px;padding:8px;font-size:0}
+      .download::before{content:"↓";font-size:25px;line-height:1}
+      .eyebrow{display:none}
+      h1{font-size:15px}
+      main{padding-left:6px;padding-right:6px}
+      .pages{gap:9px}
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <nav aria-label="Navegación del calendario">
+      <a class="back" href="calendarios.html" aria-label="Volver a calendarios">
+        <span class="back-mark" aria-hidden="true">‹</span><span>Volver</span>
+      </a>
+      <div class="heading">
+        <p class="eyebrow">Calendarios 2027</p>
+        <h1 id="document-title">Calendario</h1>
+      </div>
+      <a id="download-link" class="download" href="calendarios.html" download aria-label="Descargar calendario">Descargar</a>
+    </nav>
+  </header>
+
+  <main id="viewer">
+    <p id="viewer-status" class="status" role="status" aria-live="polite">Comprobando el acceso…</p>
+    <div id="pdf-pages" class="pages" hidden aria-label="Páginas del calendario"></div>
+    <noscript>Activa JavaScript para consultar el calendario. <a href="calendarios.html">Volver a calendarios</a>.</noscript>
+  </main>
+
+  <script type="module">
+    const documents = {
+      rota: {
+        title: 'Calendarios base ROTA · Parets',
+        url: 'docs/calendarios/2027/propuesta-calendario-base-parets-rota.pdf',
+        filename: 'Calendarios base ROTA Parets 2027.pdf'
+      },
+      colores: {
+        title: 'Turnos 12 horas · Colores',
+        url: 'docs/calendarios/2027/turnos-12-horas-colores.pdf',
+        filename: 'Turnos 12 horas Colores 2027.pdf'
+      },
+      central: {
+        title: 'Turno central',
+        url: 'docs/calendarios/2027/turno-central.pdf',
+        filename: 'Turno central 2027.pdf'
+      }
+    };
+
+    const key = new URLSearchParams(window.location.search).get('documento');
+    const selected = documents[key];
+    const status = document.getElementById('viewer-status');
+    const pages = document.getElementById('pdf-pages');
+    const title = document.getElementById('document-title');
+    const download = document.getElementById('download-link');
+
+    function showError(message) {
+      status.hidden = false;
+      status.classList.add('error');
+      status.textContent = message;
+    }
+
+    async function privateAccess(client) {
+      const sessionResult = await client.auth.getSession();
+      if (sessionResult.error) throw sessionResult.error;
+      if (!sessionResult.data?.session) return false;
+      const results = await Promise.all([
+        client.auth.getUser(),
+        client.rpc('is_current_user_private_access_allowed')
+      ]);
+      const identity = results[0];
+      const access = results[1];
+      if (identity.error || access.error) throw identity.error || access.error;
+      return Boolean(identity.data?.user) && access.data === true;
+    }
+
+    function redirectToLogin() {
+      const returnTo = 'calendario-documento.html?documento=' + encodeURIComponent(key || '');
+      window.location.replace('acceso-privado.html?next=' + encodeURIComponent(returnTo));
+    }
+
+    async function renderDocument(documentData) {
+      status.textContent = 'Preparando el calendario…';
+      const pdfjs = await import('https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/build/pdf.min.mjs');
+      pdfjs.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/build/pdf.worker.min.mjs';
+
+      const pdf = await pdfjs.getDocument({ url: documentData.url }).promise;
+      pages.hidden = false;
+
+      for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
+        status.textContent = 'Cargando página ' + pageNumber + ' de ' + pdf.numPages + '…';
+        const page = await pdf.getPage(pageNumber);
+        const renderScale = Math.min(2, Math.max(1.5, window.devicePixelRatio || 1));
+        const viewport = page.getViewport({ scale: renderScale });
+        const canvas = document.createElement('canvas');
+        const context = canvas.getContext('2d', { alpha: false });
+        const figure = document.createElement('figure');
+        const caption = document.createElement('figcaption');
+
+        canvas.width = Math.floor(viewport.width);
+        canvas.height = Math.floor(viewport.height);
+        canvas.setAttribute('role', 'img');
+        canvas.setAttribute('aria-label', 'Página ' + pageNumber + ' de ' + pdf.numPages);
+        caption.textContent = 'Página ' + pageNumber + ' de ' + pdf.numPages;
+        figure.className = 'page';
+        figure.append(canvas, caption);
+        pages.appendChild(figure);
+
+        await page.render({ canvasContext: context, viewport: viewport }).promise;
+      }
+
+      status.hidden = true;
+      document.getElementById('viewer').scrollTop = 0;
+    }
+
+    async function start() {
+      if (!selected) {
+        title.textContent = 'Documento no encontrado';
+        download.hidden = true;
+        showError('No se ha encontrado ese calendario. Pulsa «Volver» para elegir otro documento.');
+        return;
+      }
+
+      title.textContent = selected.title;
+      document.title = selected.title + ' · STR-IG';
+      download.href = selected.url;
+      download.download = selected.filename;
+
+      try {
+        const supabase = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm');
+        const client = supabase.createClient(
+          'https://icneigdnuntzugisexaz.supabase.co',
+          'sb_publishable_apKjcPClIBTHS2wwN6qPsA_6Vm4tk9m',
+          { auth: { detectSessionInUrl: false, persistSession: true, autoRefreshToken: true } }
+        );
+
+        client.auth.onAuthStateChange(function (event, session) {
+          if (event === 'SIGNED_OUT' || (event === 'TOKEN_REFRESHED' && !session)) {
+            redirectToLogin();
+          }
+        });
+
+        if (!(await privateAccess(client))) {
+          redirectToLogin();
+          return;
+        }
+
+        await renderDocument(selected);
+      } catch (error) {
+        console.error(error);
+        showError('No se ha podido mostrar el calendario. Comprueba tu conexión o usa el botón de descarga.');
+      }
+    }
+
+    start();
+  </script>
+  <script type="module" src="./app-analytics.js?v=2-card-counts"></script>
+</body>
+</html>
