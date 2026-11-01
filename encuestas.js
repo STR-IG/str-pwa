@@ -55,6 +55,7 @@ async function load() {
       const card = text(list, "article", "", "panel");
       text(card, "h2", survey.title);
       if (survey.description) text(card, "p", survey.description);
+      if (survey.kind === "weather") text(card, "p", "La sección sindical anunciará el cierre de esta encuesta. No hay una fecha automática de cierre.");
       if (survey.admin_only || survey.state === "solo_admin") {
         text(card, "p", "Prueba exclusiva para administradores", "badge");
       }
@@ -91,6 +92,7 @@ async function open(survey) {
     (selected.kind === "weather"
       ? "Cuestionario sobre información, desplazamientos y seguridad durante las alertas meteorológicas."
       : "");
+  if (selected.kind === "weather") $("survey-description").textContent += " " + "La sección sindical anunciará el cierre de esta encuesta. No hay una fecha automática de cierre.";
   const isWeatherTest = selected.kind === "weather" && selected.state !== "publicada";
   const isPrivateTest = selected.admin_only === true || isWeatherTest;
   $("consent-choice").hidden = selected.kind !== "simple" || isPrivateTest;

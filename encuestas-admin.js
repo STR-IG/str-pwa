@@ -53,6 +53,11 @@ async function loadWeather() {
     const card = text(list, "article", "", "survey-admin-card");
     text(card, "h3", survey.title);
     text(card, "p", stateLabel(survey), "badge");
+    if (survey.closed_at) text(card, "p", "Cierre registrado (UTC): " + new Date(survey.closed_at).toISOString());
+    if (survey.state === "publicada" && !survey.closed) {
+      if (!survey.opened_at) text(card, "p", "Revisa si debe seguir abierta: no consta la fecha de apertura para calcular el aviso de 30 días.", "badge");
+      else if (Date.now() - new Date(survey.opened_at).getTime() >= 30 * 86400000) text(card, "p", "Esta encuesta lleva abierta al menos 30 días. Revisa si debe seguir abierta o cerrarse. No se cierra automáticamente.", "badge");
+    }
     if (survey.state === "solo_admin") {
       const preview = text(card, "a", "Vista previa privada");
       preview.href = `encuestas.html?surveyId=${encodeURIComponent(survey.id)}`;
@@ -93,19 +98,29 @@ async function loadWeather() {
       });
     } else if (survey.state === "publicada" && !survey.closed) {
       text(card, "p", "Los resultados se mostrarán al cerrar la encuesta.");
-      const close = text(card, "button", "Cerrar definitivamente");
+      const close = text(card, "button", "Cerrar encuesta");
       close.type = "button";
       close.onclick = () => busy(card, async () => {
-        if (!confirm("El cierre es definitivo. ¿Cerrar esta encuesta?")) return;
+        if (!confirm("¿Cerrar esta encuesta? Se registrará el cierre y las huellas se eliminarán 15 días después. Podrás reabrirla por error antes de que venza ese plazo.")) return;
         try {
-          await api("weather_close", { surveyId: survey.id });
-          status.textContent = "Encuesta cerrada definitivamente.";
+          await api("weather_close", { surveyId: survey.id, confirm: true });
+          status.textContent = "Encuesta cerrada. Fecha de cierre registrada en UTC.";
           await loadWeather();
         } catch (error) {
           status.textContent = error.message;
         }
       });
     } else {
+      if (survey.closed && survey.closed_at && Date.now() - new Date(survey.closed_at).getTime() < 15 * 86400000) {
+        const reopen = text(card, "button", "Reabrir por error");
+        reopen.type = "button";
+        reopen.className = "secondary";
+        reopen.onclick = () => busy(card, async () => {
+          if (!confirm("¿Reabrir esta encuesta? Se conservarán las respuestas y participaciones, closed_at quedará vacío y un nuevo cierre iniciará otro plazo de 15 días.")) return;
+          try { await api("weather_reopen", { surveyId: survey.id, confirm: true }); status.textContent = "Encuesta reabierta; fecha de cierre anulada."; await loadWeather(); }
+          catch (error) { status.textContent = error.message; }
+        });
+      } else if (survey.closed) text(card, "p", "No se permite reabrir: la conservación de huellas ya ha vencido o no consta la fecha de cierre.");
       const resultsButton = text(card, "button", "Consultar resultados");
       resultsButton.type = "button";
       resultsButton.onclick = () => busy(card, async () => {
@@ -143,7 +158,7 @@ async function loadSimpleSurveys() {
       const button = text(
         card,
         "button",
-        ({ activate: "Activar encuesta", close: "Cerrar definitivamente", results: "Consultar resultados" })[action],
+        ({ activate: "Activar encuesta", close: "Cerrar encuesta", results: "Consultar resultados" })[action],
       );
       button.type = "button";
       button.onclick = () =>

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'str-ig-cache-v143-ios-blank-recovery';
+const CACHE_NAME = 'str-ig-cache-v144-ios-blank-recovery';
 
 const SUPABASE_URL = 'https://icneigdnuntzugisexaz.supabase.co';
 const APP_ORIGIN = self.location.origin;

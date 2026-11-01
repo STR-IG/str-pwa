@@ -32,6 +32,7 @@ export const messages = {
     "No se ha podido enviar el correo. Espera un minuto antes de solicitar otro código.",
   RESULTS_WITHHELD:
     "Los resultados públicos solo se muestran después del cierre y con al menos cinco participaciones.",
+  REOPEN_RETENTION_EXPIRED: "No se puede reabrir: las huellas ya pueden haberse eliminado. Crea una nueva encuesta.",
   INVALID_TRANSITION: "La encuesta ya cambió de estado. Actualiza el listado.",
   INVALID_SURVEY:
     "Revisa la pregunta y las opciones: entre 2 y 10, sin duplicados y de hasta 180 caracteres.",

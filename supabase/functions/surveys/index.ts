@@ -139,9 +139,10 @@ Deno.serve(async (req: Request) => {
       }
       return reply(await weatherCall("publish", weatherId()));
     }
-    if (action === "weather_close") {
+    if (action === "weather_close" || action === "weather_reopen") {
       if (!isAdmin) return reply({ error: "FORBIDDEN" }, 403);
-      return reply(await weatherCall("close", weatherId()));
+      if (body.confirm !== true) return reply({ error: "CONFIRMATION_REQUIRED" }, 400);
+      return reply(await weatherCall(action === "weather_close" ? "close" : "reopen", weatherId(), { confirm: true }));
     }
     if (action === "weather_cancel") {
       return reply(
@@ -210,7 +211,7 @@ Deno.serve(async (req: Request) => {
       return reply(result?.error ? result : { permit }, result?.error ? 400 : 200);
     }
     if (action === "weather_submit") {
-      const secret = weatherSecret();
+      const secret = await weatherSecret();
       if (typeof body.consent !== "boolean") {
         return reply({ error: "INVALID_CONSENT" }, 400);
       }
@@ -335,3 +336,4 @@ Deno.serve(async (req: Request) => {
     }, 400);
   }
 });
+
