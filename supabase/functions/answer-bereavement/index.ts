@@ -62,10 +62,6 @@ function secretKey() {
   return Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 }
 
-async function safetyIdentifier(userId: string) {
-  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(userId));
-  return Array.from(new Uint8Array(digest)).map((byte) => byte.toString(16).padStart(2, "0")).join("").slice(0, 64);
-}
 
 function extractOutputText(data: any) {
   if (typeof data?.output_text === "string") return data.output_text;
@@ -81,15 +77,14 @@ function formatDate(value: string) {
   return new Intl.DateTimeFormat("es-ES", { day: "numeric", month: "long", year: "numeric", timeZone: "Europe/Madrid" }).format(new Date(`${value}T12:00:00+02:00`));
 }
 
-servePermit(async (req: Request, subject: string) => {
+servePermit(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders(req) });
   if (req.method !== "POST") return json(req, { error: "METHOD_NOT_ALLOWED" }, 405);
 
   try {
     const openAiKey = Deno.env.get("OPENAI_API_KEY") || "";
     if (!openAiKey) return new Response(JSON.stringify({error:"SERVER_CONFIGURATION"}), {status:500});
-    const user = { id: subject };
-    const body = await req.json().catch(() => ({}));
+const body = await req.json().catch(() => ({}));
     const relationship = String(body?.relationship ?? "").trim().slice(0, 100);
     const relationshipScope = String(body?.relationshipScope ?? "");
     const deathDate = String(body?.deathDate ?? "");
@@ -112,7 +107,6 @@ servePermit(async (req: Request, subject: string) => {
         store: false,
         reasoning: { effort: "low" },
         max_output_tokens: 700,
-        safety_identifier: await safetyIdentifier(user.id),
         instructions: `Eres un asistente informativo de la sección sindical STR-IG. Analiza exclusivamente datos estructurados de un permiso por fallecimiento familiar. La referencia es el artículo 37.3.b bis del Estatuto de los Trabajadores y el artículo 50.4 del XXI Convenio General de la Industria Química: dos días laborables, ampliados en dos cuando existe necesidad de desplazamiento. La norma no fija una distancia mínima para este supuesto. No inventes pactos, horarios, documentos ni criterios empresariales. Los familiares consanguíneos de una pareja de hecho marcados como review no están incluidos expresamente en la cláusula de fallecimiento y requieren revisión de STR-IG. La hora, el turno y el calendario pueden afectar al inicio del cómputo. Da una orientación clara, prudente y breve, nunca una garantía jurídica. Responde en español y no incluyas datos personales.`,
         input: JSON.stringify(facts),
         text: { verbosity: "low", format: { type: "json_schema", name: "bereavement_guidance", strict: true, schema: {
