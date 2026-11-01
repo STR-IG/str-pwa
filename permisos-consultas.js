@@ -121,7 +121,8 @@ export function handlePermitError(error, result) {
     AUTH_REQUIRED: 'Para realizar esta consulta, entra en la app con un acceso autorizado.',
     ACCESS_NOT_ACTIVE: 'Esta cuenta no tiene acceso activo a la consulta. Comprueba el acceso en el área privada.',
     ACCESS_CHECK_FAILED: 'No podemos comprobar el acceso ahora. Inténtalo más tarde.',
-    CONSENT_NOT_GIVEN: 'La consulta no se ha enviado porque no has dado tu consentimiento.'
+    CONSENT_NOT_GIVEN: 'La consulta no se ha enviado porque no has dado tu consentimiento.',
+    CONSENT_REQUIRED: 'Antes de enviar la consulta, acepta el aviso de privacidad.'
   };
   const message = messages[error?.message];
   if (!message) return false;
