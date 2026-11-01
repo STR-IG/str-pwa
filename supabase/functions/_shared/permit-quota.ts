@@ -1,7 +1,7 @@
 import { createClient } from 'npm:@supabase/supabase-js@2.57.4';
-import { quotaHandler } from './permit-quota-core.js';
+import { accessHandler } from './permit-quota-core.js';
 
-export function servePermit(handler: (req: Request, subject: string) => Promise<Response>, statusOnly = false) {
+export function servePermit(handler: (req: Request) => Promise<Response>) {
   let adminClient: ReturnType<typeof createClient> | null = null;
   const getAdminClient = () => {
     if (adminClient) return adminClient;
@@ -13,26 +13,22 @@ export function servePermit(handler: (req: Request, subject: string) => Promise<
     return adminClient;
   };
 
-  Deno.serve(quotaHandler(handler, async (args: Record<string, unknown>) => {
-    return await getAdminClient().rpc('permit_query_quota', args);
-  }, statusOnly, async (req: Request) => {
+  Deno.serve(accessHandler(handler, async (req: Request) => {
     const authorization = req.headers.get('Authorization') || '';
     const match = authorization.match(/^Bearer\s+(.+)$/i);
     if (!match) return false;
 
-    try {
-      const admin = getAdminClient();
-      const { data: { user }, error } = await admin.auth.getUser(match[1]);
-      if (error || !user?.email) return false;
-      const { data, error: allowlistError } = await admin
-        .from('committee_admins')
-        .select('email')
-        .eq('email', user.email.toLowerCase())
-        .eq('active', true)
-        .maybeSingle();
-      return !allowlistError && Boolean(data);
-    } catch {
-      return false;
-    }
+    const admin = getAdminClient();
+    const { data: { user }, error } = await admin.auth.getUser(match[1]);
+    if (error || !user?.email) return false;
+
+    const { data, error: accessError } = await admin
+      .from('private_access_allowlist')
+      .select('email')
+      .eq('email', user.email.trim().toLowerCase())
+      .eq('active', true)
+      .maybeSingle();
+    if (accessError) throw new Error('ACCESS_LOOKUP_FAILED');
+    return Boolean(data);
   }));
 }

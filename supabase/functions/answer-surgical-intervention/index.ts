@@ -62,10 +62,6 @@ function secretKey() {
   return Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 }
 
-async function safetyIdentifier(userId: string) {
-  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(userId));
-  return Array.from(new Uint8Array(digest)).map((byte) => byte.toString(16).padStart(2, "0")).join("").slice(0, 64);
-}
 
 function extractOutputText(data: any) {
   if (typeof data?.output_text === "string") return data.output_text;
@@ -77,15 +73,14 @@ function extractOutputText(data: any) {
   return "";
 }
 
-servePermit(async (req: Request, subject: string) => {
+servePermit(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders(req) });
   if (req.method !== "POST") return json(req, { error: "METHOD_NOT_ALLOWED" }, 405);
 
   try {
     const openAiKey = Deno.env.get("OPENAI_API_KEY") || "";
     if (!openAiKey) return new Response(JSON.stringify({error:"SERVER_CONFIGURATION"}), {status:500});
-    const user = { id: subject };
-    const body = await req.json().catch(() => ({}));
+const body = await req.json().catch(() => ({}));
     const relationship = String(body?.relationship ?? "").trim().slice(0, 80);
     const interventionDate = String(body?.interventionDate ?? "");
     const interventionTime = String(body?.interventionTime ?? "");
@@ -112,7 +107,6 @@ servePermit(async (req: Request, subject: string) => {
         store: false,
         reasoning: { effort: "low" },
         max_output_tokens: 900,
-        safety_identifier: await safetyIdentifier(user.id),
         instructions: `Eres un asistente informativo de la sección sindical STR-IG. Analiza exclusivamente datos estructurados de un cuestionario sobre intervención quirúrgica familiar sin hospitalización que precisa reposo domiciliario en España. La referencia general es el artículo 37.3.b del Estatuto de los Trabajadores. No inventes convenio, sentencia, diagnóstico, horario, duración del reposo ni documentación. Ten en cuenta la relación, la fecha y hora de la intervención, el turno asignado y los días que la persona ya ha propuesto disfrutar. En casos de persona conviviente o intervención de primer o segundo grado puede haber entre uno y cinco días propuestos porque todavía no haya decidido todos; no lo trates como error ni inventes los días restantes, y deja claro que solo se están valorando las fechas ya indicadas. El turno nocturno puede exigir revisar individualmente el momento en que comienza la jornada. No afirmes con certeza que días discontinuos son válidos si falta respaldo normativo o convencional; señálalo como aspecto que debe confirmar STR-IG. Da una orientación clara, prudente y breve, nunca una garantía jurídica. Si faltan datos esenciales, las fechas exceden el reposo acreditado o hay una posible incompatibilidad temporal, usa el estado revision. Responde en español y no incluyas datos personales.`,
         input: JSON.stringify(facts),
         text: {

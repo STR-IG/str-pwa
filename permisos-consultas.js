@@ -2,33 +2,9 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 
 const API = 'https://icneigdnuntzugisexaz.supabase.co/functions/v1/';
 const KEY = 'sb_publishable_apKjcPClIBTHS2wwN6qPsA_6Vm4tk9m';
-const STORAGE_KEY = 'strPermitBrowserKeyV1';
 const supabase = createClient('https://icneigdnuntzugisexaz.supabase.co', KEY, {
   auth: { persistSession: true, autoRefreshToken: true }
 });
-
-export function browserKey() {
-  try {
-    let key = localStorage.getItem(STORAGE_KEY);
-    if (!/^[a-f0-9]{64}$/.test(key || '')) {
-      key = Array.from(crypto.getRandomValues(new Uint8Array(32)), b => b.toString(16).padStart(2, '0')).join('');
-      localStorage.setItem(STORAGE_KEY, key);
-    }
-    return key;
-  } catch {
-    throw new Error('Activa el almacenamiento de este navegador para realizar consultas. La Guía rápida sigue disponible.');
-  }
-}
-
-function showQuota(quota, message) {
-  const el = document.getElementById('permit-quota');
-  if (!el) return;
-  el.textContent = message || (quota.unlimited
-    ? 'Tienes consultas ilimitadas con tu cuenta de administración.'
-    : quota.remaining === 0
-    ? 'Has agotado tus créditos de consulta de este mes. Se renovarán el día 1 del próximo mes. Mientras tanto, puedes consultar la Guía rápida sin límite.'
-    : `Créditos de consulta disponibles este mes: ${quota.remaining} de 2.`);
-}
 
 export async function permitFetch(url, options = {}) {
   const headers = new Headers(options.headers);
@@ -37,57 +13,58 @@ export async function permitFetch(url, options = {}) {
   try {
     const { data: { session } } = await supabase.auth.getSession();
     if (session?.access_token) headers.set('Authorization', `Bearer ${session.access_token}`);
-  } catch { /* Anonymous access keeps the normal monthly quota. */ }
-  headers.set('X-Permit-Device', browserKey());
-  const response = await fetch(url, { ...options, headers });
-  const data = await response.clone().json().catch(() => ({}));
-  if (data.quota) showQuota(data.quota);
-  if (data.error === 'MONTHLY_LIMIT_REACHED') {
-    const message = 'Has agotado tus créditos de consulta de este mes. Se renovarán el día 1 del próximo mes. Mientras tanto, puedes consultar la Guía rápida sin límite.';
-    showQuota(null, message);
-  }
-  return response;
+  } catch { /* The server rejects requests without an active validated session. */ }
+  return fetch(url, { ...options, headers });
 }
 
 export function handlePermitError(error, result) {
   const messages = {
-    MONTHLY_LIMIT_REACHED: 'Has agotado tus créditos de consulta de este mes. Se renovarán el día 1 del próximo mes. Mientras tanto, puedes consultar la Guía rápida sin límite.',
-    QUOTA_UNAVAILABLE: 'No podemos comprobar tu saldo ahora. Inténtalo más tarde.',
-    BROWSER_KEY_REQUIRED: 'No hemos podido reconocer este navegador. Recarga la página para volver a intentarlo.'
+    AUTH_REQUIRED: 'Para realizar esta consulta, entra en la app con un acceso autorizado.',
+    ACCESS_NOT_ACTIVE: 'Esta cuenta no tiene acceso activo a la consulta. Comprueba el acceso en el área privada.',
+    ACCESS_CHECK_FAILED: 'No podemos comprobar el acceso ahora. Inténtalo más tarde.'
   };
   const message = messages[error?.message];
   if (!message) return false;
   result.className = 'result show not-compatible';
   const heading = document.createElement('strong');
-  heading.textContent = error.message === 'MONTHLY_LIMIT_REACHED' ? 'Créditos mensuales agotados' : 'Consulta no disponible';
+  heading.textContent = 'Consulta no disponible';
   const copy = document.createElement('p');
   copy.textContent = message;
   const link = document.createElement('a');
-  link.href = 'permisos.html';
-  link.textContent = 'Consultar la Guía rápida';
+  const next = location.pathname.split('/').pop() || 'preguntale-str-permisos.html';
+  link.href = `acceso-privado.html?next=${encodeURIComponent(next)}`;
+  link.textContent = 'Entrar al área privada';
   result.replaceChildren(heading, copy, link);
   result.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   return true;
 }
 
-export function showPublicPermitPage(withQuota = false) {
+export async function showAuthorizedPermitPage() {
+  const check = document.getElementById('auth-check');
+  if (check) {
+    check.hidden = false;
+    check.textContent = 'Comprobando acceso…';
+  }
+  const content = document.getElementById('content');
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.access_token) {
+      const { data, error } = await supabase.rpc('is_current_user_private_access_allowed');
+      if (!error && data === true) {
+        if (check) check.hidden = true;
+        if (content) content.hidden = false;
+        return true;
+      }
+    }
+  } catch { /* Fail closed and send the visitor to the access screen. */ }
+  const next = location.pathname.split('/').pop() || 'preguntale-str-permisos.html';
+  location.replace(`acceso-privado.html?next=${encodeURIComponent(next)}`);
+  return false;
+}
+
+export function showPublicPermitPage() {
   const check = document.getElementById('auth-check');
   if (check) check.hidden = true;
   const content = document.getElementById('content');
   if (content) content.hidden = false;
-  if (!withQuota) return;
-  const notice = document.createElement('p');
-  notice.id = 'permit-quota';
-  notice.setAttribute('role', 'status');
-  notice.setAttribute('aria-live', 'polite');
-  notice.style.cssText = 'padding:14px;border-radius:14px;background:#fff0f1;color:#8b1320;line-height:1.5;font-size:14px;margin:0 0 18px';
-  notice.textContent = 'Consultando tus créditos disponibles…';
-  (content || document.querySelector('main')).prepend(notice);
-  permitFetch(API + 'permit-query-quota', { method: 'POST', signal: AbortSignal.timeout(10000) })
-    .then(async response => {
-      if (!response.ok) throw new Error();
-      const data = await response.json();
-      showQuota(data.quota);
-    })
-    .catch(() => showQuota(null, 'No se ha podido consultar tu saldo de créditos. Comprueba la conexión. La Guía rápida sigue disponible sin límite.'));
 }
