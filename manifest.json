@@ -2,7 +2,7 @@
   "name": "STR-IG",
   "short_name": "STR-IG",
   "id": "/str-pwa/",
-  "start_url": "./app.html",
+  "start_url": "./app.html?v=142-ios-recovery",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#e30613",
