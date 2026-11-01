@@ -8,7 +8,7 @@ export function privateAccessMessage(affiliate) {
 
 Hemos autorizado este correo para acceder al área privada de la app de STR y utilizar «Calcula tu V» y «Revisa tu nómina».
 
-No es necesario estar afiliado a STR. La autorización de acceso no implica afiliación sindical.
+Utiliza el correo autorizado y el código temporal para acceder al área privada.
 
 INSTALA LA APP SI TODAVÍA NO LA TIENES
 
