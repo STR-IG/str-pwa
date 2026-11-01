@@ -1,7 +1,7 @@
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.4/+esm';
 
-const API = 'https://icneigdnuntzugisexaz.supabase.co/functions/v1/';
 const KEY = 'sb_publishable_apKjcPClIBTHS2wwN6qPsA_6Vm4tk9m';
+try { localStorage.removeItem('strPermitBrowserKeyV1'); } catch { /* Clear the retired quota identifier when this module loads. */ }
 const supabase = createClient('https://icneigdnuntzugisexaz.supabase.co', KEY, {
   auth: { persistSession: true, autoRefreshToken: true }
 });
