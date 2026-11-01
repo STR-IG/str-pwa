@@ -32,11 +32,11 @@
   <button id="continue" class="primary" disabled>Continuar</button>
 </div></section></main>
 <script type="module">
-import { permitFetch, showPublicPermitPage } from './permisos-consultas.js';
+import { permitFetch, showAuthorizedPermitPage } from './permisos-consultas.js';
 const URL='https://icneigdnuntzugisexaz.supabase.co',KEY='sb_publishable_apKjcPClIBTHS2wwN6qPsA_6Vm4tk9m',PAGE='preguntale-hospitalizacion-segundo-grado-documentacion.html';
 
 
-showPublicPermitPage(false);
+showAuthorizedPermitPage(false);
 const state={hospitalProof:'',relationshipRecorded:'',relationshipProof:'',healthData:'',thirdPartyData:''},relationshipProofQuestion=document.getElementById('relationship-proof-question'),warning=document.getElementById('privacy-warning'),continueButton=document.getElementById('continue');
 for(const key of Object.keys(state))state[key]=sessionStorage.getItem(`strHospitalDoc2_${key}`)||'';
 function refresh(){relationshipProofQuestion.hidden=state.relationshipRecorded==='yes';const needsRelationshipProof=state.relationshipRecorded!=='yes';const valid=state.hospitalProof&&state.relationshipRecorded&&state.healthData&&state.thirdPartyData&&(!needsRelationshipProof||state.relationshipProof);continueButton.disabled=!valid;const warnings=[];if(state.healthData==='yes'||state.healthData==='unknown')warnings.push('Revisa el justificante y elimina u oculta datos de salud que no sean necesarios para acreditar las fechas de hospitalización.');if(state.thirdPartyData==='yes'||state.thirdPartyData==='unknown')warnings.push('Oculta los datos personales de terceras personas que no sean necesarios para justificar el permiso.');if(state.hospitalProof==='no'||state.hospitalProof==='unknown')warnings.push('Se solicita justificante de las fechas de hospitalización.');if(state.relationshipRecorded!=='yes'&&(state.relationshipProof==='no'||state.relationshipProof==='unknown'))warnings.push('Si el parentesco no consta en los sistemas internos, puede ser necesario acreditarlo documentalmente.');warning.textContent=warnings.length?warnings.join(' '):'La documentación parece preparada. Pregúntale a STR no recibe ni almacena ningún documento.'}

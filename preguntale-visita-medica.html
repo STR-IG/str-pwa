@@ -22,11 +22,11 @@
 <div class="screen" data-step="6"><span class="step">Paso 6</span><h2>¿Qué jornada o turno tenías ese día?</h2><label for="shift">Turno o jornada</label><select id="shift"><option value="">Selecciona una opción</option><option value="morning">Turno de mañana</option><option value="afternoon">Turno de tarde</option><option value="night-start">Turno de noche que empieza ese día</option><option value="night-previous">Turno de noche iniciado el día anterior</option><option value="split">Jornada partida</option><option value="other">Otro horario</option></select><p id="final-notice" class="notice"></p><button id="consult" class="primary" disabled>Obtener orientación</button><div id="result" class="result"></div></div>
 </div></section></main>
 <script type="module">
-import { permitFetch, showPublicPermitPage, handlePermitError } from './permisos-consultas.js';
+import { permitFetch, showAuthorizedPermitPage, handlePermitError } from './permisos-consultas.js';
 const URL='https://icneigdnuntzugisexaz.supabase.co',KEY='sb_publishable_apKjcPClIBTHS2wwN6qPsA_6Vm4tk9m',PAGE='preguntale-visita-medica.html',ANSWER_URL=`${URL}/functions/v1/answer-medical-visit`;
 
 
-showPublicPermitPage(true);
+showAuthorizedPermitPage(true);
 const state={caseType:'',duringWork:'',region:'',needsEscort:'',dependency:'',medicalProof:''};
 const screens=[...document.querySelectorAll('.screen')],doctor=document.getElementById('doctorType'),relationship=document.getElementById('relationship'),date=document.getElementById('visitDate'),start=document.getElementById('absenceStart'),end=document.getElementById('absenceEnd'),shift=document.getElementById('shift'),consult=document.getElementById('consult'),result=document.getElementById('result');
 function go(n){screens.forEach(s=>s.classList.toggle('active',Number(s.dataset.step)===n));scrollTo({top:0,behavior:'smooth'})}function nb(s){return s.querySelector('.next')}
