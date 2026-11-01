@@ -1,4 +1,4 @@
-import { permitFetch, showPublicPermitPage, handlePermitError } from './permisos-consultas.js';
+import { permitFetch, showAuthorizedPermitPage, handlePermitError } from './permisos-consultas.js';
 import { dutyChoices, dutySections, validDutyFacts, dutyFacts, validDutyGuidance } from './public-duty.js';
 
 const URL = 'https://icneigdnuntzugisexaz.supabase.co';
@@ -98,4 +98,4 @@ form.onsubmit = async e => {
   }
 };
 try { sessionStorage.removeItem(DRAFT); } catch {}
-showPublicPermitPage(true); go(step); refresh(); if (completed) showGuidance();
+showAuthorizedPermitPage(true); go(step); refresh(); if (completed) showGuidance();
