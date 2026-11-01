@@ -2019,11 +2019,6 @@
           </ul>
         </div>
 
-        <label class="confirmation" for="privacy-confirmation">
-          <input id="privacy-confirmation" type="checkbox">
-          <span>He comprobado el recorte y confirmo que no contiene datos personales.</span>
-        </label>
-
         <input id="document-image" class="file-input" type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif">
         <button id="select-image" class="secondary select-image" type="button" disabled><span aria-hidden="true">▣</span> Seleccionar imagen</button>
         <p id="select-hint" class="select-hint">Marca primero la casilla de aceptación.</p>
@@ -2070,6 +2065,13 @@
         <div id="image-preview" class="preview" hidden>
           <img id="preview-image" alt="Vista previa de la imagen seleccionada">
           <div class="preview-label"><span aria-hidden="true">✓</span><span id="preview-status-text">Imagen lista para revisar</span></div>
+        </div>
+
+        <div id="privacy-confirmation-row" hidden>
+          <label class="confirmation" for="privacy-confirmation">
+            <input id="privacy-confirmation" type="checkbox">
+            <span>He revisado esta imagen y confirmo que el recorte no contiene datos personales.</span>
+          </label>
         </div>
 
         <div id="document-actions" class="actions" hidden>
@@ -2220,6 +2222,7 @@
     const currentSalaryResult = document.getElementById('current-salary-result');
     const salaryDifference = document.getElementById('salary-difference');
     const privacyConfirmation = document.getElementById('privacy-confirmation');
+    const privacyConfirmationRow = document.getElementById('privacy-confirmation-row');
     const fileInput = document.getElementById('document-image');
     const selectImageButton = document.getElementById('select-image');
     const selectHint = document.getElementById('select-hint');
@@ -4921,7 +4924,7 @@
       privacyConfirmation.checked = false;
       fileInput.value = '';
       selectImageButton.disabled = true;
-      selectHint.textContent = 'Marca primero la casilla de aceptación.';
+      selectHint.textContent = 'Selecciona la imagen. Después podrás revisar el recorte y confirmar que no contiene datos personales.';
       fileError.hidden = true;
       fileError.textContent = '';
       confirmImageButton.disabled = true;
@@ -4947,10 +4950,10 @@
       const regularizationReady = detectedRegularizationMonth === null || Boolean(confirmedRegularizationPeriod);
       const readyToUpload = needsUpload && privacyConfirmation.checked && privacyScanState === 'passed' && regularizationReady;
       preview.hidden = !hasImage;
+      privacyConfirmationRow.hidden = !hasImage || !needsUpload;
       preview.classList.toggle('scan-blocked', privacyBlocked);
       documentActions.hidden = !hasImage;
-      const selectionNeedsConsent = activeKind === 'timesheet' && !privacyConfirmation.checked;
-      selectImageButton.disabled = readOnly || savingDocument || checkingPrivacy || selectionNeedsConsent;
+      selectImageButton.disabled = readOnly || savingDocument || checkingPrivacy;
       if (activeKind === 'timesheet') {
         selectHint.textContent = 'Elige una imagen que ya tengas guardada en tu dispositivo. No hagas la foto directamente desde aquí, ya que podría no procesarse correctamente.';
         selectImageButton.setAttribute('aria-disabled', String(selectImageButton.disabled));
@@ -4958,7 +4961,7 @@
       } else {
         selectImageButton.removeAttribute('aria-disabled');
       }
-      changeImageButton.disabled = readOnly || savingDocument || checkingPrivacy || selectionNeedsConsent;
+      changeImageButton.disabled = readOnly || savingDocument || checkingPrivacy;
       changeImageButton.textContent = privacyBlocked ? 'Recortar o cambiar imagen' : 'Cambiar imagen';
       confirmImageButton.disabled = savingDocument || !hasImage || (needsUpload && !readyToUpload);
       confirmImageButton.textContent = savingDocument
@@ -4982,7 +4985,7 @@
             : (privacyBlocked
               ? 'Imagen no aceptada: recórtala o cámbiala'
               : (privacyScanState === 'passed'
-                ? (regularizationReady ? 'Control superado: imagen lista para guardar' : 'Confirma el mes de la regularización')
+                ? (regularizationReady ? 'Control automático superado: revisa la imagen y marca la casilla para guardarla' : 'Confirma el mes de la regularización')
                 : 'Imagen pendiente de comprobación')));
       } else {
         previewImage.removeAttribute('src');
@@ -5100,7 +5103,6 @@
     }
 
     function chooseImage() {
-      if (activeKind === 'timesheet' && !privacyConfirmation.checked) return;
       if ((isCurrentReviewComplete() && !(isAdminMode && adminReplacementKind === activeKind)) || savingDocument) return;
       fileInput.value = '';
       fileInput.click();
@@ -5174,6 +5176,7 @@
     }
 
     async function acceptSelectedFile(file) {
+      privacyConfirmation.checked = false;
       const storedUrl = documents[activeKind].url;
       if (workingUrl && workingUrl !== storedUrl) URL.revokeObjectURL(workingUrl);
       workingFile = file; workingUrl = URL.createObjectURL(file); workingSaved = false; workingOcrText = '';
@@ -5348,11 +5351,6 @@
     }
 
     privacyConfirmation.addEventListener('change', () => {
-      selectHint.textContent = privacyConfirmation.checked
-        ? 'Selecciona la hoja completa. Tras confirmar el recorte se comprobará en este dispositivo.'
-        : (workingSaved
-          ? 'La imagen ya está guardada. Marca la casilla solo si quieres sustituirla.'
-          : 'Selecciona la hoja completa; podrás recortarla dentro de la aplicación.');
       renderWorkingPreview();
     });
 
