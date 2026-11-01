@@ -1,4 +1,4 @@
-export const SURVEY_PRIVACY_URL = 'https://str-ig.github.io/str-pwa/docs/aviso-privacidad-encuestas-str.pdf?v=20261030-2';
+export const SURVEY_PRIVACY_URL = 'https://str-ig.github.io/str-pwa/docs/aviso-privacidad-encuestas-str.pdf?v=20261101-3';
 
 export function surveyCodeMessage(
   code,
@@ -32,3 +32,4 @@ Sección sindical de STR en Instituto Grifols`;
 </div>`;
   return { subject, text, html };
 }
+

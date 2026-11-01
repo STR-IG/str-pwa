@@ -19,7 +19,8 @@ async function showWeatherResults(survey, test) {
   box.replaceChildren();
   box.hidden = false;
   text(box, "h2", `${survey.title} · ${test ? "prueba" : "resultados"}`);
-  text(box, "p", `Participaciones: ${result.total}`);
+  text(box, "p", `Participaciones: ${result.total ?? "No mostrado para proteger grupos pequeños"}`);
+  if (result.archived) text(box, "p", "Resultados agregados conservados tras eliminar las respuestas individuales. Se omiten preguntas con celdas pequeñas y desgloses cruzados.");
   const labels = new Map(detail.questions.map((question) => [question.id, question.title]));
   for (const [questionId, counts] of Object.entries(result.counts || {})) {
     const section = text(box, "section", "", "result-question");
