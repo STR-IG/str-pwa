@@ -183,7 +183,7 @@
   </main>
 
   <script type="module">
-    import { permitFetch, showPublicPermitPage } from './permisos-consultas.js';
+    import { permitFetch, showAuthorizedPermitPage } from './permisos-consultas.js';
 
     const URL = 'https://icneigdnuntzugisexaz.supabase.co';
     const KEY = 'sb_publishable_apKjcPClIBTHS2wwN6qPsA_6Vm4tk9m';
@@ -192,7 +192,7 @@
 
 
 
-    showPublicPermitPage(true);
+    showAuthorizedPermitPage(true);
 
     const relationship = document.getElementById('relationship');
     const continueButton = document.getElementById('continue');
