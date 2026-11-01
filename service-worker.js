@@ -1,6 +1,8 @@
-const CACHE_NAME = 'str-ig-cache-v141-calendar-viewer-back';
+const CACHE_NAME = 'str-ig-cache-v142-ios-blank-recovery';
 
 const SUPABASE_URL = 'https://icneigdnuntzugisexaz.supabase.co';
+const APP_ORIGIN = self.location.origin;
+
 self.addEventListener('install', (event) => {
   self.skipWaiting();
 });
@@ -17,7 +19,10 @@ self.addEventListener('activate', (event) => {
           })
         )
       )
-      .then(() => { try { indexedDB.deleteDatabase('str-ig-analytics'); } catch {} return self.clients.claim(); })
+      .then(() => {
+        try { indexedDB.deleteDatabase('str-ig-analytics'); } catch {}
+        return self.clients.claim();
+      })
   );
 });
 
@@ -61,48 +66,52 @@ self.addEventListener('notificationclick', (event) => {
   })());
 });
 
+function offlinePage() {
+  return new Response(
+    '<!doctype html><html lang="es"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#e30613"><title>STR-IG</title><body style="margin:0;min-height:100vh;display:grid;place-items:center;padding:24px;box-sizing:border-box;background:#f5f5f7;color:#222;font-family:Arial,sans-serif"><main style="max-width:420px;padding:24px;border-radius:20px;background:#fff;box-shadow:0 6px 22px #0002;text-align:center"><h1 style="margin:0 0 12px;color:#e30613">STR-IG</h1><p style="margin:0;line-height:1.5">Ahora mismo no hay conexión. Cierra la app y vuelve a abrirla cuando recuperes internet.</p></main></body></html>',
+    { status: 503, headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' } }
+  );
+}
+
+async function networkFirst(request, isNavigation) {
+  try {
+    const response = await fetch(request, { cache: 'no-store' });
+    if (response && response.ok) {
+      const cache = await caches.open(CACHE_NAME);
+      await cache.put(request, response.clone());
+    }
+    return response;
+  } catch (_error) {
+    const cached = await caches.match(request);
+    if (cached) return cached;
+    if (isNavigation) return offlinePage();
+    return Response.error();
+  }
+}
+
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
-  // Private API responses must not survive document erasure in offline caches.
-  if (new URL(event.request.url).origin === SUPABASE_URL || event.request.headers.has('Authorization')) {
+
+  const requestUrl = new URL(event.request.url);
+
+  if (requestUrl.origin === SUPABASE_URL || event.request.headers.has('Authorization')) {
     event.respondWith(fetch(event.request, { cache: 'no-store' }));
     return;
   }
 
-  // Survey APIs and survey pages must never return stale/private cached data.
-  const surveyUrl = new URL(event.request.url);
-  if (surveyUrl.pathname.includes('/functions/v1/surveys') || /\/encuestas(?:-admin)?\.html$/.test(surveyUrl.pathname)) {
-    event.respondWith(fetch(event.request, {cache:'no-store'}));
+  if (requestUrl.pathname.includes('/functions/v1/surveys') || /\/encuestas(?:-admin)?\.html$/.test(requestUrl.pathname)) {
+    event.respondWith(fetch(event.request, { cache: 'no-store' }));
     return;
   }
 
-  // Emergency status must never fall back to an old cached response.
-  if (new URL(event.request.url).origin === 'https://analisi.transparenciacatalunya.cat') {
-    event.respondWith(fetch(event.request, { cache:'no-store' }));
+  if (requestUrl.origin === 'https://analisi.transparenciacatalunya.cat') {
+    event.respondWith(fetch(event.request, { cache: 'no-store' }));
     return;
   }
 
-  if (event.request.mode === 'navigate') {
+  // Let Safari handle external modules and resources directly. Caching opaque
+  // cross-origin responses caused some installed copies to open as a blank page.
+  if (requestUrl.origin !== APP_ORIGIN) return;
 
-    event.respondWith(
-      fetch(event.request, { cache: 'no-store' })
-        .then((response) => {
-          const copy = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
-          return response;
-        })
-        .catch(() => caches.match(event.request))
-    );
-    return;
-  }
-
-  event.respondWith(
-    fetch(event.request, { cache: 'no-store' })
-      .then((response) => {
-        const copy = response.clone();
-        caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
-        return response;
-      })
-      .catch(() => caches.match(event.request))
-  );
+  event.respondWith(networkFirst(event.request, event.request.mode === 'navigate'));
 });
