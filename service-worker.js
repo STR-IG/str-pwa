@@ -1,4 +1,4 @@
-const CACHE_NAME = 'str-ig-cache-v139-retire-app-demo';
+const CACHE_NAME = 'str-ig-cache-v140-permit-privacy-consent';
 
 const SUPABASE_URL = 'https://icneigdnuntzugisexaz.supabase.co';
 self.addEventListener('install', (event) => {
