@@ -3,6 +3,8 @@ import { api, busy, isCorporateEmail, messages, text } from "./survey-api.js?v=2
 const $ = (id) => document.getElementById(id);
 const status = $("status");
 const list = $("surveys");
+const privacySummaryText = $("privacy-summary-text");
+const fullPrivacySummary = privacySummaryText.textContent;
 const blockTitles = {
   1: "Trabajo durante las alertas",
   2: "Información recibida",
@@ -30,6 +32,7 @@ function reset() {
   $("weather-vote-form").hidden = true;
   $("email-form").hidden = false;
   $("weather-questions").replaceChildren();
+  privacySummaryText.textContent = fullPrivacySummary;
 }
 
 async function load() {
@@ -93,7 +96,10 @@ async function open(survey) {
       ? "Cuestionario sobre información, desplazamientos y seguridad durante las alertas meteorológicas."
       : "");
   if (selected.kind === "weather") $("survey-description").textContent += " " + "La sección sindical anunciará el cierre de esta encuesta. No hay una fecha automática de cierre.";
-  const isWeatherTest = selected.kind === "weather" && selected.state !== "publicada";
+  const isWeatherTest = selected.kind === "weather" && selected.state === "solo_admin";
+  privacySummaryText.textContent = isWeatherTest
+    ? "Responsable: Sección Sindical de STR en Instituto Grifols. Usaremos tu correo para enviarte un código y limitar a una respuesta por dirección; no verificamos tu identidad. La huella de control se guarda separada de las respuestas. Base jurídica: interés legítimo. Algunos proveedores pueden tratar datos fuera del EEE. Derechos y oposición: str.ig@str.es."
+    : fullPrivacySummary;
   const isPrivateTest = selected.admin_only === true || isWeatherTest;
   $("consent-choice").hidden = selected.kind !== "simple" || isPrivateTest;
   $("weather-consent-choice").hidden = selected.kind !== "weather" || isPrivateTest;
