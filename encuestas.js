@@ -98,7 +98,7 @@ async function open(survey) {
   if (selected.kind === "weather") $("survey-description").textContent += " " + "La sección sindical anunciará el cierre de esta encuesta. No hay una fecha automática de cierre.";
   const isWeatherTest = selected.kind === "weather" && selected.state === "solo_admin";
   privacySummaryText.textContent = isWeatherTest
-    ? "Responsable: Sección Sindical de STR en Instituto Grifols. Usaremos tu correo para enviarte un código y limitar a una respuesta por dirección; no verificamos tu identidad. Base jurídica: interés legítimo. Algunos proveedores pueden tratar datos fuera del EEE. Derechos y oposición: str.ig@str.es."
+    ? "Responsable: Sección Sindical de STR en Instituto Grifols. Usaremos tu correo para enviarte un código y limitar a una respuesta por dirección; no verificamos tu identidad. Base jurídica: interés legítimo. Derechos y oposición: str.ig@str.es."
     : fullPrivacySummary;
   const isPrivateTest = selected.admin_only === true || isWeatherTest;
   $("consent-choice").hidden = selected.kind !== "simple" || isPrivateTest;
