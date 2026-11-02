@@ -245,6 +245,9 @@ const server = http.createServer(async (req, res) => {
     assert.equal(await page.locator("#weather-surveys h3").count(), 1);
     await page.goto(base + `/encuestas.html?surveyId=${weatherSurvey.id}`);
     await page.locator("#weather-vote-form").waitFor({ state: "visible" });
+    const privatePrivacyText = await page.locator("#privacy-summary-text").textContent();
+    assert.match(privatePrivacyText, /limitar a una respuesta por dirección/);
+    assert.doesNotMatch(privatePrivacyText, /Resend conserva dirección/);
     await page.locator("#email").fill("admin@example.com");
     await page.getByRole("button", { name: "Enviar código", exact: true }).click();
     await page.locator("#weather-vote-form").waitFor({ state: "visible" });
@@ -267,6 +270,10 @@ const server = http.createServer(async (req, res) => {
     await page.getByRole("button", { name: "Participar", exact: true }).last().waitFor();
     assert.equal(await page.getByText("Prueba exclusiva para administradores").count(), 0);
     admin = true;
+    await page.goto(base + `/encuestas.html?surveyId=${weatherSurvey.id}`);
+    await page.locator("#weather-vote-form").waitFor({ state: "visible" });
+    const publishedPrivacyText = await page.locator("#privacy-summary-text").textContent();
+    assert.match(publishedPrivacyText, /Resend conserva dirección/);
     await page.goto(base + "/encuestas-admin.html");
     await page.locator("#title").fill("Prueba creada");
     await page.locator("#new-options").fill("Sí\nNo");
