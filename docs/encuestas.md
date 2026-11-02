@@ -29,7 +29,7 @@ El formulario fuerza la ejecución de la función `surveys` en `eu-west-3`, la m
 
 El aviso público completo se publica en `docs/aviso-privacidad-encuestas-str.pdf`. La interfaz muestra únicamente la primera capa: responsable, finalidad, base jurídica y enlace al PDF. La ponderación detallada del interés legítimo se mantiene como documentación interna de cumplimiento; la validación técnica del borrado se registra más abajo en esta documentación del proyecto.
 
-En la encuesta meteorológica mientras permanece en `solo_admin`, la vista de prueba muestra un resumen más breve para revisar el diseño. Al publicarla, la interfaz vuelve al aviso completo de primera capa; el PDF público no cambia.
+En la encuesta meteorológica mientras permanece en `solo_admin`, la vista de prueba muestra un resumen más breve para revisar el diseño. La explicación de la huella, su separación de las respuestas y sus plazos queda en el PDF público. Al publicarla, la interfaz vuelve al aviso completo de primera capa; el PDF no cambia.
 
 La retirada del consentimiento se solicita en `str.ig@str.es`. El panel administrativo ofrece una acción específica que llama a `survey_contact_withdraw`: elimina únicamente el correo de `contacts`, sin tocar respuestas ni agregados, y no permite listar contactos.
 

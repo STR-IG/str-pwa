@@ -247,7 +247,9 @@ const server = http.createServer(async (req, res) => {
     await page.locator("#weather-vote-form").waitFor({ state: "visible" });
     const privatePrivacyText = await page.locator("#privacy-summary-text").textContent();
     assert.match(privatePrivacyText, /limitar a una respuesta por dirección/);
+    assert.doesNotMatch(privatePrivacyText, /huella de control/);
     assert.doesNotMatch(privatePrivacyText, /Resend conserva dirección/);
+    assert.match(privatePrivacyText, /Base jurídica: interés legítimo/);
     await page.locator("#email").fill("admin@example.com");
     await page.getByRole("button", { name: "Enviar código", exact: true }).click();
     await page.locator("#weather-vote-form").waitFor({ state: "visible" });
