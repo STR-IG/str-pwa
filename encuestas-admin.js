@@ -54,6 +54,7 @@ async function loadWeather() {
     const card = text(list, "article", "", "survey-admin-card");
     text(card, "h3", survey.title);
     text(card, "p", stateLabel(survey), "badge");
+    if (survey.opened_at) text(card, "p", "Apertura registrada (UTC): " + new Date(survey.opened_at).toISOString());
     if (survey.closed_at) text(card, "p", "Cierre registrado (UTC): " + new Date(survey.closed_at).toISOString());
     if (survey.state === "publicada" && !survey.closed) {
       if (!survey.opened_at) text(card, "p", "Revisa si debe seguir abierta: no consta la fecha de apertura para calcular el aviso de 30 días.", "badge");
