@@ -9,7 +9,7 @@
   <link rel="apple-touch-icon" href="icono-str-ig.png">
   <link rel="manifest" href="manifest.json">
   <style>
-    *{box-sizing:border-box}body{margin:0;min-height:100vh;background:#f5f5f7;color:#18181b;font-family:Arial,Helvetica,sans-serif}.topbar{position:sticky;top:0;z-index:10;display:flex;align-items:center;gap:14px;min-height:68px;padding:12px 18px;background:#fff;border-bottom:1px solid #e5e5e7}.back{display:grid;place-items:center;width:42px;height:42px;border-radius:50%;color:#18181b;background:#f0f0f2;text-decoration:none;font-size:25px}.topbar strong{font-size:18px}main{width:min(100% - 28px,780px);margin:0 auto;padding:28px 0 calc(48px + env(safe-area-inset-bottom))}h1{margin:0 0 8px;font-size:30px}.intro{margin:0 0 24px;color:#6e6e73;line-height:1.5}.status{padding:18px;border-radius:18px;background:#fff;box-shadow:0 5px 18px rgba(0,0,0,.06);color:#6e6e73}.communications{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.communication{padding:0;overflow:hidden;border:0;border-radius:20px;background:#fff;box-shadow:0 6px 20px rgba(0,0,0,.09);cursor:pointer;text-align:left}.communication[hidden]{display:none}.communication:focus-visible{outline:3px solid #e30613;outline-offset:3px}.communication img{display:block;width:100%;height:auto}.communication span{display:block;padding:14px 16px;font-weight:800}.viewer{position:fixed;inset:0;z-index:30;display:none;flex-direction:column;background:rgba(0,0,0,.92);padding:max(14px,env(safe-area-inset-top)) 14px max(14px,env(safe-area-inset-bottom))}.viewer.open{display:flex}.viewer-bar{display:flex;justify-content:flex-end;padding-bottom:12px}.close{min-width:46px;min-height:46px;border:0;border-radius:50%;color:#18181b;background:#fff;font-size:27px;cursor:pointer}.viewer-scroll{flex:1;overflow:auto;text-align:center;-webkit-overflow-scrolling:touch}.viewer img{display:block;width:min(100%,900px);height:auto;margin:0 auto;background:#fff}.private-content[hidden]{display:none}@media(max-width:620px){.communications{grid-template-columns:1fr}h1{font-size:27px}}
+    *{box-sizing:border-box}body{margin:0;min-height:100vh;background:#f5f5f7;color:#18181b;font-family:Arial,Helvetica,sans-serif}.topbar{position:sticky;top:0;z-index:10;display:flex;align-items:center;gap:14px;min-height:68px;padding:12px 18px;background:#fff;border-bottom:1px solid #e5e5e7}.back{display:grid;place-items:center;width:42px;height:42px;border-radius:50%;color:#18181b;background:#f0f0f2;text-decoration:none;font-size:25px}.topbar strong{font-size:18px}main{width:min(100% - 28px,780px);margin:0 auto;padding:28px 0 calc(48px + env(safe-area-inset-bottom))}h1{margin:0 0 8px;font-size:30px}.intro{margin:0 0 24px;color:#6e6e73;line-height:1.5}.status{padding:18px;border-radius:18px;background:#fff;box-shadow:0 5px 18px rgba(0,0,0,.06);color:#6e6e73}.communications{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.communication{padding:0;overflow:hidden;border:0;border-radius:20px;background:#fff;box-shadow:0 6px 20px rgba(0,0,0,.09);cursor:pointer;text-align:left}.communication[hidden]{display:none}.communication:focus-visible{outline:3px solid #e30613;outline-offset:3px}.communication img{display:block;width:100%;height:auto}.communication{display:flex;flex-direction:column;cursor:default}.communication img{height:180px;object-fit:cover;object-position:top}.communication h2{margin:0;padding:14px 16px;font-size:17px}.open-communication{align-self:flex-start;margin:auto 16px 16px;padding:10px 16px;min-height:44px;border:0;border-radius:10px;background:#c90010;color:#fff;font:inherit;font-weight:700;cursor:pointer}.open-communication:focus-visible{outline:3px solid #e30613;outline-offset:3px}.viewer{position:fixed;inset:0;z-index:30;display:none;flex-direction:column;background:rgba(0,0,0,.92);padding:max(14px,env(safe-area-inset-top)) 14px max(14px,env(safe-area-inset-bottom))}.viewer.open{display:flex}.viewer-bar{display:flex;justify-content:flex-end;padding-bottom:12px}.close{min-width:46px;min-height:46px;border:0;border-radius:50%;color:#18181b;background:#fff;font-size:27px;cursor:pointer}.viewer-scroll{flex:1;overflow:auto;text-align:center;-webkit-overflow-scrolling:touch}.viewer img{display:block;width:min(100%,900px);height:auto;margin:0 auto;background:#fff}.private-content[hidden]{display:none}@media(max-width:620px){.communications{grid-template-columns:1fr}h1{font-size:27px}}
   </style>
 </head>
 <body>
@@ -20,22 +20,26 @@
       <h1>Comunicados internos</h1>
       <p class="intro">Información exclusiva para personas afiliadas a STR-IG.</p>
       <div class="communications">
-        <button class="communication" type="button" aria-label="Abrir ficha de septiembre de 2026 en un minuto">
+        <article class="communication">
           <img data-src="ficha-septiembre-1minuto.png" alt="Septiembre 2026 en un minuto" loading="lazy">
-          <span>Septiembre 2026 · En un minuto</span>
-        </button>
-        <button class="communication" type="button" aria-label="Abrir ficha de julio de 2026 en un minuto">
+          <h2>Septiembre 2026 · En un minuto</h2>
+          <button class="open-communication" type="button" aria-label="Abrir ficha de septiembre de 2026 en un minuto">Abrir ficha</button>
+        </article>
+        <article class="communication">
           <img data-src="ficha-julio-1minuto.png" alt="Julio 2026 en un minuto" loading="lazy">
-          <span>Julio 2026 · En un minuto</span>
-        </button>
-        <button class="communication" type="button" data-news-id="internal-activity-summary-2026-06" data-storage-path="2026/06/resumen-actividad-junio-2026.jpg" aria-label="Abrir resumen de nuestra actividad de junio de 2026">
+          <h2>Julio 2026 · En un minuto</h2>
+          <button class="open-communication" type="button" aria-label="Abrir ficha de julio de 2026 en un minuto">Abrir ficha</button>
+        </article>
+        <article class="communication" data-news-id="internal-activity-summary-2026-06" data-storage-path="2026/06/resumen-actividad-junio-2026.jpg">
           <img alt="Junio 2026 en un minuto" loading="lazy">
-          <span>Junio 2026 · Resumen de nuestra actividad</span>
-        </button>
-        <button class="communication" type="button" data-news-id="internal-data-affiliation-2026-09" aria-label="Abrir comunicado sobre datos de afiliación">
+          <h2>Junio 2026 · Resumen de nuestra actividad</h2>
+          <button class="open-communication" type="button" aria-label="Abrir resumen de nuestra actividad de junio de 2026">Abrir ficha</button>
+        </article>
+        <article class="communication" data-news-id="internal-data-affiliation-2026-09">
           <img id="communication-preview" alt="Comunicado sobre datos de afiliación" loading="eager">
-          <span>Datos de afiliación</span>
-        </button>
+          <h2>Datos de afiliación</h2>
+          <button class="open-communication" type="button" aria-label="Abrir comunicado sobre datos de afiliación">Abrir ficha</button>
+        </article>
       </div>
     </section>
   </main>
@@ -87,14 +91,19 @@
       }
     }
 
+    let activeTrigger;
+
     function closeCommunication(){
+      if(!viewer.classList.contains('open'))return;
       viewer.classList.remove('open');
       viewer.setAttribute('aria-hidden','true');
       document.body.style.overflow='';
+      activeTrigger?.focus();
     }
 
     document.querySelectorAll('.communication').forEach((button)=>{
-      button.addEventListener('click',async()=>{
+      const trigger=button.querySelector('.open-communication');
+      trigger.addEventListener('click',async()=>{
         const selectedImage=button.querySelector('img');
         if(button.dataset.storagePath){
           const {data,error}=await supabase.storage.from(STORAGE_BUCKET).createSignedUrl(button.dataset.storagePath,SIGNED_URL_TTL_SECONDS);
@@ -108,6 +117,7 @@
         viewer.classList.add('open');
         viewer.setAttribute('aria-hidden','false');
         document.body.style.overflow='hidden';
+        activeTrigger=trigger;
         closeViewer.focus();
         if(!button.dataset.newsId)return;
         if(communicationImage.complete&&communicationImage.naturalWidth>0){
