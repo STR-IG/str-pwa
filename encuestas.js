@@ -47,7 +47,8 @@ async function load() {
       ...weatherResult.surveys.map((survey) => ({ ...survey, kind: "weather" })),
     ].filter((survey) => {
       if (survey.kind === "weather") {
-        return !survey.closed && ["publicada", "solo_admin"].includes(survey.state);
+        // Admin-only surveys are never rendered in the participant list, even in an admin session.
+        return !survey.closed && survey.state === "publicada";
       }
       return ["active"].includes(survey.state);
     });
@@ -69,7 +70,19 @@ async function load() {
     const urlSurveyId = new URLSearchParams(location.search).get("surveyId");
     if (urlSurveyId) {
       const requested = surveys.find((survey) => survey.id === urlSurveyId);
-      if (requested) await open(requested);
+      if (requested) {
+        await open(requested);
+      } else {
+        // Keep the admin's private preview available by direct link without listing it publicly.
+        try {
+          const privateWeather = await api("weather_get", { surveyId: urlSurveyId });
+          if (privateWeather.state === "solo_admin" && !privateWeather.closed) {
+            await open({ ...privateWeather, kind: "weather" });
+          }
+        } catch (error) {
+          status.textContent = error.message;
+        }
+      }
     }
   } catch (error) {
     status.textContent = error.message;
@@ -97,9 +110,7 @@ async function open(survey) {
       : "");
   if (selected.kind === "weather") $("survey-description").textContent += " " + "La sección sindical anunciará el cierre de esta encuesta. No hay una fecha automática de cierre.";
   const isWeatherTest = selected.kind === "weather" && selected.state === "solo_admin";
-  privacySummaryText.textContent = isWeatherTest
-    ? "Responsable: Sección Sindical de STR en Instituto Grifols. Usaremos tu correo para enviarte un código y limitar a una respuesta por dirección; no verificamos tu identidad. Base jurídica: interés legítimo. Derechos y oposición: str.ig@str.es."
-    : fullPrivacySummary;
+  privacySummaryText.textContent = fullPrivacySummary;
   const isPrivateTest = selected.admin_only === true || isWeatherTest;
   $("consent-choice").hidden = selected.kind !== "simple" || isPrivateTest;
   $("weather-consent-choice").hidden = selected.kind !== "weather" || isPrivateTest;
