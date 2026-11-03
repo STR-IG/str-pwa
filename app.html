@@ -194,7 +194,7 @@
         <a href="actualidad-empresa.html" class="quick-card menu-image-card news-notification-card" data-news-category="company-news" aria-label="Actualidad de tu empresa"><img src="card-actualidad-empresa.webp" alt="Actualidad de tu empresa"><span class="news-notification-badge" data-news-badge aria-label="Novedades sin leer">0</span></a>
         <a href="estado-carreteras.html" class="quick-card menu-image-card"><img src="card-estado-carreteras-v2.webp" style="object-fit:contain" alt="Estado de las carreteras. Tráfico e incidencias oficiales"></a>
         <a href="alertas-meteorologicas.html" class="quick-card menu-image-card" aria-label="Emergencias: alertas oficiales de Protecció Civil"><img src="card-alertas-meteorologicas.webp" style="object-fit:contain" alt="Emergencias: alertas oficiales de Protecció Civil" loading="lazy"></a>
-        <a href="conoce-tus-derechos.html" class="quick-card menu-image-card rights-image-card" aria-label="Conoce tus derechos"><img src="card-conoce-tus-derechos-propuesta-v5.webp" alt="Conoce tus derechos"></a>
+        <a href="conoce-tus-derechos.html" class="quick-card menu-image-card rights-image-card" aria-label="Conoce tus derechos" style="position:relative"><img src="card-conoce-tus-derechos-propuesta-v5.webp" alt="Conoce tus derechos"><span id="rights-new-badge" style="display:none;position:absolute;top:10px;right:10px;background:#e30613;color:#fff;border:2px solid #fff;border-radius:999px;padding:6px 10px;font-size:12px;font-weight:800;letter-spacing:.04em;box-shadow:0 2px 8px #0004;pointer-events:none">NUEVO</span></a>
         <a href="votaciones.html" class="quick-card menu-image-card voting-image-card" aria-label="Elecciones generales del 29-N: votaciones y permisos laborales"><img src="card-votaciones.webp" alt="Votaciones. Elecciones generales · 29-N" loading="lazy"></a>
         <article class="quick-card menu-image-card" aria-label="Nuestra sección sindical STR-IG"><img src="card-nuestra-seccion-sindical.webp" alt="Nuestra sección sindical STR-IG"></article>
       </div>
@@ -299,5 +299,13 @@ if (heroCarousel && heroDots.length) {
 if ('serviceWorker' in navigator) { window.addEventListener('load', async () => { try { const registration = await navigator.serviceWorker.register('./service-worker.js', { updateViaCache:'none' }); registration.update().catch(() => {}); } catch (error) { console.error('Error al registrar el Service Worker:', error); } }); }
 </script>
   <script type="module" src="./app-analytics.js?v=2-card-counts"></script>
+<script>
+  // El aviso es local a este dispositivo y se reinicia al cambiar la versión del contenido.
+  try {
+    if (localStorage.getItem('str-rights-seen-version') !== '2026-11-jubilacion') {
+      document.getElementById('rights-new-badge').style.display = 'block';
+    }
+  } catch (error) { document.getElementById('rights-new-badge').style.display = 'block'; }
+</script>
 </body>
 </html>
