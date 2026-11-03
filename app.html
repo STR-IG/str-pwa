@@ -51,10 +51,9 @@
     .area-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; width:100%; max-width:780px; }
     .quick-card { background:white; border-radius:20px; padding:20px; min-height:155px; box-shadow:0 5px 18px rgba(0,0,0,.07); display:flex; flex-direction:column; justify-content:space-between; transition:.2s ease; cursor:pointer; }
     .quick-card:hover { transform:translateY(-3px); box-shadow:0 10px 24px rgba(0,0,0,.11); }
-    .menu-image-card { aspect-ratio:1.45/1; min-height:0; padding:0; overflow:hidden; background:#fff; box-shadow:none; -webkit-transform:translateZ(0); transform:translateZ(0); -webkit-backface-visibility:hidden; backface-visibility:hidden; }
-    .menu-image-card img { width:100%; height:100%; object-fit:cover; display:block; -webkit-transform:translateZ(0); transform:translateZ(0); -webkit-backface-visibility:hidden; backface-visibility:hidden; }
+    .menu-image-card { position:relative; aspect-ratio:3/2; min-height:0; padding:0; overflow:hidden; background:#fff; box-shadow:none; -webkit-transform:translateZ(0); transform:translateZ(0); -webkit-backface-visibility:hidden; backface-visibility:hidden; }
+    .menu-image-card img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; display:block; -webkit-transform:translateZ(0); transform:translateZ(0); -webkit-backface-visibility:hidden; backface-visibility:hidden; }
     .voting-image-card { position:relative; }
-    .voting-image-card img { position:absolute; inset:0; width:100%; height:100%; object-fit:contain; object-position:center; }
     .news-notification-card { position:relative; }
     .news-notification-badge { position:absolute; top:8px; right:8px; z-index:5; min-width:28px; height:28px; padding:0 8px; border:2px solid #fff; border-radius:999px; display:none; align-items:center; justify-content:center; color:#fff; background:var(--red); box-shadow:0 3px 10px rgba(0,0,0,.24); font-size:15px; line-height:1; font-weight:900; }
     .news-notification-badge.show { display:flex; }
@@ -104,7 +103,6 @@
     a.news-card:focus-visible { outline:3px solid var(--red); outline-offset:3px; }
     .news-image { height:105px; background:linear-gradient(135deg,rgba(227,6,19,.85),rgba(176,0,12,.65)),#ddd; display:flex; align-items:end; padding:15px; color:white; font-weight:800; }
     .sindical-news-card { min-width:0; }
-    .sindical-news-card img, .rights-image-card img { display:block; width:100%; height:100%; object-fit:contain; }
     .activity-news-card { align-self:start; background:#111; }
     .activity-news-card img { width:100%; height:auto; display:block; }
     .information-news-card { padding:6px; background:#fff; }
@@ -186,14 +184,14 @@
       <h2 class="area-heading">ÁREA PÚBLICA</h2>
       <div class="area-grid">
         <a href="https://wa.me/34625641044?text=Hola%20Roc%C3%ADo%2C%20quiero%20comprar%20un%20d%C3%A9cimo%20de%20la%20loter%C3%ADa%20de%20Navidad%20de%20STR." class="quick-card menu-image-card" target="_blank" rel="noopener noreferrer" aria-label="Solicita tu décimo de lotería de Navidad STR 2026 por WhatsApp. Número 30234, 21 euros por décimo"><img src="card-loteria-navidad-solicita.webp" alt="Lotería de Navidad STR 2026. Número 30234, 21 euros por décimo. Solicita tu décimo" width="1450" height="1000" loading="lazy"></a>
-        <a href="permisos-publicos.html" class="quick-card menu-image-card"><img src="card-permisos-retribuidos-ajustada.webp" style="object-fit:contain" alt="Permisos retribuidos"></a>
-        <a href="encuestas.html" class="quick-card menu-image-card" aria-label="Participa en las encuestas. Tu opinión cuenta"><img src="card-participa-encuestas.webp" style="object-fit:contain" alt="Participa en las encuestas. Tu opinión cuenta" loading="lazy"></a>
+        <a href="permisos-publicos.html" class="quick-card menu-image-card"><img src="card-permisos-retribuidos-ajustada.webp" alt="Permisos retribuidos"></a>
+        <a href="encuestas.html" class="quick-card menu-image-card" aria-label="Participa en las encuestas. Tu opinión cuenta"><img src="card-participa-encuestas.webp" alt="Participa en las encuestas. Tu opinión cuenta" loading="lazy"></a>
         <a href="menu-comedor.html" class="quick-card menu-image-card news-notification-card" id="menu-card" data-news-category="menu"><img src="menu-comedor.webp" alt="Menú comedor"><span class="news-notification-badge" data-news-badge aria-label="Novedades sin leer">0</span></a>
         <a class="quick-card menu-image-card sindical-news-card news-notification-card" href="actividad-informacion-sindical.html" data-news-category="activity" data-news-categories="activity documentation-info" aria-label="ACTIVIDAD E INFORMACIÓN SINDICAL"><img src="actividad-sindical-480x295.webp" alt="ACTIVIDAD E INFORMACIÓN SINDICAL"><span class="news-notification-badge" data-news-badge aria-label="Novedades sin leer">0</span></a>
         <a href="actualidad-laboral.html" class="quick-card menu-image-card news-notification-card" data-news-category="labor-news" aria-label="Actualidad laboral"><img src="card-actualidad-laboral.webp" alt="Actualidad laboral"><span class="news-notification-badge" data-news-badge aria-label="Novedades sin leer">0</span></a>
         <a href="actualidad-empresa.html" class="quick-card menu-image-card news-notification-card" data-news-category="company-news" aria-label="Actualidad de tu empresa"><img src="card-actualidad-empresa.webp" alt="Actualidad de tu empresa"><span class="news-notification-badge" data-news-badge aria-label="Novedades sin leer">0</span></a>
-        <a href="estado-carreteras.html" class="quick-card menu-image-card"><img src="card-estado-carreteras-v2.webp" style="object-fit:contain" alt="Estado de las carreteras. Tráfico e incidencias oficiales"></a>
-        <a href="alertas-meteorologicas.html" class="quick-card menu-image-card" aria-label="Emergencias: alertas oficiales de Protecció Civil"><img src="card-alertas-meteorologicas.webp" style="object-fit:contain" alt="Emergencias: alertas oficiales de Protecció Civil" loading="lazy"></a>
+        <a href="estado-carreteras.html" class="quick-card menu-image-card"><img src="card-estado-carreteras-v2.webp" alt="Estado de las carreteras. Tráfico e incidencias oficiales"></a>
+        <a href="alertas-meteorologicas.html" class="quick-card menu-image-card" aria-label="Emergencias: alertas oficiales de Protecció Civil"><img src="card-alertas-meteorologicas.webp" alt="Emergencias: alertas oficiales de Protecció Civil" loading="lazy"></a>
         <a href="conoce-tus-derechos.html" class="quick-card menu-image-card rights-image-card" aria-label="Conoce tus derechos" style="position:relative"><img src="card-conoce-tus-derechos-propuesta-v5.webp" alt="Conoce tus derechos"><span id="rights-new-badge" style="display:none;position:absolute;top:10px;right:10px;background:#e30613;color:#fff;border:2px solid #fff;border-radius:999px;padding:6px 10px;font-size:12px;font-weight:800;letter-spacing:.04em;box-shadow:0 2px 8px #0004;pointer-events:none">NUEVO</span></a>
         <a href="votaciones.html" class="quick-card menu-image-card voting-image-card" aria-label="Elecciones generales del 29-N: votaciones y permisos laborales"><img src="card-votaciones.webp" alt="Votaciones. Elecciones generales · 29-N" loading="lazy"></a>
         <article class="quick-card menu-image-card" aria-label="Nuestra sección sindical STR-IG"><img src="card-nuestra-seccion-sindical.webp" alt="Nuestra sección sindical STR-IG"></article>
@@ -203,8 +201,8 @@
     <div class="area-block">
       <h2 class="area-heading" id="area-privada">ÁREA PRIVADA</h2>
       <div class="area-grid">
-        <a href="acceso-privado.html?next=calendarios.html" class="quick-card menu-image-card" aria-label="Calendarios 2027, calendarios base y hoja de ruta, área privada"><img src="card-calendarios-base-2027-private.webp" style="object-fit:contain" alt="Calendarios 2027 · Calendarios base y hoja de ruta" loading="lazy"></a>
-        <a href="acceso-privado.html?next=preguntale-str-permisos.html" class="quick-card menu-image-card" aria-label="Asistente de permisos retribuidos, área privada"><img src="asistente-permisos-retribuidos-private.webp" style="object-fit:contain" alt="Asistente de permisos retribuidos" loading="lazy"></a>
+        <a href="acceso-privado.html?next=calendarios.html" class="quick-card menu-image-card" aria-label="Calendarios 2027, calendarios base y hoja de ruta, área privada"><img src="card-calendarios-base-2027-private.webp" alt="Calendarios 2027 · Calendarios base y hoja de ruta" loading="lazy"></a>
+        <a href="acceso-privado.html?next=preguntale-str-permisos.html" class="quick-card menu-image-card" aria-label="Asistente de permisos retribuidos, área privada"><img src="asistente-permisos-retribuidos-private.webp" alt="Asistente de permisos retribuidos" loading="lazy"></a>
         <a href="acceso-privado.html" class="quick-card menu-image-card"><img src="calcula-tu-v-referencia.webp" alt="Calcula tu V, área privada"></a>
         <a href="acceso-privado.html" class="quick-card menu-image-card" onclick="sessionStorage.setItem('strAfterLogin','revisa-nomina.html')" aria-label="Revisa tu nómina, acceso privado para afiliados"><img src="revisa-tu-nomina-card.webp" alt="Revisa tu nómina, área privada"></a>
         <a href="acceso-privado.html?next=comunicados-internos.html" class="quick-card menu-image-card news-notification-card internal-communications-card" data-news-category="internal-communications" aria-label="Comunicados internos, acceso privado para afiliados"><img src="card-comunicados-internos-titulo-arriba.webp" alt="Comunicados internos, área privada"><span class="news-notification-badge" data-news-badge aria-label="Novedades sin leer">0</span></a>
