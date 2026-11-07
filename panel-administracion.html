@@ -64,13 +64,13 @@
       <div class="panel">
         <a href="encuestas-admin.html" class="module"><div><strong>Encuestas</strong><span>Crear, activar, cerrar y consultar resultados agregados</span></div><b>›</b></a>
         <button id="open-affiliates" class="module" type="button">
-          <span><strong>Usuarios del área privada</strong><span>Añadir correos y enviar el mensaje de acceso.</span></span><b aria-hidden="true">›</b>
+          <span><strong>Usuarios registrados</strong><span>Añadir correos y enviar el mensaje de acceso.</span></span><b aria-hidden="true">›</b>
         </button>
         <button id="open-card-stats" class="module" type="button"><span><strong>Accesos a tarjetas</strong><span>Totales mensuales, sin identificar personas.</span></span><b aria-hidden="true">›</b></button>
         <button id="test-gemini" class="module" type="button">
           <span><strong>Probar conexión Gemini</strong><span id="gemini-status" role="status">Prueba técnica interna.</span></span><b aria-hidden="true">›</b>
         </button>
-        <a class="existing-link" href="alta-afiliados.html">Abrir la herramienta actual de altas</a>
+        <a class="existing-link" href="alta-afiliados.html">Abrir la gestión de usuarios</a>
       </div>
     </section>
 
@@ -79,7 +79,7 @@
       <div class="panel"><label for="card-stats-month">Mes</label><input id="card-stats-month" class="search" type="month"><button id="refresh-card-stats" class="module" type="button">Actualizar recuentos</button><p id="card-stats-status" role="status"></p><p class="privacy-note">Se suma una pulsación cada vez que se abre una tarjeta. No se guardan personas, sesiones, respuestas ni historiales de navegación. No son usuarios únicos. Los recuentos comienzan con esta versión.</p><div id="card-stats-list"></div></div>
     </section>
     <section id="affiliates" class="screen" hidden>
-      <div class="screen-head"><button class="screen-back" type="button" data-back="home" aria-label="Volver al panel">‹</button><div><h1>Usuarios del área privada</h1><p>Correos autorizados · No exige afiliación</p></div></div>
+      <div class="screen-head"><button class="screen-back" type="button" data-back="home" aria-label="Volver al panel">‹</button><div><h1>Usuarios registrados</h1><p>Acceso autorizado mediante correo electrónico. No implica afiliación sindical.</p></div></div>
       <div class="panel">
         <form id="add-access-email">
           <label for="new-access-email">Añadir correo autorizado</label>
@@ -89,7 +89,7 @@
           <p id="add-access-status" role="status" aria-live="polite"></p>
         </form>
         <label for="affiliate-search">Buscar usuario</label>
-        <input id="affiliate-search" class="search" type="search" autocomplete="off" placeholder="Nombre, email, número o teléfono">
+        <input id="affiliate-search" class="search" type="search" autocomplete="off" placeholder="Buscar por correo electrónico">
         <p id="affiliate-count" class="count">Cargando usuarios…</p>
         <div id="affiliate-list" class="affiliate-list"></div>
         <p id="affiliate-error" class="error" hidden>No se ha podido consultar el listado.</p>
@@ -97,16 +97,14 @@
     </section>
 
     <section id="affiliate-detail" class="screen" hidden>
-      <div class="screen-head"><button class="screen-back" type="button" data-back="affiliates" aria-label="Volver al listado">‹</button><div><h1>Acceso del usuario</h1><p>Información existente</p></div></div>
+      <div class="screen-head"><button class="screen-back" type="button" data-back="affiliates" aria-label="Volver al listado">‹</button><div><h1>Acceso del usuario</h1><p>Correo y estado de acceso</p></div></div>
       <article class="panel">
-        <h2 id="detail-name" style="margin:0 0 14px;font-size:23px"></h2>
+        <h2 style="margin:0 0 14px;font-size:23px">Datos de acceso</h2>
         <dl class="details">
-          <div class="detail"><dt>Número de afiliado</dt><dd id="detail-number">—</dd></div>
           <div class="detail"><dt>Estado de acceso</dt><dd id="detail-status">—</dd></div>
-          <div class="detail"><dt>Email personal</dt><dd id="detail-email">—</dd></div>
-          <div class="detail"><dt>Teléfono</dt><dd id="detail-phone">—</dd></div>
+          <div class="detail"><dt>Correo electrónico</dt><dd id="detail-email">—</dd></div>
         </dl>
-        <p class="privacy-note">Ficha de consulta. No muestra contraseñas ni crea copias de los datos del afiliado.</p>
+        <p class="privacy-note">La lista conserva el correo electrónico y el estado necesario para administrar el acceso.</p>
       </article>
       <article class="panel access-message">
         <h2>Correo de acceso al área privada</h2>
@@ -182,7 +180,7 @@
 
     function show(name){loading.hidden=true;Object.entries(screens).forEach(([key,screen])=>{screen.hidden=key!==name});window.scrollTo({top:0,behavior:'auto'})}
     function normalized(value){return String(value||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim()}
-    function matches(affiliate,query){const value=normalized(query);if(!value)return true;return [affiliate.display_name,affiliate.email,affiliate.employee_number,affiliate.phone].some(field=>normalized(field).includes(value))}
+    function matches(user,query){const value=normalized(query);return !value||normalized(user.email).includes(value)}
     function addText(parent,tag,text){const element=document.createElement(tag);element.textContent=text;parent.appendChild(element);return element}
 
     async function adminRequest(action,body={}){
@@ -243,7 +241,7 @@
         emptyLink.href=adminPeriodUrl(affiliate);emptyLink.hidden=false;
       }catch(problem){
         loadingPeriods.hidden=true;periodError.hidden=false;
-        periodError.textContent=problem.message==='AFFILIATE_ACCOUNT_NOT_FOUND'?'El afiliado todavía no ha activado una cuenta privada. No se pueden gestionar documentos hasta que exista su cuenta autenticada.':'No se han podido consultar los periodos de este afiliado.';
+        periodError.textContent=problem.message==='AFFILIATE_ACCOUNT_NOT_FOUND'?'Este usuario todavía no ha activado una cuenta privada. No se pueden gestionar documentos hasta que exista su cuenta autenticada.':'No se han podido consultar los periodos de este afiliado.';
       }
     }
 
@@ -258,11 +256,8 @@
       const prepare=document.getElementById('prepare-access-message');
       prepare.disabled=affiliate.active===false||!affiliate.email;
       if(prepare.disabled)document.getElementById('access-message-status').textContent='Este usuario no tiene un correo con acceso activo.';
-      document.getElementById('detail-name').textContent=affiliate.display_name||affiliate.email;
-      document.getElementById('detail-number').textContent=affiliate.employee_number||'No indicado';
       document.getElementById('detail-status').textContent=affiliate.active===false?'Acceso inactivo':'Acceso activo';
       document.getElementById('detail-email').textContent=affiliate.email||'No indicado';
-      document.getElementById('detail-phone').textContent=affiliate.phone||'No indicado';
       show('detail');
       loadPeriods(affiliate);
     }
@@ -270,11 +265,11 @@
     function renderAffiliates(){
       const filtered=affiliates.filter(affiliate=>matches(affiliate,search.value));
       list.replaceChildren();
-      count.textContent=`${filtered.length} ${filtered.length===1?'usuario':'usuarios'}${search.value.trim()?' encontrado'+(filtered.length===1?'':'s'):''}`;
+      count.textContent=`${filtered.length} ${filtered.length===1?'usuario registrado':'usuarios registrados'}${search.value.trim()?' encontrado'+(filtered.length===1?'':'s'):''}`;
       if(!filtered.length){const empty=addText(list,'p',search.value.trim()?'No hay resultados para esta búsqueda.':'No hay usuarios para mostrar.');empty.className='empty';return}
       filtered.forEach(affiliate=>{
         const button=document.createElement('button');button.type='button';button.className='affiliate';
-        const copy=document.createElement('span');addText(copy,'strong',affiliate.display_name||affiliate.email);addText(copy,'small',`${affiliate.employee_number||'Sin número'} · ${affiliate.email||'Sin email'}`);
+        const copy=document.createElement('span');addText(copy,'strong',affiliate.email||'Sin correo');
         const state=addText(copy,'span',affiliate.active===false?'Acceso inactivo':'Acceso activo');state.className=`state${affiliate.active===false?' inactive':''}`;
         addText(button,'b','›').setAttribute('aria-hidden','true');button.prepend(copy);button.addEventListener('click',()=>openDetail(affiliate));list.appendChild(button);
       });
@@ -282,7 +277,7 @@
 
     async function loadAffiliates(){
       if(loaded){renderAffiliates();return}
-      error.hidden=true;count.textContent='Cargando afiliados…';list.replaceChildren();
+      error.hidden=true;count.textContent='Cargando usuarios registrados…';list.replaceChildren();
       try{const result=await adminRequest('list');affiliates=Array.isArray(result.affiliates)?result.affiliates:[];loaded=true;renderAffiliates()}
       catch(problem){if(problem.status===403){show('denied');return}count.textContent='';error.hidden=false}
     }
