@@ -98,7 +98,7 @@ async function open(survey) {
   if (selected.kind === "weather") $("survey-description").textContent += " " + "La sección sindical anunciará el cierre de esta encuesta. No hay una fecha automática de cierre.";
   const isWeatherTest = selected.kind === "weather" && selected.state === "solo_admin";
   privacySummaryText.textContent = isWeatherTest
-    ? "Responsable: Sección Sindical de STR en Instituto Grifols. Usaremos tu correo para enviarte un código y limitar a una respuesta por dirección; no verificamos tu identidad. Base jurídica: interés legítimo. Derechos y oposición: str.ig@str.es."
+    ? "Responsable del tratamiento: Sindicato de Trabajadores (STR). Domicilio: Carrer del Metge Fortuny 2, 1.ª planta, 43201 Reus (Tarragona). Contacto: str.ig@str.es e info@str.es. Usaremos tu correo personal para enviarte un código y limitar la participación a una respuesta por dirección; no verificamos tu identidad. Base jurídica: interés legítimo. Derechos y oposición: str.ig@str.es o info@str.es."
     : fullPrivacySummary;
   const isPrivateTest = selected.admin_only === true || isWeatherTest;
   $("consent-choice").hidden = selected.kind !== "simple" || isPrivateTest;
