@@ -1,4 +1,4 @@
-const CACHE_NAME = 'str-ig-cache-v147-privacy-v16';
+const CACHE_NAME = 'str-ig-cache-v148-privacy-contact';
 
 const SUPABASE_URL = 'https://icneigdnuntzugisexaz.supabase.co';
 const APP_ORIGIN = self.location.origin;
