@@ -68,63 +68,23 @@ Deno.serve(async (req: Request) => {
 
     if (action === "upsert") {
       const targetEmail = cleanEmail(body?.email);
-      const displayName = String(body?.displayName ?? "").trim();
-      const employeeNumber = String(body?.employeeNumber ?? "").trim();
-      const phone = String(body?.phone ?? "").replace(/\D/g, "");
-
-      if (
-        !targetEmail || targetEmail.length > 320 || !targetEmail.includes("@") ||
-        !displayName || displayName.length > 160 ||
-        !employeeNumber || employeeNumber.length > 40 ||
-        !/^\d{9}$/.test(phone)
-      ) {
-        return json(req, { error: "INVALID_AFFILIATE" }, 400);
+      if (!targetEmail || targetEmail.length > 320 || !targetEmail.includes("@")) {
+        return json(req, { error: "INVALID_EMAIL" }, 400);
       }
 
       const { error } = await admin
         .from("private_access_allowlist")
-        .upsert({
-          email: targetEmail,
-          display_name: displayName,
-          employee_number: employeeNumber,
-          phone,
-          active: true,
-        }, { onConflict: "email" });
+        .upsert({ email: targetEmail, active: true }, { onConflict: "email" });
 
       if (error) return json(req, { error: "UPSERT_FAILED" }, 500);
       return json(req, { saved: true });
     }
 
-    if (action === "update_contact") {
-      const targetEmail = cleanEmail(body?.email);
-      const displayName = String(body?.displayName ?? "").trim();
-      const phone = String(body?.phone ?? "").replace(/\D/g, "");
-
-      if (
-        !targetEmail || targetEmail.length > 320 || !targetEmail.includes("@") ||
-        !displayName || displayName.length > 160 ||
-        (phone.length !== 0 && phone.length !== 9)
-      ) {
-        return json(req, { error: "INVALID_CONTACT" }, 400);
-      }
-
-      const { data, error } = await admin
-        .from("private_access_allowlist")
-        .update({ display_name: displayName, phone: phone || null })
-        .eq("email", targetEmail)
-        .select("email")
-        .maybeSingle();
-
-      if (error) return json(req, { error: "CONTACT_UPDATE_FAILED" }, 500);
-      if (!data) return json(req, { error: "AFFILIATE_NOT_FOUND" }, 404);
-      return json(req, { updated: true });
-    }
-
     if (action === "list") {
       const { data, error } = await admin
         .from("private_access_allowlist")
-        .select("email, display_name, employee_number, phone, active")
-        .order("display_name", { ascending: true });
+        .select("email, active")
+        .order("email", { ascending: true });
 
       if (error) return json(req, { error: "LIST_FAILED" }, 500);
       return json(req, { affiliates: data ?? [] });
@@ -138,7 +98,7 @@ Deno.serve(async (req: Request) => {
 
       const { data: target, error: targetError } = await admin
         .from("private_access_allowlist")
-        .select("email, display_name")
+        .select("email")
         .eq("email", targetEmail)
         .maybeSingle();
 
@@ -156,10 +116,7 @@ Deno.serve(async (req: Request) => {
         return json(req, { error: "DELETE_NOT_CONFIRMED" }, 409);
       }
 
-      return json(req, {
-        deleted: true,
-        displayName: target.display_name || target.email,
-      });
+      return json(req, { deleted: true });
     }
 
     return json(req, { error: "INVALID_ACTION" }, 400);
