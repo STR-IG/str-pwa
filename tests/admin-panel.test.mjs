@@ -19,7 +19,7 @@ test('el panel consulta usuarios y conserva la autorización administrativa del 
   assert.match(panel, /adminRequest\('list'\)/);
   assert.doesNotMatch(panel, /adminRequest\('upsert'/);
   assert.doesNotMatch(panel, /localStorage/);
-  assert.match(panel, /display_name,affiliate\.email,affiliate\.employee_number,affiliate\.phone/);
+  assert.match(panel, /addText\(copy,'strong',affiliate\.email\|\|'Sin correo'\)/);\n  assert.doesNotMatch(panel, /display_name|employee_number|affiliate\.phone|Número de afiliado|Teléfono/);
 });
 
 test('la URL directa valida primero sesión y rol en servidor', () => {
