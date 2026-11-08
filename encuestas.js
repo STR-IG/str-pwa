@@ -6,7 +6,7 @@ const list = $("surveys");
 const privacySummaryText = $("privacy-summary-text");
 const fullPrivacySummary = privacySummaryText.textContent;
 const weatherPrivacySummary =
-  "Responsable del tratamiento: Sindicato de Trabajadores (STR), que gestiona esta encuesta a través de su Sección Sindical en Instituto Grifols. Contacto: str.ig@str.es. Usamos tu correo personal para enviarte un código y generar una huella HMAC que limita la participación a una por dirección; no verificamos tu identidad ni tu afiliación. Cada opción elegida incrementa únicamente un contador marginal: no se guarda una fila con tus respuestas, no se pregunta la modalidad de trabajo y no se realizan cruces entre preguntas. La encuesta puede cerrarse antes por decisión de la sección y se bloquea, como máximo, a los 60 días de abrirse. La huella se elimina 15 días después del cierre. No se solicita consentimiento para comunicaciones laborales en esta encuesta.";
+  "STR gestiona esta encuesta a través de su sección sindical. Usaremos tu correo personal solo para enviarte el código y evitar más de una participación por dirección. No comprobamos tu identidad ni si estás afiliado. Tus respuestas no se guardan de forma individual: solo se suman a contadores generales y no se cruzan entre sí.";
 const blockTitles = {
   2: "Información recibida",
   3: "Desplazamientos y alternativas",
