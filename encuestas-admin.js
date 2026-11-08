@@ -20,7 +20,7 @@ async function showWeatherResults(survey, test) {
   box.hidden = false;
   text(box, "h2", `${survey.title} · ${test ? "prueba" : "resultados"}`);
   text(box, "p", `Participaciones: ${result.total ?? "No mostrado para proteger grupos pequeños"}`);
-  if (result.archived) text(box, "p", "Resultados agregados conservados tras eliminar las respuestas individuales. Se omiten preguntas con celdas pequeñas y desgloses cruzados.");
+  if (result.counter_model === "marginal_v2") text(box, "p", "Solo se conservan contadores marginales. No existen filas de respuestas individuales ni cruces entre preguntas. En resultados reales se omiten preguntas con celdas de 1 a 4 respuestas.");
   const labels = new Map(detail.questions.map((question) => [question.id, question.title]));
   for (const [questionId, counts] of Object.entries(result.counts || {})) {
     const section = text(box, "section", "", "result-question");
@@ -29,18 +29,6 @@ async function showWeatherResults(survey, test) {
       const row = text(section, "div", "", "result-row");
       text(row, "span", label);
       text(row, "strong", String(count));
-    }
-  }
-  if (Array.isArray(result.groups) && result.groups.length) {
-    text(box, "h3", "Desglose por tipo de trabajo");
-    for (const group of result.groups) {
-      const section = text(box, "section", "", "result-group");
-      text(section, "h4", `${group.modality} · ${group.total} respuestas`);
-      for (const [questionId, counts] of Object.entries(group.counts || {})) {
-        const row = text(section, "div", "", "result-row");
-        text(row, "span", labels.get(questionId) || questionId);
-        text(row, "strong", Object.values(counts).reduce((sum, n) => sum + n, 0));
-      }
     }
   }
   box.scrollIntoView({ behavior: "smooth" });
@@ -57,7 +45,7 @@ async function loadWeather() {
     if (survey.closed_at) text(card, "p", "Cierre registrado (UTC): " + new Date(survey.closed_at).toISOString());
     if (survey.state === "publicada" && !survey.closed) {
       if (!survey.opened_at) text(card, "p", "Revisa si debe seguir abierta: no consta la fecha de apertura para calcular el aviso de 30 días.", "badge");
-      else if (Date.now() - new Date(survey.opened_at).getTime() >= 30 * 86400000) text(card, "p", "Esta encuesta lleva abierta al menos 30 días. Revisa si debe seguir abierta o cerrarse. No se cierra automáticamente.", "badge");
+      else if (Date.now() - new Date(survey.opened_at).getTime() >= 30 * 86400000) text(card, "p", "Esta encuesta lleva abierta al menos 30 días. Revisa si conviene cerrarla antes; se bloqueará automáticamente al cumplir 60 días.", "badge");
     }
     if (survey.state === "solo_admin") {
       const preview = text(card, "a", "Vista previa privada");
@@ -72,26 +60,26 @@ async function loadWeather() {
           status.textContent = error.message;
         }
       });
-      const cleanup = text(card, "button", "Limpiar respuestas de prueba");
+      const cleanup = text(card, "button", "Limpiar prueba");
       cleanup.type = "button";
       cleanup.className = "secondary";
       cleanup.onclick = () => busy(card, async () => {
-        if (!confirm("Se borrarán las respuestas de prueba y los códigos pendientes. ¿Continuar?")) return;
+        if (!confirm("Se pondrán a cero los contadores de prueba y se borrarán las huellas, permisos y códigos pendientes. ¿Continuar?")) return;
         try {
           const result = await api("weather_cleanup", { surveyId: survey.id });
-          status.textContent = `Prueba limpiada: ${result.test_responses_deleted || 0} respuestas y ${result.test_participations_deleted || 0} participaciones eliminadas.`;
+          status.textContent = `Prueba limpiada: ${result.test_responses_deleted || 0} participaciones retiradas de los contadores y ${result.test_participations_deleted || 0} huellas eliminadas.`;
           await loadWeather();
         } catch (error) {
           status.textContent = error.message;
         }
       });
-      const publish = text(card, "button", "Publicar para la plantilla");
+      const publish = text(card, "button", "Publicar encuesta");
       publish.type = "button";
       publish.onclick = () => busy(card, async () => {
-        if (!confirm("La publicación borrará los datos de prueba y permitirá responder a toda la plantilla. ¿Publicar ahora?")) return;
+        if (!confirm("La publicación limpiará todos los datos de prueba y abrirá la encuesta. Se bloqueará automáticamente a los 60 días. ¿Publicar ahora?")) return;
         try {
           await api("weather_publish", { surveyId: survey.id, confirm: true });
-          status.textContent = "Encuesta publicada para la plantilla.";
+          status.textContent = "Encuesta publicada.";
           await loadWeather();
         } catch (error) {
           status.textContent = error.message;
@@ -247,3 +235,4 @@ $("withdraw-consent-form").onsubmit = async (event) => {
 };
 
 init();
+

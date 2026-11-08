@@ -62,11 +62,11 @@ const server = http.createServer(async (req, res) => {
       closed: false,
       questions: [
         {
-          id: "q1",
-          block: 1,
-          title: "Durante las alertas, mi trabajo era:",
-          max: 1,
-          options: ["Presencial", "Teletrabajo"],
+          id: "q2",
+          block: 2,
+          title: "¿Por qué vías te enteraste de la alerta?",
+          max: 2,
+          options: ["ES-Alert en el móvil", "Compañeros"],
           exclusive: [],
         },
         {
@@ -125,7 +125,7 @@ const server = http.createServer(async (req, res) => {
           result = { ok: true };
         }
         if (body.action === "weather_results") {
-          result = { total: weatherVotes.length, counts: { q1: { Presencial: weatherVotes.length } }, groups: [] };
+          result = { total: weatherVotes.length, counts: { q2: { "ES-Alert en el móvil": weatherVotes.length } }, groups: [], counter_model: "marginal_v2" };
         }
         if (body.action === "weather_cleanup") result = { ok: true, test_responses_deleted: weatherVotes.length, test_participations_deleted: weatherVotes.length };
         if (body.action === "weather_publish") {
@@ -246,26 +246,25 @@ const server = http.createServer(async (req, res) => {
     await page.goto(base + `/encuestas.html?surveyId=${weatherSurvey.id}`);
     await page.locator("#weather-vote-form").waitFor({ state: "visible" });
     const privatePrivacyText = await page.locator("#privacy-summary-text").textContent();
-    assert.match(privatePrivacyText, /limitar a una respuesta por dirección/);
-    assert.doesNotMatch(privatePrivacyText, /huella de control/);
-    assert.doesNotMatch(privatePrivacyText, /Resend conserva dirección/);
-    assert.match(privatePrivacyText, /Base jurídica: interés legítimo/);
+    assert.match(privatePrivacyText, /huella HMAC/);
+    assert.match(privatePrivacyText, /contador marginal/);
+    assert.match(privatePrivacyText, /no se guarda una fila/i);
+    assert.match(privatePrivacyText, /no se realizan cruces/i);
     await page.locator("#email").fill("admin@example.com");
     await page.getByRole("button", { name: "Enviar código", exact: true }).click();
     await page.locator("#weather-vote-form").waitFor({ state: "visible" });
-    await page.getByLabel("Presencial", { exact: true }).check();
+    await page.getByLabel("ES-Alert en el móvil", { exact: true }).check();
     await page.getByLabel("Teletrabajar", { exact: true }).check();
     await page.locator("#weather-code").fill("123456");
-    assert.equal(await page.locator("#weather-consent").isChecked(), false);
     await page.getByRole("button", { name: "Verificar código y enviar respuestas" }).click();
     await page.getByRole("status").filter({ hasText: "Gracias" }).waitFor();
-    assert.equal(weatherVotes.at(-1).consent, false);
-    assert.deepEqual(weatherVotes.at(-1).answers, { q1: ["Presencial"], q7: ["Teletrabajar"] });
+    assert.equal("consent" in weatherVotes.at(-1), false);
+    assert.deepEqual(weatherVotes.at(-1).answers, { q2: ["ES-Alert en el móvil"], q7: ["Teletrabajar"] });
     await page.goto(base + "/encuestas-admin.html");
     await page.getByRole("button", { name: "Resultados de prueba" }).click();
     await page.locator("#results").waitFor({ state: "visible" });
     page.once("dialog", (dialog) => dialog.accept());
-    await page.getByRole("button", { name: "Publicar para la plantilla" }).click();
+    await page.getByRole("button", { name: "Publicar encuesta" }).click();
     await page.getByRole("status").filter({ hasText: "Encuesta publicada" }).waitFor();
     admin = false;
     await page.goto(base + "/encuestas.html");
@@ -275,7 +274,8 @@ const server = http.createServer(async (req, res) => {
     await page.goto(base + `/encuestas.html?surveyId=${weatherSurvey.id}`);
     await page.locator("#weather-vote-form").waitFor({ state: "visible" });
     const publishedPrivacyText = await page.locator("#privacy-summary-text").textContent();
-    assert.match(publishedPrivacyText, /Resend conserva dirección/);
+    assert.match(publishedPrivacyText, /contador marginal/);
+    assert.match(publishedPrivacyText, /No se solicita consentimiento para comunicaciones laborales/i);
     await page.goto(base + "/encuestas-admin.html");
     await page.locator("#title").fill("Prueba creada");
     await page.locator("#new-options").fill("Sí\nNo");
@@ -329,3 +329,4 @@ const server = http.createServer(async (req, res) => {
   server.close();
   process.exitCode = 1;
 });
+

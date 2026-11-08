@@ -153,17 +153,15 @@ Deno.test("survey Edge authorization, mail privacy and forged admin flags", asyn
     await request({
       action: "weather_submit",
       surveyId: survey,
-      email: "admin@example.com",
       permit: permit.permit,
-      answers: { q1: ["Presencial"] },
-      consent: true,
+      answers: { q2: ["ES-Alert en el móvil"] },
     }, true);
     const weatherSubmit = calls.findLast((call) =>
       call.url.includes("/rpc/weather_action") && call.body.p_action === "submit"
     )!;
     assert(weatherSubmit.body.p_actor === "admin-id", "weather response uses verified admin");
-    assert(weatherSubmit.body.p_data.contact === "admin@example.com", "explicit consent sends the normalized contact for separate storage");
-    assert(String(weatherSubmit.body.p_data.email_key).length === 64, "consent contact matches the verified email fingerprint");
+    assert(!("contact" in weatherSubmit.body.p_data), "weather response contains no communications contact");
+    assert(!("email_key" in weatherSubmit.body.p_data), "weather response contains no email fingerprint");
     assert(!JSON.stringify(weatherSubmit.body.p_data).includes(permit.permit), "raw weather permit is never sent to the database");
     const sent = await request({
       action: "request",
@@ -263,3 +261,4 @@ Deno.test("survey Edge authorization, mail privacy and forged admin flags", asyn
     );
   }
 });
+

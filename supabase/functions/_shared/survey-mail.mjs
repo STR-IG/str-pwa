@@ -1,4 +1,4 @@
-export const SURVEY_PRIVACY_URL = 'https://str-ig.github.io/str-pwa/docs/aviso-privacidad-encuestas-str.pdf?v=20261101-3';
+export const SURVEY_PRIVACY_URL = 'https://str-ig.github.io/str-pwa/docs/aviso-privacidad-encuestas-str.pdf?v=20261108-1';
 
 export function surveyCodeMessage(
   code,
@@ -11,7 +11,7 @@ Tu código de verificación es: ${code}
 
 Introdúcelo en la app de STR para participar. Caduca en ${minutes} minutos y solo puede usarse una vez.
 
-Tu voto se añade a un recuento por opción. El control de participación se guarda por separado, mediante una huella del correo, sin la opción elegida.
+Tu respuesta incrementa únicamente contadores por opción. No se guarda una fila con tus respuestas ni se realizan cruces entre preguntas. El control de participación se conserva por separado, mediante una huella del correo, sin la opción elegida.
 
 Si no has pedido este código, ignora este mensaje. No compartas el código.
 
@@ -24,7 +24,7 @@ Sección sindical de STR en Instituto Grifols`;
 <p>Tu código de verificación es:</p>
 <p style="font-size:32px;font-weight:bold;letter-spacing:6px">${code}</p>
 <p>Introdúcelo en la app de STR para participar. <strong>Caduca en ${minutes} minutos</strong> y solo puede usarse una vez.</p>
-<p>Tu voto se añade a un recuento por opción. El control de participación se guarda por separado, mediante una huella del correo, sin la opción elegida.</p>
+<p>Tu respuesta incrementa únicamente contadores por opción. No se guarda una fila con tus respuestas ni se realizan cruces entre preguntas. El control de participación se conserva por separado, mediante una huella del correo, sin la opción elegida.</p>
 <p>Si no has pedido este código, ignora este mensaje. No compartas el código.</p>
 <p><a href="${SURVEY_PRIVACY_URL}">Información de privacidad de las encuestas</a></p>
 <p>Contacto para privacidad y ejercicio de derechos: <a href="mailto:str.ig@str.es">str.ig@str.es</a></p>
@@ -32,4 +32,5 @@ Sección sindical de STR en Instituto Grifols`;
 </div>`;
   return { subject, text, html };
 }
+
 

@@ -36,18 +36,18 @@
   </header>
   <main>
     <h1>Aviso de privacidad de las encuestas</h1>
-    <p class="help">Aviso vigente, versión 1.6.1 · 7 de noviembre de 2026.</p>
+    <p class="help">Aviso vigente, versión 2.0 · 8 de noviembre de 2026.</p>
     <div class="actions">
       <a
         id="save-pdf"
         class="download"
-        href="docs/aviso-privacidad-encuestas-str-v1.6.1.pdf?v=20261107-2"
+        href="docs/aviso-privacidad-encuestas-str-v2.0.pdf?v=20261108-1"
         target="_blank"
         rel="noopener noreferrer">Guardar o compartir el PDF</a>
     </div>
     <p id="download-status" class="status" role="status" aria-live="polite"></p>
     <iframe
-      src="docs/aviso-privacidad-encuestas-str-v1.6.1.pdf?v=20261107-2"
+      src="docs/aviso-privacidad-encuestas-str-v2.0.pdf?v=20261108-1"
       title="Aviso de privacidad completo de las encuestas"
       loading="eager">
     </iframe>
@@ -55,7 +55,7 @@
     <noscript><p><a href="encuestas.html">Volver a las encuestas</a></p></noscript>
   </main>
   <script>
-    const pdfUrl = "docs/aviso-privacidad-encuestas-str-v1.6.1.pdf?v=20261107-2";
+    const pdfUrl = "docs/aviso-privacidad-encuestas-str-v2.0.pdf?v=20261108-1";
     const savePdf = document.getElementById("save-pdf");
     const downloadStatus = document.getElementById("download-status");
 
@@ -88,7 +88,7 @@
         const blob = await response.blob();
         const file = new File(
           [blob],
-          "aviso-privacidad-encuestas-STR-v1.6.1.pdf",
+          "aviso-privacidad-encuestas-STR-v2.0.pdf",
           { type: "application/pdf" }
         );
 
@@ -117,3 +117,4 @@
   </script>
 </body>
 </html>
+

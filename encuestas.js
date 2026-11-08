@@ -5,8 +5,9 @@ const status = $("status");
 const list = $("surveys");
 const privacySummaryText = $("privacy-summary-text");
 const fullPrivacySummary = privacySummaryText.textContent;
+const weatherPrivacySummary =
+  "Responsable del tratamiento: Sindicato de Trabajadores (STR), que gestiona esta encuesta a través de su Sección Sindical en Instituto Grifols. Contacto: str.ig@str.es. Usamos tu correo personal para enviarte un código y generar una huella HMAC que limita la participación a una por dirección; no verificamos tu identidad ni tu afiliación. Cada opción elegida incrementa únicamente un contador marginal: no se guarda una fila con tus respuestas, no se pregunta la modalidad de trabajo y no se realizan cruces entre preguntas. La encuesta puede cerrarse antes por decisión de la sección y se bloquea, como máximo, a los 60 días de abrirse. La huella se elimina 15 días después del cierre. No se solicita consentimiento para comunicaciones laborales en esta encuesta.";
 const blockTitles = {
-  1: "Trabajo durante las alertas",
   2: "Información recibida",
   3: "Desplazamientos y alternativas",
   4: "Valoración de la gestión",
@@ -58,7 +59,7 @@ async function load() {
       const card = text(list, "article", "", "panel");
       text(card, "h2", survey.title);
       if (survey.description) text(card, "p", survey.description);
-      if (survey.kind === "weather") text(card, "p", "La sección sindical anunciará el cierre de esta encuesta. No hay una fecha automática de cierre.");
+      if (survey.kind === "weather") text(card, "p", "La sección sindical puede cerrarla antes y, en todo caso, se bloquea automáticamente a los 60 días de su apertura.");
       if (survey.admin_only || survey.state === "solo_admin") {
         text(card, "p", "Prueba exclusiva para administradores", "badge");
       }
@@ -95,10 +96,10 @@ async function open(survey) {
     (selected.kind === "weather"
       ? "Cuestionario sobre información, desplazamientos y seguridad durante las alertas meteorológicas."
       : "");
-  if (selected.kind === "weather") $("survey-description").textContent += " " + "La sección sindical anunciará el cierre de esta encuesta. No hay una fecha automática de cierre.";
+  if (selected.kind === "weather") $("survey-description").textContent += " " + "La sección sindical puede cerrarla antes y, en todo caso, se bloquea automáticamente a los 60 días de su apertura.";
   const isWeatherTest = selected.kind === "weather" && selected.state === "solo_admin";
-  privacySummaryText.textContent = isWeatherTest
-    ? "Responsable del tratamiento: Sindicato de Trabajadores (STR). Domicilio: Carrer del Metge Fortuny 2, 1.ª planta, 43201 Reus (Tarragona). Contacto: str.ig@str.es. Usaremos tu correo personal para enviarte un código y limitar la participación a una respuesta por dirección; no verificamos tu identidad. Base jurídica: interés legítimo. Derechos y oposición: str.ig@str.es."
+  privacySummaryText.textContent = selected.kind === "weather"
+    ? (isWeatherTest ? "Prueba privada de administración. " : "") + weatherPrivacySummary
     : fullPrivacySummary;
   const isPrivateTest = selected.admin_only === true || isWeatherTest;
   $("consent-choice").hidden = selected.kind !== "simple" || isPrivateTest;
@@ -362,3 +363,4 @@ $("weather-vote-form").onsubmit = async (event) => {
 };
 
 load();
+
