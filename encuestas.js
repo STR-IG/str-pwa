@@ -39,10 +39,19 @@ function reset() {
 async function load() {
   list.replaceChildren();
   try {
-    const [genericResult, weatherResult] = await Promise.all([
+    const [genericRequest, weatherRequest] = await Promise.allSettled([
       api("list"),
       api("weather_list"),
     ]);
+    if (genericRequest.status === "rejected" && weatherRequest.status === "rejected") {
+      throw weatherRequest.reason || genericRequest.reason;
+    }
+    const genericResult = genericRequest.status === "fulfilled"
+      ? genericRequest.value
+      : { surveys: [] };
+    const weatherResult = weatherRequest.status === "fulfilled"
+      ? weatherRequest.value
+      : { surveys: [] };
     const surveys = [
       ...genericResult.surveys.map((survey) => ({ ...survey, kind: "simple" })),
       ...weatherResult.surveys.map((survey) => ({ ...survey, kind: "weather" })),

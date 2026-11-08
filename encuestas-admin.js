@@ -181,7 +181,19 @@ async function loadSimpleSurveys() {
 }
 
 async function load() {
-  await Promise.all([loadWeather(), loadSimpleSurveys()]);
+  const [weatherRequest, simpleRequest] = await Promise.allSettled([
+    loadWeather(),
+    loadSimpleSurveys(),
+  ]);
+  if (weatherRequest.status === "rejected" && simpleRequest.status === "rejected") {
+    throw weatherRequest.reason || simpleRequest.reason;
+  }
+  if (weatherRequest.status === "rejected") {
+    text($("weather-surveys"), "p", "No se han podido cargar las encuestas meteorológicas.");
+  }
+  if (simpleRequest.status === "rejected") {
+    text($("surveys"), "p", "No se han podido cargar las encuestas simples.");
+  }
 }
 
 async function init() {
