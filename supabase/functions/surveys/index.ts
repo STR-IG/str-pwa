@@ -212,15 +212,6 @@ Deno.serve(async (req: Request) => {
     }
     if (action === "weather_submit") {
       const secret = await weatherSecret();
-      if (typeof body.consent !== "boolean") {
-        return reply({ error: "INVALID_CONSENT" }, 400);
-      }
-      let contact: string | undefined;
-      let emailKey: string | undefined;
-      if (body.consent) {
-        contact = participantEmail(body.email);
-        emailKey = await hmac(secret, `email:${contact}`);
-      }
       if (!body.answers || typeof body.answers !== "object" || Array.isArray(body.answers)) {
         return reply({ error: "INVALID_ANSWERS" }, 400);
       }
@@ -231,14 +222,6 @@ Deno.serve(async (req: Request) => {
       const result = await weatherCall("submit", weatherSurveyId(), {
         permit: await hmac(secret, `permit:${permit}`),
         answers: body.answers,
-        consent: body.consent,
-        ...(body.consent
-          ? {
-            contact,
-            email_key: emailKey,
-            consent_version: CONSENT_VERSION,
-          }
-          : {}),
       });
       return reply(result, result?.error ? 400 : 200);
     }
