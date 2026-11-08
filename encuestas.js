@@ -102,9 +102,7 @@ async function open(survey) {
     : fullPrivacySummary;
   const isPrivateTest = selected.admin_only === true || isWeatherTest;
   $("consent-choice").hidden = selected.kind !== "simple" || isPrivateTest;
-  $("weather-consent-choice").hidden = selected.kind !== "weather" || isPrivateTest;
   $("consent").checked = false;
-  $("weather-consent").checked = false;
   $("email-note").textContent = selected.kind === "weather"
     ? "Te enviaremos un código de un solo uso, válido durante 5 minutos."
     : "Te enviaremos un código de un solo uso, válido durante 10 minutos.";
@@ -351,8 +349,6 @@ $("weather-vote-form").onsubmit = async (event) => {
         surveyId: selected.id,
         permit,
         answers,
-        consent: $("weather-consent").checked,
-        ...( $("weather-consent").checked ? { email } : {} ),
       });
       reset();
       $("participate").hidden = true;
