@@ -14,17 +14,19 @@
     button,.download{display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:12px 20px;border:1px solid #f1c7cb;border-radius:12px;background:#fff1f2;color:#b8000d;font:inherit;font-weight:750;text-decoration:none;cursor:pointer}
     button:hover,.download:hover{background:#ffe2e5}
     button:focus-visible,.download:focus-visible{outline:3px solid #e0a800;outline-offset:3px}
+    .download[aria-busy="true"]{opacity:.72;pointer-events:none}
     main{max-width:1000px;margin:auto;padding:20px 16px 32px}
     h1{font-size:clamp(1.5rem,4vw,2rem);line-height:1.2;margin:0 0 8px}
-    .actions{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 14px}
+    .actions{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 8px}
     .help{margin:0 0 12px;color:#555}
-    iframe{display:block;width:100%;height:calc(100dvh - 205px);min-height:420px;border:1px solid #e3e1e1;border-radius:12px;background:#fff}
+    .status{min-height:1.5em;margin:0 0 12px;color:#555}
+    iframe{display:block;width:100%;height:calc(100dvh - 235px);min-height:420px;border:1px solid #e3e1e1;border-radius:12px;background:#fff}
     @media(max-width:600px){
       header{padding:10px 14px}
       main{padding:16px 12px 24px}
       .actions{display:grid;grid-template-columns:1fr}
       button,.download{width:100%}
-      iframe{height:calc(100dvh - 275px);min-height:360px}
+      iframe{height:calc(100dvh - 305px);min-height:360px}
     }
   </style>
 </head>
@@ -36,17 +38,74 @@
     <h1>Aviso de privacidad de las encuestas</h1>
     <p class="help">Aviso vigente, versión 1.6.1 · 7 de noviembre de 2026.</p>
     <div class="actions">
-      <a class="download" href="docs/aviso-privacidad-encuestas-str-v1.6.1.pdf?v=20261107-2" download>Descargar el PDF</a>
+      <a
+        id="save-pdf"
+        class="download"
+        href="docs/aviso-privacidad-encuestas-str-v1.6.1.pdf?v=20261107-2"
+        target="_blank"
+        rel="noopener noreferrer">Guardar o compartir el PDF</a>
     </div>
+    <p id="download-status" class="status" role="status" aria-live="polite"></p>
     <iframe
       src="docs/aviso-privacidad-encuestas-str-v1.6.1.pdf?v=20261107-2"
       title="Aviso de privacidad completo de las encuestas"
       loading="eager">
     </iframe>
-    <p class="help">Si el documento no se muestra aquí, utiliza «Descargar el PDF».</p>
+    <p class="help">Si el documento no se muestra aquí, utiliza «Guardar o compartir el PDF».</p>
     <noscript><p><a href="encuestas.html">Volver a las encuestas</a></p></noscript>
   </main>
   <script>
+    const pdfUrl = "docs/aviso-privacidad-encuestas-str-v1.6.1.pdf?v=20261107-2";
+    const savePdf = document.getElementById("save-pdf");
+    const downloadStatus = document.getElementById("download-status");
+
+    function supportsPdfSharing() {
+      try {
+        const sample = new File([""], "aviso-privacidad-encuestas-STR.pdf", { type: "application/pdf" });
+        return typeof navigator.share === "function"
+          && typeof navigator.canShare === "function"
+          && navigator.canShare({ files: [sample] });
+      } catch {
+        return false;
+      }
+    }
+
+    savePdf.addEventListener("click", async (event) => {
+      if (!supportsPdfSharing()) return;
+
+      event.preventDefault();
+      if (savePdf.getAttribute("aria-busy") === "true") return;
+
+      const originalText = savePdf.textContent;
+      savePdf.setAttribute("aria-busy", "true");
+      savePdf.textContent = "Preparando el PDF…";
+      downloadStatus.textContent = "";
+
+      try {
+        const response = await fetch(pdfUrl, { cache: "no-store" });
+        if (!response.ok) throw new Error("No se pudo obtener el PDF");
+
+        const blob = await response.blob();
+        const file = new File(
+          [blob],
+          "aviso-privacidad-encuestas-STR-v1.6.1.pdf",
+          { type: "application/pdf" }
+        );
+
+        await navigator.share({
+          files: [file],
+          title: "Aviso de privacidad de las encuestas de STR"
+        });
+      } catch (error) {
+        if (error?.name !== "AbortError") {
+          downloadStatus.textContent = "No se ha podido preparar el PDF. Puedes seguir consultándolo en esta pantalla e intentarlo de nuevo.";
+        }
+      } finally {
+        savePdf.removeAttribute("aria-busy");
+        savePdf.textContent = originalText;
+      }
+    });
+
     document.getElementById("back").addEventListener("click", () => {
       let sameSiteReferrer = false;
       try {
