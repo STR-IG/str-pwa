@@ -168,6 +168,7 @@ function showWeatherQuestion(index, focus = true) {
   });
   const total = weatherQuestionSlides.length;
   const position = weatherQuestionIndex + 1;
+  $("weather-purpose-note").hidden = weatherQuestionIndex !== 0;
   $("weather-question-count").textContent = `Pregunta ${position} de ${total}`;
   const progress = $("weather-progress-fill");
   progress.style.width = `${(position / total) * 100}%`;
