@@ -66,7 +66,7 @@
         <button id="open-affiliates" class="module" type="button">
           <span><strong>Usuarios registrados</strong><span>Añadir correos y enviar el mensaje de acceso.</span></span><b aria-hidden="true">›</b>
         </button>
-        <button id="open-card-stats" class="module" type="button"><span><strong>Accesos a tarjetas</strong><span>Totales mensuales, sin identificar personas.</span></span><b aria-hidden="true">›</b></button>
+        <button id="open-card-stats" class="module" type="button"><span><strong>Accesos a tarjetas</strong><span>Recuentos diarios por tarjeta, sin identificar personas.</span></span><b aria-hidden="true">›</b></button>
         <button id="test-gemini" class="module" type="button">
           <span><strong>Probar conexión Gemini</strong><span id="gemini-status" role="status">Prueba técnica interna.</span></span><b aria-hidden="true">›</b>
         </button>
@@ -76,7 +76,7 @@
 
     <section id="card-stats" class="screen" hidden>
       <div class="screen-head"><button class="screen-back" type="button" data-back="home" aria-label="Volver al panel">‹</button><div><h1>Accesos a tarjetas</h1><p>Pulsaciones, sin identificar personas</p></div></div>
-      <div class="panel"><label for="card-stats-month">Mes</label><input id="card-stats-month" class="search" type="month"><button id="refresh-card-stats" class="module" type="button">Actualizar recuentos</button><p id="card-stats-status" role="status"></p><p class="privacy-note">Se suma una pulsación cada vez que se abre una tarjeta. No se guardan personas, sesiones, respuestas ni historiales de navegación. No son usuarios únicos. Los recuentos comienzan con esta versión.</p><div id="card-stats-list"></div></div>
+      <div class="panel"><label for="card-stats-month">Mes</label><input id="card-stats-month" class="search" type="month"><button id="refresh-card-stats" class="module" type="button">Actualizar recuentos</button><p id="card-stats-status" role="status"></p><p class="privacy-note">Se suma una pulsación cada vez que se abre una tarjeta. No se guardan personas, sesiones, respuestas ni historiales de navegación. No son usuarios únicos. Los recuentos comienzan con esta versión.</p><div id="card-stats-list"></div><hr style="margin:24px 0;border:0;border-top:1px solid #ddd"><h2>Consultas por día</h2><label for="card-stats-day">Fecha</label><input id="card-stats-day" class="search" type="date"><button id="refresh-card-stats-day" class="module" type="button">Consultar día</button><p id="card-stats-day-status" role="status"></p><div id="card-stats-day-list"></div></div>
     </section>
     <section id="affiliates" class="screen" hidden>
       <div class="screen-head"><button class="screen-back" type="button" data-back="home" aria-label="Volver al panel">‹</button><div><h1>Usuarios registrados</h1><p>Acceso autorizado mediante correo electrónico. No implica afiliación sindical.</p></div></div>
@@ -397,7 +397,34 @@
         for(const row of rows){const line=document.createElement('p');line.style.cssText='display:flex;justify-content:space-between;gap:16px;border-bottom:1px solid #eee;padding:12px 0';addText(line,'span',CARD_LABELS[row.card]||row.card);addText(line,'strong',String(row.accesses));target.appendChild(line);}
       }catch{if(version===statsLoad)status.textContent='No se han podido cargar los recuentos. Comprueba tu sesión de administrador.';}
     }
-    document.getElementById('open-card-stats').addEventListener('click',()=>{show('card-stats');loadCardStats();});
+    const statsDay=document.getElementById('card-stats-day');
+    const localToday=new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Madrid',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
+    statsDay.value=localToday;statsDay.max=localToday;
+    let dailyLoad=0;
+    async function loadDailyStats(){
+      const version=++dailyLoad,status=document.getElementById('card-stats-day-status'),target=document.getElementById('card-stats-day-list');
+      status.textContent='Consultando datos del día…';target.replaceChildren();
+      try{
+        const {data:{session}}=await supabase.auth.getSession();
+        if(!session?.access_token)throw Error('Sesión caducada');
+        const response=await fetch(SUPABASE_URL+'/functions/v1/admin-card-daily-stats',{method:'POST',headers:{Authorization:'Bearer '+session.access_token,apikey:SUPABASE_PUBLISHABLE_KEY,'Content-Type':'application/json'},body:JSON.stringify({action:'daily-stats',day:statsDay.value})});
+        if(!response.ok)throw Error('No autorizado o error al consultar');
+        const result=await response.json();
+        if(version!==dailyLoad)return;
+        const rows=Array.isArray(result.counts)?result.counts:[];
+        const total=rows.reduce((sum,row)=>sum+Number(row.accesses||0),0);
+        status.textContent=total?total+' aperturas registradas el '+statsDay.value+'.':'Sin aperturas registradas para esta fecha. El registro diario comenzó el 10/11/2026.';
+        for(const row of rows){
+          const line=document.createElement('p');line.style.cssText='display:flex;justify-content:space-between;gap:16px;border-bottom:1px solid #eee;padding:12px 0';
+          addText(line,'span',CARD_LABELS[row.card]||row.card);
+          addText(line,'strong',String(row.accesses));
+          target.appendChild(line);
+        }
+      }catch{if(version===dailyLoad)status.textContent='No se pudieron consultar los datos diarios. Comprueba tu acceso de administrador.';}
+    }
+    document.getElementById('refresh-card-stats-day').addEventListener('click',loadDailyStats);
+    statsDay.addEventListener('change',loadDailyStats);
+    document.getElementById('open-card-stats').addEventListener('click',()=>{show('card-stats');loadCardStats();loadDailyStats();});
     document.getElementById('refresh-card-stats').addEventListener('click',loadCardStats);
     statsMonth.addEventListener('change',loadCardStats);
     document.getElementById('test-gemini').addEventListener('click',testGeminiConnection);
