@@ -35,6 +35,7 @@
     .reason.wide { grid-column:1/-1; min-height:0; }
     .reason.secondary { border-style:dashed; background:#fafafa; }
     .contact { padding:24px 18px; text-align:center; }
+    .contact-photo { display:block; width:144px; max-width:100%; height:auto; margin:0 auto 16px; border-radius:18px; }
     .contact h2 { margin-bottom:7px; font-size:25px; }
     .contact-copy { max-width:560px; margin:0 auto 18px; color:var(--muted); font-size:15px; line-height:1.45; }
     .actions { display:grid; gap:10px; }
@@ -52,11 +53,11 @@
 </head>
 <body>
   <header class="top">
-    <div class="top-inner"><a class="back" href="index.html" aria-label="Volver al menú principal">‹</a><h1>Afíliate a STR-IG</h1></div>
+    <div class="top-inner"><a class="back" href="app.html" aria-label="Volver al menú principal">‹</a><h1>Afíliate a STR-IG</h1></div>
   </header>
   <main>
     <section class="card hero" aria-label="Ficha visual Afíliate a STR-IG">
-      <div class="prepared-visual"><img src="ficha-afiliate-str-ig.png" alt="Afíliate a STR-IG. Información de afiliación y contacto con Rocío."></div>
+      <div class="prepared-visual"><img src="afiliate-str-ig.webp" alt="Afíliate a STR-IG. Información de afiliación y contacto con Rocío."></div>
     </section>
 
     <section class="card intro">
@@ -66,17 +67,18 @@
     </section>
 
     <section class="card contact" aria-labelledby="contact-title">
-      <h2 id="contact-title">¿Hablamos?</h2>
+      <img class="contact-photo" src="rocio.webp" alt="Rocío, contacto de STR-IG" width="241" height="217" loading="lazy">
+      <h2 id="contact-title">Contacta con Rocío</h2>
       <p class="contact-copy">Rocío puede explicarte cómo afiliarte y resolver tus dudas personalmente.</p>
       <div class="actions">
-        <a class="button primary" href="https://wa.me/34625641044?text=Hola%20Roc%C3%ADo%2C%20he%20llegado%20hasta%20la%20secci%C3%B3n%20de%20afiliaci%C3%B3n%20de%20STR-IG%20y%20me%20gustar%C3%ADa%20informarme%20para%20afiliarme.%20%C2%BFMe%20puedes%20explicar%20c%C3%B3mo%20hacerlo%3F%20Gracias." target="_blank" rel="noopener noreferrer">Hablar con Rocío por WhatsApp</a>
+        <a class="button primary" href="https://wa.me/34625641044?text=Hola%20Roc%C3%ADo%2C%20quiero%20afiliarme%20a%20STR-IG.%20%C2%BFMe%20puedes%20indicar%20los%20pasos%3F%20Gracias." target="_blank" rel="noopener noreferrer">Quiero afiliarme</a>
         <a class="button secondary" href="https://wa.me/34625641044?text=Hola%20Roc%C3%ADo%2C%20he%20llegado%20hasta%20la%20secci%C3%B3n%20de%20afiliaci%C3%B3n%20de%20STR-IG%20y%20tengo%20algunas%20dudas%20antes%20de%20afiliarme.%20Cuando%20puedas%2C%20%C2%BFme%20explicas%20c%C3%B3mo%20funciona%3F%20Gracias." target="_blank" rel="noopener noreferrer">Tengo dudas antes de afiliarme</a>
       </div>
       <p class="whatsapp-note">Los botones abren WhatsApp con el mensaje preparado.</p>
     </section>
 
-    <a class="home" href="index.html">Volver al menú principal</a>
+    <a class="home" href="app.html">Volver al menú principal</a>
   </main>
-  <script type="module" src="./app-analytics.js?v=2-card-counts"></script>
+  <script type="module" src="./app-analytics.js"></script>
 </body>
 </html>
