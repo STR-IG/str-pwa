@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#e30613">
+  <title>Derecho de huelga · STR-IG</title>
+  <link rel="icon" type="image/png" href="icono-str-ig.png">
+  <link rel="apple-touch-icon" href="icono-str-ig.png">
+  <link rel="manifest" href="manifest.json">
+  <style>
+    * { box-sizing:border-box; margin:0; padding:0; }
+    :root { --red:#e30613; --ink:#161616; --muted:#6e6e73; --paper:#fff; --surface:#f5f5f7; }
+    body { min-height:100vh; padding-bottom:calc(34px + env(safe-area-inset-bottom)); color:var(--ink); background:var(--surface); font-family:Arial,Helvetica,sans-serif; }
+    .top { position:sticky; top:0; z-index:20; padding:calc(12px + env(safe-area-inset-top)) 16px 12px; border-bottom:1px solid #e3e3e6; background:rgba(245,245,247,.96); backdrop-filter:blur(12px); }
+    .top-inner { display:flex; align-items:center; gap:13px; width:min(100%,900px); margin:auto; }
+    .back { display:grid; flex:0 0 42px; width:42px; height:42px; place-items:center; border-radius:50%; color:var(--red); background:var(--paper); box-shadow:0 3px 12px rgba(0,0,0,.08); font-size:27px; font-weight:800; line-height:1; text-decoration:none; }
+    h1 { font-size:clamp(23px,6vw,30px); line-height:1.05; }
+    main { width:min(100%,900px); margin:auto; padding:22px 14px 0; }
+    .logo-placeholder small { font-size:12px; }
+    .legal-group { margin:26px 0; }
+    .legal-group > h2 { font-size:19px; margin:0 0 12px; }
+    .legal-item { margin:10px 0; border-radius:16px; background:#fff; border:1px solid #e3e3e6; scroll-margin-top:100px; }
+    summary { display:list-item; position:relative; min-height:64px; padding:16px 48px 16px 18px; cursor:pointer; list-style:none; font-size:17px; font-weight:700; line-height:1.4; }
+    summary::-webkit-details-marker { display:none; }
+    summary::after { content:'+'; position:absolute; right:18px; top:50%; transform:translateY(-50%); color:var(--red); font-size:25px; flex-shrink:0; }
+    details[open] > summary::after { content:'−'; }
+    summary small { display:block; color:#666; font-size:13px; font-weight:400; margin-top:4px; }
+    summary:focus-visible, a:focus-visible { outline:3px solid var(--red); outline-offset:3px; border-radius:8px; }
+    .detail-body { padding:0 18px 20px; overflow-wrap:anywhere; }
+    .legal-note { background:#f1f1f3; border:1px solid #ddd; border-radius:12px; margin-top:20px; padding:16px; }
+    .legal-note h3 { font-size:16px; line-height:1.5; margin-bottom:10px; }
+    .legal-note a { color:#444; }
+    .permalink { display:block; margin-top:18px; color:#555; font-size:14px; }
+    @media (prefers-reduced-motion:reduce) { html { scroll-behavior:auto; } }
+    .guide { max-width:780px; }
+    .summary, .guide article, .sources { padding:22px; margin-bottom:14px; border-radius:20px; background:var(--paper); box-shadow:0 5px 18px rgba(0,0,0,.05); }
+    .summary { background:#fff0f1; border-left:4px solid var(--red); }
+    h2 { font-size:21px; line-height:1.25; margin-bottom:10px; }
+    p, li { font-size:16px; line-height:1.65; }
+    p + p { margin-top:10px; }
+    ul { padding-left:21px; }
+    li + li { margin-top:8px; }
+    .sources a { color:#ad0010; overflow-wrap:anywhere; }
+    .sources p { color:var(--muted); font-size:14px; }
+    blockquote { margin:0 0 14px; }
+    .legal-source { display:inline-block; color:#ad0010; font-size:14px; line-height:1.5; overflow-wrap:anywhere; text-underline-offset:3px; }
+    .legal-note p { font-size:16px; }
+    .note-label { font-weight:700; margin-bottom:8px; }
+    .intro { margin-bottom:19px; color:var(--muted); font-size:15px; line-height:1.5; }
+    .topics-grid { display:grid; grid-template-columns:1fr; gap:12px; width:100%; max-width:780px; }
+    .topic-card { overflow:hidden; border-radius:20px; background:var(--paper); box-shadow:0 5px 18px rgba(0,0,0,.07); }
+    .topic-card img { display:block; width:100%; height:auto; }
+    .back-section { display:block; max-width:780px; margin-top:24px; padding:15px 18px; border-radius:999px; color:#555; background:#e8e8eb; font-size:14px; font-weight:800; text-align:center; text-decoration:none; }
+    @media (min-width:700px) {
+      main { padding-top:28px; }
+      .topics-grid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; }
+    }
+  </style>
+</head>
+<body>
+  <header class="top">
+    <div class="top-inner">
+      <a class="back" href="conoce-tus-derechos.html" aria-label="Volver a Conoce tus derechos">‹</a>
+      <h1>Derecho de huelga</h1>
+    </div>
+  </header>
+
+  <main>
+    <p class="intro">Selección de preceptos; los títulos son orientativos y no forman parte de la norma.</p>
+    <div class="guide">
+    <section class="summary" aria-label="Derecho constitucional"><h2>Un derecho fundamental</h2><blockquote cite="https://www.boe.es/buscar/act.php?id=BOE-A-1978-31229#a28"><p>Se reconoce el derecho a la huelga de los trabajadores para la defensa de sus intereses. La ley que regule el ejercicio de este derecho establecerá las garantías precisas para asegurar el mantenimiento de los servicios esenciales de la comunidad.</p></blockquote><a class="legal-source" href="https://www.boe.es/buscar/act.php?id=BOE-A-1978-31229#a28">Constitución Española · Artículo 28.2 · Ver en el BOE</a></section>
+    <section class="legal-group" aria-labelledby="efectos"><h2 id="efectos">Efectos para quien secunda la huelga</h2><details class="legal-item" id="proteccion-frente-a-sanciones"><summary><span>Protección frente a sanciones<small>Art. 6.1</small></span></summary><div class="detail-body"><blockquote lang="es"><p>El ejercicio del derecho de huelga no extingue la relación de trabajo, ni puede dar lugar a sanción alguna, salvo que el trabajador, durante la misma, incurriera en falta laboral.</p></blockquote><a class="legal-source" href="https://www.boe.es/buscar/act.php?id=BOE-A-1977-6061#aseis">Real Decreto-ley 17/1977, de 4 de marzo · Artículo 6.1 · BOE</a><a class="permalink" href="#proteccion-frente-a-sanciones" aria-label="Enlace a Protección frente a sanciones">Enlace a este apartado</a></div></details>
+<details class="legal-item" id="contrato-y-salario"><summary><span>Contrato y salario durante la huelga<small>Art. 6.2</small></span></summary><div class="detail-body"><blockquote lang="es"><p>Durante la huelga se entenderá suspendido el contrato de trabajo y el trabajador no tendrá derecho al salario.</p></blockquote><a class="legal-source" href="https://www.boe.es/buscar/act.php?id=BOE-A-1977-6061#aseis">Real Decreto-ley 17/1977, de 4 de marzo · Artículo 6.2 · BOE</a><a class="permalink" href="#contrato-y-salario" aria-label="Enlace a Contrato y salario durante la huelga">Enlace a este apartado</a></div></details>
+<details class="legal-item" id="seguridad-social"><summary><span>Seguridad Social<small>Art. 6.3</small></span></summary><div class="detail-body"><blockquote lang="es"><p>El trabajador en huelga permanecerá en situación de alta especial en la Seguridad Social, con suspensión de la obligación de cotización por parte del empresario y del propio trabajador. El trabajador en huelga no tendrá derecho a la prestación por desempleo, ni a la económica por incapacidad laboral transitoria.</p></blockquote><a class="legal-source" href="https://www.boe.es/buscar/act.php?id=BOE-A-1977-6061#aseis">Real Decreto-ley 17/1977, de 4 de marzo · Artículo 6.3 · BOE</a><a class="permalink" href="#seguridad-social" aria-label="Enlace a Seguridad Social">Enlace a este apartado</a></div></details></section>
+    <section class="legal-group" aria-labelledby="no-sumarse"><h2 id="no-sumarse">Quien decide no sumarse</h2><details class="legal-item" id="libertad-de-trabajo"><summary><span>Libertad de trabajo de quien no se suma<small>Art. 6.4</small></span></summary><div class="detail-body"><blockquote lang="es"><p>Se respetará la libertad de trabajo de aquellos trabajadores que no quisieran sumarse a la huelga.</p></blockquote><a class="legal-source" href="https://www.boe.es/buscar/act.php?id=BOE-A-1977-6061#aseis">Real Decreto-ley 17/1977, de 4 de marzo · Artículo 6.4 · BOE</a><a class="permalink" href="#libertad-de-trabajo" aria-label="Enlace a Libertad de trabajo de quien no se suma">Enlace a este apartado</a></div></details></section>
+    <section class="legal-group" aria-labelledby="reglas"><h2 id="reglas">Reglas de la huelga</h2><details class="legal-item" id="sustitucion-de-huelguistas"><summary><span>Sustitución de huelguistas<small>Art. 6.5</small></span></summary><div class="detail-body"><blockquote lang="es"><p>En tanto dure la huelga, el empresario no podrá sustituir a los huelguistas por trabajadores que no estuviesen vinculados a la empresa al tiempo de ser comunicada la misma, salvo caso de incumplimiento de las obligaciones contenidas en el apartado número siete de este artículo.</p></blockquote><a class="legal-source" href="https://www.boe.es/buscar/act.php?id=BOE-A-1977-6061#aseis">Real Decreto-ley 17/1977, de 4 de marzo · Artículo 6.5 · BOE</a><a class="permalink" href="#sustitucion-de-huelguistas" aria-label="Enlace a Sustitución de huelguistas">Enlace a este apartado</a></div></details>
+<details class="legal-item" id="publicidad-pacifica"><summary><span>Publicidad pacífica y recogida de fondos<small>Art. 6.6</small></span></summary><div class="detail-body"><blockquote lang="es"><p>Los trabajadores en huelga podrán efectuar publicidad de la misma, en forma pacífica, y llevar a efecto recogida de fondos sin coacción alguna.</p></blockquote><a class="legal-source" href="https://www.boe.es/buscar/act.php?id=BOE-A-1977-6061#aseis">Real Decreto-ley 17/1977, de 4 de marzo · Artículo 6.6 · BOE</a><a class="permalink" href="#publicidad-pacifica" aria-label="Enlace a Publicidad pacífica y recogida de fondos">Enlace a este apartado</a></div></details><details class="legal-item" id="ejercicio-y-ocupacion"><summary><span>Ejercicio de la huelga y ocupación del centro<small>Art. 7.1</small></span></summary><div class="detail-body"><blockquote lang="es"><p>El ejercicio del derecho de huelga habrá de realizarse, precisamente, mediante la cesación de la prestación de servicios por los trabajadores afectados y sin ocupación por los mismos del centro de trabajo o de cualquiera de sus dependencias.</p></blockquote><a class="legal-source" href="https://www.boe.es/buscar/act.php?id=BOE-A-1977-6061#asiete">Real Decreto-ley 17/1977, de 4 de marzo · Artículo 7.1 · BOE</a><aside class="legal-note"><h3>Interpretación constitucional · FJ 17</h3><blockquote lang="es"><p>Ante todo, hay que decir que la interdicción de ocupación de locales y de dependencias no puede entenderse como regla impeditiva del derecho de reunión de los trabajadores, necesario para el desenvolvimiento del derecho de huelga y para la solución de la misma. Es éste un derecho que debe quedar claramente preservado y su ejercicio llevarse a cabo de acuerdo con las correspondientes normas del Estatuto de los Trabajadores.</p><p>Hay que decir también que la ocupación de locales y dependencias se torna ilícita cuando con ella se vulnera el derecho de libertad de otras personas (v. gr.: de los trabajadores no huelguistas) o el derecho sobre las instalaciones y los bienes. En todos los casos en que exista notorio peligro de violación de otros derechos o de producción de desórdenes, la interdicción de permanencia en los locales puede decretarse como medida de policía.</p><p>Conviene, asimismo, llamar la atención en el sentido de que el artículo 7.º debe ser objeto de una interpretación restrictiva. Por ocupación hay que entender un ilegal ingreso en los locales o una ilegal negativa de desalojo frente a una legítima orden de abandono, pero no, en cambio, la simple permanencia en los puestos de trabajo.</p></blockquote><a class="legal-source" href="https://www.boe.es/boe/dias/1981/04/25/pdfs/T00001-00013.pdf#page=8">STC 11/1981, de 8 de abril · FJ 17 · BOE</a></aside><a class="permalink" href="#ejercicio-y-ocupacion" aria-label="Enlace a Ejercicio de la huelga y ocupación del centro">Enlace a este apartado</a></div></details><details class="legal-item" id="seguridad-y-mantenimiento"><summary><span>Servicios de seguridad y mantenimiento<small>Art. 6.7</small></span></summary><div class="detail-body"><blockquote lang="es"><p>El Comité de huelga habrá de garantizar durante la misma la prestación de los servicios necesarios para la seguridad de las personas y de las cosas, mantenimiento de los locales, maquinaria, instalaciones, materias primas y cualquier otra atención que fuese precisa para la ulterior reanudación de las tareas de la empresa. Corresponde al empresario la designación de los trabajadores que deban efectuar dichos servicios.</p></blockquote><a class="legal-source" href="https://www.boe.es/buscar/act.php?id=BOE-A-1977-6061#aseis">Real Decreto-ley 17/1977, de 4 de marzo · Artículo 6.7 · BOE</a><aside class="legal-note"><h3>Inconstitucionalidad parcial · Fallo, apartado 2.c</h3><blockquote lang="es"><p>Que es inconstitucional el apartado 7.º del artículo 6.º en cuanto atribuye de manera exclusiva al empresario la facultad de designar los trabajadores que durante la huelga deban velar por el mantenimiento de los locales, maquinaria e instalaciones.</p></blockquote><a class="legal-source" href="https://www.boe.es/boe/dias/1981/04/25/pdfs/T00001-00013.pdf#page=13">STC 11/1981, de 8 de abril · Fallo · BOE</a></aside><a class="permalink" href="#seguridad-y-mantenimiento" aria-label="Enlace a Servicios de seguridad y mantenimiento">Enlace a este apartado</a></div></details>
+<details class="legal-item" id="servicios-esenciales"><summary><span>Servicios esenciales de la comunidad<small>Art. 10, párrafo segundo</small></span></summary><div class="detail-body"><blockquote lang="es"><p>Cuando la huelga se declare en empresas encargadas de la prestación de cualquier género de servicios públicos o de reconocida e inaplazable necesidad y concurran circunstancias de especial gravedad, la Autoridad gubernativa podrá acordar las medidas necesarias para asegurar el funcionamiento de los servicios. El Gobierno, asimismo, podrá adoptar a tales fines las medidas de intervención adecuadas.</p></blockquote><a class="legal-source" href="https://www.boe.es/buscar/act.php?id=BOE-A-1977-6061#adiez">Real Decreto-ley 17/1977, de 4 de marzo · Artículo 10, párrafo segundo · BOE</a><aside class="legal-note"><h3>Interpretación constitucional · Fallo, apartado 2.e</h3><blockquote lang="es"><p>Que no es inconstitucional el párrafo 2.º del artículo 10, que atribuye a la autoridad gubernativa la potestad de dictar las medidas necesarias para determinar el mantenimiento de los servicios esenciales a la comunidad, en cuanto que el ejercicio de esta potestad está sometido a la jurisdicción de los Tribunales de justicia y al recurso de amparo ante este Tribunal.</p></blockquote><a class="legal-source" href="https://www.boe.es/boe/dias/1981/04/25/pdfs/T00001-00013.pdf#page=13">STC 11/1981, de 8 de abril · Fallo · BOE</a></aside><a class="permalink" href="#servicios-esenciales" aria-label="Enlace a Servicios esenciales de la comunidad">Enlace a este apartado</a></div></details></section>
+    <details class="legal-item" id="fuentes-y-alcance"><summary><span>Fuentes y alcance<small>Textos oficiales · Revisión: 10 de noviembre de 2026</small></span></summary><div class="detail-body"><p>Los extractos legales proceden del texto consolidado del BOE y se han cotejado con las publicaciones originales. El texto consolidado tiene carácter informativo y no tiene valor jurídico. El BOE indica como última actualización del Real Decreto-ley la publicada el 25 de abril de 1981.</p><p>Se conserva la redacción original, incluida la expresión «incapacidad laboral transitoria», sin los indicadores de numeración al inicio de los apartados. En las citas judiciales se normalizan los espacios, los saltos de línea y la representación tipográfica de los ordinales.</p><p>Es una selección: no se incluyen la declaración y el preaviso de huelga, la huelga ilegal, el cierre patronal ni los conflictos colectivos. Tampoco se reproduce el primer párrafo del artículo 10, declarado parcialmente inconstitucional. Consulta los textos completos y su jurisprudencia.</p><ul><li><a class="legal-source" href="https://www.boe.es/buscar/act.php?id=BOE-A-1978-31229#a28">Constitución Española · Artículo 28.2 · BOE</a></li><li><a class="legal-source" href="https://www.boe.es/buscar/act.php?id=BOE-A-1977-6061">Real Decreto-ley 17/1977 · BOE</a></li><li><a class="legal-source" href="https://www.boe.es/buscar/doc.php?id=BOE-T-1981-9433">STC 11/1981 · Pleno · Recurso 192/1980 · BOE de 25 de abril de 1981 · BOE</a></li><li><a class="legal-source" href="https://www.boe.es/boe/dias/1981/04/25/pdfs/T00001-00013.pdf">Publicación original de la sentencia · BOE</a></li><li><a class="legal-source" href="https://www.boe.es/buscar/doc.php?id=BOE-T-1981-11587">Corrección de errores · BOE de 21 de mayo de 1981 · BOE</a></li></ul><a class="permalink" href="#fuentes-y-alcance" aria-label="Enlace a Fuentes y alcance">Enlace a este apartado</a></div></details>
+    </div>
+    <a class="back-section" href="conoce-tus-derechos.html">Volver a Conoce tus derechos</a>
+  </main>
+  <script src="./derecho-de-huelga.js" defer></script>
+  <script type="module" src="./app-analytics.js?v=2-card-counts"></script>
+</body>
+</html>

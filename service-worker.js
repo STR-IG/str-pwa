@@ -1,4 +1,4 @@
-const CACHE_NAME = 'str-ig-cache-v153-votaciones-private';
+const CACHE_NAME = 'str-ig-cache-v154-votaciones-private';
 
 const SUPABASE_URL = 'https://icneigdnuntzugisexaz.supabase.co';
 const APP_ORIGIN = self.location.origin;
