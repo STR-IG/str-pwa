@@ -53,6 +53,9 @@
     .quick-card:hover { transform:translateY(-3px); box-shadow:0 10px 24px rgba(0,0,0,.11); }
     .menu-image-card { position:relative; aspect-ratio:3/2; min-height:0; padding:0; overflow:hidden; background:#fff; box-shadow:none; -webkit-transform:translateZ(0); transform:translateZ(0); -webkit-backface-visibility:hidden; backface-visibility:hidden; }
     .menu-image-card img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; display:block; -webkit-transform:translateZ(0); transform:translateZ(0); -webkit-backface-visibility:hidden; backface-visibility:hidden; }
+    /* Remove the artwork's white margins inside the standard 3:2 cards. */
+    .menu-image-card img[src="menu-comedor.webp"] { inset:auto; left:-2.174%; top:-3.433%; width:104.348%; height:109.871%; object-fit:fill; }
+    .menu-image-card img[src="card-actualidad-laboral.webp"] { inset:auto; left:-2.027%; top:-5.915%; width:103.784%; height:114.286%; object-fit:fill; }
     .voting-image-card { position:relative; }
     .news-notification-card { position:relative; }
     .news-notification-badge { position:absolute; top:8px; right:8px; z-index:5; min-width:28px; height:28px; padding:0 8px; border:2px solid #fff; border-radius:999px; display:none; align-items:center; justify-content:center; color:#fff; background:var(--red); box-shadow:0 3px 10px rgba(0,0,0,.24); font-size:15px; line-height:1; font-weight:900; }
