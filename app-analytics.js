@@ -20,7 +20,8 @@ export function cardDestination(href, base = location.href) {
   } catch { return null; }
 }
 export async function track(eventType, card) {
-  if (eventType !== 'card_click' || !Object.hasOwn(CARD_LABELS, card)) return;
+  if (eventType !== 'card_click' && !(eventType === 'page_view' && card === 'app.html')) return;
+  if (!Object.hasOwn(CARD_LABELS, card)) return;
   try {
     await fetch(ENDPOINT, {
       method: 'POST', keepalive: true, credentials: 'omit', referrerPolicy: 'no-referrer',
@@ -29,6 +30,10 @@ export async function track(eventType, card) {
     });
   } catch { /* Statistics never affect navigation; no persistent retry queue. */ }
 }
+if (/(?:^|\/)app\.html$/.test(location.pathname)) {
+  void track('page_view', 'app.html');
+}
+
 document.addEventListener('click', event => {
   const anchor = event.target.closest?.('a[href]');
   if (!anchor || anchor.dataset.analyticsIgnore != null) return;
