@@ -3,13 +3,13 @@ export const MONTHLY_SUMMARIES = [
   {
     "date": "2026-10-31",
     "title": "Octubre 2026 · En un minuto",
-    "summary": "Un resumen visual de cinco temas destacados de nuestra actividad sindical en octubre: comedor, pluses de Navidad, movilidad sostenible, emergencias climáticas y nuevas encuestas en la app.",
+    "summary": "Resumen visual de octubre: comedor, pluses de Navidad, movilidad sostenible, emergencias climáticas y nuevas encuestas en la app.",
     "url": "octubre-en-un-minuto.html"
   },
   {
     "date": "2026-09-30",
     "title": "Septiembre 2026 · En un minuto",
-    "summary": "Repasamos cinco temas de septiembre: datos de afiliación sindical, encuestas tras una baja médica, coeficientes reductores de jubilación, movilidad sostenible y presentación de la app STR.",
+    "summary": "Resumen de septiembre: datos de afiliación sindical, encuestas tras una baja médica, coeficientes reductores de jubilación, movilidad sostenible y presentación de la app STR.",
     "url": "septiembre-en-un-minuto.html"
   }
 ];

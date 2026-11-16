@@ -31,6 +31,10 @@
     .post-category { display:block; margin-bottom:7px; color:var(--red); font-size:12px; font-weight:900; letter-spacing:.7px; text-transform:uppercase; }
     .post h3 { margin-bottom:8px; font-size:clamp(21px,5.7vw,27px); line-height:1.12; }
     .post p { color:var(--muted); font-size:15px; line-height:1.5; }
+    .monthly-access { color:var(--paper); background:var(--red); }
+    .monthly-access p { color:inherit; }
+    .monthly-access .post-actions { font-size:14px; font-weight:900; }
+    .monthly-access:hover { background:var(--red-dark); }
     .post-actions { display:flex; gap:10px; margin-top:17px; }
     .primary { display:inline-flex; align-items:center; justify-content:center; min-height:46px; padding:0 18px; border-radius:999px; color:var(--red-dark); background:var(--red-soft); font-size:14px; font-weight:900; text-decoration:none; }
     .post-actions .primary { flex:1; color:#fff; background:var(--red); }
@@ -43,9 +47,10 @@
 <body>
   <header class="top"><div class="top-inner"><a class="back" href="index.html" aria-label="Volver al menú principal">‹</a><h1>Actividad e información sindical</h1></div></header>
   <main>
-    <a class="post post-link post-body" href="resumen-mensual.html">
-      <strong class="post-category">Resumen mensual · En un minuto</strong>
-      <p>Lo más importante de cada mes</p>
+    <a class="post post-link post-body monthly-access" href="resumen-mensual.html">
+      <h3>EN UN MINUTO · RESUMEN MENSUAL</h3>
+      <p>Lo más importante de nuestra actividad sindical cada mes, en menos de un minuto de lectura.</p>
+      <span class="post-actions">Leer el último resumen →</span>
     </a>
     <section class="feed" aria-label="Publicaciones sindicales">
 <article class="post" data-news-category="documentation-info" data-news-id="documentation-explanation-2026-09-30" data-published-at="2026-09-30T00:00:00Z">
