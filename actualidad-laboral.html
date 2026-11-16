@@ -58,10 +58,13 @@
         link.target = '_blank';
         link.rel = 'noopener noreferrer';
       }
-      const image = document.createElement('img');
-      image.className = 'post-media';
-      image.src = news.image;
-      image.alt = news.title;
+      if (news.image) {
+        const image = document.createElement('img');
+        image.className = 'post-media';
+        image.src = news.image;
+        image.alt = news.title;
+        link.append(image);
+      }
       const copy = document.createElement('div');
       copy.className = 'post-copy';
       const title = document.createElement('h2');
@@ -69,8 +72,23 @@
       const date = document.createElement('time');
       date.dateTime = news.date;
       date.textContent = dateFormat.format(new Date(news.date));
+      if (news.label) {
+        const label = document.createElement('div');
+        label.textContent = news.label;
+        copy.append(label);
+      }
       copy.append(title, date);
-      link.append(image, copy);
+      if (news.summary) {
+        const summary = document.createElement('p');
+        summary.textContent = news.summary;
+        copy.append(summary);
+      }
+      if (news.linkText) {
+        const action = document.createElement('span');
+        action.textContent = news.linkText;
+        copy.append(action);
+      }
+      link.append(copy);
       post.append(link);
       feed.append(post);
     });
