@@ -46,26 +46,41 @@
     .documentation-link { position:relative; }
     .documentation-link .post-actions { margin-top:12px; }
     #documentation-title { display:block; }
-    .achievement-banner { position:relative; display:flex; align-items:center; overflow:hidden; width:100%; max-width:780px; aspect-ratio:1400 / 438; margin-bottom:12px; border-radius:20px; background:#a30025; color:#fff; }
-    .achievement-banner img { position:absolute; inset:0 0 0 auto; width:65%; height:100%; object-fit:cover; }
-    .achievement-banner::after { content:""; position:absolute; inset:0; background:linear-gradient(90deg,#a30025 35%,transparent 41%); }
-    .achievement-banner h2 { position:relative; z-index:1; max-width:35%; margin:0; padding-left:4%; font-size:clamp(16px,4.4vw,46px); }
+    .achievements-link { display:flex; align-items:center; justify-content:space-between; gap:12px; color:#fff; background:var(--red); font-size:clamp(21px,5.7vw,27px); font-weight:800; line-height:1.12; }
+
+    .section-title { font-size:16px; font-weight:800; }
+    .monthly-access { position:relative; }
+    .monthly-access .post-category, .monthly-access .post-date { color:inherit; }
+    .monthly-access .primary { border:1px solid #fff; }
+    .previous { display:block; width:fit-content; margin-top:14px; padding:8px 0; color:#fff; font-size:14px; }
+    .achievements-link { display:block; padding:15px 18px; font-size:15px; text-align:center; white-space:nowrap; }
+    .more { display:block; padding:14px; color:var(--red-dark); font-weight:800; text-align:center; }
+    .monthly-access a:focus-visible { outline-color:#fff; }
+    [hidden] { display:none !important; }
+
+    .navigation-card { position:relative; display:flex; align-items:center; justify-content:space-between; gap:16px; min-height:94px; padding:22px; color:#fff; background:var(--red); text-decoration:none; }
+    .navigation-card h2 { margin:0; font-size:clamp(21px,5.7vw,27px); line-height:1.15; }
+    .navigation-card .arrow { flex:none; font-size:30px; }
+    .navigation-card:hover { background:var(--red-dark); }
+    .navigation-card:focus-visible { outline-offset:4px; }
+    .content-card { position:relative; padding:20px; }
+    .content-card h2 { margin-bottom:10px; font-size:22px; line-height:1.2; }
+    .content-card h3 { margin:20px 0 7px; font-size:18px; }
+    .content-card p + p { margin-top:12px; }
+    .status { display:inline-block; margin-bottom:12px; padding:5px 10px; border-radius:999px; color:var(--red-dark); background:var(--red-soft); font-size:13px; font-weight:800; }
+    .related { display:block; padding:12px 0; color:var(--red-dark); font-size:15px; font-weight:800; line-height:1.4; }
+    .content-image { display:block; width:100%; height:auto; margin-bottom:18px; border-radius:18px; }
+    .empty { padding:20px; color:var(--muted); }
+    .category-heading { font-size:19px; line-height:1.3; }
+    .group { display:grid; gap:16px; }
   </style>
 </head>
 <body>
   <header class="top"><div class="top-inner"><a class="back" href="actividad-informacion-sindical.html" aria-label="Volver a Actividad e información sindical">‹</a><h1>Nuestros logros</h1></div></header>
-  <main>
-    <article class="post">
-      <div class="post-body">
-        <div class="achievement-banner">
-          <img src="card-puntos-recarga.webp" alt="Ocho puntos de recarga alineados junto a árboles" width="880" height="450" decoding="async">
-          <h2>Puntos de recarga</h2>
-        </div>
-        <p>Nuestra sección sindical propuso instalar puntos de recarga para vehículos eléctricos e insistió tras la negativa inicial de la empresa.</p>
-      </div>
-    </article>
-    <a class="home" href="actividad-informacion-sindical.html">Volver a Actividad e información sindical</a>
+  <main id="activity-content">
+    <noscript>Activa JavaScript para consultar la ficha de los puntos de recarga.</noscript>
   </main>
+  <script type="module" src="./actividad-informacion-sindical.js"></script>
   <script type="module" src="./app-analytics.js"></script>
 </body>
 </html>

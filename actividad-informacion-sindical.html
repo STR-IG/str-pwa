@@ -57,31 +57,29 @@
     .more { display:block; padding:14px; color:var(--red-dark); font-weight:800; text-align:center; }
     .monthly-access a:focus-visible { outline-color:#fff; }
     [hidden] { display:none !important; }
+
+    .navigation-card { position:relative; display:flex; align-items:center; justify-content:space-between; gap:16px; min-height:94px; padding:22px; color:#fff; background:var(--red); text-decoration:none; }
+    .navigation-card h2 { margin:0; font-size:clamp(21px,5.7vw,27px); line-height:1.15; }
+    .navigation-card .arrow { flex:none; font-size:30px; }
+    .navigation-card:hover { background:var(--red-dark); }
+    .navigation-card:focus-visible { outline-offset:4px; }
+    .content-card { position:relative; padding:20px; }
+    .content-card h2 { margin-bottom:10px; font-size:22px; line-height:1.2; }
+    .content-card h3 { margin:20px 0 7px; font-size:18px; }
+    .content-card p + p { margin-top:12px; }
+    .status { display:inline-block; margin-bottom:12px; padding:5px 10px; border-radius:999px; color:var(--red-dark); background:var(--red-soft); font-size:13px; font-weight:800; }
+    .related { display:block; padding:12px 0; color:var(--red-dark); font-size:15px; font-weight:800; line-height:1.4; }
+    .content-image { display:block; width:100%; height:auto; margin-bottom:18px; border-radius:18px; }
+    .empty { padding:20px; color:var(--muted); }
+    .category-heading { font-size:19px; line-height:1.3; }
+    .group { display:grid; gap:16px; }
   </style>
 </head>
 <body>
-  <header class="top"><div class="top-inner"><a class="back" href="index.html" aria-label="Volver al menú principal">‹</a><h1>Actividad e información sindical</h1></div></header>
-  <main>
-    <section id="monthly" aria-label="Resumen mensual"></section>
-    <section id="topics" class="feed" aria-label="Temas abiertos" hidden></section>
-    <section class="feed" aria-labelledby="meetings-title">
-      <h2 id="meetings-title" class="section-title">Reuniones y comunicados</h2>
-      <div id="meetings" class="feed"></div>
-      <a id="all-meetings" class="more" href="?reuniones=todas#meetings-title" hidden>Ver todas</a>
-    </section>
-    <div id="achievements"></div>
-    <a class="home" href="index.html">Volver al menú principal</a>
+  <header class="top"><div class="top-inner"><a class="back" href="app.html" aria-label="Volver al menú principal">‹</a><h1>Actividad e información sindical</h1></div></header>
+  <main id="activity-content">
     <noscript>Activa JavaScript para consultar las publicaciones sindicales.</noscript>
   </main>
-  <template id="publication">
-    <article class="post post-body">
-      <span class="post-category"></span>
-      <div class="post-date"><span class="calendar" aria-hidden="true">📅</span><time></time></div>
-      <h3></h3>
-      <p></p>
-      <div class="post-actions"><a class="primary"></a></div>
-    </article>
-  </template>
   <script type="module" src="./actividad-informacion-sindical.js"></script>
   <script type="module" src="./app-analytics.js?v=2-card-counts"></script>
 </body>

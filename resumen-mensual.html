@@ -57,6 +57,12 @@
     const template = document.querySelector('#monthly-summary');
     const formatDate = new Intl.DateTimeFormat('es-ES', { dateStyle: 'long', timeZone: 'UTC' });
 
+    if (!MONTHLY_SUMMARIES.length) {
+      const empty = document.createElement('p');
+      empty.textContent = 'Todavía no hay contenido aquí';
+      feed.append(empty);
+    }
+
     for (const summary of [...MONTHLY_SUMMARIES].sort((a, b) => b.date.localeCompare(a.date))) {
       const card = template.content.cloneNode(true);
       card.querySelector('h2').textContent = summary.title;
