@@ -55,7 +55,8 @@ function addDate(card, entry) {
   const row = element('div', '', 'post-date');
   const prefix = entry.tipo === 'tema' ? 'Actualizado: ' : '📅 ';
   if (entry.fecha) {
-    const date = (entry.tipo === 'tema' ? monthFormat : dateFormat).format(new Date(entry.fecha));
+    const monthOnly = entry.tipo === 'tema' || /^\d{4}-\d{2}$/.test(entry.fecha);
+    const date = (monthOnly ? monthFormat : dateFormat).format(new Date(entry.fecha));
     const time = element('time', prefix + (entry.tipo === 'tema' ? date.replace(' de ', ' ') : date));
     time.dateTime = entry.fecha;
     row.append(time);
@@ -175,7 +176,7 @@ function renderDetail(entry) {
     detailBlock(card, 'Qué se consiguió', ficha.objetivo);
     detailBlock(card, 'Qué hizo STR', ficha.actuaciones);
     const when = ficha.cuando?.trim();
-    if (when && !when.includes(PENDING)) {
+    if (hasDate(entry.fecha) && when && !when.includes(PENDING)) {
       detailBlock(card, 'Cuándo', when);
     } else if (hasDate(entry.fecha)) {
       detailBlock(card, 'Cuándo', dateFormat.format(new Date(entry.fecha)));
@@ -184,7 +185,14 @@ function renderDetail(entry) {
   const related = relatedLink(entry, entry.id === 'puntos-recarga' ? 'Siguiente paso: ' : 'Relacionado con: ');
   if (related) {
     if (entry.id === 'puntos-recarga') related.textContent = 'Siguiente paso: bajar el precio del kWh →';
-    card.append(related);
+    if (entry.textoRelacionado) {
+      const block = element('section', '', 'detail-block');
+      related.textContent = entry.textoRelacionado;
+      block.append(element('h3', 'Relacionado'), related);
+      card.append(block);
+    } else {
+      card.append(related);
+    }
   }
   main.append(card);
 }

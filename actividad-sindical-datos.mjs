@@ -53,13 +53,15 @@ export const CONTENIDOS = [
     }
   },
   {
-    id: 'pluses-especiales', tipo: 'logro', titulo: 'Pluses de días especiales de Navidad', fecha: '',
+    id: 'pluses-especiales', tipo: 'logro', titulo: 'Pluses de días especiales de Navidad', fecha: '2025-07',
     estado: 'conseguido', categoria: 'Condiciones laborales y reconocimiento económico',
-    resumen: '', enlace: 'actividad-informacion-sindical.html?ficha=pluses-especiales', relacionado: '',
+    resumen: 'Las plantillas de los departamentos de servicio a producción quedan incluidas en los días especiales de Navidad.',
+    enlace: 'actividad-informacion-sindical.html?ficha=pluses-especiales', relacionado: 'resumen-octubre-2026',
+    textoRelacionado: 'En octubre de 2026 la empresa confirmó que los pluses de Navidad 2026 se abonarán conforme al pacto vigente',
     ficha: {
-      objetivo: 'Pluses especiales navideños, que siguen vigentes.',
-      actuaciones: 'Los pluses de días especiales de Navidad fueron una reivindicación que STR llevó históricamente a todas las reuniones con la empresa y al comité. Los anteriores comités de empresa habían dejado fuera del pacto de vacaciones a los departamentos que dan servicio a producción, como Mantenimiento, Calibraciones, Aguas, SAF, CAP y CI.',
-      cuando: ''
+      objetivo: 'En julio de 2025 la empresa incorporó la fórmula de días especiales de Navidad que proponía STR. Con ella, los departamentos que dan servicio a producción (Mantenimiento, Calibraciones, Aguas, SAF, CAP y CI) quedan incluidos en el reconocimiento de esos días.',
+      actuaciones: 'El pacto de vacaciones firmado por el comité de empresa en 2016 dejó fuera a esos departamentos. Desde entonces, STR llevó esta reivindicación a todas las reuniones con la empresa y al comité, año tras año, hasta que la empresa aceptó nuestra fórmula.',
+      cuando: 'Julio de 2025'
     }
   },
   {
