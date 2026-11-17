@@ -4,7 +4,7 @@ import { initNews } from './novedades.js';
 const HUB = 'actividad-informacion-sindical.html';
 const PENDING = 'PENDIENTE DE REDACTAR';
 const sections = [
-  { vista: 'resumenes', titulo: 'En un minuto · Resúmenes mensuales', tipo: 'resumen', enlace: 'resumen-mensual.html' },
+  { vista: 'resumenes', titulo: 'Resumen del mes', subtitulo: 'Lo importante de cada mes, en 1 minuto', tipo: 'resumen', enlace: 'resumen-mensual.html' },
   { vista: 'temas', titulo: 'Temas abiertos', tipo: 'tema' },
   { vista: 'proyectos', titulo: 'En qué estamos trabajando', tipo: 'proyecto' },
   { vista: 'reuniones', titulo: 'Reuniones y comunicados', tipo: 'reunión' },
@@ -146,7 +146,10 @@ function renderHub() {
   screen('Actividad e información sindical', 'app.html', 'menú principal');
   for (const section of sections) {
     const card = link('', section.enlace || HUB + '?vista=' + section.vista, 'post navigation-card');
-    card.append(element('h2', section.titulo));
+    const copy = element('div', '', 'navigation-copy');
+    copy.append(element('h2', section.titulo));
+    if (section.subtitulo) copy.append(element('small', section.subtitulo));
+    card.append(copy);
     const arrow = element('span', '›', 'arrow');
     arrow.setAttribute('aria-hidden', 'true');
     card.append(arrow);
