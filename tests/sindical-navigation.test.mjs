@@ -28,40 +28,17 @@ test('la entrada sindical unificada conserva contenido, rutas y avisos', () => {
 });
 
 import vm from 'node:vm';
-test('la tarjeta de protección de datos abre la cronología y marca el aviso como leído', () => {
+test('la tarjeta de protección de datos enlaza a una pantalla con la cronología', () => {
   const hub = read('actividad-informacion-sindical.html');
-  const card = hub.match(/<article[^>]+data-news-category="documentation-info"[\s\S]*?<\/article>/)[0];
-  assert.doesNotMatch(card, /<img|<a\s/);
-  assert.match(card, /<button[^>]+aria-expanded="false"[^>]+aria-controls="documentation-timeline"/);
-  assert.match(card, /id="documentation-timeline" hidden>\s*<details open>/);
-  assert.doesNotMatch(card, /<summary>Paso/);
-  assert.deepEqual([...card.matchAll(/<summary><strong>(.*?)<\/strong>/g)].map(([, date]) => date), [
+  assert.match(hub, /href="cronologia-sharepoint.html"/);
+  assert.doesNotMatch(hub, /<div[^>]+class="[^"]*documentation-timeline/);
+  const detail = read('cronologia-sharepoint.html');
+  assert.match(detail, /class="back" href="actividad-informacion-sindical.html"/);
+  assert.match(detail, /class="post-body documentation-timeline faq-calida">\s*<details class="faq-item" name="sharepoint-cronologia" open>/);
+  assert.deepEqual([...detail.matchAll(/<summary><span><strong>(.*?)<\/strong>/g)].map(([, date]) => date), [
     'noviembre de 2026', 'octubre de 2026', 'julio de 2026', 'julio de 2026',
   ]);
-  const step = { open: false };
-  const timeline = { hidden: true, querySelector: () => step };
-  const action = { textContent: '' };
-  const reads = [];
-  const toggle = {
-    addEventListener(type, listener) { this.click = listener; },
-    setAttribute(key, value) { this[key] = value; },
-    closest: () => ({ dataset: { newsId: 'documentation-explanation-2026-09-30' } }),
-  };
-  const elements = { '.documentation-toggle': toggle, '#documentation-timeline': timeline, '#documentation-action': action };
-  vm.runInNewContext(hub.slice(hub.indexOf('    const toggle ='), hub.indexOf('    initNews().catch')), {
-    document: { querySelector: selector => elements[selector] },
-    markNewsRead: async ids => reads.push(...ids),
-  });
-  toggle.click();
-  assert.equal(timeline.hidden, false);
-  assert.equal(toggle['aria-expanded'], 'true');
-  assert.equal(action.textContent, 'Ocultar cronología ▴');
-  assert.equal(step.open, true);
-  assert.deepEqual(reads, ['documentation-explanation-2026-09-30']);
-  toggle.click();
-  assert.equal(timeline.hidden, true);
-  assert.equal(toggle['aria-expanded'], 'false');
-  assert.equal(action.textContent, 'Ver cronología ▾');
+  assert.ok(detail.includes("markNewsRead(['documentation-explanation-2026-09-30'])"));
 });
 
 test('el badge pasa de 1 a oculto después de visualizar la explicación', async () => {
@@ -124,7 +101,7 @@ test('el listado ordena por publicación y vuelve directamente a Inicio', () => 
   const children = ['2026-09-08T09:42:00Z', '2026-09-30T00:00:00Z', '2026-09-16T12:00:00Z'].map(publishedAt => ({dataset: {publishedAt}}));
   const ordered = [];
   const feed = {children, appendChild: post => ordered.push(post.dataset.publishedAt)};
-  const script = html.split('const feed =')[1].split('const toggle =')[0];
+  const script = html.split('const feed =')[1].split('initNews()')[0];
   vm.runInNewContext('const feed =' + script, {document: {querySelector: () => feed}});
   assert.deepEqual(ordered, ['2026-09-30T00:00:00Z', '2026-09-16T12:00:00Z', '2026-09-08T09:42:00Z']);
 });

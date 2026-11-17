@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#e30613">
+  <title>Cronología de SharePoint · STR-IG</title>
+  <link rel="icon" type="image/png" href="icono-str-ig.png">
+  <link rel="apple-touch-icon" href="icono-str-ig.png">
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="acordeon-str.css">
+  <style>
+    * { box-sizing:border-box; margin:0; padding:0; }
+    :root { --red:#e30613; --red-dark:#b9000b; --red-soft:#fff0f1; --ink:#161616; --muted:#6e6e73; --paper:#fff; --surface:#f5f5f7; }
+    html, body { width:100%; overflow-x:hidden; }
+    body { min-height:100vh; padding-bottom:calc(34px + env(safe-area-inset-bottom)); color:var(--ink); background:var(--surface); font-family:Arial,Helvetica,sans-serif; }
+    .top { position:sticky; top:0; z-index:10; padding:calc(12px + env(safe-area-inset-top)) 16px 12px; border-bottom:1px solid #e3e3e6; background:rgba(245,245,247,.96); backdrop-filter:blur(12px); }
+    .top-inner { display:flex; align-items:center; gap:13px; width:min(100%,900px); margin:auto; }
+    .back { display:grid; flex:0 0 42px; width:42px; height:42px; place-items:center; border-radius:50%; color:var(--red); background:var(--paper); box-shadow:0 3px 12px rgba(0,0,0,.08); font-size:27px; font-weight:800; line-height:1; text-decoration:none; }
+    h1 { font-size:clamp(23px,6vw,30px); line-height:1.05; }
+    main { display:grid; gap:18px; width:min(100%,900px); margin:auto; padding:22px 14px 0; }
+    .post { overflow:hidden; border-radius:24px; background:var(--paper); box-shadow:0 6px 22px rgba(0,0,0,.08); }
+    .post-body { padding:18px; }
+    .post h3 { margin-bottom:8px; font-size:clamp(21px,5.7vw,27px); line-height:1.12; }
+    @media (min-width:700px) { main { padding-top:30px; } .post-body { padding:22px 24px 24px; } }
+    a:focus-visible { outline:3px solid var(--red); outline-offset:4px; }
+    .documentation-timeline footer { margin-top:12px; font-size:13px; color:var(--ink); }
+  </style>
+</head>
+<body>
+  <header class="top"><div class="top-inner"><a class="back" href="actividad-informacion-sindical.html" aria-label="Volver a Actividad e información sindical">‹</a><h1>Cronología</h1></div></header>
+  <main>
+    <article class="post">
+      <div class="post-body"><h2>Filtración de datos en SharePoint: qué ocurrió y dónde estamos</h2></div>
+        <div class="post-body documentation-timeline faq-calida">
+          <details class="faq-item" name="sharepoint-cronologia" open>
+            <summary><span><strong>noviembre de 2026</strong> · Situación actual</span><span class="faq-icon" aria-hidden="true"></span></summary>
+            <p>En noviembre de 2026, STR y CGT presentaron el asunto ante los juzgados. UGT continúa por su cuenta.</p>
+          </details>
+          <details class="faq-item" name="sharepoint-cronologia">
+            <summary><span><strong>octubre de 2026</strong> · Comité de empresa y Fondo Social</span><span class="faq-icon" aria-hidden="true"></span></summary>
+            <p>El comité de empresa aprobó llevar la cuestión al Fondo Social para interponer un conflicto colectivo. En el Fondo Social no pudo aprobarse porque CC.OO., que tiene mayoría en ese órgano, votó en contra. CC.OO. también realizó una movilización y comunicó su posición públicamente.</p>
+          </details>
+          <details class="faq-item" name="sharepoint-cronologia">
+            <summary><span><strong>julio de 2026</strong> · Petición de explicaciones a la empresa</span><span class="faq-icon" aria-hidden="true"></span></summary>
+            <p>Preguntamos a la empresa por qué no se avisó a la plantilla y hasta dónde llegó la filtración. No hemos recibido una respuesta que lo aclare.</p>
+          </details>
+          <details class="faq-item" name="sharepoint-cronologia">
+            <summary><span><strong>julio de 2026</strong> · Detección</span><span class="faq-icon" aria-hidden="true"></span></summary>
+            <p>Detectamos que datos de afiliación estaban accesibles en SharePoint.</p>
+          </details>
+          <footer>Lo publicado se basa en documentos y actas.</footer>
+        </div>
+    </article>
+  </main>
+  <script type="module">
+    import { markNewsRead } from './novedades.js';
+    markNewsRead(['documentation-explanation-2026-09-30']).catch(() => {});
+  </script>
+  <script type="module" src="./app-analytics.js?v=2-card-counts"></script>
+</body>
+</html>

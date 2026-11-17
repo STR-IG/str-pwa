@@ -43,19 +43,9 @@
     @media (min-width:700px) { main { padding-top:30px; } .post-body { padding:22px 24px 24px; } }
     a:focus-visible { outline:3px solid var(--red); outline-offset:4px; }
     .post .documentation-heading { margin:0; }
-    .documentation-toggle { position:relative; display:block; width:100%; border:0; text-align:left; font:inherit; cursor:pointer; }
-    .documentation-toggle:focus-visible { outline:3px solid #fff; outline-offset:-5px; }
-    .documentation-timeline summary:focus-visible { outline:3px solid var(--red-dark); outline-offset:-4px; }
+    .documentation-link { position:relative; }
+    .documentation-link .post-actions { margin-top:12px; }
     #documentation-title { display:block; }
-    .documentation-toggle .post-actions { margin-top:12px; }
-    .documentation-timeline { padding-top:0; }
-    .documentation-timeline details { margin-top:10px; border:1px solid #e3e3e6; border-radius:16px; overflow:hidden; }
-    .documentation-timeline summary { position:relative; display:block; list-style:none; padding:13px 44px 13px 14px; line-height:1.4; cursor:pointer; }
-    .documentation-timeline summary::-webkit-details-marker { display:none; }
-    .documentation-timeline summary::after { content:'+'; position:absolute; right:16px; top:50%; transform:translateY(-50%); color:var(--red); font-size:25px; }
-    .documentation-timeline details[open] > summary::after { content:'−'; }
-    .documentation-timeline p { margin:0 14px 14px; color:var(--ink); font-size:16px; }
-    .documentation-timeline footer { margin-top:12px; font-size:13px; color:var(--ink); }
   </style>
 </head>
 <body>
@@ -69,31 +59,12 @@
     <section class="feed" aria-label="Publicaciones sindicales">
       <article class="post" data-news-category="documentation-info" data-news-id="documentation-explanation-2026-09-30" data-published-at="2026-09-30T00:00:00Z">
         <h3 class="documentation-heading">
-          <button type="button" class="post-body monthly-access documentation-toggle" aria-expanded="false" aria-controls="documentation-timeline" aria-labelledby="documentation-title documentation-action">
+          <a class="post-body post-link monthly-access documentation-link" href="cronologia-sharepoint.html">
             <span id="documentation-title">Filtración de datos en SharePoint: qué ocurrió y dónde estamos</span>
-            <span class="post-actions" id="documentation-action">Ver cronología ▾</span>
+            <span class="post-actions" id="documentation-action">Ver cronología →</span>
             <span class="news-notification-badge" data-news-badge aria-label="Novedades sin leer">0</span>
-          </button>
+          </a>
         </h3>
-        <div class="post-body documentation-timeline" id="documentation-timeline" hidden>
-          <details open>
-            <summary><strong>noviembre de 2026</strong> · Situación actual</summary>
-            <p>En noviembre de 2026, STR y CGT presentaron el asunto ante los juzgados. UGT continúa por su cuenta.</p>
-          </details>
-          <details>
-            <summary><strong>octubre de 2026</strong> · Comité de empresa y Fondo Social</summary>
-            <p>El comité de empresa aprobó llevar la cuestión al Fondo Social para interponer un conflicto colectivo. En el Fondo Social no pudo aprobarse porque CC.OO., que tiene mayoría en ese órgano, votó en contra. CC.OO. también realizó una movilización y comunicó su posición públicamente.</p>
-          </details>
-          <details>
-            <summary><strong>julio de 2026</strong> · Petición de explicaciones a la empresa</summary>
-            <p>Preguntamos a la empresa por qué no se avisó a la plantilla y hasta dónde llegó la filtración. No hemos recibido una respuesta que lo aclare.</p>
-          </details>
-          <details>
-            <summary><strong>julio de 2026</strong> · Detección</summary>
-            <p>Detectamos que datos de afiliación estaban accesibles en SharePoint.</p>
-          </details>
-          <footer>Lo publicado se basa en documentos y actas.</footer>
-        </div>
       </article>
       <article class="post" data-published-at="2026-09-08T09:42:00Z">
       
@@ -102,23 +73,10 @@
     </section>
     <a class="home" href="index.html">Volver al menú principal</a>
   </main>
-  <script type="module">import { initNews, markNewsRead } from './novedades.js';
+  <script type="module">import { initNews } from './novedades.js';
     const feed = document.querySelector('.feed');
     // Añadir las nuevas fichas aquí con su fecha de publicación ISO.
     [...feed.children].sort((a, b) => Date.parse(b.dataset.publishedAt) - Date.parse(a.dataset.publishedAt)).forEach(post => feed.appendChild(post));
-    const toggle = document.querySelector('.documentation-toggle');
-    const timeline = document.querySelector('#documentation-timeline');
-    const action = document.querySelector('#documentation-action');
-    toggle.addEventListener('click', () => {
-      const expanded = timeline.hidden;
-      timeline.hidden = !expanded;
-      toggle.setAttribute('aria-expanded', String(expanded));
-      action.textContent = expanded ? 'Ocultar cronología ▴' : 'Ver cronología ▾';
-      if (expanded) {
-        timeline.querySelector('details').open = true;
-        markNewsRead([toggle.closest('[data-news-id]').dataset.newsId]).catch(() => {});
-      }
-    });
     initNews().catch(() => {});</script>
   <script type="module" src="./app-analytics.js?v=2-card-counts"></script>
 </body>

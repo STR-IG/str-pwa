@@ -1,0 +1,21 @@
+.faq-item{background:#fff;border-radius:16px;margin:10px 0;overflow:hidden;box-shadow:0 3px 14px rgba(0,0,0,.09)}
+.faq-sobria .faq-item[open]{background:#fff5f5;border-left:4px solid #e30613}
+.faq-calida .faq-item[open]>summary{background:linear-gradient(to right,#e30613,#b0000f);color:#fff}
+.faq-item>summary{cursor:pointer;min-height:48px;padding:15px 16px;font-weight:700;color:#181818;list-style:none;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.faq-item>summary::-webkit-details-marker{display:none}
+.faq-item>summary:focus-visible{outline:3px solid #e30613;outline-offset:-4px}
+.faq-calida .faq-item[open]>summary:focus-visible{outline-color:#fff}
+.faq-icon{display:grid;flex:0 0 32px;height:32px;place-items:center;border-radius:50%;background:#fadce0;color:#e30613;font-size:22px;line-height:1}
+.faq-icon::before{content:'+'}
+.faq-sobria .faq-item[open] .faq-icon{background:#e30613;color:#fff}
+.faq-calida .faq-item[open] .faq-icon{background:#fff;color:#e30613}
+.faq-item[open] .faq-icon::before{content:'–'}
+.faq-item>p{margin:0;padding:0 16px 18px;font-size:16px;line-height:1.6}
+.faq-calida .faq-item>p{padding-top:16px}
+.faq-key-data{display:inline-block;padding:2px 8px;border-radius:999px;background:#e30613;color:#fff;font-size:.875em;font-weight:700}
+@media (prefers-reduced-motion:no-preference){
+  .faq-icon{transition:transform 160ms ease}
+  .faq-item[open] .faq-icon{transform:rotate(180deg)}
+  .faq-item[open]>p{animation:faq-reveal 200ms ease-out}
+}
+@keyframes faq-reveal{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
