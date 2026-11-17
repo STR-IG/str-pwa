@@ -79,7 +79,7 @@ function listingCard(entry) {
   const card = element('article', '', 'post content-card');
   if (entry.tipo === 'logro') card.classList.add('achievement-card');
   card.append(element('h2', entry.titulo));
-  if (entry.estado) card.append(element('span', statuses[entry.estado] || entry.estado, 'status'));
+  if (entry.estado && entry.tipo !== 'logro') card.append(element('span', statuses[entry.estado] || entry.estado, 'status'));
   addDate(card, entry);
   if (entry.resumen) card.append(element('p', entry.resumen));
   const buttons = element('div', '', 'post-actions');
