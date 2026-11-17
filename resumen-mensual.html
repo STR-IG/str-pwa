@@ -19,15 +19,15 @@
     h1 { font-size:clamp(23px,6vw,30px); line-height:1.05; }
     main { display:grid; gap:18px; width:min(100%,900px); margin:auto; padding:22px 14px 0; }
     .feed { display:grid; gap:16px; }
-    .post { overflow:hidden; border-radius:24px; background:var(--paper); box-shadow:0 6px 22px rgba(0,0,0,.08); }
+    .post { overflow:hidden; border-radius:24px; color:#fff; background:var(--red); box-shadow:0 6px 22px rgba(0,0,0,.08); }
     .post-body { padding:18px; }
-    .post-date { display:flex; align-items:center; gap:7px; margin-bottom:10px; color:var(--muted); font-size:13px; font-weight:700; }
-    .post-category { display:block; margin-bottom:7px; color:var(--red); font-size:12px; font-weight:900; letter-spacing:.7px; text-transform:uppercase; }
+    .post-date { display:flex; align-items:center; gap:7px; margin-bottom:10px; color:inherit; font-size:13px; font-weight:700; }
+    .post-category { display:block; margin-bottom:7px; color:inherit; font-size:12px; font-weight:900; letter-spacing:.7px; text-transform:uppercase; }
     .post h2 { margin-bottom:8px; font-size:clamp(21px,5.7vw,27px); line-height:1.12; }
-    .post p { color:var(--muted); font-size:15px; line-height:1.5; }
+    .post p { color:inherit; font-size:15px; line-height:1.5; }
     .post-actions { display:flex; gap:10px; margin-top:17px; }
     .primary { display:inline-flex; align-items:center; justify-content:center; min-height:46px; padding:0 18px; border-radius:999px; color:var(--red-dark); background:var(--red-soft); font-size:14px; font-weight:900; text-decoration:none; }
-    .post-actions .primary { flex:1; color:#fff; background:var(--red); }
+    .post-actions .primary { flex:1; border:1px solid #fff; color:#fff; background:var(--red); }
     .post-actions .primary:hover { background:var(--red-dark); }
     @media (min-width:700px) { main { padding-top:30px; } .post-body { padding:22px 24px 24px; } }
     a:focus-visible { outline:3px solid var(--red); outline-offset:4px; }
