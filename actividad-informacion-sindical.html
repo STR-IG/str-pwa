@@ -47,39 +47,42 @@
     .documentation-link .post-actions { margin-top:12px; }
     #documentation-title { display:block; }
     .achievements-link { display:flex; align-items:center; justify-content:space-between; gap:12px; color:#fff; background:var(--red); font-size:clamp(21px,5.7vw,27px); font-weight:800; line-height:1.12; }
+
+    .section-title { font-size:16px; font-weight:800; }
+    .monthly-access { position:relative; }
+    .monthly-access .post-category, .monthly-access .post-date { color:inherit; }
+    .monthly-access .primary { border:1px solid #fff; }
+    .previous { display:block; width:fit-content; margin-top:14px; padding:8px 0; color:#fff; font-size:14px; }
+    .achievements-link { display:block; padding:15px 18px; font-size:15px; text-align:center; white-space:nowrap; }
+    .more { display:block; padding:14px; color:var(--red-dark); font-weight:800; text-align:center; }
+    .monthly-access a:focus-visible { outline-color:#fff; }
+    [hidden] { display:none !important; }
   </style>
 </head>
 <body>
   <header class="top"><div class="top-inner"><a class="back" href="index.html" aria-label="Volver al menú principal">‹</a><h1>Actividad e información sindical</h1></div></header>
   <main>
-    <a class="post post-link post-body achievements-link" href="nuestros-logros.html">Conoce nuestros logros <span aria-hidden="true">›</span></a>
-    <a class="post post-link post-body monthly-access" href="resumen-mensual.html">
-      <h3>EN UN MINUTO · RESUMEN MENSUAL</h3>
-      <p>Lo más importante de nuestra actividad sindical cada mes, en menos de un minuto de lectura.</p>
-      <span class="post-actions">Leer el último resumen →</span>
-    </a>
-    <section class="feed" aria-label="Publicaciones sindicales">
-      <article class="post" data-news-category="documentation-info" data-news-id="documentation-explanation-2026-09-30" data-published-at="2026-09-30T00:00:00Z">
-        <h3 class="documentation-heading">
-          <a class="post-body post-link monthly-access documentation-link" href="cronologia-sharepoint.html">
-            <span id="documentation-title">Filtración de datos en SharePoint: qué ocurrió y dónde estamos</span>
-            <span class="post-actions" id="documentation-action">Ver cronología →</span>
-            <span class="news-notification-badge" data-news-badge aria-label="Novedades sin leer">0</span>
-          </a>
-        </h3>
-      </article>
-      <article class="post" data-published-at="2026-09-08T09:42:00Z">
-      
-      <div class="post-body"><div class="post-date"><span aria-hidden="true">📅</span><time datetime="2026-09-07">7 de septiembre de 2026</time></div><h3>Resumen reunión comedor</h3><p>Nos reunimos con la empresa y Sodexo para conocer la propuesta de mejora del servicio, la encuesta que se realizará a la plantilla y trasladar nuestras aportaciones.</p><div class="post-actions"><a class="primary" href="comunicado-comedor.html">Ver resumen →</a></div></div>
-    </article>
+    <section id="monthly" aria-label="Resumen mensual"></section>
+    <section id="topics" class="feed" aria-label="Temas abiertos" hidden></section>
+    <section class="feed" aria-labelledby="meetings-title">
+      <h2 id="meetings-title" class="section-title">Reuniones y comunicados</h2>
+      <div id="meetings" class="feed"></div>
+      <a id="all-meetings" class="more" href="?reuniones=todas#meetings-title" hidden>Ver todas</a>
     </section>
+    <div id="achievements"></div>
     <a class="home" href="index.html">Volver al menú principal</a>
+    <noscript>Activa JavaScript para consultar las publicaciones sindicales.</noscript>
   </main>
-  <script type="module">import { initNews } from './novedades.js';
-    const feed = document.querySelector('.feed');
-    // Añadir las nuevas fichas aquí con su fecha de publicación ISO.
-    [...feed.children].sort((a, b) => Date.parse(b.dataset.publishedAt) - Date.parse(a.dataset.publishedAt)).forEach(post => feed.appendChild(post));
-    initNews().catch(() => {});</script>
+  <template id="publication">
+    <article class="post post-body">
+      <span class="post-category"></span>
+      <div class="post-date"><span class="calendar" aria-hidden="true">📅</span><time></time></div>
+      <h3></h3>
+      <p></p>
+      <div class="post-actions"><a class="primary"></a></div>
+    </article>
+  </template>
+  <script type="module" src="./actividad-informacion-sindical.js"></script>
   <script type="module" src="./app-analytics.js?v=2-card-counts"></script>
 </body>
 </html>
