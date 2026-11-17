@@ -3,10 +3,8 @@
 export const LABOR_NEWS = [{
   id: 'strike-repsol-2026-11-03',
   date: '2026-11-03',
-  label: 'STR · REPSOL',
-  title: 'Huelga para reclamar mejoras en los convenios',
+  title: 'Huelga en Repsol',
   image: 'huelga-repsol-2026-11.png',
-  summary: 'STR convocó dos jornadas de huelga para pedir mejoras laborales, salariales y de plantilla. Diari de Tarragona recoge que STR cifró el seguimiento en cerca del 100%.',
+  summary: 'STR convocó dos jornadas de paro para reclamar mejoras salariales, laborales y de plantilla.',
   url: 'https://www.diaridetarragona.com/economia/274742/primer-dia-huelga-repsol-trabajadores-piden-mejoras-convenios.html',
-  linkText: 'Leer noticia →',
 }];
