@@ -53,7 +53,7 @@ export const CONTENIDOS = [
     }
   },
   {
-    id: 'pluses-especiales', tipo: 'logro', titulo: 'Pluses de días especiales', fecha: '',
+    id: 'pluses-especiales', tipo: 'logro', titulo: 'Pluses de días especiales de Navidad', fecha: '',
     estado: 'conseguido', categoria: 'Condiciones laborales y reconocimiento económico',
     resumen: '', enlace: 'actividad-informacion-sindical.html?ficha=pluses-especiales', relacionado: '',
     ficha: { objetivo: 'Pluses especiales navideños, que siguen vigentes.', actuaciones: '', cuando: '' }
