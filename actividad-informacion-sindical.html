@@ -46,11 +46,29 @@
     .documentation-link { position:relative; }
     .documentation-link .post-actions { margin-top:12px; }
     #documentation-title { display:block; }
+    .achievements summary { display:flex; align-items:center; justify-content:space-between; gap:12px; cursor:pointer; list-style:none; color:#fff; background:var(--red); font-size:clamp(21px,5.7vw,27px); font-weight:800; line-height:1.12; }
+    .achievements summary::-webkit-details-marker { display:none; }
+    .achievements summary:focus-visible { outline:3px solid #fff; outline-offset:-5px; }
+    .achievements[open] .achievements-arrow { transform:rotate(90deg); }
+    .achievement-banner { position:relative; display:flex; align-items:center; overflow:hidden; width:100%; max-width:780px; aspect-ratio:1400 / 438; margin-bottom:12px; border-radius:20px; background:#a30025; color:#fff; }
+    .achievement-banner img { position:absolute; inset:0 0 0 auto; width:65%; height:100%; object-fit:cover; }
+    .achievement-banner::after { content:""; position:absolute; inset:0; background:linear-gradient(90deg,#a30025 35%,transparent 41%); }
+    .achievement-banner h3 { position:relative; z-index:1; max-width:35%; margin:0; padding-left:4%; font-size:clamp(16px,4.4vw,46px); }
   </style>
 </head>
 <body>
   <header class="top"><div class="top-inner"><a class="back" href="index.html" aria-label="Volver al menú principal">‹</a><h1>Actividad e información sindical</h1></div></header>
   <main>
+    <details class="post achievements">
+      <summary class="post-body">Conoce nuestros logros <span class="achievements-arrow" aria-hidden="true">›</span></summary>
+      <div class="post-body">
+        <div class="achievement-banner">
+          <img src="card-puntos-recarga.webp" alt="Ocho puntos de recarga alineados junto a árboles" width="880" height="450" decoding="async">
+          <h3>Puntos de recarga</h3>
+        </div>
+        <p>Nuestra sección sindical propuso instalar puntos de recarga para vehículos eléctricos e insistió tras la negativa inicial de la empresa.</p>
+      </div>
+    </details>
     <a class="post post-link post-body monthly-access" href="resumen-mensual.html">
       <h3>EN UN MINUTO · RESUMEN MENSUAL</h3>
       <p>Lo más importante de nuestra actividad sindical cada mes, en menos de un minuto de lectura.</p>
