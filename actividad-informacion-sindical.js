@@ -151,6 +151,14 @@ function detailBlock(card, title, text) {
   card.append(block);
 }
 
+function detailImage(card, entry) {
+  if (!entry.imagen?.trim()) return;
+  const image = element('img', '', 'content-image');
+  image.src = entry.imagen.trim();
+  image.alt = entry.titulo;
+  card.append(image);
+}
+
 function renderDetail(entry) {
   const section = sections.find(item => item.tipo === entry.tipo);
   screen(entry.titulo, HUB + '?vista=' + section.vista, section.titulo);
@@ -159,21 +167,17 @@ function renderDetail(entry) {
     document.body.classList.add('achievement-detail');
     card.classList.add('achievement-detail-card');
   }
-  if (entry.imagen) {
-    const image = element('img', '', 'content-image');
-    image.src = entry.imagen;
-    image.alt = 'Puntos de recarga para vehículos eléctricos';
-    card.append(image);
-  }
   if (entry.tipo === 'proyecto') card.append(element('span', statuses[entry.estado] || entry.estado, 'status'));
   const ficha = entry.ficha || {};
   if (entry.tipo === 'proyecto') {
+    detailImage(card, entry);
     detailBlock(card, 'Qué proponemos', ficha.objetivo);
     detailBlock(card, 'Qué hemos hecho', ficha.actuaciones);
     detailBlock(card, 'Próximo paso', ficha.proximoPaso);
     if (entry.precioActualKwh) detailBlock(card, 'Precio actual por kWh', entry.precioActualKwh);
   } else {
     detailBlock(card, 'Qué se consiguió', ficha.objetivo);
+    detailImage(card, entry);
     detailBlock(card, 'Qué hizo STR', ficha.actuaciones);
     const when = ficha.cuando?.trim();
     if (hasDate(entry.fecha) && when && !when.includes(PENDING)) {

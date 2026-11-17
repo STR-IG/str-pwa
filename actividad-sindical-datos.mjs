@@ -1,6 +1,7 @@
 // Fuente única de contenido. Fechas ISO (AAAA-MM-DD), o '' si no se conocen.
 // Los resúmenes usan tipo 'resumen' para compartir esta fuente con el listado mensual.
 // relacionado contiene el id de otra entrada. Los enlaces de fichas existentes se conservan.
+// imagen es opcional. Si falta o está vacía, no se crea ningún elemento de imagen.
 export const CONTENIDOS = [
   {
     id: 'resumen-octubre-2026', tipo: 'resumen',
@@ -69,7 +70,7 @@ export const CONTENIDOS = [
     estado: 'conseguido', categoria: 'Movilidad sostenible',
     resumen: 'Se instalaron puntos de recarga para vehículos eléctricos.',
     enlace: 'nuestros-logros.html', relacionado: 'precio-recarga',
-    imagen: 'card-puntos-recarga.webp',
+    imagen: '',
     ficha: {
       objetivo: 'Se instalaron puntos de recarga para vehículos eléctricos.',
       actuaciones: 'Nuestra sección sindical propuso instalar puntos de recarga para vehículos eléctricos e insistió tras la negativa inicial de la empresa.',
