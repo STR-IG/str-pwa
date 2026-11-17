@@ -54,7 +54,8 @@ function addDate(card, entry) {
   const row = element('div', '', 'post-date');
   const prefix = entry.tipo === 'tema' ? 'Actualizado: ' : '📅 ';
   if (entry.fecha) {
-    const time = element('time', prefix + (entry.tipo === 'tema' ? monthFormat : dateFormat).format(new Date(entry.fecha)));
+    const date = (entry.tipo === 'tema' ? monthFormat : dateFormat).format(new Date(entry.fecha));
+    const time = element('time', prefix + (entry.tipo === 'tema' ? date.replace(' de ', ' ') : date));
     time.dateTime = entry.fecha;
     row.append(time);
   } else {
@@ -82,13 +83,42 @@ function listingCard(entry) {
     const related = relatedLink(entry);
     if (related) card.append(related);
   }
-  addBadge(card, entry);
+  if (entry.tipo === 'tema') {
+    card.classList.add('topic-card', entry.estado === 'cerrado' ? 'topic-closed' : 'topic-open');
+    const metadata = element('div', '', 'topic-metadata');
+    metadata.append(card.querySelector('.status'), card.querySelector('.post-date'));
+    card.prepend(metadata);
+  }
   return card;
+}
+
+function renderTopics(entries) {
+  main.append(element('p', 'Asuntos que seguimos hasta resolverlos', 'page-intro'));
+  if (!entries.length) {
+    main.append(element('p', 'Todavía no hay contenido aquí', 'post empty'));
+    return;
+  }
+  for (const entry of entries.filter(item => item.estado === 'abierto')) {
+    main.append(listingCard(entry));
+  }
+  const closed = entries.filter(item => item.estado === 'cerrado');
+  if (closed.length) {
+    const resolved = element('details', '', 'resolved-topics');
+    resolved.append(element('summary', 'Resueltos'));
+    const list = element('div', '', 'feed');
+    for (const entry of closed) list.append(listingCard(entry));
+    resolved.append(list);
+    main.append(resolved);
+  }
 }
 
 function renderList(section) {
   screen(section.titulo, HUB, 'Actividad e información sindical');
   const entries = ordenarPorFecha(CONTENIDOS.filter(entry => entry.tipo === section.tipo));
+  if (section.tipo === 'tema') {
+    renderTopics(entries);
+    return;
+  }
   if (!entries.length) {
     main.append(element('p', 'Todavía no hay contenido aquí', 'post empty'));
     return;

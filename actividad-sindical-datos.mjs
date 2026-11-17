@@ -20,7 +20,8 @@ export const CONTENIDOS = [
     id: 'sharepoint', tipo: 'tema',
     titulo: 'Filtración de datos en SharePoint: qué ocurrió y dónde estamos',
     fecha: '2026-11-01', estado: 'abierto', categoria: '',
-    resumen: '', enlace: 'cronologia-sharepoint.html', relacionado: '',
+    resumen: 'STR y CGT presentaron el asunto ante los juzgados en noviembre de 2026.',
+    enlace: 'cronologia-sharepoint.html', relacionado: '',
     aviso: { categoria: 'documentation-info', id: 'documentation-explanation-2026-09-30' }
   },
   {
