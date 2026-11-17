@@ -56,7 +56,11 @@ export const CONTENIDOS = [
     id: 'pluses-especiales', tipo: 'logro', titulo: 'Pluses de días especiales de Navidad', fecha: '',
     estado: 'conseguido', categoria: 'Condiciones laborales y reconocimiento económico',
     resumen: '', enlace: 'actividad-informacion-sindical.html?ficha=pluses-especiales', relacionado: '',
-    ficha: { objetivo: 'Pluses especiales navideños, que siguen vigentes.', actuaciones: '', cuando: '' }
+    ficha: {
+      objetivo: 'Pluses especiales navideños, que siguen vigentes.',
+      actuaciones: 'Los pluses de días especiales de Navidad fueron una reivindicación que STR llevó históricamente a todas las reuniones con la empresa y al comité. Los anteriores comités de empresa habían dejado fuera del pacto de vacaciones a los departamentos que dan servicio a producción, como Mantenimiento, Calibraciones, Aguas, SAF, CAP y CI.',
+      cuando: ''
+    }
   },
   {
     id: 'puntos-recarga', tipo: 'logro', titulo: 'Puntos de recarga para coches eléctricos', fecha: '',
