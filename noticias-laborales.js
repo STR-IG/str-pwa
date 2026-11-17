@@ -5,7 +5,8 @@ export const LABOR_NEWS = [{
   date: '2026-11-03',
   label: 'STR · REPSOL',
   title: 'Huelga para reclamar mejoras en los convenios',
-  summary: 'STR convocó dos jornadas de huelga en los centros de Repsol en España para reclamar mejoras laborales, salariales y de plantilla. La movilización coincidió con la negociación de los convenios de Repsol Fuels y Repsol Materials. Diari de Tarragona atribuye a STR la estimación de un seguimiento cercano al 100%.',
+  image: 'huelga-repsol-2026-11.png',
+  summary: 'STR convocó dos jornadas de huelga para pedir mejoras laborales, salariales y de plantilla. Diari de Tarragona recoge que STR cifró el seguimiento en cerca del 100%.',
   url: 'https://www.diaridetarragona.com/economia/274742/primer-dia-huelga-repsol-trabajadores-piden-mejoras-convenios.html',
   linkText: 'Leer noticia →',
 }];
