@@ -60,7 +60,7 @@ export const CONTENIDOS = [
     textoRelacionado: 'En la última reunión trimestral con la Dirección de la empresa, STR preguntó si este año se abonarían los pluses de días especiales de Navidad acordados en el pacto de julio de 2025. La Dirección confirmó que sí se pagarán conforme a lo pactado.',
     ficha: {
       objetivo: 'En julio de 2025 la empresa incorporó la fórmula de días especiales de Navidad que proponía STR. Con ella, los departamentos que dan servicio a producción (Mantenimiento, Calibraciones, Aguas, SAF, CAP y CI) quedan incluidos en el reconocimiento de esos días.',
-      actuaciones: 'El pacto de vacaciones firmado por el comité de empresa en 2016 dejó fuera a esos departamentos. Desde entonces, STR llevó esta reivindicación a todas las reuniones con la empresa y al comité, año tras año, hasta que la empresa aceptó nuestra fórmula.',
+      actuaciones: 'El pacto de 19 de septiembre de 2016 sobre modificación del esquema de vacaciones dejó fuera a esos departamentos. Desde entonces, STR llevó esta reivindicación a todas las reuniones con la empresa y al comité, año tras año, hasta que la empresa aceptó nuestra fórmula.',
       cuando: 'Julio de 2025'
     }
   },
