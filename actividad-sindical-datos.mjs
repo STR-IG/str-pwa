@@ -47,8 +47,8 @@ export const CONTENIDOS = [
     estado: 'conseguido', categoria: 'Condiciones laborales y reconocimiento económico',
     resumen: '', enlace: 'actividad-informacion-sindical.html?ficha=prima-covid', relacionado: '',
     ficha: {
-      objetivo: 'Se acordó una prima COVID.',
-      actuaciones: 'STR propuso la fórmula de la prima, la afiliación la votó y la empresa la aceptó.',
+      objetivo: 'La empresa aprobó el pago de una prima a las personas que siguieron trabajando durante la pandemia.',
+      actuaciones: 'Durante la pandemia propusimos a la empresa que se reconociera con una prima a quienes acudían a trabajar. Defendimos que ese esfuerzo debía compensarse. No hubo unanimidad entre las secciones sindicales, ya que otras planteaban que la prima debía cobrarla toda la plantilla. La empresa aceptó nuestra propuesta y se abonó la prima.',
       cuando: ''
     }
   },

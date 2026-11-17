@@ -51,6 +51,7 @@ function addBadge(card, entry) {
 }
 
 function addDate(card, entry) {
+  if (entry.tipo === 'logro' && !hasDate(entry.fecha)) return;
   const row = element('div', '', 'post-date');
   const prefix = entry.tipo === 'tema' ? 'Actualizado: ' : '📅 ';
   if (entry.fecha) {
@@ -64,6 +65,10 @@ function addDate(card, entry) {
   card.append(row);
 }
 
+function hasDate(value) {
+  return Boolean(value?.trim()) && !value.includes(PENDING) && !Number.isNaN(Date.parse(value));
+}
+
 function relatedLink(entry, label = 'Relacionado con: ') {
   const related = CONTENIDOS.find(item => item.id === entry.relacionado);
   if (!related) return null;
@@ -72,6 +77,7 @@ function relatedLink(entry, label = 'Relacionado con: ') {
 
 function listingCard(entry) {
   const card = element('article', '', 'post content-card');
+  if (entry.tipo === 'logro') card.classList.add('achievement-card');
   card.append(element('h2', entry.titulo));
   if (entry.estado) card.append(element('span', statuses[entry.estado] || entry.estado, 'status'));
   addDate(card, entry);
@@ -139,20 +145,26 @@ function renderList(section) {
 }
 
 function detailBlock(card, title, text) {
-  card.append(element('h3', title), element('p', text || PENDING));
+  const block = element('section', '', 'detail-block');
+  block.append(element('h3', title), element('p', text || PENDING));
+  card.append(block);
 }
 
 function renderDetail(entry) {
   const section = sections.find(item => item.tipo === entry.tipo);
   screen(entry.titulo, HUB + '?vista=' + section.vista, section.titulo);
   const card = element('article', '', 'post content-card');
+  if (entry.tipo === 'logro') {
+    document.body.classList.add('achievement-detail');
+    card.classList.add('achievement-detail-card');
+  }
   if (entry.imagen) {
     const image = element('img', '', 'content-image');
     image.src = entry.imagen;
     image.alt = 'Puntos de recarga para vehículos eléctricos';
     card.append(image);
   }
-  card.append(element('span', statuses[entry.estado] || entry.estado, 'status'));
+  if (entry.tipo === 'proyecto') card.append(element('span', statuses[entry.estado] || entry.estado, 'status'));
   const ficha = entry.ficha || {};
   if (entry.tipo === 'proyecto') {
     detailBlock(card, 'Qué proponemos', ficha.objetivo);
@@ -162,7 +174,12 @@ function renderDetail(entry) {
   } else {
     detailBlock(card, 'Qué se consiguió', ficha.objetivo);
     detailBlock(card, 'Qué hizo STR', ficha.actuaciones);
-    detailBlock(card, 'Cuándo', ficha.cuando || (entry.fecha && dateFormat.format(new Date(entry.fecha))));
+    const when = ficha.cuando?.trim();
+    if (when && !when.includes(PENDING)) {
+      detailBlock(card, 'Cuándo', when);
+    } else if (hasDate(entry.fecha)) {
+      detailBlock(card, 'Cuándo', dateFormat.format(new Date(entry.fecha)));
+    }
   }
   const related = relatedLink(entry, entry.id === 'puntos-recarga' ? 'Siguiente paso: ' : 'Relacionado con: ');
   if (related) {

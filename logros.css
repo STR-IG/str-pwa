@@ -1,0 +1,17 @@
+.achievement-card { padding:18px; color:#fff; background:var(--red); }
+.achievement-card h2 { margin-bottom:8px; color:inherit; font-size:clamp(21px,5.7vw,27px); line-height:1.12; }
+.achievement-card p, .achievement-card .post-date { color:inherit; }
+.achievement-card .status { color:var(--red); background:#fff; }
+.achievement-card .primary { border:1px solid #fff; color:#fff; background:transparent; }
+.achievement-card .primary:hover { background:var(--red-dark); }
+.achievement-card a:focus-visible { outline-color:#fff; }
+.achievement-detail .top { color:#fff; background:var(--red); border-bottom-color:var(--red); }
+.achievement-detail .back { color:var(--red); background:#fff; }
+.achievement-detail-card { display:grid; gap:16px; padding:0; overflow:visible; background:transparent; box-shadow:none; }
+.achievement-detail-card .detail-block { padding:18px; border-radius:24px; background:#fff; box-shadow:0 6px 22px rgba(0,0,0,.08); }
+.achievement-detail-card .detail-block h3 { margin:0 0 8px; color:var(--red); font-size:20px; line-height:1.2; }
+.achievement-detail-card .content-image { margin:0; }
+.achievement-detail-card > .related { padding:16px 18px; border-radius:24px; background:#fff; }
+@media (min-width:700px) {
+  .achievement-card, .achievement-detail-card .detail-block { padding:22px 24px 24px; }
+}
