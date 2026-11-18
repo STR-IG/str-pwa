@@ -68,12 +68,15 @@ export const CONTENIDOS = [
   {
     id: 'puntos-recarga', tipo: 'logro', titulo: 'Puntos de recarga para coches eléctricos', fecha: '',
     estado: 'conseguido', categoria: 'Movilidad sostenible',
-    resumen: 'Se instalaron puntos de recarga para vehículos eléctricos.',
+    resumen: 'La empresa instaló puntos de recarga tras la insistencia de STR, que le demostró que la ley la obligaba.',
     enlace: 'nuestros-logros.html', relacionado: 'precio-recarga',
     imagen: '',
+    enlaceNorma: 'https://www.boe.es/buscar/act.php?id=BOE-A-2021-21096#a4',
+    siguientePaso: 'Ahora trabajamos para que baje el precio del kWh.',
     ficha: {
-      objetivo: 'Se instalaron puntos de recarga para vehículos eléctricos.',
-      actuaciones: 'Nuestra sección sindical propuso instalar puntos de recarga para vehículos eléctricos e insistió tras la negativa inicial de la empresa.',
+      objetivo: 'La empresa instaló puntos de recarga para vehículos eléctricos en sus instalaciones.',
+      norma: 'El artículo 4 del Real Decreto-ley 29/2021 obligó a los aparcamientos de edificios no residenciales con más de 20 plazas a disponer de estaciones de recarga antes del 1 de enero de 2023. Con carácter general, exige una estación por cada 40 plazas o fracción hasta 1.000 plazas, y una más por cada 100 plazas adicionales o fracción.',
+      actuaciones: 'STR propuso instalar los puntos de recarga y, ante la negativa inicial de la empresa, insistió y le demostró que la norma la obligaba a hacerlo. Finalmente se instalaron.',
       cuando: ''
     }
   },

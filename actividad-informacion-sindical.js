@@ -149,6 +149,7 @@ function detailBlock(card, title, text) {
   const block = element('section', '', 'detail-block');
   block.append(element('h3', title), element('p', text || PENDING));
   card.append(block);
+  return block;
 }
 
 function detailImage(card, entry) {
@@ -178,6 +179,10 @@ function renderDetail(entry) {
   } else {
     detailBlock(card, 'Qué se consiguió', ficha.objetivo);
     detailImage(card, entry);
+    if (ficha.norma) {
+      const block = detailBlock(card, 'Qué dice la norma', ficha.norma);
+      if (entry.enlaceNorma) block.append(link('Consultar el BOE →', entry.enlaceNorma, 'related'));
+    }
     detailBlock(card, 'Qué hizo STR', ficha.actuaciones);
     const when = ficha.cuando?.trim();
     if (hasDate(entry.fecha) && when && !when.includes(PENDING)) {
@@ -186,10 +191,16 @@ function renderDetail(entry) {
       detailBlock(card, 'Cuándo', dateFormat.format(new Date(entry.fecha)));
     }
   }
-  const related = relatedLink(entry, entry.id === 'puntos-recarga' ? 'Siguiente paso: ' : 'Relacionado con: ');
+  const related = relatedLink(entry);
   if (related) {
-    if (entry.id === 'puntos-recarga') related.textContent = 'Siguiente paso: bajar el precio del kWh →';
-    if (entry.textoRelacionado) {
+    if (entry.siguientePaso) {
+      const block = detailBlock(card, 'Siguiente paso', entry.siguientePaso);
+      const buttons = element('div', '', 'post-actions');
+      related.className = 'primary';
+      related.textContent = 'Ver el proyecto →';
+      buttons.append(related);
+      block.append(buttons);
+    } else if (entry.textoRelacionado) {
       const block = element('section', '', 'detail-block');
       related.textContent = entry.textoRelacionado;
       block.append(element('h3', 'Relacionado'), related);
