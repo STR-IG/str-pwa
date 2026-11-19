@@ -6,7 +6,6 @@ const HUB = 'actividad-informacion-sindical.html';
 const PENDING = 'PENDIENTE DE REDACTAR';
 const sections = [
   { vista: 'resumenes', titulo: 'Resumen del mes', subtitulo: 'Lo importante de cada mes, en 1 minuto', tipo: 'resumen', enlace: 'resumen-mensual.html' },
-  { vista: 'temas', titulo: 'Temas abiertos', tipo: 'tema' },
   { vista: 'proyectos', titulo: 'En qué estamos trabajando', tipo: 'proyecto' },
   { vista: 'reuniones', titulo: 'Actas y reuniones', tipo: 'reunión' },
   { vista: 'logros', titulo: 'Nuestros logros', tipo: 'logro' }
@@ -47,8 +46,10 @@ function addBadge(card, entry) {
   card.dataset.newsId = entry.aviso.id;
   const badge = element('span', '0', 'news-notification-badge');
   badge.dataset.newsBadge = '';
+  badge.hidden = true;
   badge.setAttribute('aria-label', 'Novedades sin leer');
   card.append(badge);
+  return badge;
 }
 
 function addDate(card, entry) {
@@ -86,27 +87,25 @@ function listingCard(entry) {
   if (entry.resumen) card.append(element('p', entry.resumen));
   const buttons = element('div', '', 'post-actions');
   buttons.append(link(actions[entry.tipo], entry.enlace, 'primary'));
+  if (entry.tipo === 'tema') {
+    card.classList.add('topic-card', entry.estado === 'cerrado' ? 'topic-closed' : 'topic-open');
+    const metadata = element('div', '', 'topic-metadata');
+    metadata.append(card.querySelector('.status'), card.querySelector('.post-date'));
+    card.prepend(metadata);
+    card.id = entry.id;
+    if (entry.ficha?.actuaciones) detailBlock(card, 'Qué ha hecho STR', entry.ficha.actuaciones);
+    if (entry.ficha?.proximoPaso) detailBlock(card, 'Qué queda pendiente', entry.ficha.proximoPaso);
+  }
   card.append(buttons);
   if (entry.tipo === 'reunión') {
     card.classList.add('meeting-card');
     const related = relatedLink(entry);
     if (related) card.append(related);
   }
-  if (entry.tipo === 'tema') {
-    card.classList.add('topic-card', entry.estado === 'cerrado' ? 'topic-closed' : 'topic-open');
-    const metadata = element('div', '', 'topic-metadata');
-    metadata.append(card.querySelector('.status'), card.querySelector('.post-date'));
-    card.prepend(metadata);
-  }
   return card;
 }
 
 function renderTopics(entries) {
-  main.append(element('p', 'Asuntos que seguimos hasta resolverlos', 'page-intro'));
-  if (!entries.length) {
-    main.append(element('p', 'Todavía no hay contenido aquí', 'post empty'));
-    return;
-  }
   for (const entry of entries.filter(item => item.estado === 'abierto')) {
     main.append(listingCard(entry));
   }
@@ -124,14 +123,12 @@ function renderTopics(entries) {
 function renderList(section) {
   screen(section.titulo, HUB, 'Actividad e información sindical');
   if (section.tipo === 'proyecto') {
+    renderTopics(ordenarPorFecha(CONTENIDOS.filter(entry => entry.tipo === 'tema')));
     renderWorkCategories(main, CONTENIDOS);
+    if (location.hash === '#sharepoint') document.getElementById('sharepoint')?.scrollIntoView();
     return;
   }
   const entries = ordenarPorFecha(CONTENIDOS.filter(entry => entry.tipo === section.tipo));
-  if (section.tipo === 'tema') {
-    renderTopics(entries);
-    return;
-  }
   if (!entries.length) {
     main.append(element('p', 'Todavía no hay contenido aquí', 'post empty'));
     return;
@@ -237,15 +234,14 @@ function renderHub() {
     const card = link('', section.enlace || HUB + '?vista=' + section.vista, 'post navigation-card');
     const copy = element('div', '', 'navigation-copy');
     copy.append(element('h2', section.titulo));
-    if (section.tipo === 'proyecto') addWorkIndicator(copy.querySelector('h2'));
     if (section.subtitulo) copy.append(element('small', section.subtitulo));
     card.append(copy);
     const arrow = element('span', '›', 'arrow');
     arrow.setAttribute('aria-hidden', 'true');
     card.append(arrow);
-    if (section.tipo === 'tema') {
-      const unreadTopic = CONTENIDOS.find(entry => entry.tipo === 'tema' && entry.aviso);
-      if (unreadTopic) addBadge(card, unreadTopic);
+    if (section.tipo === 'proyecto') {
+      const topic = CONTENIDOS.find(entry => entry.tipo === 'tema' && entry.aviso);
+      addWorkIndicator(copy.querySelector('h2'), topic ? addBadge(card, topic) : undefined);
     }
     main.append(card);
   }
@@ -261,7 +257,8 @@ if (detailId) {
     main.append(element('p', 'Todavía no hay contenido aquí', 'post empty'));
   }
 } else {
-  const section = sections.find(item => item.vista === params.get('vista') && item.tipo);
+  const view = params.get('vista');
+  const section = sections.find(item => item.vista === (view === 'temas' ? 'proyectos' : view));
   if (section) renderList(section);
   else renderHub();
 }

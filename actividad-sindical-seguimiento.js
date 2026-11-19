@@ -74,11 +74,16 @@ function node(tag, text, className) {
   return element;
 }
 
-function addIndicator(parent, issues) {
+function addIndicator(parent, issues, legacyBadge) {
   const badge = node('span', '', 'activity-count');
   badge.setAttribute('role', 'img');
   parent.append(badge);
-  indicators.push({ badge, issues });
+  indicators.push({ badge, issues, legacyBadge });
+  if (legacyBadge) {
+    new MutationObserver(refreshIndicators).observe(legacyBadge, {
+      childList: true, characterData: true, subtree: true,
+    });
+  }
 }
 
 export function renderPublishedIssue(container, publication) {
@@ -155,8 +160,8 @@ if (homeBadge) {
   indicators.push({ badge: homeBadge, issues: allIssues, card, legacyBadge });
 }
 
-export function addWorkIndicator(link) {
-  addIndicator(link, allIssues);
+export function addWorkIndicator(link, legacyBadge) {
+  addIndicator(link, allIssues, legacyBadge);
   refreshIndicators();
 }
 
