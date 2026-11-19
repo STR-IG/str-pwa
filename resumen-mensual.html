@@ -25,12 +25,12 @@
     .post-link { display:grid; grid-template-columns:60px minmax(0,1fr) 20px; align-items:center; gap:14px; padding:12px; color:inherit; text-decoration:none; }
     .post-link:focus-visible { outline:3px solid #fff; outline-offset:-5px; }
     .post-link img { display:block; width:60px; height:84px; object-fit:cover; border-radius:9px; }
-    .post-link h2 { margin-bottom:7px; font-size:18px; line-height:1.15; }
+    .post-link h2 { font-size:18px; line-height:1.15; }
     @media (max-width:380px) {
       .post-link h2 .post-title-separator { display:none; }
       .post-link h2 .post-title-ending { display:block; }
     }
-    .post-link .post-date { margin:0; font-size:12px; }
+    .post-link .post-date { margin:7px 0 0; font-size:12px; }
     .post-chevron { justify-self:center; font-size:31px; line-height:1; }
     .post-date { display:flex; align-items:center; gap:7px; margin-bottom:10px; color:inherit; font-size:13px; font-weight:700; }
     .post-category { display:block; margin-bottom:7px; color:inherit; font-size:12px; font-weight:900; letter-spacing:.7px; text-transform:uppercase; }
@@ -104,8 +104,12 @@
         card.querySelector('p').textContent = summary.summary;
       }
       const date = card.querySelector('time');
-      date.dateTime = summary.date;
-      date.textContent = formatDate.format(new Date(summary.date));
+      if (summary.url === 'julio-en-un-minuto.html') {
+        date.remove();
+      } else {
+        date.dateTime = summary.date;
+        date.textContent = formatDate.format(new Date(summary.date));
+      }
       const link = card.querySelector('a');
       link.href = summary.url;
       link.setAttribute('aria-label', 'Ver ficha de ' + summary.title);
