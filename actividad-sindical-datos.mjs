@@ -25,6 +25,13 @@ export const CONTENIDOS = [
     enlace: 'julio-en-un-minuto.html', relacionado: ''
   },
   {
+    id: 'resumen-junio-2026', tipo: 'resumen',
+    titulo: 'Junio 2026 · En un minuto', fecha: '2026-06-30',
+    estado: '', categoria: '',
+    resumen: 'Lo más destacado de la actividad sindical de junio.',
+    enlace: 'junio-en-un-minuto.html', relacionado: ''
+  },
+  {
     id: 'sharepoint', tipo: 'tema',
     titulo: 'Filtración de datos en SharePoint: qué ocurrió y dónde estamos',
     fecha: '2026-11-01', estado: 'abierto', categoria: '',

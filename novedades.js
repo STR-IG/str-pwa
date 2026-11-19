@@ -46,12 +46,6 @@ const PUBLIC_NEWS = [...LABOR_NEWS.map((item) => ({
   active: true,
 }];
 const PRIVATE_NEWS = [{
-  id: 'internal-activity-summary-2026-06',
-  category: 'internal-communications',
-  published_at: '2026-10-17T14:00:00Z',
-  url: 'comunicados-internos.html',
-  active: true,
-}, {
   id: 'internal-data-affiliation-2026-09',
   category: 'internal-communications',
   published_at: '2026-09-17T08:00:00Z',

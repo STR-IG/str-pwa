@@ -104,7 +104,7 @@ test('el badge pasa de 1 a oculto después de visualizar el comunicado', async (
 test('las fichas internas se cargan tras validar afiliación y abren su propia imagen', () => {
   const html=read('comunicados-internos.html');
   assert.match(html, /data-src="ficha-septiembre-1minuto.png"/);
-  assert.doesNotMatch(html, /ficha-julio-1minuto\.png|Julio 2026/);
+  assert.doesNotMatch(html, /ficha-julio-1minuto\.png|Julio 2026|internal-activity-summary-2026-06|Junio 2026/);
   assert.doesNotMatch(html, /<img src="ficha-(julio|septiembre)/);
   assert.ok(html.indexOf("image.src=image.dataset.src")>html.indexOf('allowed!==true'));
   assert.match(html, /communicationImage.src=selectedImage.src/);
