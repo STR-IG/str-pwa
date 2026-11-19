@@ -40,7 +40,7 @@ export const CONTENIDOS = [
   {
     id: 'reunion-comedor-2026-09', tipo: 'reunión',
     titulo: 'Resumen reunión comedor', fecha: '2026-09-07', estado: '', categoria: '',
-    resumen: 'Nos reunimos con la empresa y Sodexo para conocer la propuesta de mejora del servicio, la encuesta que se realizará a la plantilla y trasladar nuestras aportaciones.',
+    resumen: 'Reunión con la empresa y Sodexo sobre la propuesta de mejora del servicio y la encuesta a la plantilla.',
     enlace: 'comunicado-comedor.html', relacionado: ''
   },
   {

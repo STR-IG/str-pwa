@@ -1,5 +1,6 @@
 import { CONTENIDOS, ordenarPorFecha } from './actividad-sindical-datos.mjs';
 import { initNews } from './novedades.js';
+import { addWorkIndicator, renderWorkCategories } from './actividad-sindical-seguimiento.js';
 
 const HUB = 'actividad-informacion-sindical.html';
 const PENDING = 'PENDIENTE DE REDACTAR';
@@ -7,7 +8,7 @@ const sections = [
   { vista: 'resumenes', titulo: 'Resumen del mes', subtitulo: 'Lo importante de cada mes, en 1 minuto', tipo: 'resumen', enlace: 'resumen-mensual.html' },
   { vista: 'temas', titulo: 'Temas abiertos', tipo: 'tema' },
   { vista: 'proyectos', titulo: 'En qué estamos trabajando', tipo: 'proyecto' },
-  { vista: 'reuniones', titulo: 'Reuniones y comunicados', tipo: 'reunión' },
+  { vista: 'reuniones', titulo: 'Actas y reuniones', tipo: 'reunión' },
   { vista: 'logros', titulo: 'Nuestros logros', tipo: 'logro' }
 ];
 const statuses = { abierto: 'Abierto', cerrado: 'Cerrado', 'en curso': 'En curso', conseguido: 'Conseguido' };
@@ -87,6 +88,7 @@ function listingCard(entry) {
   buttons.append(link(actions[entry.tipo], entry.enlace, 'primary'));
   card.append(buttons);
   if (entry.tipo === 'reunión') {
+    card.classList.add('meeting-card');
     const related = relatedLink(entry);
     if (related) card.append(related);
   }
@@ -121,6 +123,10 @@ function renderTopics(entries) {
 
 function renderList(section) {
   screen(section.titulo, HUB, 'Actividad e información sindical');
+  if (section.tipo === 'proyecto') {
+    renderWorkCategories(main, CONTENIDOS);
+    return;
+  }
   const entries = ordenarPorFecha(CONTENIDOS.filter(entry => entry.tipo === section.tipo));
   if (section.tipo === 'tema') {
     renderTopics(entries);
@@ -218,6 +224,7 @@ function renderHub() {
     const card = link('', section.enlace || HUB + '?vista=' + section.vista, 'post navigation-card');
     const copy = element('div', '', 'navigation-copy');
     copy.append(element('h2', section.titulo));
+    if (section.tipo === 'proyecto') addWorkIndicator(copy.querySelector('h2'));
     if (section.subtitulo) copy.append(element('small', section.subtitulo));
     card.append(copy);
     const arrow = element('span', '›', 'arrow');
