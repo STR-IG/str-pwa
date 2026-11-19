@@ -54,14 +54,16 @@ function markRead(issue) {
 }
 
 function refreshIndicators() {
-  for (const { dot, issues } of indicators) {
-    dot.hidden = !issues.some(unread);
-    const home = dot.closest('.sindical-news-card');
-    if (home) {
-      home.setAttribute('aria-label', dot.hidden
-        ? 'Actividad e información sindical'
-        : 'Actividad e información sindical, novedades de seguimiento sin consultar');
-    }
+  for (const { badge, issues, card, legacyBadge } of indicators) {
+    const legacyCount = Number(legacyBadge?.textContent) || 0;
+    const count = issues.filter(unread).length + legacyCount;
+    const label = count === 1 ? '1 novedad sin consultar' : count + ' novedades sin consultar';
+    badge.textContent = String(count);
+    badge.hidden = count === 0;
+    badge.setAttribute('aria-label', label);
+    if (card) card.setAttribute('aria-label', count
+      ? 'Actividad e información sindical, ' + label
+      : 'Actividad e información sindical');
   }
 }
 
@@ -73,11 +75,10 @@ function node(tag, text, className) {
 }
 
 function addIndicator(parent, issues) {
-  const dot = node('span', '', 'activity-dot');
-  dot.setAttribute('role', 'img');
-  dot.setAttribute('aria-label', 'Novedades sin consultar');
-  parent.append(dot);
-  indicators.push({ dot, issues });
+  const badge = node('span', '', 'activity-count');
+  badge.setAttribute('role', 'img');
+  parent.append(badge);
+  indicators.push({ badge, issues });
 }
 
 export function renderPublishedIssue(container, publication) {
@@ -88,9 +89,11 @@ export function renderPublishedIssue(container, publication) {
     });
     container.append(paragraph);
   }
-  const status = node('p');
-  status.append(node('strong', 'Estado actual:'), ' ' + publication.estado);
-  container.append(status);
+  if (publication.estado) {
+    const status = node('p');
+    status.append(node('strong', 'Estado actual:'), ' ' + publication.estado);
+    container.append(status);
+  }
 }
 
 export function markPublishedIssueRead(existingId) {
@@ -139,8 +142,18 @@ function issuePanel(issue, existing) {
 }
 
 const allIssues = categories.flatMap(category => category.issues);
-const homeDot = document.querySelector('[data-activity-home-dot]');
-if (homeDot) indicators.push({ dot: homeDot, issues: allIssues });
+const homeBadge = document.querySelector('[data-activity-home-count]');
+if (homeBadge) {
+  const card = homeBadge.closest('.sindical-news-card');
+  const legacyBadge = card.querySelector('[data-news-badge]');
+  if (legacyBadge) {
+    legacyBadge.hidden = true;
+    new MutationObserver(refreshIndicators).observe(legacyBadge, {
+      childList: true, characterData: true, subtree: true,
+    });
+  }
+  indicators.push({ badge: homeBadge, issues: allIssues, card, legacyBadge });
+}
 
 export function addWorkIndicator(link) {
   addIndicator(link, allIssues);
