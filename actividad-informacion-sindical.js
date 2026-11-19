@@ -1,6 +1,6 @@
 import { CONTENIDOS, ordenarPorFecha } from './actividad-sindical-datos.mjs';
 import { initNews } from './novedades.js';
-import { addWorkIndicator, renderWorkCategories } from './actividad-sindical-seguimiento.js';
+import { addWorkIndicator, markPublishedIssueRead, renderPublishedIssue, renderWorkCategories } from './actividad-sindical-seguimiento.js';
 
 const HUB = 'actividad-informacion-sindical.html';
 const PENDING = 'PENDIENTE DE REDACTAR';
@@ -174,9 +174,12 @@ function renderDetail(entry) {
     document.body.classList.add('achievement-detail');
     card.classList.add('achievement-detail-card');
   }
-  if (entry.tipo === 'proyecto') card.append(element('span', statuses[entry.estado] || entry.estado, 'status'));
+  if (entry.tipo === 'proyecto' && !entry.publicacion) card.append(element('span', statuses[entry.estado] || entry.estado, 'status'));
   const ficha = entry.ficha || {};
-  if (entry.tipo === 'proyecto') {
+  if (entry.publicacion) {
+    renderPublishedIssue(card, entry.publicacion);
+    markPublishedIssueRead(entry.id);
+  } else if (entry.tipo === 'proyecto') {
     detailImage(card, entry);
     detailBlock(card, 'Qué proponemos', ficha.objetivo);
     detailBlock(card, 'Qué hemos hecho', ficha.actuaciones);

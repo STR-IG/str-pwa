@@ -3,7 +3,7 @@ const categories = [
   {
     title: 'Movilidad',
     issues: [
-      { id: 'precio-kwh', title: 'Precio del kWh de los cargadores eléctricos', revision: 1, existingId: 'precio-recarga' },
+      { id: 'precio-kwh', title: 'Precio del kWh de los cargadores eléctricos', revision: 2, existingId: 'precio-recarga' },
       { id: 'transporte-maresme', title: 'Transporte colectivo desde el Maresme', revision: 1 },
       { id: 'plazas-vao', title: 'Plazas VAO', revision: 1 },
     ],
@@ -80,6 +80,25 @@ function addIndicator(parent, issues) {
   indicators.push({ dot, issues });
 }
 
+export function renderPublishedIssue(container, publication) {
+  for (const text of publication.parrafos) {
+    const paragraph = node('p');
+    text.split('**').forEach((part, index) => {
+      paragraph.append(index % 2 ? node('strong', part) : part);
+    });
+    container.append(paragraph);
+  }
+  const status = node('p');
+  status.append(node('strong', 'Estado actual:'), ' ' + publication.estado);
+  container.append(status);
+}
+
+export function markPublishedIssueRead(existingId) {
+  const issue = allIssues.find(item => item.existingId === existingId);
+  if (issue) markRead(issue);
+  refreshIndicators();
+}
+
 function issuePanel(issue, existing) {
   const panel = node('details', '', 'activity-issue');
   const summary = node('summary', issue.title);
@@ -87,8 +106,13 @@ function issuePanel(issue, existing) {
   const status = issue.status || (existing?.estado === 'en curso'
     ? 'En curso · detalles pendientes de validación'
     : 'Pendiente de validación');
-  panel.append(summary, node('p', status, 'activity-status'));
-  if (existing?.resumen) panel.append(node('p', existing.resumen));
+  panel.append(summary);
+  if (existing?.publicacion) {
+    renderPublishedIssue(panel, existing.publicacion);
+  } else {
+    panel.append(node('p', status, 'activity-status'));
+    if (existing?.resumen) panel.append(node('p', existing.resumen));
+  }
   if (issue.actions?.length) {
     const actions = node('ul');
     for (const action of issue.actions) actions.append(node('li', action));
@@ -100,7 +124,7 @@ function issuePanel(issue, existing) {
     source.href = issue.source;
     panel.append(source);
   }
-  if (existing?.enlace) {
+  if (existing?.enlace && !existing.publicacion) {
     const detail = node('a', 'Consultar la propuesta de STR', 'primary');
     detail.href = existing.enlace;
     panel.append(detail);

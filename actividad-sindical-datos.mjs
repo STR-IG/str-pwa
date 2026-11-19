@@ -27,11 +27,19 @@ export const CONTENIDOS = [
   },
   {
     id: 'precio-recarga', tipo: 'proyecto',
-    titulo: 'Bajar el precio del kWh en los puntos de recarga',
+    titulo: 'Precio del kWh de los cargadores eléctricos',
     fecha: '', estado: 'en curso', categoria: 'Movilidad sostenible',
     resumen: 'Proponemos reducir el precio por kWh de los puntos de recarga.',
     enlace: 'actividad-informacion-sindical.html?ficha=precio-recarga',
     relacionado: 'puntos-recarga', precioActualKwh: '',
+    publicacion: {
+      parrafos: [
+        'Recargar el coche en el aparcamiento de la planta cuesta hoy **0,26 €/kWh más IVA**. Desde STR consideramos que es un precio elevado para un servicio pensado para la plantilla.',
+        'Proponemos que la empresa aplique, como mejora social permanente, un precio más ajustado al coste real de la energía y tres tarifas según la hora (valle, llano y punta). Así, recargar en las franjas más baratas, como la nocturna, saldría más económico.',
+        'Esta medida es especialmente importante para quienes entran a las seis de la mañana o salen de noche y tienen pocas alternativas de transporte público.',
+      ],
+      estado: 'Propuesta pendiente de presentar a la empresa. Os iremos informando.',
+    },
     ficha: {
       objetivo: 'Proponemos que la empresa reduzca el precio por kWh de los puntos de recarga, que consideramos muy alto.',
       actuaciones: '', proximoPaso: '', cuando: ''
