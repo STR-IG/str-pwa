@@ -104,7 +104,7 @@
         card.querySelector('p').textContent = summary.summary;
       }
       const date = card.querySelector('time');
-      if (summary.url === 'julio-en-un-minuto.html') {
+      if (thumbnail) {
         date.remove();
       } else {
         date.dateTime = summary.date;
