@@ -91,11 +91,20 @@ export const CONTENIDOS = [
   {
     id: 'ropa-laboral', tipo: 'logro', titulo: 'Mejoras de ropa laboral', fecha: '',
     estado: 'conseguido', categoria: 'Seguridad y salud laboral',
-    resumen: 'Cazadoras amarillas de alta visibilidad y calzado de seguridad.',
+    resumen: 'Cazadoras de alta visibilidad para quien trabaja en exteriores y una primera mejora del calzado de seguridad.',
     enlace: 'actividad-informacion-sindical.html?ficha=ropa-laboral', relacionado: '',
+    mostrarEstado: true,
+    siguientePaso: 'Seguimos trabajando para mejorar el calzado de seguridad.',
     ficha: {
-      objetivo: 'Cazadoras amarillas de alta visibilidad y calzado de seguridad.',
-      actuaciones: '', cuando: ''
+      objetivo: [
+        'Cazadoras amarillas de alta visibilidad para las personas que trabajan en zonas exteriores.',
+        'Mejora del calzado de seguridad para los departamentos que trabajan en exteriores. Es una mejora parcial: STR la considera insuficiente y sigue pidiendo más.'
+      ],
+      actuaciones: [
+        'Cazadoras: demostramos a la empresa que quienes trabajaban en zonas exteriores corrían peligro por no poder ser vistos. La empresa las incorporó.',
+        'Calzado: demostramos que era necesario mejorar el calzado de seguridad para los departamentos que trabajan en exteriores. Tras varias propuestas de STR, la empresa aplicó una mejora. Para nosotros se queda corta y seguimos reclamando.'
+      ],
+      cuando: ''
     }
   }
 ];

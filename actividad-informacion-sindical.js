@@ -81,7 +81,7 @@ function listingCard(entry) {
   const card = element('article', '', 'post content-card');
   if (entry.tipo === 'logro') card.classList.add('achievement-card');
   card.append(element('h2', entry.titulo));
-  if (entry.estado && entry.tipo !== 'logro') card.append(element('span', statuses[entry.estado] || entry.estado, 'status'));
+  if (entry.estado && (entry.tipo !== 'logro' || entry.mostrarEstado)) card.append(element('span', statuses[entry.estado] || entry.estado, 'status'));
   addDate(card, entry);
   if (entry.resumen) card.append(element('p', entry.resumen));
   const buttons = element('div', '', 'post-actions');
@@ -153,7 +153,14 @@ function renderList(section) {
 
 function detailBlock(card, title, text) {
   const block = element('section', '', 'detail-block');
-  block.append(element('h3', title), element('p', text || PENDING));
+  block.append(element('h3', title));
+  if (Array.isArray(text)) {
+    const list = element('ul');
+    for (const item of text) list.append(element('li', item));
+    block.append(list);
+  } else {
+    block.append(element('p', text || PENDING));
+  }
   card.append(block);
   return block;
 }
@@ -201,6 +208,9 @@ function renderDetail(entry) {
     }
   }
   const related = relatedLink(entry);
+  if (entry.siguientePaso && !related) {
+    detailBlock(card, 'Siguiente paso', entry.siguientePaso);
+  }
   if (related) {
     if (entry.siguientePaso) {
       const block = detailBlock(card, 'Siguiente paso', entry.siguientePaso);
