@@ -1,14 +1,14 @@
 import { CONTENIDOS, ordenarPorFecha } from './actividad-sindical-datos.mjs';
 import { initNews } from './novedades.js';
-import { addWorkIndicator, markPublishedIssueRead, renderPublishedIssue, renderWorkCategories } from './actividad-sindical-seguimiento.js';
+import { markPublishedIssueRead, renderPublishedIssue, renderWorkCategories } from './actividad-sindical-seguimiento.js';
 
 const HUB = 'actividad-informacion-sindical.html';
 const PENDING = 'PENDIENTE DE REDACTAR';
 const sections = [
-  { vista: 'resumenes', titulo: 'Resumen del mes', subtitulo: 'Lo importante de cada mes, en 1 minuto', tipo: 'resumen', enlace: 'resumen-mensual.html' },
-  { vista: 'proyectos', titulo: 'En qué estamos trabajando', tipo: 'proyecto' },
-  { vista: 'reuniones', titulo: 'Actas y reuniones', tipo: 'reunión' },
-  { vista: 'logros', titulo: 'Nuestros logros', tipo: 'logro' }
+  { vista: 'resumenes', titulo: 'Resumen del mes', icono: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18m-13 5h2m4 0h2m-8 3h2"/></svg>', subtitulo: 'Lo importante de cada mes, en 1 minuto', tipo: 'resumen', enlace: 'resumen-mensual.html' },
+  { vista: 'proyectos', titulo: 'En qué estamos trabajando', icono: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a4 4 0 0 0-5-5l2.3 2.3-2.4 2.4-2.3-2.3a4 4 0 0 0 5 5L3.4 17.6a2 2 0 0 0 2.8 2.8l8.9-8.9a4 4 0 0 0 5-5l-2.3 2.3-2.4-2.4 2.3-2.3a4 4 0 0 0-3 .2"/></svg>', subtitulo: 'Movilidad y comedor', tipo: 'proyecto' },
+  { vista: 'reuniones', titulo: 'Actas y reuniones', icono: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="7" r="3"/><path d="M3 20v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2m2-16a3 3 0 0 1 0 6m4 10v-2a4 4 0 0 0-3-3.9"/></svg>', subtitulo: 'Lo que hablamos con la empresa', tipo: 'reunión' },
+  { vista: 'logros', titulo: 'Nuestros logros', icono: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8m-4-4v4M7 4h10v7a5 5 0 0 1-10 0V4Zm0 2H3v2a4 4 0 0 0 4 4m10-6h4v2a4 4 0 0 1-4 4"/></svg>', subtitulo: 'Lo que hemos conseguido', tipo: 'logro' }
 ];
 const statuses = { abierto: 'Abierto', cerrado: 'Cerrado', 'en curso': 'En curso', conseguido: 'Conseguido' };
 const actions = { tema: 'Ver cronología →', proyecto: 'Ver ficha →', logro: 'Ver ficha →', 'reunión': 'Ver resumen →' };
@@ -38,18 +38,6 @@ function screen(title, parent, parentTitle) {
   back.href = parent;
   back.setAttribute('aria-label', 'Volver a ' + parentTitle);
   main.replaceChildren();
-}
-
-function addBadge(card, entry) {
-  if (!entry.aviso) return;
-  card.dataset.newsCategory = entry.aviso.categoria;
-  card.dataset.newsId = entry.aviso.id;
-  const badge = element('span', '0', 'news-notification-badge');
-  badge.dataset.newsBadge = '';
-  badge.hidden = true;
-  badge.setAttribute('aria-label', 'Novedades sin leer');
-  card.append(badge);
-  return badge;
 }
 
 function addDate(card, entry) {
@@ -247,14 +235,13 @@ function renderHub() {
     const copy = element('div', '', 'navigation-copy');
     copy.append(element('h2', section.titulo));
     if (section.subtitulo) copy.append(element('small', section.subtitulo));
-    card.append(copy);
+    const icon = element('span', '', 'navigation-icon');
+    icon.setAttribute('aria-hidden', 'true');
+    icon.innerHTML = section.icono;
+    card.append(icon, copy);
     const arrow = element('span', '›', 'arrow');
     arrow.setAttribute('aria-hidden', 'true');
     card.append(arrow);
-    if (section.tipo === 'proyecto') {
-      const topic = CONTENIDOS.find(entry => entry.tipo === 'tema' && entry.aviso);
-      addWorkIndicator(copy.querySelector('h2'), topic ? addBadge(card, topic) : undefined);
-    }
     main.append(card);
   }
 }
