@@ -1,4 +1,4 @@
-const CACHE_NAME = 'str-ig-cache-v160-road-card';
+const CACHE_NAME = 'str-ig-cache-v161';
 
 const SUPABASE_URL = 'https://icneigdnuntzugisexaz.supabase.co';
 const APP_ORIGIN = self.location.origin;
