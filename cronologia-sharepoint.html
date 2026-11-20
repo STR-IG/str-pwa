@@ -1,58 +1,244 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <meta name="theme-color" content="#e30613">
-  <title>Cronología de SharePoint · STR-IG</title>
-  <link rel="icon" type="image/png" href="icono-str-ig.png">
-  <link rel="apple-touch-icon" href="icono-str-ig.png">
-  <link rel="manifest" href="manifest.json">
-  <link rel="stylesheet" href="acordeon-str.css">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>Filtración de datos en SharePoint: qué ocurrió y dónde estamos</title>
   <style>
-    * { box-sizing:border-box; margin:0; padding:0; }
-    :root { --red:#e30613; --red-dark:#b9000b; --red-soft:#fff0f1; --ink:#161616; --muted:#6e6e73; --paper:#fff; --surface:#f5f5f7; }
-    html, body { width:100%; overflow-x:hidden; }
-    body { min-height:100vh; padding-bottom:calc(34px + env(safe-area-inset-bottom)); color:var(--ink); background:var(--surface); font-family:Arial,Helvetica,sans-serif; }
-    .top { position:sticky; top:0; z-index:10; padding:calc(12px + env(safe-area-inset-top)) 16px 12px; border-bottom:1px solid #e3e3e6; background:rgba(245,245,247,.96); backdrop-filter:blur(12px); }
-    .top-inner { display:flex; align-items:center; gap:13px; width:min(100%,900px); margin:auto; }
-    .back { display:grid; flex:0 0 42px; width:42px; height:42px; place-items:center; border-radius:50%; color:var(--red); background:var(--paper); box-shadow:0 3px 12px rgba(0,0,0,.08); font-size:27px; font-weight:800; line-height:1; text-decoration:none; }
-    h1 { font-size:clamp(23px,6vw,30px); line-height:1.05; }
-    main { display:grid; gap:18px; width:min(100%,900px); margin:auto; padding:22px 14px 0; }
-    .post { overflow:hidden; border-radius:24px; background:var(--paper); box-shadow:0 6px 22px rgba(0,0,0,.08); }
-    .post-body { padding:18px; }
-    .post h3 { margin-bottom:8px; font-size:clamp(21px,5.7vw,27px); line-height:1.12; }
-    @media (min-width:700px) { main { padding-top:30px; } .post-body { padding:22px 24px 24px; } }
-    a:focus-visible { outline:3px solid var(--red); outline-offset:4px; }
-    .documentation-timeline footer { margin-top:12px; font-size:13px; color:var(--ink); }
+    *, *::before, *::after { box-sizing: border-box; }
+    :root {
+      color-scheme: light dark;
+      --surface: #f5f5f7;
+      --paper: #fff;
+      --ink: #161616;
+      --muted: #54545a;
+      --pink: #fadce0;
+      --accent: #b9000b;
+      --focus: #b9000b;
+      --vote: #fff5f5;
+      --line: #efcdd1;
+      --shadow: rgba(0, 0, 0, .09);
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --surface: #151517;
+        --paper: #232326;
+        --ink: #f6f6f7;
+        --muted: #c9c9cf;
+        --focus: #ff9aa5;
+        --vote: #34282b;
+        --line: #79505a;
+        --shadow: rgba(0, 0, 0, .32);
+      }
+    }
+    body {
+      margin: 0;
+      background: var(--surface);
+      color: var(--ink);
+      font-family: Arial, Helvetica, sans-serif;
+    }
+    main {
+      width: min(100%, 900px);
+      margin-inline: auto;
+      padding: 22px 14px calc(34px + env(safe-area-inset-bottom));
+    }
+    article {
+      padding: 18px;
+      border-radius: 24px;
+      background: var(--paper);
+      box-shadow: 0 6px 22px var(--shadow);
+      overflow-wrap: anywhere;
+    }
+    .back {
+      display: inline-block;
+      margin-bottom: 12px;
+      padding: 12px 16px;
+      border-radius: 24px;
+      color: var(--ink);
+      background: var(--paper);
+      font-weight: 700;
+      text-decoration: none;
+    }
+    .back:focus-visible { outline: 3px solid var(--focus); }
+    h1 { margin: 0 0 28px; font-size: 1.5rem; line-height: 1.2; }
+    h2 { margin: 0; font-size: 1rem; }
+    .item {
+      margin: 10px 0;
+      border-radius: 16px;
+      overflow: hidden;
+      background: var(--paper);
+      box-shadow: 0 3px 14px var(--shadow);
+    }
+    button {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      width: 100%;
+      min-height: 48px;
+      padding: 15px 16px;
+      border: 0;
+      background: transparent;
+      color: inherit;
+      font: inherit;
+      font-weight: 700;
+      text-align: start;
+      cursor: pointer;
+    }
+    button[aria-expanded="true"] {
+      background: linear-gradient(to right, #e30613, #b0000f);
+      color: #fff;
+    }
+    button:focus-visible { outline: 3px solid var(--focus); outline-offset: -4px; }
+    button[aria-expanded="true"]:focus-visible { outline-color: #fff; }
+    .icon {
+      display: grid;
+      flex: 0 0 32px;
+      height: 32px;
+      place-items: center;
+      border-radius: 50%;
+      background: var(--pink);
+      color: var(--accent);
+      font-size: 22px;
+      line-height: 1;
+    }
+    .icon::before { content: "+"; }
+    button[aria-expanded="true"] .icon { background: #fff; }
+    button[aria-expanded="true"] .icon::before { content: "−"; }
+    .panel { padding: 16px 16px 18px; line-height: 1.6; }
+    .panel p { margin: 0; }
+    .panel p + p { margin-top: 10px; }
+    .votes {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 12px 0;
+      padding: 0;
+      list-style: none;
+    }
+    .votes li {
+      display: grid;
+      padding: 6px 9px;
+      border: 1px solid var(--line);
+      border-radius: 9px;
+      background: var(--vote);
+      font-size: .8125rem;
+      line-height: 1.35;
+    }
+    footer { margin-top: 12px; color: var(--muted); font-size: .8125rem; }
+    @media (min-width: 700px) {
+      main { padding-top: 30px; }
+      article { padding: 22px 24px 24px; }
+    }
+    @media (forced-colors: active) {
+      .item, .icon { border: 1px solid ButtonText; }
+      button:focus-visible, button[aria-expanded="true"]:focus-visible { outline-color: Highlight; }
+    }
   </style>
 </head>
 <body>
-  <header class="top"><div class="top-inner"><a class="back" href="actividad-informacion-sindical.html?vista=proyectos&amp;seccion=sharepoint" aria-label="Volver a Filtración de datos en SharePoint">‹</a><h1>Cronología</h1></div></header>
   <main>
-    <article class="post">
-      <div class="post-body"><h2>Filtración de datos en SharePoint: qué ocurrió y dónde estamos</h2></div>
-        <div class="post-body documentation-timeline faq-calida">
-          <details class="faq-item" name="sharepoint-cronologia" open>
-            <summary><span><strong>noviembre de 2026</strong> · Situación actual</span><span class="faq-icon" aria-hidden="true"></span></summary>
-            <p>En noviembre de 2026, STR y CGT presentaron el asunto ante los juzgados. UGT continúa por su cuenta.</p>
-          </details>
-          <details class="faq-item" name="sharepoint-cronologia">
-            <summary><span><strong>octubre de 2026</strong> · Comité de empresa y Fondo Social</span><span class="faq-icon" aria-hidden="true"></span></summary>
-            <p>El comité de empresa aprobó llevar la cuestión al Fondo Social para interponer un conflicto colectivo. En el Fondo Social no pudo aprobarse porque CC.OO., que tiene mayoría en ese órgano, votó en contra. CC.OO. también realizó una movilización y comunicó su posición públicamente.</p>
-          </details>
-          <details class="faq-item" name="sharepoint-cronologia">
-            <summary><span><strong>julio de 2026</strong> · Petición de explicaciones a la empresa</span><span class="faq-icon" aria-hidden="true"></span></summary>
-            <p>Preguntamos a la empresa por qué no se avisó a la plantilla y hasta dónde llegó la filtración. No hemos recibido una respuesta que lo aclare.</p>
-          </details>
-          <details class="faq-item" name="sharepoint-cronologia">
-            <summary><span><strong>julio de 2026</strong> · Detección</span><span class="faq-icon" aria-hidden="true"></span></summary>
-            <p>Detectamos que datos de afiliación estaban accesibles en SharePoint.</p>
-          </details>
-          <footer>Lo publicado se basa en documentos y actas.</footer>
+    <a class="back" href="actividad-informacion-sindical.html?vista=proyectos#sharepoint">‹ Volver a En qué estamos trabajando</a>
+    <article aria-labelledby="titulo">
+      <h1 id="titulo">Filtración de datos en SharePoint: qué ocurrió y dónde estamos</h1>
+      <section class="item">
+        <h2>
+          <button type="button" id="hito-1" aria-expanded="true" aria-controls="detalle-1">
+            <span><strong>octubre de 2026</strong> · Situación actual</span>
+            <span class="icon" aria-hidden="true"></span>
+          </button>
+        </h2>
+        <div class="panel" id="detalle-1">
+          <p>Desde octubre, STR y CGT han puesto el asunto en manos de un bufete de abogados, que trabaja en los actos preparatorios. UGT actúa por su cuenta.</p>
+          <p>STR busca aclarar hasta dónde llegó la filtración e informar a la plantilla cuando haya novedades que se puedan comunicar.</p>
         </div>
+      </section>
+      <section class="item">
+        <h2>
+          <button type="button" id="hito-2" aria-expanded="false" aria-controls="detalle-2">
+            <span><strong>28 de octubre de 2026</strong> · Fondo Social</span>
+            <span class="icon" aria-hidden="true"></span>
+          </button>
+        </h2>
+        <div class="panel" id="detalle-2" hidden>
+          <p>El Fondo Social rechazó financiar los actos preparatorios del conflicto colectivo. CC.OO., que tiene mayoría en ese órgano, votó en contra de la financiación. CC.OO. también realizó una movilización en la que defendió que no era responsable y atribuyó lo ocurrido a un error.</p>
+          <p>Ante el voto en contra de CC.OO. y el rechazo de la financiación, STR advierte de que se trata de un hecho grave y sin precedentes que puede perjudicar a toda la plantilla. STR considera que los recursos del Fondo Social deben servir al conjunto de la plantilla.</p>
+        </div>
+      </section>
+      <section class="item">
+        <h2>
+          <button type="button" id="hito-3" aria-expanded="false" aria-controls="detalle-3">
+            <span><strong>septiembre de 2026</strong> · Comité de empresa</span>
+            <span class="icon" aria-hidden="true"></span>
+          </button>
+        </h2>
+        <div class="panel" id="detalle-3" hidden>
+          <p>El comité de empresa aprobó iniciar actuaciones. La propuesta sometida a votación contemplaba presentar una demanda de conflicto colectivo, acudir a la Agencia Española de Protección de Datos o ambas vías, con los gastos a cargo del Fondo Social.</p>
+          <ul class="votes" aria-label="Resultado de la votación">
+            <li><strong>CGT</strong><span>8 a favor</span></li>
+            <li><strong>USOC</strong><span>3 a favor</span></li>
+            <li><strong>STR</strong><span>2 a favor</span></li>
+            <li><strong>CC.OO.</strong><span>4 en contra</span></li>
+            <li><strong>UGT</strong><span>5 abstenciones</span></li>
+          </ul>
+          <p>La propuesta se aprobó con 13 votos a favor.</p>
+        </div>
+      </section>
+      <section class="item">
+        <h2>
+          <button type="button" id="hito-4" aria-expanded="false" aria-controls="detalle-4">
+            <span><strong>septiembre de 2026</strong> · Qué dice la empresa</span>
+            <span class="icon" aria-hidden="true"></span>
+          </button>
+        </h2>
+        <div class="panel" id="detalle-4" hidden>
+          <p>Según la empresa, los permisos indebidos se retiraron el 8 de julio, en cuanto tuvo conocimiento de la incidencia. Después, Recursos Humanos, el DPO e IT investigaron las causas.</p>
+          <p>La empresa comunicó a STR que la incidencia se había subsanado y que había adoptado medidas para evitar que se repitiera.</p>
+        </div>
+      </section>
+      <section class="item">
+        <h2>
+          <button type="button" id="hito-5" aria-expanded="false" aria-controls="detalle-5">
+            <span><strong>julio de 2026</strong> · Petición de explicaciones a la empresa</span>
+            <span class="icon" aria-hidden="true"></span>
+          </button>
+        </h2>
+        <div class="panel" id="detalle-5" hidden>
+          <p>STR pidió aclarar qué archivos se abrieron o modificaron, qué acciones se realizaron, cuánto tiempo estuvieron accesibles y por qué no se avisó a la plantilla. También solicitó los registros de auditoría. Sigue pendiente aclarar el alcance del acceso.</p>
+        </div>
+      </section>
+      <section class="item">
+        <h2>
+          <button type="button" id="hito-6" aria-expanded="false" aria-controls="detalle-6">
+            <span><strong>julio de 2026</strong> · Detección</span>
+            <span class="icon" aria-hidden="true"></span>
+          </button>
+        </h2>
+        <div class="panel" id="detalle-6" hidden>
+          <p>STR detectó movimientos en una carpeta de SharePoint reservada a su sección sindical. Según el comunicado a la afiliación, la empresa confirmó que una sección sindical tuvo acceso no autorizado a datos de afiliación de otras secciones, incluidos nombres y apellidos.</p>
+        </div>
+      </section>
+      <footer>Lo publicado se basa en documentos y actas.</footer>
     </article>
   </main>
+  <script>
+    const buttons = [...document.querySelectorAll('.item button')];
+
+    function setExpanded(button, expanded) {
+      button.setAttribute('aria-expanded', String(expanded));
+      document.getElementById(button.getAttribute('aria-controls')).hidden = !expanded;
+    }
+
+    for (const button of buttons) {
+      button.addEventListener('click', () => {
+        const shouldOpen = button.getAttribute('aria-expanded') === 'false';
+        for (const candidate of buttons) {
+          setExpanded(candidate, candidate === button && shouldOpen);
+        }
+      });
+    }
+  </script>
   <script type="module">
     import { markNewsRead } from './novedades.js';
     markNewsRead(['documentation-explanation-2026-09-30']).catch(() => {});
