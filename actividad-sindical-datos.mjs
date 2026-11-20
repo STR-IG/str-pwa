@@ -38,12 +38,12 @@ export const CONTENIDOS = [
   {
     id: 'sharepoint', tipo: 'tema',
     titulo: 'Filtración de datos en SharePoint',
-    fecha: '2026-11-01', estado: 'abierto', categoria: '',
+    fecha: '2026-10', estado: 'abierto', categoria: '',
     resumen: '',
     enlace: 'cronologia-sharepoint.html', relacionado: '',
     ficha: {
-      actuaciones: 'STR pidió explicaciones a la empresa. En noviembre de 2026, STR y CGT llevaron el asunto ante los juzgados.',
-      proximoPaso: 'Está pendiente el resultado de la vía judicial. La empresa todavía no ha aclarado el alcance de la filtración ni por qué no avisó a la plantilla.'
+      actuaciones: 'STR pidió explicaciones a la empresa. STR y CGT encargaron a un bufete los actos preparatorios. UGT actúa por su cuenta.',
+      proximoPaso: 'El bufete está trabajando en los actos preparatorios. La empresa todavía no ha aclarado el alcance de la filtración ni por qué no avisó a la plantilla.'
     },
     aviso: { categoria: 'documentation-info', id: 'documentation-explanation-2026-09-30' }
   },
