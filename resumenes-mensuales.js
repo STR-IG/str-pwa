@@ -6,5 +6,6 @@ export const MONTHLY_SUMMARIES = ordenarPorFecha(CONTENIDOS.filter(entrada => en
     date: entrada.fecha,
     title: entrada.titulo,
     summary: entrada.resumen,
+    topics: entrada.temasBreves,
     url: entrada.enlace
   }));

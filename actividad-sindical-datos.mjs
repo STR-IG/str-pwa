@@ -8,6 +8,7 @@ export const CONTENIDOS = [
     titulo: 'Octubre 2026 · En un minuto', fecha: '2026-10-31',
     estado: '', categoria: '',
     resumen: 'Resumen visual de octubre: comedor, pluses de Navidad, movilidad sostenible, emergencias climáticas y nuevas encuestas en la app.',
+    temasBreves: 'Comedor, pluses de Navidad y movilidad sostenible',
     enlace: 'octubre-en-un-minuto.html', relacionado: ''
   },
   {
@@ -15,6 +16,7 @@ export const CONTENIDOS = [
     titulo: 'Septiembre 2026 · En un minuto', fecha: '2026-09-30',
     estado: '', categoria: '',
     resumen: 'Resumen de septiembre: datos de afiliación sindical, encuestas tras una baja médica, coeficientes reductores de jubilación, movilidad sostenible y presentación de la app STR.',
+    temasBreves: 'Datos de afiliación, encuestas tras una baja y jubilación',
     enlace: 'septiembre-en-un-minuto.html', relacionado: ''
   },
   {
@@ -22,6 +24,7 @@ export const CONTENIDOS = [
     titulo: 'Julio 2026 · En un minuto', fecha: '2026-07-31',
     estado: '', categoria: '',
     resumen: 'Lo más destacado de la actividad sindical de julio.',
+    temasBreves: 'Pausas en Mantenimiento, jubilación anticipada y comedor',
     enlace: 'julio-en-un-minuto.html', relacionado: ''
   },
   {
@@ -29,6 +32,7 @@ export const CONTENIDOS = [
     titulo: 'Junio 2026 · En un minuto', fecha: '2026-06-30',
     estado: '', categoria: '',
     resumen: 'Lo más destacado de la actividad sindical de junio.',
+    temasBreves: 'Calendarios laborales, cálculo de la V y jubilación',
     enlace: 'junio-en-un-minuto.html', relacionado: ''
   },
   {
