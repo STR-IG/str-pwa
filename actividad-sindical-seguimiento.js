@@ -74,18 +74,6 @@ function node(tag, text, className) {
   return element;
 }
 
-function addIndicator(parent, issues, legacyBadge) {
-  const badge = node('span', '', 'activity-count');
-  badge.setAttribute('role', 'img');
-  parent.append(badge);
-  indicators.push({ badge, issues, legacyBadge });
-  if (legacyBadge) {
-    new MutationObserver(refreshIndicators).observe(legacyBadge, {
-      childList: true, characterData: true, subtree: true,
-    });
-  }
-}
-
 export function renderPublishedIssue(container, publication) {
   for (const text of publication.parrafos) {
     const paragraph = node('p');
@@ -108,13 +96,12 @@ export function markPublishedIssueRead(existingId) {
 }
 
 function issuePanel(issue, existing) {
-  const panel = node('details', '', 'activity-issue');
-  const summary = node('summary', issue.title);
-  addIndicator(summary, [issue]);
+  const panel = node('section', '', 'post content-card activity-project-detail');
+  const title = node('h2', issue.title);
   const status = issue.status || (existing?.estado === 'en curso'
     ? 'En curso · detalles pendientes de validación'
     : 'Pendiente de validación');
-  panel.append(summary);
+  panel.append(title);
   if (existing?.publicacion) {
     renderPublishedIssue(panel, existing.publicacion);
   } else {
@@ -137,12 +124,6 @@ function issuePanel(issue, existing) {
     detail.href = existing.enlace;
     panel.append(detail);
   }
-  panel.addEventListener('toggle', () => {
-    if (panel.open && panel.closest('.activity-category').open) {
-      markRead(issue);
-      refreshIndicators();
-    }
-  });
   return panel;
 }
 
@@ -160,25 +141,13 @@ if (homeBadge) {
   indicators.push({ badge: homeBadge, issues: allIssues, card, legacyBadge });
 }
 
-export function addWorkIndicator(link, legacyBadge) {
-  addIndicator(link, allIssues, legacyBadge);
-  refreshIndicators();
-}
-
-export function renderWorkCategories(work, existingContent) {
-  for (const category of categories) {
-    if (!category.issues.length) continue;
-    const panel = node('details', '', 'post activity-category');
-    const summary = node('summary', category.title);
-    addIndicator(summary, category.issues);
-    panel.append(summary);
-    const body = node('div', '', 'activity-category-body');
-    for (const issue of category.issues) {
-      const existing = existingContent.find(entry => entry.id === issue.existingId);
-      body.append(issuePanel(issue, existing));
-    }
-    panel.append(body);
-    work.append(panel);
+export function renderWorkCategory(work, title, existingContent) {
+  const category = categories.find(item => item.title === title);
+  if (!category) return;
+  for (const issue of category.issues) {
+    const existing = existingContent.find(entry => entry.id === issue.existingId);
+    work.append(issuePanel(issue, existing));
+    markRead(issue);
   }
   refreshIndicators();
 }

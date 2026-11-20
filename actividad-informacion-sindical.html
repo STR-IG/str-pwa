@@ -70,22 +70,13 @@
     .navigation-card .arrow { flex:none; font-size:30px; }
     .navigation-card:hover { background:var(--red-dark); }
     .navigation-card:focus-visible { outline-offset:4px; }
-    .activity-category, .meeting-card { color:#fff; background:var(--red); }
+    .meeting-card { color:#fff; background:var(--red); }
     .meeting-card :is(p, .post-date, .related) { color:inherit; }
     .meeting-card .post-actions .primary { border:1px solid #fff; }
     .meeting-card a:focus-visible { outline-color:#fff; }
-    .activity-category > summary { padding:16px 18px; min-height:48px; font-weight:800; cursor:pointer; }
-    .activity-category-body { display:grid; gap:8px; padding:0 16px 16px; }
-    .activity-issue { padding:0 12px; border-radius:14px; background:var(--red-dark); }
-    .activity-issue summary { min-height:44px; padding:12px 0; font-weight:700; cursor:pointer; }
-    .activity-issue p, .activity-issue ul, .activity-issue a { margin-bottom:12px; }
-    .activity-issue p, .activity-issue ul { color:inherit; }
-    .activity-issue ul { padding-left:20px; font-size:15px; line-height:1.5; }
-    .activity-issue .activity-status { font-weight:700; }
-    .activity-issue .primary { color:#fff; background:transparent; border:1px solid #fff; }
-    .activity-category :is(summary, a):focus-visible { outline:3px solid #fff; outline-offset:-4px; }
-    .activity-count { display:inline-grid; place-items:center; min-width:22px; min-height:22px; padding:0 5px; margin-inline-start:7px; vertical-align:middle; border:2px solid #fff; border-radius:999px; color:#fff; background:var(--red-dark); font-size:13px; font-weight:900; line-height:1; }
-    .activity-count[hidden] { display:none; }
+    .activity-project-detail > * + * { margin-top:12px; }
+    .activity-project-detail ul { padding-inline-start:20px; font-size:15px; line-height:1.5; }
+    .activity-project-detail .activity-status { font-weight:700; }
     .content-card { position:relative; padding:20px; }
     .content-card h2 { margin-bottom:10px; font-size:22px; line-height:1.2; }
     .content-card h3 { margin:20px 0 7px; font-size:18px; }
@@ -129,7 +120,7 @@
   <main id="activity-content">
     <noscript>Activa JavaScript para consultar las publicaciones sindicales.</noscript>
   </main>
-  <script type="module" src="./actividad-informacion-sindical.js?v=tarjetas-sindicales-20261120"></script>
+  <script type="module" src="./actividad-informacion-sindical.js?v=detalle-seguimiento"></script>
   <script type="module" src="./app-analytics.js?v=2-card-counts"></script>
 </body>
 </html>

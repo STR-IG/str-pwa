@@ -1,6 +1,6 @@
 import { CONTENIDOS, ordenarPorFecha } from './actividad-sindical-datos.mjs';
 import { initNews } from './novedades.js';
-import { markPublishedIssueRead, renderPublishedIssue, renderWorkCategories } from './actividad-sindical-seguimiento.js';
+import { markPublishedIssueRead, renderPublishedIssue, renderWorkCategory } from './actividad-sindical-seguimiento.js?v=detalle-seguimiento';
 
 const HUB = 'actividad-informacion-sindical.html';
 const PENDING = 'PENDIENTE DE REDACTAR';
@@ -93,27 +93,35 @@ function listingCard(entry) {
   return card;
 }
 
-function renderTopics(entries) {
-  for (const entry of entries.filter(item => item.estado === 'abierto')) {
-    main.append(listingCard(entry));
+const workSections = [
+  { id: 'sharepoint', titulo: 'Filtración de datos en SharePoint', subtitulo: 'Abierto · Pendiente de la vía judicial', icono: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s7-3.5 7-10V5l-7-3-7 3v7c0 6.5 7 10 7 10Z"/><path d="m9 12 2 2 4-4"/></svg>' },
+  { id: 'movilidad', titulo: 'Movilidad', subtitulo: 'Cargadores, transporte desde el Maresme y plazas VAO', icono: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 11 1.6-4.6A2 2 0 0 1 8.5 5h7a2 2 0 0 1 1.9 1.4L19 11M3 17v2m18-2v2"/><rect x="3" y="11" width="18" height="6" rx="2"/><path d="M7 14h1m8 0h1"/></svg>' },
+  { id: 'comedor', titulo: 'Comedor', subtitulo: 'Seguimiento con la empresa', icono: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 3v5a3 3 0 0 0 6 0V3M7 3v18M19 3c-2.5 1.8-4 4-4 7v3h4m0-10v18"/></svg>' }
+];
+const workList = HUB + '?vista=proyectos';
+
+function renderWorkList() {
+  for (const section of workSections) {
+    main.append(navigationCard(section, workList + '&seccion=' + section.id));
   }
-  const closed = entries.filter(item => item.estado === 'cerrado');
-  if (closed.length) {
-    const resolved = element('details', '', 'resolved-topics');
-    resolved.append(element('summary', 'Resueltos'));
-    const list = element('div', '', 'feed');
-    for (const entry of closed) list.append(listingCard(entry));
-    resolved.append(list);
-    main.append(resolved);
+}
+
+function renderWorkDetail(section) {
+  screen(section.titulo, workList, 'En qué estamos trabajando');
+  if (section.id === 'sharepoint') {
+    const topic = CONTENIDOS.find(entry => entry.id === section.id);
+    const card = listingCard(topic);
+    card.querySelector('h2').remove();
+    main.append(card);
+  } else {
+    renderWorkCategory(main, section.titulo, CONTENIDOS);
   }
 }
 
 function renderList(section) {
   screen(section.titulo, HUB, 'Actividad e información sindical');
   if (section.tipo === 'proyecto') {
-    renderTopics(ordenarPorFecha(CONTENIDOS.filter(entry => entry.tipo === 'tema')));
-    renderWorkCategories(main, CONTENIDOS);
-    if (location.hash === '#sharepoint') document.getElementById('sharepoint')?.scrollIntoView();
+    renderWorkList();
     return;
   }
   if (section.vista === 'reuniones') {
@@ -228,21 +236,25 @@ function renderDetail(entry) {
   main.append(card);
 }
 
+function navigationCard(section, href) {
+  const card = link('', href, 'post navigation-card');
+  const copy = element('div', '', 'navigation-copy');
+  copy.append(element('h2', section.titulo));
+  if (section.subtitulo) copy.append(element('small', section.subtitulo));
+  const icon = element('span', '', 'navigation-icon');
+  icon.setAttribute('aria-hidden', 'true');
+  icon.innerHTML = section.icono;
+  card.append(icon, copy);
+  const arrow = element('span', '›', 'arrow');
+  arrow.setAttribute('aria-hidden', 'true');
+  card.append(arrow);
+  return card;
+}
+
 function renderHub() {
   screen('Actividad e información sindical', 'app.html', 'menú principal');
   for (const section of sections) {
-    const card = link('', section.enlace || HUB + '?vista=' + section.vista, 'post navigation-card');
-    const copy = element('div', '', 'navigation-copy');
-    copy.append(element('h2', section.titulo));
-    if (section.subtitulo) copy.append(element('small', section.subtitulo));
-    const icon = element('span', '', 'navigation-icon');
-    icon.setAttribute('aria-hidden', 'true');
-    icon.innerHTML = section.icono;
-    card.append(icon, copy);
-    const arrow = element('span', '›', 'arrow');
-    arrow.setAttribute('aria-hidden', 'true');
-    card.append(arrow);
-    main.append(card);
+    main.append(navigationCard(section, section.enlace || HUB + '?vista=' + section.vista));
   }
 }
 
@@ -258,7 +270,11 @@ if (detailId) {
 } else {
   const view = params.get('vista');
   const section = sections.find(item => item.vista === (view === 'temas' ? 'proyectos' : view));
-  if (section) renderList(section);
+  const workDetail = section?.vista === 'proyectos'
+    ? workSections.find(item => item.id === (params.get('seccion') || location.hash.slice(1)))
+    : undefined;
+  if (workDetail) renderWorkDetail(workDetail);
+  else if (section) renderList(section);
   else renderHub();
 }
 initNews().catch(() => {});
