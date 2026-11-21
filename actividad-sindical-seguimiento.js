@@ -3,9 +3,9 @@ const categories = [
   {
     title: 'Movilidad',
     issues: [
-      { id: 'precio-kwh', title: 'Precio del kWh de los cargadores eléctricos', revision: 2, existingId: 'precio-recarga' },
-      { id: 'transporte-maresme', title: 'Transporte colectivo desde el Maresme', revision: 1, image: 'boton-movilidad-maresme.webp', href: 'transporte-maresme-detalle.html' },
-      { id: 'plazas-vao', title: 'Plazas VAO para coche compartido', revision: 1, image: 'plazas-vao-icono.png', href: 'plazas-vao-detalle.html' },
+      { id: 'precio-kwh', title: 'Precio del kWh de los cargadores eléctricos', subtitle: 'Propuesta para bajar el precio', revision: 2, existingId: 'precio-recarga' },
+      { id: 'transporte-maresme', title: 'Ampliación del autobús de empresa', subtitle: 'Propuesta de ampliación y nueva ruta', revision: 1, image: 'boton-movilidad-maresme.webp', href: 'transporte-maresme-detalle.html' },
+      { id: 'plazas-vao', title: 'Plazas VAO para coche compartido', subtitle: 'Propuesta de plazas reservadas', revision: 1, image: 'plazas-vao-icono.png', href: 'plazas-vao-detalle.html' },
     ],
   },
   { title: 'Condiciones laborales', issues: [] },
@@ -172,7 +172,7 @@ export function renderWorkCategory(work, title, existingContent) {
 
       const copy = node('div', '', 'navigation-copy');
       copy.append(node('h2', issue.title));
-      if (issue.id === 'precio-kwh') copy.append(node('small', 'Propuesta para bajar el precio'));
+      if (issue.subtitle) copy.append(node('small', issue.subtitle));
       const arrow = node('span', '›', 'arrow');
       arrow.setAttribute('aria-hidden', 'true');
       card.append(photo, copy, arrow);
