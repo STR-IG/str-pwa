@@ -1,6 +1,6 @@
 import { CONTENIDOS, ordenarPorFecha } from './actividad-sindical-datos.mjs';
 import { initNews } from './novedades.js';
-import { markPublishedIssueRead, renderPublishedIssue, renderWorkCategory } from './actividad-sindical-seguimiento.js?v=cartel-maresme';
+import { markPublishedIssueRead, renderPublishedIssue, renderWorkCategory } from './actividad-sindical-seguimiento.js?v=miniatura-plazas-vao';
 
 const HUB = 'actividad-informacion-sindical.html';
 const PENDING = 'PENDIENTE DE REDACTAR';

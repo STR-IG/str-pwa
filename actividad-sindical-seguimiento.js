@@ -5,7 +5,7 @@ const categories = [
     issues: [
       { id: 'precio-kwh', title: 'Precio del kWh de los cargadores eléctricos', subtitle: 'Propuesta para bajar el precio', revision: 2, existingId: 'precio-recarga' },
       { id: 'transporte-maresme', title: 'Ampliación del autobús de empresa', subtitle: 'Propuesta de ampliación y nueva ruta', revision: 1, image: 'boton-movilidad-maresme.webp', href: 'transporte-maresme-detalle.html' },
-      { id: 'plazas-vao', title: 'Plazas VAO para coche compartido', subtitle: 'Propuesta de plazas reservadas', revision: 1, image: 'plazas-vao-icono.png', href: 'plazas-vao-detalle.html' },
+      { id: 'plazas-vao', title: 'Plazas VAO para coche compartido', subtitle: 'Propuesta de plazas reservadas', revision: 1, image: 'plazas-vao-miniatura.webp', href: 'plazas-vao-detalle.html' },
     ],
   },
   { title: 'Condiciones laborales', issues: [] },
