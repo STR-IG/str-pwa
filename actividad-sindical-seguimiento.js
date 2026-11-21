@@ -5,7 +5,7 @@ const categories = [
     issues: [
       { id: 'precio-kwh', title: 'Precio del kWh de los cargadores eléctricos', revision: 2, existingId: 'precio-recarga' },
       { id: 'transporte-maresme', title: 'Transporte colectivo desde el Maresme', revision: 1 },
-      { id: 'plazas-vao', title: 'Plazas VAO para coche compartido', revision: 1, image: 'plazas-vao-icono.png', href: 'plazas-vao-cartel-str.png' },
+      { id: 'plazas-vao', title: 'Plazas VAO para coche compartido', revision: 1, image: 'plazas-vao-icono.png', href: 'plazas-vao.html' },
     ],
   },
   { title: 'Condiciones laborales', issues: [] },
