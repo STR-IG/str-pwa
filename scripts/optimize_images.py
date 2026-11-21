@@ -10,6 +10,7 @@ import argparse
 from collections import Counter
 from pathlib import Path
 import re
+import os
 
 ROOT = Path(__file__).resolve().parents[1]
 TEXT_EXT = {".html", ".css", ".js", ".mjs", ".json"}
@@ -74,8 +75,8 @@ def main() -> None:
                 print(f"SKIP no savings: {src.relative_to(ROOT)}")
                 continue
             for owner in owners:
-                rel = src.relative_to(owner.parent).as_posix()
-                replacements.setdefault(owner, {})[rel] = target.relative_to(owner.parent).as_posix()
+                rel = Path(os.path.relpath(src, owner.parent)).as_posix()
+                replacements.setdefault(owner, {})[rel] = Path(os.path.relpath(target, owner.parent)).as_posix()
             print(f"CONVERTED {src.relative_to(ROOT)}: {src.stat().st_size} -> {target.stat().st_size} bytes")
         except Exception as exc:
             print(f"ERROR {src.relative_to(ROOT)}: {exc}")
