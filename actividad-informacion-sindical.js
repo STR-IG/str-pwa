@@ -1,6 +1,6 @@
 import { CONTENIDOS, ordenarPorFecha } from './actividad-sindical-datos.mjs';
 import { initNews } from './novedades.js';
-import { markPublishedIssueRead, renderPublishedIssue, renderWorkCategory } from './actividad-sindical-seguimiento.js?v=plazas-vao';
+import { markPublishedIssueRead, renderPublishedIssue, renderWorkCategory } from './actividad-sindical-seguimiento.js?v=plazas-vao-detalle';
 
 const HUB = 'actividad-informacion-sindical.html';
 const PENDING = 'PENDIENTE DE REDACTAR';

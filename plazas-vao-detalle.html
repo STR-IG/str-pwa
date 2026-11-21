@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#e30613">
+  <title>Plazas VAO · STR-IG</title>
+  <link rel="stylesheet" href="acordeon-str.css">
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; background: #f5f5f7; color: #161616; font-family: Arial, Helvetica, sans-serif; }
+    main { width: min(100%, 595px); margin: auto; padding: 14px 14px calc(24px + env(safe-area-inset-bottom)); }
+    .back { display: inline-grid; width: 48px; height: 48px; place-items: center; margin-bottom: 12px; border-radius: 50%; background: #fff; color: #e30613; font-size: 28px; font-weight: 800; text-decoration: none; }
+    .back:focus-visible { outline: 3px solid #e30613; outline-offset: 3px; }
+    .poster { display: block; width: 100%; height: auto; }
+    .faq-calida .faq-item > summary { background: linear-gradient(to right, #e30613, #b0000f); color: #fff; }
+    .faq-calida .faq-item > summary:focus-visible { outline-color: #fff; }
+    .faq-calida .faq-icon { background: #fff; color: #e30613; }
+    .faq-calida .faq-item .faq-icon::before { content: '›'; }
+    .faq-calida .faq-item[open] .faq-icon { transform: rotate(90deg); }
+    .vao-detail { padding: 18px 16px; font-size: 16px; line-height: 1.6; }
+    .vao-detail h1 { margin: 0; font-size: 23px; line-height: 1.2; }
+    .vao-detail .subtitle { margin-top: 4px; color: #505057; }
+    .vao-detail h2 { margin: 18px 0 4px; font-size: 17px; line-height: 1.35; }
+    .vao-detail p, .vao-detail ul { margin: 0; }
+    .vao-detail ul { padding-inline-start: 21px; }
+    .vao-detail li + li { margin-top: 4px; }
+  </style>
+</head>
+<body>
+  <main>
+    <a class="back" href="actividad-informacion-sindical.html?vista=proyectos&amp;seccion=movilidad" aria-label="Volver a Movilidad">‹</a>
+    <img class="poster" src="plazas-vao-cartel-str.png" width="567" height="732" alt="Cartel de STR sobre plazas de aparcamiento para vehículos de alta ocupación. La propuesta beneficiaría a las personas trabajadoras que compartan vehículo. Contacto: str.ig@str.es.">
+    <div class="faq-calida">
+      <details class="faq-item">
+        <summary>Más detalle <span class="faq-icon" aria-hidden="true"></span></summary>
+        <article class="vao-detail">
+          <h1>Plazas VAO: más detalle</h1>
+          <p class="subtitle">Qué proponemos y qué trabas hay</p>
+
+          <h2>¿Qué proponemos?</h2>
+          <p>Reservar plazas de aparcamiento, las más cercanas a la entrada, para vehículos que lleguen con 3 o más personas trabajadoras.</p>
+
+          <h2>¿Por qué beneficiaría a la plantilla?</h2>
+          <ul>
+            <li>Menos gasto en combustible por persona</li>
+            <li>Menos coches y menos presión sobre el aparcamiento</li>
+            <li>Menos huella de carbono</li>
+            <li>Menos desplazamientos individuales, y por tanto menos riesgo in itinere</li>
+          </ul>
+
+          <h2>¿Qué traba plantea la empresa?</h2>
+          <p>Seguridad cree que las personas no validarán su tarjeta de empleado en la entrada, y que así no se podría comprobar la ocupación.</p>
+
+          <h2>¿Qué respondemos?</h2>
+          <ul>
+            <li>Proponemos una prueba piloto en las dos plazas antes destinadas a carga eléctrica, enfrente de la garita de seguridad.</li>
+            <li>Seguridad puede ver directamente la ocupación de los vehículos.</li>
+            <li>Un registro previo de grupos (nombres y matrícula) permite saber quién usa las plazas.</li>
+            <li>Quien abuse del sistema pierde el derecho a usarlas.</li>
+            <li>Tras unos meses se revisan los resultados con la empresa.</li>
+          </ul>
+
+          <h2>¿Qué pedimos?</h2>
+          <p>Una prueba piloto con un control sencillo, y revisar los resultados en las reuniones trimestrales con dirección.</p>
+        </article>
+      </details>
+    </div>
+  </main>
+</body>
+</html>
