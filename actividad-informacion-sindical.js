@@ -251,7 +251,19 @@ function navigationCard(section, href) {
   }
   const icon = element('span', '', 'navigation-icon');
   icon.setAttribute('aria-hidden', 'true');
-  icon.innerHTML = section.icono;
+  if (section.vista === 'opinion') {
+    icon.classList.add('navigation-thumbnail');
+    const image = element('img');
+    image.src = 'articulos-opinion-periodico.webp';
+    image.alt = '';
+    image.width = 72;
+    image.height = 72;
+    image.loading = 'lazy';
+    image.decoding = 'async';
+    icon.append(image);
+  } else {
+    icon.innerHTML = section.icono;
+  }
   card.append(icon, copy);
   const arrow = element('span', '›', 'arrow');
   arrow.setAttribute('aria-hidden', 'true');
