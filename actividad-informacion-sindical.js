@@ -5,10 +5,10 @@ import { markPublishedIssueRead, renderPublishedIssue, renderWorkCategory } from
 const HUB = 'actividad-informacion-sindical.html';
 const PENDING = 'PENDIENTE DE REDACTAR';
 const sections = [
-  { vista: 'resumenes', titulo: 'Resumen del mes', icono: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18m-13 5h2m4 0h2m-8 3h2"/></svg>', subtitulo: 'Lo importante de cada mes, en 1 minuto', tipo: 'resumen', enlace: 'resumen-mensual.html' },
+  { vista: 'resumenes', titulo: 'Resumen del mes', miniatura: 'resumen-mensual-octubre-miniatura.webp', subtitulo: 'Lo importante de cada mes, en 1 minuto', tipo: 'resumen', enlace: 'resumen-mensual.html' },
   { vista: 'proyectos', titulo: 'En qué estamos trabajando', icono: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a4 4 0 0 0-5-5l2.3 2.3-2.4 2.4-2.3-2.3a4 4 0 0 0 5 5L3.4 17.6a2 2 0 0 0 2.8 2.8l8.9-8.9a4 4 0 0 0 5-5l-2.3 2.3-2.4-2.4 2.3-2.3a4 4 0 0 0-3 .2"/></svg>', subtitulo: 'Movilidad y comedor', tipo: 'proyecto' },
   { vista: 'reuniones', titulo: 'Actas y reuniones', icono: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="7" r="3"/><path d="M3 20v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2m2-16a3 3 0 0 1 0 6m4 10v-2a4 4 0 0 0-3-3.9"/></svg>', subtitulo: 'Lo que hablamos con la empresa', tipo: 'reunión' },
-  { vista: 'opinion', titulo: 'Artículos de opinión', icono: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 8h10M7 12h5M7 16h10m-3-4h3"/></svg>', subtitulo: 'Publicaciones y reflexiones de STR', tipo: 'opinion', enlace: 'articulos-opinion.html' },
+  { vista: 'opinion', titulo: 'Artículos de opinión', miniatura: 'articulos-opinion-periodico.webp', icono: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 8h10M7 12h5M7 16h10m-3-4h3"/></svg>', subtitulo: 'Publicaciones y reflexiones de STR', tipo: 'opinion', enlace: 'articulos-opinion.html' },
   { vista: 'logros', titulo: 'Nuestros logros', icono: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8m-4-4v4M7 4h10v7a5 5 0 0 1-10 0V4Zm0 2H3v2a4 4 0 0 0 4 4m10-6h4v2a4 4 0 0 1-4 4"/></svg>', subtitulo: 'Lo que hemos conseguido', tipo: 'logro' }
 ];
 const statuses = { abierto: 'Abierto', cerrado: 'Cerrado', 'en curso': 'En curso', conseguido: 'Conseguido' };
@@ -251,10 +251,11 @@ function navigationCard(section, href) {
   }
   const icon = element('span', '', 'navigation-icon');
   icon.setAttribute('aria-hidden', 'true');
-  if (section.vista === 'opinion') {
+  if (section.miniatura) {
     icon.classList.add('navigation-thumbnail');
+    if (section.tipo === 'resumen') icon.classList.add('navigation-thumbnail-cover');
     const image = element('img');
-    image.src = 'articulos-opinion-periodico.webp';
+    image.src = section.miniatura;
     image.alt = '';
     image.width = 72;
     image.height = 72;
