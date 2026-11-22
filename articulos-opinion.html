@@ -22,13 +22,15 @@ main{max-width:900px;margin:22px auto;padding:0 14px}
 .author{font-size:15px;font-weight:600;color:#333}
 .role,.meta{font-size:12px;color:#777;line-height:1.45}
 .article:hover .headline{text-decoration:underline}
-a:focus-visible{outline:3px solid #e30613;outline-offset:3px}
+.tabs{display:flex;gap:10px;overflow-x:auto;margin-bottom:20px;padding:2px 0 8px;scrollbar-width:thin}.tab{flex:none;border:0;border-radius:999px;padding:12px 19px;background:#e1e7ef;color:#263d58;font-size:15px;font-weight:600;cursor:pointer}.tab[aria-selected="true"]{background:#e30613;color:#fff}.panel[hidden]{display:none}.empty{background:#fff;border-radius:18px;padding:22px;color:#555;font-size:15px;line-height:1.5}a:focus-visible,.tab:focus-visible{outline:3px solid #e30613;outline-offset:3px}
 @media(max-width:400px){.article{gap:12px;padding:12px}.thumb{width:38%}.copy{gap:8px}.headline{font-size:14px}.author{font-size:13px}.role,.meta{font-size:11px}}
 </style>
 </head>
 <body>
 <header class="top"><div class="top-inner"><a class="back" href="actividad-informacion-sindical.html" aria-label="Volver a actividad e información sindical">‹</a><h1>Artículos de opinión</h1></div></header>
 <main>
+<div class="tabs" role="tablist" aria-label="Tipo de publicación"><button class="tab" id="tab-opinion" role="tab" aria-controls="panel-opinion" aria-selected="true" type="button">Opinión</button><button class="tab" id="tab-medios" role="tab" aria-controls="panel-medios" aria-selected="false" type="button">STR en los medios</button></div>
+<section class="panel" id="panel-opinion" role="tabpanel" aria-labelledby="tab-opinion">
 <a class="article" href="https://www.diarimes.com/ca/opinio/tribuna/261119/vacaciones-jugar-gta_243449.html" target="_blank" rel="noopener noreferrer" aria-label="Leer en Diari Més: ¿Vacaciones para jugar al GTA? ¿Por qué no?">
 <img class="thumb" src="articulo-gta-vi.webp" alt="Imagen del videojuego GTA VI" width="300" height="200" decoding="async">
 <div class="copy">
@@ -39,6 +41,13 @@ a:focus-visible{outline:3px solid #e30613;outline-offset:3px}
 <span class="meta">19/11/2026 · Diari Més</span>
 </div>
 </a>
+</section>
+<section class="panel" id="panel-medios" role="tabpanel" aria-labelledby="tab-medios" hidden><p class="empty">Próximamente, noticias y publicaciones sobre STR en los medios de comunicación.</p></section>
 </main>
+<script>
+const tabs=[...document.querySelectorAll('[role="tab"]')];
+function selectTab(tab){tabs.forEach(t=>{const active=t===tab;t.setAttribute('aria-selected',String(active));document.getElementById(t.getAttribute('aria-controls')).hidden=!active;});}
+tabs.forEach((tab,i)=>{tab.addEventListener('click',()=>selectTab(tab));tab.addEventListener('keydown',e=>{if(e.key==='ArrowRight'||e.key==='ArrowLeft'){e.preventDefault();const next=tabs[(i+(e.key==='ArrowRight'?1:tabs.length-1))%tabs.length];selectTab(next);next.focus();}});});
+</script>
 </body>
 </html>
