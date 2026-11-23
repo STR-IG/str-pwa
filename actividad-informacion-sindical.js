@@ -96,7 +96,7 @@ function listingCard(entry) {
 
 const workSections = [
   { id: 'sharepoint', titulo: 'Filtración de datos en SharePoint', subtitulo: 'Abierto · Exigimos respuestas. Queremos saber hasta dónde llegó.', miniatura: 'boton-sharepoint-candado.webp' },
-  { id: 'movilidad', titulo: 'Movilidad', subtitulo: 'Cargadores, transporte desde el Maresme y plazas VAO', icono: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 11 1.6-4.6A2 2 0 0 1 8.5 5h7a2 2 0 0 1 1.9 1.4L19 11M3 17v2m18-2v2"/><rect x="3" y="11" width="18" height="6" rx="2"/><path d="M7 14h1m8 0h1"/></svg>' },
+  { id: 'movilidad', titulo: 'Movilidad', subtitulo: 'Cargadores, transporte desde el Maresme y plazas VAO', miniatura: 'boton-movilidad-recarga-bus.png' },
   { id: 'comedor', titulo: 'Comedor', subtitulo: 'Seguimiento con la empresa', icono: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 3v5a3 3 0 0 0 6 0V3M7 3v18M19 3c-2.5 1.8-4 4-4 7v3h4m0-10v18"/></svg>' }
 ];
 const workList = HUB + '?vista=proyectos';
@@ -252,7 +252,7 @@ function photoNavigationCard(image, title, href, subtitle) {
 
 function navigationCard(section, href) {
   const card = link('', href, 'post navigation-card');
-  if (section.id === 'sharepoint') card.classList.add('navigation-card-sharepoint');
+  if (section.id === 'sharepoint' || section.id === 'movilidad') card.classList.add('navigation-card-sharepoint');
   const copy = element('div', '', 'navigation-copy');
   copy.append(element('h2', section.titulo));
   if (section.subtitulo) {
