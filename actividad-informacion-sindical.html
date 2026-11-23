@@ -118,6 +118,23 @@
       .navigation-icon svg { width:22px; height:22px; }
       .navigation-icon.navigation-thumbnail { width:60px; height:60px; }
     }
+    .navigation-card-sharepoint {
+      grid-template-columns:minmax(64px,28%) minmax(0,1fr) auto;
+      align-items:stretch;
+      padding:0 16px 0 0;
+    }
+    .navigation-card-sharepoint .navigation-icon.navigation-thumbnail {
+      position:relative;
+      width:100%;
+      height:100%;
+      border-radius:0;
+      background:transparent;
+      -webkit-mask-image:linear-gradient(to right,#000 68%,transparent);
+      mask-image:linear-gradient(to right,#000 68%,transparent);
+    }
+    .navigation-card-sharepoint .navigation-thumbnail img { position:absolute; inset:0; }
+    .navigation-card-sharepoint .navigation-copy { align-self:center; padding-block:13px; }
+    .navigation-card-sharepoint .arrow { align-self:center; }
     .activity-hub .top { position:static; padding-inline:18px; border-bottom:0; backdrop-filter:none; }
     .activity-hub .top-inner { flex-direction:column; align-items:flex-start; gap:6px; }
     .activity-hub h1 { max-width:20ch; font-size:clamp(26px,6.4vw,36px); }
@@ -135,7 +152,7 @@
   <main id="activity-content">
     <noscript>Activa JavaScript para consultar las publicaciones sindicales.</noscript>
   </main>
-  <script type="module" src="./actividad-informacion-sindical.js?v=menu-fotos-realistas"></script>
+  <script type="module" src="./actividad-informacion-sindical.js?v=boton-sharepoint-candado"></script>
   <script type="module" src="./app-analytics.js?v=2-card-counts"></script>
 </body>
 </html>
