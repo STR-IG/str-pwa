@@ -144,7 +144,15 @@ function renderList(section) {
       const group = element('section', '', 'group');
       group.append(element('h2', category, 'category-heading'));
       for (const entry of entries.filter(item => (item.categoria || 'Otros logros') === category)) {
-        group.append(listingCard(entry));
+        if (entry.id === 'pluses-especiales') {
+          group.append(navigationCard({
+            id: entry.id,
+            titulo: entry.titulo,
+            miniatura: 'boton-pluses-navidad.webp',
+          }, entry.enlace));
+        } else {
+          group.append(listingCard(entry));
+        }
       }
       main.append(group);
     }
@@ -252,7 +260,7 @@ function photoNavigationCard(image, title, href, subtitle) {
 
 function navigationCard(section, href) {
   const card = link('', href, 'post navigation-card');
-  if (section.id === 'sharepoint' || section.id === 'movilidad' || section.id === 'comedor') card.classList.add('navigation-card-sharepoint');
+  if (section.id === 'sharepoint' || section.id === 'movilidad' || section.id === 'comedor' || section.id === 'pluses-especiales') card.classList.add('navigation-card-sharepoint');
   const copy = element('div', '', 'navigation-copy');
   copy.append(element('h2', section.titulo));
   if (section.subtitulo) {
