@@ -21,9 +21,10 @@
     .feed { display:grid; gap:16px; }
     .post { overflow:hidden; border-radius:24px; background:var(--paper); box-shadow:0 6px 22px rgba(0,0,0,.08); }
     .post-link { display:block; color:inherit; text-decoration:none; }
-    .comedor-access { display:grid; grid-template-columns:minmax(0,1fr) 72px 20px; align-items:center; gap:12px; padding:12px; border-radius:16px; color:#fff; background:var(--red); text-decoration:none; }
+    .comedor-row { display:grid; grid-template-columns:72px minmax(0,1fr); align-items:center; gap:8px; }
+    .comedor-access { display:grid; grid-template-columns:minmax(0,1fr) 20px; min-height:108px; box-sizing:border-box; align-items:center; gap:12px; padding:12px; border-radius:16px; color:#fff; background:var(--red); text-decoration:none; }
     .comedor-access h2 { padding-left:4px; font-size:18px; line-height:1.15; }
-    .comedor-access img { display:block; width:72px; height:84px; border-radius:9px; }
+    .comedor-row img { display:block; width:72px; height:84px; object-fit:cover; border-radius:9px; }
     .comedor-chevron { justify-self:center; font-size:31px; line-height:1; }
     .comedor-access:focus-visible { outline:3px solid #fff; outline-offset:-5px; }
     .post-media { position:relative; display:block; width:100%; background:#111; }
@@ -125,7 +126,7 @@
   <main id="activity-content">
     <noscript>Activa JavaScript para consultar las publicaciones sindicales.</noscript>
   </main>
-  <script type="module" src="./actividad-informacion-sindical.js?v=miniatura-actas-reuniones"></script>
+  <script type="module" src="./actividad-informacion-sindical.js?v=comedor-foto-exterior"></script>
   <script type="module" src="./app-analytics.js?v=2-card-counts"></script>
 </body>
 </html>
