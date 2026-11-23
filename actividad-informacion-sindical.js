@@ -5,11 +5,11 @@ import { markPublishedIssueRead, renderPublishedIssue, renderWorkCategory } from
 const HUB = 'actividad-informacion-sindical.html';
 const PENDING = 'PENDIENTE DE REDACTAR';
 const sections = [
-  { vista: 'resumenes', titulo: 'Resumen del mes', miniatura: 'resumen-mensual-octubre-miniatura.webp', subtitulo: 'Lo importante de cada mes, en 1 minuto', tipo: 'resumen', fotoExterior: true, enlace: 'resumen-mensual.html' },
-  { vista: 'proyectos', titulo: 'En qué estamos trabajando', miniatura: 'resumen-mensual-tablon.webp', tipo: 'proyecto', fotoExterior: true },
-  { vista: 'reuniones', titulo: 'Actas y reuniones', miniatura: 'actas-y-reuniones-miniatura.webp', subtitulo: 'Lo que hablamos con la empresa', tipo: 'reunión' },
-  { vista: 'opinion', titulo: 'Artículos de opinión', miniatura: 'articulos-opinion-periodico.webp', icono: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 8h10M7 12h5M7 16h10m-3-4h3"/></svg>', subtitulo: 'Publicaciones y reflexiones de STR', tipo: 'opinion', enlace: 'articulos-opinion.html' },
-  { vista: 'logros', titulo: 'Nuestros logros', icono: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8m-4-4v4M7 4h10v7a5 5 0 0 1-10 0V4Zm0 2H3v2a4 4 0 0 0 4 4m10-6h4v2a4 4 0 0 1-4 4"/></svg>', subtitulo: 'Lo que hemos conseguido', tipo: 'logro' }
+  { vista: 'resumenes', titulo: 'Resumen del mes', subtitulo: 'Lo importante de cada mes, en 1 minuto', miniatura: 'actividad-menu-resumen.webp', tipo: 'resumen', enlace: 'resumen-mensual.html' },
+  { vista: 'proyectos', titulo: 'En qué estamos trabajando', miniatura: 'actividad-menu-trabajo.webp', tipo: 'proyecto' },
+  { vista: 'reuniones', titulo: 'Actas y reuniones', subtitulo: 'Lo que hablamos con la empresa', miniatura: 'actividad-menu-actas.webp', tipo: 'reunión' },
+  { vista: 'logros', titulo: 'Nuestros logros', miniatura: 'actividad-menu-logros.webp', tipo: 'logro' },
+  { vista: 'opinion', titulo: 'Artículos de opinión', subtitulo: 'Publicaciones y reflexiones de STR', miniatura: 'actividad-menu-opinion.webp', tipo: 'opinion', enlace: 'articulos-opinion.html' }
 ];
 const statuses = { abierto: 'Abierto', cerrado: 'Cerrado', 'en curso': 'En curso', conseguido: 'Conseguido' };
 const actions = { tema: 'Ver cronología →', proyecto: 'Ver ficha →', logro: 'Ver ficha →', 'reunión': 'Ver resumen →' };
@@ -273,9 +273,6 @@ function navigationCard(section, href) {
     image.height = 72;
     image.loading = 'lazy';
     image.decoding = 'async';
-    if (section.fotoExterior) {
-      return photoNavigationCard(image, section.titulo, href, section.subtitulo);
-    }
     icon.append(image);
   } else {
     icon.innerHTML = section.icono;
@@ -288,6 +285,7 @@ function navigationCard(section, href) {
 }
 
 function renderHub() {
+  document.body.classList.add('activity-hub');
   screen('Actividad e información sindical', 'app.html', 'menú principal');
   for (const section of sections) {
     main.append(navigationCard(section, section.enlace || HUB + '?vista=' + section.vista));

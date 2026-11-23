@@ -118,6 +118,15 @@
       .navigation-icon svg { width:22px; height:22px; }
       .navigation-icon.navigation-thumbnail { width:60px; height:60px; }
     }
+    .activity-hub .top { position:static; padding-inline:18px; border-bottom:0; backdrop-filter:none; }
+    .activity-hub .top-inner { flex-direction:column; align-items:flex-start; gap:6px; }
+    .activity-hub h1 { max-width:20ch; font-size:clamp(26px,6.4vw,36px); }
+    .activity-hub main { gap:10px; padding:16px 8px 0; }
+    .activity-hub .navigation-card { min-height:68px; gap:10px; padding:8px 12px; border-radius:12px; box-shadow:none; }
+    .activity-hub .navigation-icon.navigation-thumbnail { width:48px; height:48px; border-radius:10px; }
+    .activity-hub .navigation-card h2 { font-size:clamp(16px,4.25vw,21px); }
+    .activity-hub .navigation-copy small { font-size:clamp(12px,3.2vw,15px); }
+    .activity-hub .navigation-card .arrow { font-size:24px; line-height:1; }
   </style>
   <link rel="stylesheet" href="logros.css">
 </head>
@@ -126,7 +135,7 @@
   <main id="activity-content">
     <noscript>Activa JavaScript para consultar las publicaciones sindicales.</noscript>
   </main>
-  <script type="module" src="./actividad-informacion-sindical.js?v=tarjeta-trabajo-foto-exterior"></script>
+  <script type="module" src="./actividad-informacion-sindical.js?v=menu-fotos-realistas"></script>
   <script type="module" src="./app-analytics.js?v=2-card-counts"></script>
 </body>
 </html>
