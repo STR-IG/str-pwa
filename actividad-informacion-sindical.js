@@ -129,17 +129,16 @@ function renderMeetings() {
     .meeting-tabs::-webkit-scrollbar {display:none}
     .meeting-tabs button {flex:none;border:0;border-radius:999px;padding:12px 17px;background:#fbe5e7;color:#b9000b;font:600 16px Arial;cursor:pointer}
     .meeting-tabs button[aria-pressed=true] {background:#e30613;color:#fff}
-    .meeting-feed-item {padding:22px 0;border-bottom:1px solid #e5e5e5}
-    .meeting-feed-item img {display:block;width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:16px;margin-bottom:15px}
-    .meeting-feed-item h2 {font-size:24px;line-height:1.22;margin:8px 0;color:#171717}
-    .meeting-feed-item a {color:inherit;text-decoration:none;display:block}
-    .meeting-feed-item p {border-left:3px solid #e30613;padding-left:12px;color:#626269;line-height:1.5;margin:12px 0}
-    .meeting-feed-item .meeting-kicker {color:#b9000b;font-size:13px;font-weight:700;text-transform:uppercase}
-    .meeting-feed-item .meeting-date {color:#666;font-size:14px}
-    .meeting-feed-item .meeting-more {color:#b9000b;font-weight:700;margin-top:12px}
-    .meeting-feed-item.compact img {float:left;width:34%;aspect-ratio:4/3;margin:0 14px 10px 0}
-    .meeting-feed-item.compact h2 {font-size:19px}
-    .meeting-feed-item.compact {display:flow-root}
+    .meeting-feed-item {margin:14px 0;border-radius:20px;overflow:hidden;background:#e30613;box-shadow:0 5px 16px #0001}
+    .meeting-feed-item a {display:grid;grid-template-columns:29% minmax(0,1fr) 22px;align-items:center;min-height:112px;color:#fff;text-decoration:none;gap:12px;padding-right:12px}
+    .meeting-feed-photo {position:relative;align-self:stretch;min-height:112px;overflow:hidden}
+    .meeting-feed-photo img {position:absolute;width:100%;height:100%;object-fit:cover}
+    .meeting-feed-photo::after {content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent 50%,#e30613)}
+    .meeting-feed-copy {padding:12px 0;min-width:0}
+    .meeting-feed-item h2 {font-size:clamp(16px,4.5vw,22px);line-height:1.2;margin:0;color:#fff}
+    .meeting-feed-item .meeting-date {display:block;color:#fff;font-size:13px;margin-top:8px;line-height:1.3}
+    .meeting-feed-arrow {font-size:30px;color:#fff;text-align:center}
+    .meeting-feed-item a:focus-visible {outline:3px solid #222;outline-offset:-4px}
     .meeting-empty {padding:28px 0;color:#666}
   `;
   document.head.append(style);
@@ -158,12 +157,13 @@ function renderMeetings() {
     visible.forEach((entry,index)=>{
       const card=element('article','','meeting-feed-item'+(index?' compact':''));
       const a=link('',entry.enlace);
-      if(entry.photo){const image=element('img');image.src=entry.photo;image.alt='';image.loading=index?'lazy':'eager';a.append(image);}
-      a.append(element('div',categories.find(([key])=>key===entry.group)?.[1] || 'Reuniones','meeting-kicker'));
-      a.append(element('h2',entry.titulo));
-      if(hasDate(entry.fecha)){const time=element('time',dateFormat.format(new Date(entry.fecha)),'meeting-date');time.dateTime=entry.fecha;a.append(time);}
-      if(entry.resumen)a.append(element('p',entry.resumen));
-      a.append(element('span','Ver resumen →','meeting-more'));
+      const photo=element('div','','meeting-feed-photo');
+      if(entry.photo){const image=element('img');image.src=entry.photo;image.alt='';image.loading=index?'lazy':'eager';photo.append(image);}
+      const copy=element('div','','meeting-feed-copy');
+      copy.append(element('h2',entry.titulo));
+      if(hasDate(entry.fecha)){const time=element('time',dateFormat.format(new Date(entry.fecha)),'meeting-date');time.dateTime=entry.fecha;copy.append(time);}
+      const arrow=element('span','›','meeting-feed-arrow');arrow.setAttribute('aria-hidden','true');
+      a.append(photo,copy,arrow);
       card.append(a);feed.append(card);
     });
   }
